@@ -324,8 +324,8 @@ int WebsocketClientOnClientEstablished(WebsocketClient* self) {
     return -1;
   }
 
-  // Snapshot ws->wsi once.  WebsocketClose() can set ws->wsi = NULL from another
-  // thread (SIMOPEN superseded connection cleanup path).  Reading it once and using only the
+  // Snapshot ws->wsi once. WebsocketClose() can set ws->wsi = NULL from another
+  // thread (SIMOPEN superseded connection cleanup path). Reading it once and using only the
   // snapshot eliminates the race window between the two uses below: if it is already
   // NULL we bail out early; if it becomes NULL after the snapshot the LWS wsi object
   // itself is still alive (lws_context_destroy runs only after this thread exits).
