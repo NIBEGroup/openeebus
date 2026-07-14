@@ -284,6 +284,10 @@ int WebsocketOnClose(WebsocketObject* self) {
 }
 
 const char* WebsocketGetSkiWithWsi(struct lws* wsi) {
+  if (wsi == NULL) {
+    return NULL;
+  }
+
   static const size_t kMaxCertSize = 2048;
 
   char* const buf = (char*)EEBUS_MALLOC(kMaxCertSize);
