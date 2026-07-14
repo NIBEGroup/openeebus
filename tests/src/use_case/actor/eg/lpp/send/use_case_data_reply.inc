@@ -90,6 +90,7 @@ static constexpr char use_case_data_reply[] = R"({
                                 "scenarioSupport": [
                                   1,
                                   2,
+                                  3,
                                   4
                                 ]
                               },

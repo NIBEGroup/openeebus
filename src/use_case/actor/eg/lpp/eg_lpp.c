@@ -36,9 +36,7 @@ static const EntityTypeType valid_entity_types[]  = {
 
 static const FeatureTypeType use_case_scenario_support_1_features[] = {kFeatureTypeTypeLoadControl};
 static const FeatureTypeType use_case_scenario_support_2_features[] = {kFeatureTypeTypeDeviceConfiguration};
-#if 0
 static const FeatureTypeType use_case_scenario_support_3_features[] = {kFeatureTypeTypeDeviceDiagnosis};
-#endif
 static const FeatureTypeType use_case_scenario_support_4_features[] = {kFeatureTypeTypeElectricalConnection};
 
 static const UseCaseScenario use_case_scenarios[] = {
@@ -54,14 +52,12 @@ static const UseCaseScenario use_case_scenarios[] = {
      .server_features      = use_case_scenario_support_2_features,
      .server_features_size = ARRAY_SIZE(use_case_scenario_support_2_features),
      },
-#if 0
     {
      .scenario             = (UseCaseScenarioSupportType)3,
      .mandatory            = true,
      .server_features      = use_case_scenario_support_3_features,
      .server_features_size = ARRAY_SIZE(use_case_scenario_support_3_features),
      },
-#endif
     {
      .scenario             = (UseCaseScenarioSupportType)4,
      .mandatory            = false,
