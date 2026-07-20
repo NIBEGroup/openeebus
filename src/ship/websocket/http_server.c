@@ -225,9 +225,7 @@ void* HttpServerConnectionLoop(void* self) {
   lws_sul_schedule(srv->lws_ctx, 0, &srv->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);
 
   do {
-    EEBUS_MUTEX_LOCK(srv->mutex);
     err = lws_service(srv->lws_ctx, 100);
-    EEBUS_MUTEX_UNLOCK(srv->mutex);
   } while ((err >= 0) && (!srv->cancel));
 
   return NULL;
