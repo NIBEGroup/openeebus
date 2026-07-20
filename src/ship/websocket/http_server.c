@@ -175,11 +175,11 @@ void Destruct(HttpServerObject* self) {
 void HttpServerStaggerCallback(lws_sorted_usec_list_t* sul) {
   HttpServer* const srv = lws_container_of(sul, HttpServer, sul_stagger);
 
-  if ((srv->ws_is_active) && (srv->ws != NULL)) {
-    if (!WEBSOCKET_IS_CLOSED(srv->ws)) {
-      WEBSOCKET_SCHEDULE_WRITE(srv->ws);
-    }
+  EEBUS_MUTEX_LOCK(srv->mutex);
+  if (srv->ws_is_active && (srv->ws != NULL) && !WEBSOCKET_IS_CLOSED(srv->ws)) {
+    WEBSOCKET_SCHEDULE_WRITE(srv->ws);
   }
+  EEBUS_MUTEX_UNLOCK(srv->mutex);
 
   lws_sul_schedule(srv->lws_ctx, 0, &srv->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);
 }
@@ -283,7 +283,11 @@ void HttpServerUnbindWsi(HttpServerObject* self, struct lws* wsi) {
 
 // LWS Handlers
 int HttpServerOnClientConnect(HttpServer* self, struct lws* wsi) {
-  if (((self->ws_is_active) && (self->ws != NULL))) {
+  EEBUS_MUTEX_LOCK(self->mutex);
+  const bool already_active = self->ws_is_active && (self->ws != NULL);
+  EEBUS_MUTEX_UNLOCK(self->mutex);
+
+  if (already_active) {
     // Currently only a single connection is supported
     HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is already created\n", __func__);
     return -1;
@@ -317,8 +321,10 @@ int HttpServerOnClientConnect(HttpServer* self, struct lws* wsi) {
     return -1;
   }
 
+  EEBUS_MUTEX_LOCK(self->mutex);
   self->ws           = ws;
   self->ws_is_active = true;
+  EEBUS_MUTEX_UNLOCK(self->mutex);
 
   lws_sul_schedule(self->lws_ctx, 0, &self->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);
 
