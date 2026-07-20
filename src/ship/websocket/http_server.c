@@ -277,6 +277,7 @@ void HttpServerUnbindWsi(HttpServerObject* self, struct lws* wsi) {
 
   EEBUS_MUTEX_LOCK(srv->mutex);
   srv->ws_is_active = false;
+  srv->ws           = NULL;
   lws_set_wsi_user(wsi, NULL);
   EEBUS_MUTEX_UNLOCK(srv->mutex);
 }
@@ -373,7 +374,6 @@ int HttpServerOnConnectionClose(HttpServer* self, struct lws* wsi) {
 
   WEBSOCKET_CLOSE(ws, 0, "");
   WebsocketOnClose(ws);
-  self->ws = NULL;
   lws_cancel_service(self->lws_ctx);
   return 0;
 }
