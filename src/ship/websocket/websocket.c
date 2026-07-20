@@ -98,18 +98,19 @@ void WebsocketWrQueueMsgRelease(void* msg) {
 void WebsocketDestruct(WebsocketObject* self) {
   Websocket* const ws = WEBSOCKET(self);
 
-  ws->wsi = NULL;
+  ws->wsi       = NULL;
+  ws->is_closed = true;
+
+  if (ws->lws_ctx != NULL) {
+    lws_context_destroy(ws->lws_ctx);
+    ws->lws_ctx = NULL;
+  }
 
   EebusMutexDelete(ws->wr_mutex);
   ws->wr_mutex = NULL;
 
   EebusQueueDelete(ws->wr_queue);
   ws->wr_queue = NULL;
-
-  if (ws->lws_ctx != NULL) {
-    lws_context_destroy(ws->lws_ctx);
-    ws->lws_ctx = NULL;
-  }
 
   if (ws->buf_tmp != NULL) {
     EEBUS_FREE(ws->buf_tmp);
