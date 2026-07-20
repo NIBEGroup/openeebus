@@ -193,9 +193,9 @@ void WebsocketStaggerCallback(lws_sorted_usec_list_t* sul) {
     if (!WEBSOCKET_IS_CLOSED(WEBSOCKET_OBJECT(ws))) {
       WEBSOCKET_SCHEDULE_WRITE(WEBSOCKET_OBJECT(ws));
     }
-  }
 
-  lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
+    lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
+  }
 }
 
 // LWS event handlers
