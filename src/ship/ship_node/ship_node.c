@@ -350,6 +350,10 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
 void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, bool had_error) {
   ShipNode* const sn = SHIP_NODE(self);
 
+  if (sn->cancel) {
+    return;
+  }
+
   ShipNodeQueueMessage queue_msg = {
       .type            = kShipNodeQueueMsgTypeShipConnectionClosed,
       .ship_connection = sc,
