@@ -69,9 +69,17 @@ struct ShipNode {
   // for early stage of Ship Node development and testing.
   // To be replaces with multiple instances handling
   ShipConnectionObject* ship_connection;
+  // Old client connection superseded by the simultaneous-open tiebreaker.
+  // Stopped and freed by the DiscardSuperseded handler on the connection loop thread.
+  ShipConnectionObject* superseded_connection;
   WebsocketCreatorObject* websocket_creator;
   HttpServerObject* http_server;
   bool connection_attempt_running;
+  // True only while a CLIENT ShipConnection is alive.  Distinct from
+  // connection_attempt_running (which is also true for active servers) so that
+  // the SIMOPEN detector can tell whether there is a real concurrent outgoing
+  // client, not just an already-established server.
+  bool client_connection_running;
   ShipRole role;
 };
 

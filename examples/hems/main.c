@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "examples/hems/hems.h"
 #include "src/common/eebus_thread/eebus_thread.h"
@@ -51,7 +52,11 @@ void MainLoop() {
 
   while (!should_terminate) {
     if (fgets(cmd, sizeof(cmd), stdin)) {
-      HemsHandleCmd(hems, cmd);
+      if (strncmp(cmd, "exit", 4) == 0 && (cmd[4] == '\n' || cmd[4] == '\r' || cmd[4] == '\0')) {
+        should_terminate = true;
+      } else {
+        HemsHandleCmd(hems, cmd);
+      }
     }
   }
 }

@@ -324,7 +324,18 @@ int WebsocketClientOnClientEstablished(WebsocketClient* self) {
     return -1;
   }
 
-  const char* ski = WebsocketGetSkiWithWsi(ws->wsi);
+  // Snapshot ws->wsi once. WebsocketClose() can set ws->wsi = NULL from another
+  // thread (SIMOPEN superseded connection cleanup path). Reading it once and using only the
+  // snapshot eliminates the race window between the two uses below: if it is already
+  // NULL we bail out early; if it becomes NULL after the snapshot the LWS wsi object
+  // itself is still alive (lws_context_destroy runs only after this thread exits).
+  struct lws* const wsi = ws->wsi;
+  if (wsi == NULL) {
+    WEBSOCKET_DEBUG_PRINTF("%s(), ws->wsi is NULL\n", __func__);
+    return -1;
+  }
+
+  const char* ski = WebsocketGetSkiWithWsi(wsi);
   if (ski == NULL) {
     WEBSOCKET_DEBUG_PRINTF("%s(), WebsocketGetSkiWithWsi() failed\n", __func__);
     return -1;
@@ -333,7 +344,7 @@ int WebsocketClientOnClientEstablished(WebsocketClient* self) {
   int ret = -1;
   if (strcmp(ski, self->remote_ski) == 0) {
     lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
-    lws_callback_on_writable(ws->wsi);
+    lws_callback_on_writable(wsi);
     ret = 0;
   } else {
     WEBSOCKET_DEBUG_PRINTF("%s(), server certificate SKI does not match the trusted SKI\n", __func__);
