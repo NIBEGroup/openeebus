@@ -20,6 +20,7 @@
 
 #include <string.h>
 
+#include "src/common/debug.h"
 #include "src/common/eebus_arguments.h"
 #include "src/common/eebus_malloc.h"
 #include "src/service/api/service_reader_interface.h"
@@ -30,6 +31,17 @@
 #include "src/spine/api/device_local_interface.h"
 #include "src/spine/device/device_local.h"
 #include "src/spine/entity/entity_local.h"
+
+/** Set EEBUS_SERVICE_DEBUG 1 to enable debug prints */
+#ifndef EEBUS_SERVICE_DEBUG
+#define EEBUS_SERVICE_DEBUG 0
+#endif
+
+#if EEBUS_SERVICE_DEBUG
+#define EEBUS_SERVICE_DEBUG_PRINTF(fmt, ...) DebugPrintf(fmt, ##__VA_ARGS__)
+#else
+#define EEBUS_SERVICE_DEBUG_PRINTF(fmt, ...)
+#endif
 
 typedef struct EebusService EebusService;
 
