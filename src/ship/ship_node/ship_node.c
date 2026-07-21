@@ -676,6 +676,22 @@ void Stop(ShipNodeObject* self) {
     sn->connection_thread = NULL;
   }
 
+  // ShipNodeConnectionLoop may have exited via kCancel before processing a
+  // kShipConnectionClosed that arrived during the concurrent close handshake
+  // (e.g. during the 500 ms wait in DataExchangeHandleClose). Stop and delete
+  // the connection here so Destruct never encounters a live ship_connection.
+  EEBUS_MUTEX_LOCK(sn->mutex);
+  ShipConnectionObject* const sc = sn->ship_connection;
+
+  sn->ship_connection = NULL;
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
+  if (sc != NULL) {
+    SHIP_CONNECTION_STOP(sc);
+    SHIP_NODE_READER_ON_REMOTE_SKI_DISCONNECTED(sn->ship_node_reader, SHIP_CONNECTION_GET_REMOTE_SKI(sc));
+    ShipConnectionDelete(sc);
+  }
+
   SHIP_MDNS_STOP(sn->mdns);
 
   if (ShipNodeIsServerSupported(sn)) {
