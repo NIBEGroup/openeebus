@@ -227,6 +227,8 @@ ShipNodeObject* ShipNodeCreate(
 void Destruct(InfoProviderObject* self) {
   ShipNode* const sn = SHIP_NODE(self);
 
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): begin\n", __func__);
+
   StringDelete(sn->remote_ski);
   sn->remote_ski = NULL;
 
@@ -268,6 +270,7 @@ void Destruct(InfoProviderObject* self) {
   sn->msg_queue = NULL;
 
   sn->connection_attempt_running = false;
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): end\n", __func__);
 }
 
 void ShipNodeOnMdnsEntriesFoundCallback(Vector* found_entries, void* ctx) {
@@ -666,6 +669,7 @@ void Start(ShipNodeObject* self) {
 void Stop(ShipNodeObject* self) {
   ShipNode* const sn = SHIP_NODE(self);
 
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): begin\n", __func__);
   sn->cancel = true;
 
   if (sn->connection_thread != NULL) {
@@ -697,6 +701,8 @@ void Stop(ShipNodeObject* self) {
   if (ShipNodeIsServerSupported(sn)) {
     HTTP_SERVER_STOP(sn->http_server);
   }
+
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): end\n", __func__);
 }
 
 void ShipNodeRegisterSki(ShipNodeObject* self, const char* ski, bool is_trusted) {
