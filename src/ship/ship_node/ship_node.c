@@ -747,26 +747,28 @@ void ShipNodeCancelPairingSki(ShipNodeObject* self, const char* ski) {
     return;
   }
 
-  // Forget the SKI if it is the one being cancelled so the slot becomes
-  // free for the intended device
+  ShipConnectionObject* sc = NULL;
+
   EEBUS_MUTEX_LOCK(sn->mutex);
   if (SkiMatches(ski, sn->remote_ski)) {
     StringDelete(sn->remote_ski);
     sn->remote_ski = NULL;
   }
-  EEBUS_MUTEX_UNLOCK(sn->mutex);
 
-  // Initiate the SHIP-level close for that SKI's connection. Do NOT run
-  // CloseShipConnection() here: if the connection already went down through
-  // the regular path, its remote-device structures are torn down and a second
-  // teardown crashes on dangling subscription links. The close handshake
-  // triggers HandleConnectionClosed exactly once for a live connection and
-  // is harmless for a dead one.
   if (sn->ship_connection != NULL) {
     const char* const conn_ski = SHIP_CONNECTION_GET_REMOTE_SKI(sn->ship_connection);
     if (SkiMatches(ski, conn_ski)) {
-      SHIP_CONNECTION_CLOSE_CONNECTION(sn->ship_connection, true, 0, "pairing cancelled");
+      sc = sn->ship_connection;
+
+      sn->ship_connection = NULL;
     }
+  }
+
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
+  if (sc != NULL) {
+    SHIP_CONNECTION_CLOSE_CONNECTION(sc, true, 0, "pairing cancelled");
+    ShipConnectionDelete(sc);
   }
 }
 
