@@ -260,8 +260,10 @@ void Start(EebusServiceObject* self) {
 
 void Stop(EebusServiceObject* self) {
   EebusService* const service = EEBUS_SERVICE(self);
-  SHIP_NODE_STOP(service->ship_node);
+  // Stop DeviceLocal first so its loop thread is joined before ShipNode
+  // frees remote-device objects — prevents dangling-pointer DeviceLocal::ProcessDatagram() crash
   DEVICE_LOCAL_STOP(service->spine_local_device);
+  SHIP_NODE_STOP(service->ship_node);
 }
 
 const ServiceDetails* GetLocalService(const EebusServiceObject* self) {
