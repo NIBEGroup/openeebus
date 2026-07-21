@@ -205,6 +205,7 @@ EebusServiceObject* EebusServiceCreate(
 
 void Destruct(ShipNodeReaderObject* self) {
   EebusService* const service = EEBUS_SERVICE(self);
+  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): begin\n", __func__);
 
   // Note: Service shall not own Service Reader therefore it is not released here
 
@@ -224,6 +225,8 @@ void Destruct(ShipNodeReaderObject* self) {
 
   EebusDeviceInfoDelete(service->device_info);
   service->device_info = NULL;
+
+  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): end\n", __func__);
 }
 
 void OnRemoteSkiConnected(ShipNodeReaderObject* self, const char* ski) {
@@ -272,10 +275,12 @@ void Start(EebusServiceObject* self) {
 
 void Stop(EebusServiceObject* self) {
   EebusService* const service = EEBUS_SERVICE(self);
+  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): begin\n", __func__);
   // Stop DeviceLocal first so its loop thread is joined before ShipNode
   // frees remote-device objects — prevents dangling-pointer DeviceLocal::ProcessDatagram() crash
   DEVICE_LOCAL_STOP(service->spine_local_device);
   SHIP_NODE_STOP(service->ship_node);
+  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): end\n", __func__);
 }
 
 const ServiceDetails* GetLocalService(const EebusServiceObject* self) {
