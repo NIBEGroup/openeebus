@@ -136,7 +136,7 @@ void HttpServerConstruct(
   self->conn_establish_ctx = conn_establish_ctx;
 
   self->port         = port;
-  self->ws = NULL;
+  self->ws           = NULL;
 
   self->lws_ctx = NULL;
 
