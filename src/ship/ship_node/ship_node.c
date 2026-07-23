@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <pthread.h>
-#include <signal.h>
 #include <stdbool.h>
 #include <string.h>
 
