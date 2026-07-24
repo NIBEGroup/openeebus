@@ -72,16 +72,20 @@ for i in $(seq 1 $TOTAL); do
 
     ELAPSED=$((SECONDS - START))
 
+    HP_B=$(branch_of "$HP_LOG")
+    HEMS_B=$(branch_of "$HEMS_LOG")
     if $CONNECTED; then
-        HP_B=$(branch_of "$HP_LOG")
-        HEMS_B=$(branch_of "$HEMS_LOG")
         printf "Run %2d/%d: PASS %3ds | hp=%-12s hems=%-12s\n" \
                "$i" "$TOTAL" "$ELAPSED" "$HP_B" "$HEMS_B"
         PASS=$((PASS + 1))
     else
-        HP_B="TIMEOUT"
-        HEMS_B="TIMEOUT"
-        printf "Run %2d/%d: FAIL (timeout %ds)\n" "$i" "$TOTAL" "$TIMEOUT"
+        # Distinguish: branch known = handshake started but failed; unknown = no attempt
+        if [ "$HP_B" = "unknown" ] && [ "$HEMS_B" = "unknown" ]; then
+            printf "Run %2d/%d: FAIL (no attempt, timeout %ds)\n" "$i" "$TOTAL" "$TIMEOUT"
+        else
+            printf "Run %2d/%d: FAIL (partial, timeout %ds) | hp=%-12s hems=%-12s\n" \
+                   "$i" "$TOTAL" "$TIMEOUT" "$HP_B" "$HEMS_B"
+        fi
         FAIL=$((FAIL + 1))
     fi
 
