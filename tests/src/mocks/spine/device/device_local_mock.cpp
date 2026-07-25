@@ -49,6 +49,7 @@ static EebusError HandleMessage(DeviceLocalObject* self, MessageBuffer* msg, Dev
 static NodeManagementObject* GetNodeManagement(const DeviceLocalObject* self);
 static BindingManagerObject* GetBindingManager(const DeviceLocalObject* self);
 static SubscriptionManagerObject* GetSubscriptionManager(const DeviceLocalObject* self);
+static EventsManagerObject* GetEventsManager(const DeviceLocalObject* self);
 static void
 NotifySubscribers(const DeviceLocalObject* self, const FeatureAddressType* feature_addr, const CmdType* cmd);
 static NodeManagementDetailedDiscoveryDeviceInformationType* CreateInformation(const DeviceLocalObject* self);
@@ -83,6 +84,7 @@ static const DeviceLocalInterface device_local_methods = {
     .get_node_management                    = GetNodeManagement,
     .get_binding_manager                    = GetBindingManager,
     .get_subscription_manager               = GetSubscriptionManager,
+    .get_events_manager                     = GetEventsManager,
     .notify_subscribers                     = NotifySubscribers,
     .create_information                     = CreateInformation,
     .lock                                   = Lock,
@@ -236,6 +238,11 @@ BindingManagerObject* GetBindingManager(const DeviceLocalObject* self) {
 SubscriptionManagerObject* GetSubscriptionManager(const DeviceLocalObject* self) {
   DeviceLocalMock* const mock = DEVICE_LOCAL_MOCK(self);
   return mock->gmock->GetSubscriptionManager(self);
+}
+
+EventsManagerObject* GetEventsManager(const DeviceLocalObject* self) {
+  DeviceLocalMock* const mock = DEVICE_LOCAL_MOCK(self);
+  return mock->gmock->GetEventsManager(self);
 }
 
 void NotifySubscribers(const DeviceLocalObject* self, const FeatureAddressType* feature_addr, const CmdType* cmd) {

@@ -751,7 +751,7 @@ void PublishDataUpdateEvent(
       .cmd_classifier = &cmd_classifier,
   };
 
-  EventPublish(&payload);
+  EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self))), &payload);
 }
 
 EebusError ProcessNotify(FeatureLocal* self, const Message* msg) {

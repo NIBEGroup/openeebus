@@ -21,6 +21,7 @@
 #ifndef TESTS_SRC_MOCKS_SPINE_EVENTS_EVENT_HANDLER_MOCK_H_
 #define TESTS_SRC_MOCKS_SPINE_EVENTS_EVENT_HANDLER_MOCK_H_
 
+#include "src/spine/api/events_manager_interface.h"
 #include "tests/src/mocks/mock_inst.h"
 
 class EventHandlerInterface {
@@ -38,8 +39,11 @@ class EventHandlerMock : public EventHandlerInterface {
 
 class EventHandlerMockInst : public MockInst<EventHandlerMock> {
  public:
-  EventHandlerMockInst();
+  explicit EventHandlerMockInst(EventsManagerObject* events_manager);
   ~EventHandlerMockInst();
+
+ private:
+  EventsManagerObject* events_manager_;
 };
 
 #endif  // TESTS_SRC_MOCKS_SPINE_EVENTS_EVENT_HANDLER_MOCK_H_

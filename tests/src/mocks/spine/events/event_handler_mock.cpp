@@ -32,10 +32,11 @@ void TestEventHandler(const EventPayload* payload, void* ctx) {
   }
 }
 
-EventHandlerMockInst::EventHandlerMockInst() : MockInst(event_handler_mock) {
-  EventSubscribe(kEventHandlerLevelApplication, TestEventHandler, nullptr);
+EventHandlerMockInst::EventHandlerMockInst(EventsManagerObject* events_manager)
+    : MockInst(event_handler_mock), events_manager_(events_manager) {
+  EVENTS_SUBSCRIBE(events_manager_, kEventHandlerLevelApplication, TestEventHandler, nullptr);
 }
 
 EventHandlerMockInst::~EventHandlerMockInst() {
-  EventUnsubscribe(kEventHandlerLevelApplication, TestEventHandler, nullptr);
+  EVENTS_UNSUBSCRIBE(events_manager_, kEventHandlerLevelApplication, TestEventHandler, nullptr);
 }

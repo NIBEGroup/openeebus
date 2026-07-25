@@ -41,6 +41,7 @@ extern "C" {
  * (Device Remote "virtual functions table" declaration)
  */
 typedef struct DeviceRemoteInterface DeviceRemoteInterface;
+typedef struct DeviceLocalObject DeviceLocalObject;
 
 /**
  * @brief Device Remote Object type definition
@@ -56,6 +57,7 @@ struct DeviceRemoteInterface {
   /** Extends DeviceInterface */
   DeviceInterface device_interface;
 
+  DeviceLocalObject* (*get_local_device)(const DeviceRemoteObject* self);
   const char* (*get_ski)(const DeviceRemoteObject* self);
   DataReaderObject* (*get_data_reader)(const DeviceRemoteObject* self);
   void (*add_entity)(DeviceRemoteObject* self, EntityRemoteObject* entity);
@@ -106,6 +108,11 @@ struct DeviceRemoteObject {
  * @brief Device Remote Interface class pointer typecast
  */
 #define DEVICE_REMOTE_INTERFACE(obj) (DEVICE_REMOTE_OBJECT(obj)->interface_)
+
+/**
+ * @brief Device Remote Get Local Device caller definition
+ */
+#define DEVICE_REMOTE_GET_LOCAL_DEVICE(obj) (DEVICE_REMOTE_INTERFACE(obj)->get_local_device(obj))
 
 /**
  * @brief Device Remote Get Ski caller definition
