@@ -53,6 +53,7 @@ enum ShipNodeQueueMsgType {
   kShipNodeQueueMsgTypeShipUnregisterSki,
   kShipNodeQueueMsgTypeShipRegisterSki,
   kShipNodeQueueMsgTypeDiscardSuperseded,
+  kShipNodeQueueMsgTypeShipCancelPairingSki,
 };
 
 typedef enum ShipNodeQueueMsgType ShipNodeQueueMsgType;
@@ -88,6 +89,7 @@ static void RegisterRemoteSki(ShipNodeObject* self, const char* ski, bool is_tru
 static void UnregisterRemoteSki(ShipNodeObject* self, const char* ski);
 static void CancelPairingWithSki(ShipNodeObject* self, const char* ski);
 static void ShipNodeUnregisterSki(ShipNodeObject* self, const char* ski);
+static void ShipNodeCancelPairingSki(ShipNodeObject* self, const char* ski);
 static void ShipNodeRegisterSki(ShipNodeObject* self, const char* ski, bool is_trusted);
 
 static const ShipNodeInterface ship_node_methods = {
@@ -502,6 +504,8 @@ void* ShipNodeConnectionLoop(void* ctx) {
       ShipNodeConnectToRemoteSki(sn);
     } else if (queue_msg.type == kShipNodeQueueMsgTypeDiscardSuperseded) {
       CloseShipConnection(sn, queue_msg.ship_connection, queue_msg.had_error);
+    } else if (queue_msg.type == kShipNodeQueueMsgTypeShipCancelPairingSki) {
+      ShipNodeCancelPairingSki(SHIP_NODE_OBJECT(sn), queue_msg.ski);
     }
 
     ShipNodeQueueMsgDeallocator(&queue_msg);
@@ -735,8 +739,52 @@ void UnregisterRemoteSki(ShipNodeObject* self, const char* ski) {
   EEBUS_QUEUE_SEND(sn->msg_queue, &queue_msg, kTimeoutInfinite);
 }
 
+// Runs on the connection loop thread (same context as ShipNodeUnregisterSki)
+void ShipNodeCancelPairingSki(ShipNodeObject* self, const char* ski) {
+  ShipNode* const sn = SHIP_NODE(self);
+
+  if (StringIsEmpty(ski)) {
+    return;
+  }
+
+  ShipConnectionObject* sc = NULL;
+
+  EEBUS_MUTEX_LOCK(sn->mutex);
+  if (SkiMatches(ski, sn->remote_ski)) {
+    StringDelete(sn->remote_ski);
+    sn->remote_ski = NULL;
+  }
+
+  if (sn->ship_connection != NULL) {
+    const char* const conn_ski = SHIP_CONNECTION_GET_REMOTE_SKI(sn->ship_connection);
+    if (SkiMatches(ski, conn_ski)) {
+      sc = sn->ship_connection;
+
+      sn->ship_connection = NULL;
+    }
+  }
+
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
+  if (sc != NULL) {
+    SHIP_CONNECTION_CLOSE_CONNECTION(sc, true, 0, "pairing cancelled");
+    ShipConnectionDelete(sc);
+  }
+}
+
 void CancelPairingWithSki(ShipNodeObject* self, const char* ski) {
-  UNUSED(self);
-  UNUSED(ski);
-  // TODO: Implement method
+  ShipNode* const sn = SHIP_NODE(self);
+
+  if (StringIsEmpty(ski)) {
+    return;
+  }
+
+  ShipNodeQueueMessage queue_msg = {
+      .type            = kShipNodeQueueMsgTypeShipCancelPairingSki,
+      .ship_connection = NULL,
+      .had_error       = false,
+      .ski             = StringCopy(ski),
+  };
+
+  EEBUS_QUEUE_SEND(sn->msg_queue, &queue_msg, kTimeoutInfinite);
 }
