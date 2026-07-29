@@ -23,6 +23,7 @@
 constexpr uint8_t kMaxResponseTimeSec = TIME_MS_TO_S(kDefaultMaxResponseDelayMs);
 
 void WriteApproveTestSuite::SetUp() {
+  events_manager_.reset(EventsManagerCreate());
   device_local_mock_.reset(DeviceLocalMockCreate());
   entity_local_mock_.reset(EntityLocalMockCreate());
   device_remote_mock_.reset(DeviceRemoteMockCreate());
@@ -47,6 +48,9 @@ void WriteApproveTestSuite::SetUp() {
 
   EXPECT_CALL(*entity_local_mock_->gmock, GetDevice(ENTITY_LOCAL_OBJECT(entity_local_mock_.get())))
       .WillRepeatedly(::testing::Return(DEVICE_LOCAL_OBJECT(device_local_mock_.get())));
+
+  EXPECT_CALL(*device_local_mock_->gmock, GetEventsManager(DEVICE_LOCAL_OBJECT(device_local_mock_.get())))
+      .WillRepeatedly(::testing::Return(events_manager_.get()));
 
   EXPECT_CALL(*device_local_mock_->gmock, NotifySubscribers(::testing::_, ::testing::_, ::testing::_))
       .WillRepeatedly(::testing::Return());
@@ -79,6 +83,7 @@ void WriteApproveTestSuite::TearDown() {
   sender_mock_.reset();
 
   feature_local_object_.reset();
+  events_manager_.reset();
   entity_address_.reset();
   spine_data_.reset();
   cmd_mock_.reset();

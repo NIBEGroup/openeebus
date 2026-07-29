@@ -45,6 +45,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/model/function_data
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/feature
     ${EXECUTABLE_OUTPUT_PATH}/spine/feature)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/events
+    ${EXECUTABLE_OUTPUT_PATH}/spine/events)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/function
     ${EXECUTABLE_OUTPUT_PATH}/spine/function)
 

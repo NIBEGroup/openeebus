@@ -187,8 +187,9 @@ EebusError ProcessReadDetailedDiscoveryData(NodeManagement* self, const Message*
 }
 
 EebusError ProcessReplyDetailedDiscoveryData(NodeManagement* self, const Message* msg) {
-  UNUSED(self);
   DeviceRemoteObject* const dr = msg->device_remote;
+  EventsManagerObject* const events_manager
+      = DEVICE_LOCAL_GET_EVENTS_MANAGER(FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self)));
 
   const NodeManagementDetailedDiscoveryDataType* const discovery_data
       = (const NodeManagementDetailedDiscoveryDataType*)msg->cmd->data_choice;
@@ -231,7 +232,7 @@ EebusError ProcessReplyDetailedDiscoveryData(NodeManagement* self, const Message
       .function_type = kFunctionTypeNodeManagementDetailedDiscoveryData,
   };
 
-  EventPublish(&payload);
+  EVENTS_PUBLISH(events_manager, &payload);
 
   // Publish event for each added remote entity
   for (size_t i = 0; i < VectorGetSize(entities); ++i) {
@@ -247,7 +248,7 @@ EebusError ProcessReplyDetailedDiscoveryData(NodeManagement* self, const Message
         .function_type = kFunctionTypeNodeManagementDetailedDiscoveryData,
     };
 
-    EventPublish(&payload);
+    EVENTS_PUBLISH(events_manager, &payload);
   }
 
   FeatureAddressDelete(feature_remote_addr);

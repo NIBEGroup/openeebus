@@ -31,6 +31,7 @@
 class DeviceRemoteGMockInterface : public DeviceGMockInterface {
  public:
   virtual ~DeviceRemoteGMockInterface() {};
+  virtual DeviceLocalObject* GetLocalDevice(const DeviceRemoteObject* self)    = 0;
   virtual const char* GetSki(const DeviceRemoteObject* self)                   = 0;
   virtual DataReaderObject* GetDataReader(const DeviceRemoteObject* self)      = 0;
   virtual void AddEntity(DeviceRemoteObject* self, EntityRemoteObject* entity) = 0;
@@ -76,6 +77,7 @@ class DeviceRemoteGMock : public DeviceRemoteGMockInterface {
   MOCK_METHOD1(GetDeviceType, const DeviceTypeType*(const DeviceObject*));
   MOCK_METHOD1(GetFeatureSet, const NetworkManagementFeatureSetType*(const DeviceObject*));
   MOCK_METHOD1(CreateDestinationData, const NodeManagementDestinationDataType*(const DeviceObject*));
+  MOCK_METHOD1(GetLocalDevice, DeviceLocalObject*(const DeviceRemoteObject*));
   MOCK_METHOD1(GetSki, const char*(const DeviceRemoteObject*));
   MOCK_METHOD1(GetDataReader, DataReaderObject*(const DeviceRemoteObject*));
   MOCK_METHOD2(AddEntity, void(DeviceRemoteObject*, EntityRemoteObject*));

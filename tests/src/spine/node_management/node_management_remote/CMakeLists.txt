@@ -41,6 +41,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/node_management/node_management_remote.c
 
   # Mocks sources
+  ${MOCKS_SOURCES_PATH}/spine/device/device_local_mock.cpp
   ${MOCKS_SOURCES_PATH}/spine/device/device_remote_mock.cpp
   ${MOCKS_SOURCES_PATH}/spine/entity/entity_remote_mock.cpp
   ${MOCKS_SOURCES_PATH}/spine/events/event_handler_mock.cpp

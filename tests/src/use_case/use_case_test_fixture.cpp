@@ -65,12 +65,13 @@ void UseCaseTestFixture::SetUp() {
 }
 
 void UseCaseTestFixture::TearDown() {
+  DEVICE_LOCAL_REMOVE_REMOTE_DEVICE(device_local_.get(), kRemoteSki);
+  TearDownUseCase();
+
   device_local_.reset();
 
   EXPECT_CALL(*data_write_mock_->gmock, Destruct(_)).WillOnce(Return());
   data_write_mock_.reset();
-
-  TearDownUseCase();
 
   device_info_.reset();
 

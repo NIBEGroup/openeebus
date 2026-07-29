@@ -32,6 +32,7 @@
 #include "src/spine/api/feature_local_interface.h"
 #include "src/spine/api/message.h"
 #include "src/spine/api/pending_write_request_interface.h"
+#include "src/spine/events/events.h"
 #include "src/spine/feature/feature_local.h"
 #include "src/spine/model/model.h"
 
@@ -44,6 +45,7 @@ class WriteApproveTestSuite : public testing::Test {
   Message CreateTestMessage(FunctionType data_type_id, uint64_t msg_counter);
 
  protected:
+  std::unique_ptr<EventsManagerObject, decltype(&EventsManagerDelete)> events_manager_{nullptr, EventsManagerDelete};
   std::unique_ptr<DeviceLocalMock, decltype(&DeviceLocalMockDelete)> device_local_mock_{nullptr, DeviceLocalMockDelete};
   std::unique_ptr<EntityLocalMock, decltype(&EntityLocalMockDelete)> entity_local_mock_{nullptr, EntityLocalMockDelete};
 

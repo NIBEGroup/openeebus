@@ -20,6 +20,8 @@
 
 #include "src/spine/node_management/node_management_remote.h"
 #include "src/common/vector.h"
+#include "src/spine/api/device_local_interface.h"
+#include "src/spine/api/device_remote_interface.h"
 #include "src/spine/events/events.h"
 #include "src/spine/feature/feature_remote_internal.h"
 #include "src/spine/model/model.h"
@@ -127,6 +129,7 @@ void PublishUseCaseSupportedEvent(
   if (dr == NULL) {
     return;
   }
+  EventsManagerObject* const events_manager = DEVICE_LOCAL_GET_EVENTS_MANAGER(DEVICE_REMOTE_GET_LOCAL_DEVICE(dr));
 
   const UseCaseFilterType use_case_filter = {
       .actor            = actor,
@@ -155,11 +158,11 @@ void PublishUseCaseSupportedEvent(
 
     for (size_t i = 0; i < VectorGetSize(entities); i++) {
       payload.entity = (EntityRemoteObject*)VectorGetElement(entities, i);
-      EventPublish(&payload);
+      EVENTS_PUBLISH(events_manager, &payload);
     }
   } else {
     payload.entity = DEVICE_REMOTE_GET_ENTITY(DEVICE_REMOTE_OBJECT(dr), addr->entity, addr->entity_size);
-    EventPublish(&payload);
+    EVENTS_PUBLISH(events_manager, &payload);
   }
 }
 
@@ -245,7 +248,7 @@ EebusError UpdateData(
       .function_type = kFunctionTypeNodeManagementUseCaseData,
   };
 
-  EventPublish(&payload);
+  EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(DEVICE_REMOTE_GET_LOCAL_DEVICE(dr)), &payload);
 
   const UseCaseInformationListDataType* const use_case_data_new = (const UseCaseInformationListDataType*)
       FeatureRemoteGetData(FEATURE_REMOTE_OBJECT(self), kFunctionTypeNodeManagementUseCaseData);

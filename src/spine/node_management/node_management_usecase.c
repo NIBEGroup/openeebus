@@ -20,6 +20,7 @@
 
 #include "src/common/array_util.h"
 #include "src/common/eebus_arguments.h"
+#include "src/spine/api/device_local_interface.h"
 #include "src/spine/api/message.h"
 #include "src/spine/events/events.h"
 #include "src/spine/model/cmd.h"
@@ -71,8 +72,6 @@ EebusError ProcessReadUseCaseData(NodeManagement* self, const Message* msg) {
 }
 
 EebusError ProcessReplyUseCaseData(NodeManagement* self, const Message* msg) {
-  UNUSED(self);
-
   const NodeManagementUseCaseDataType* const usecase_data = (const NodeManagementUseCaseDataType*)msg->cmd->data_choice;
 
   FeatureRemoteObject* const fr = msg->feature_remote;
@@ -98,7 +97,7 @@ EebusError ProcessReplyUseCaseData(NodeManagement* self, const Message* msg) {
       .cmd_classifier = &msg->cmd_classifier,
   };
 
-  EventPublish(&payload);
+  EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self))), &payload);
   return kEebusErrorOk;
 }
 

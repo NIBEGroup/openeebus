@@ -21,6 +21,7 @@
 #include "src/use_case/use_case.h"
 
 #include "src/common/eebus_malloc.h"
+#include "src/spine/api/device_local_interface.h"
 #include "src/spine/api/entity_local_interface.h"
 #include "src/spine/events/events.h"
 #include "src/spine/model/usecase_information_types.h"
@@ -58,7 +59,12 @@ void UseCaseConstruct(
   UseCaseEntityAddUseCaseInfo(self);
   self->event_handler = event_handler;
   if (self->event_handler != NULL) {
-    EventSubscribe(kEventHandlerLevelApplication, event_handler, self);
+    EVENTS_SUBSCRIBE(
+        DEVICE_LOCAL_GET_EVENTS_MANAGER(self->local_device),
+        kEventHandlerLevelApplication,
+        self->event_handler,
+        self
+    );
   }
 }
 
@@ -66,7 +72,12 @@ void UseCaseDestruct(UseCaseObject* self) {
   UseCase* use_case = USE_CASE(self);
 
   if (use_case->event_handler != NULL) {
-    EventUnsubscribe(kEventHandlerLevelApplication, use_case->event_handler, self);
+    EVENTS_UNSUBSCRIBE(
+        DEVICE_LOCAL_GET_EVENTS_MANAGER(use_case->local_device),
+        kEventHandlerLevelApplication,
+        use_case->event_handler,
+        self
+    );
   }
 }
 
