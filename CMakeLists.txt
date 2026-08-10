@@ -243,6 +243,7 @@ target_link_libraries(
 
 add_subdirectory(examples/heat_pump)
 add_subdirectory(examples/hems)
+add_subdirectory(examples/ev_charger)
 
 # Integration tests — only when building in CI (ENV{CI} is set by GitHub Actions)
 if(DEFINED ENV{CI} AND NOT WIN32)

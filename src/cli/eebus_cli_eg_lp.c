@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "src/cli/eebus_cli_eg_lp.h"
+#include "src/cli/eebus_cli_remote_arg.h"
 #include "src/common/eebus_arguments.h"
 #include "src/common/eebus_bool/eebus_bool.h"
 #include "src/common/eebus_date_time/eebus_date_time.h"
@@ -35,8 +36,8 @@ struct EgLpCli {
 
   /** EG LP instance to deal with */
   EgLpUseCaseObject* eg_lp;
-  /** EG LP remote entity address to communicate with */
-  const EntityAddressType* entity_addr;
+  /** Connected remote entity address list (not owned — pointer into caller's storage) */
+  const EntityAddressList* addr_list;
   /** Energy direction (consume = LPC, produce = LPP) */
   EnergyDirectionType energy_direction;
   /** Command name ("eg_lpc" or "eg_lpp") */
@@ -56,65 +57,81 @@ static const EebusCliHandlerInterface eg_lp_cli_methods = {
 };
 
 static EebusError EgLpCliConstruct(
-    EgLpCli* self,
-    EnergyDirectionType energy_direction,
-    EgLpUseCaseObject* eg_lp,
-    const EntityAddressType* entity_addr
+    EgLpCli*                 self,
+    EnergyDirectionType      energy_direction,
+    EgLpUseCaseObject*       eg_lp,
+    const EntityAddressList* addr_list
 );
 
-static void HandleCmdGetPowerLimit(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
-static void HandleCmdGetFailsafeLimit(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
-static void HandleCmdGetFailsafeDuration(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
-static void HandleCmdGetPowerNominalMax(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
-static void HandleCmdGet(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
+static void HandleCmdList(const EgLpCli* self);
+static void HandleCmdGetPowerLimit(
+    const EgLpCli* self, const EntityAddressType* entity_addr, const char* const* tokens, size_t num_tokens
+);
+static void HandleCmdGetFailsafeLimit(
+    const EgLpCli* self, const EntityAddressType* entity_addr, const char* const* tokens, size_t num_tokens
+);
+static void HandleCmdGetFailsafeDuration(
+    const EgLpCli* self, const EntityAddressType* entity_addr, const char* const* tokens, size_t num_tokens
+);
+static void HandleCmdGetPowerNominalMax(
+    const EgLpCli* self, const EntityAddressType* entity_addr, const char* const* tokens, size_t num_tokens
+);
+static void HandleCmdGet(
+    const EgLpCli* self, const EntityAddressType* entity_addr, const char* const* tokens, size_t num_tokens
+);
 static void OnSetPowerLimitResult(
-    const ResultMessage* result_msg,
+    const ResultMessage*      result_msg,
     const FeatureAddressType* remote_feature_addr,
-    EebusError err,
-    void* ctx
+    EebusError                err,
+    void*                     ctx
 );
-static void HandleCmdSetPowerLimit(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
+static void HandleCmdSetPowerLimit(
+    const EgLpCli* self, const EntityAddressType* entity_addr, const char* const* tokens, size_t num_tokens
+);
 static void OnSetFailsafeLimitResult(
-    const ResultMessage* result_msg,
+    const ResultMessage*      result_msg,
     const FeatureAddressType* remote_feature_addr,
-    EebusError err,
-    void* ctx
+    EebusError                err,
+    void*                     ctx
 );
-static void HandleCmdSetFailsafeLimit(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
+static void HandleCmdSetFailsafeLimit(
+    const EgLpCli* self, const EntityAddressType* entity_addr, const char* const* tokens, size_t num_tokens
+);
 static void OnSetFailsafeDurationResult(
-    const ResultMessage* result_msg,
+    const ResultMessage*      result_msg,
     const FeatureAddressType* remote_feature_addr,
-    EebusError err,
-    void* ctx
+    EebusError                err,
+    void*                     ctx
 );
-static void HandleCmdSetFailsafeDuration(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
-static void HandleCmdSet(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
+static void HandleCmdSetFailsafeDuration(
+    const EgLpCli* self, const EntityAddressType* entity_addr, const char* const* tokens, size_t num_tokens
+);
+static void HandleCmdSet(
+    const EgLpCli* self, const EntityAddressType* entity_addr, const char* const* tokens, size_t num_tokens
+);
 static void HandleCmdStart(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
 static void HandleCmdStop(const EgLpCli* self, const char* const* tokens, size_t num_tokens);
 
 EebusError EgLpCliConstruct(
-    EgLpCli* self,
-    EnergyDirectionType energy_direction,
-    EgLpUseCaseObject* eg_lp,
-    const EntityAddressType* entity_addr
+    EgLpCli*                 self,
+    EnergyDirectionType      energy_direction,
+    EgLpUseCaseObject*       eg_lp,
+    const EntityAddressList* addr_list
 ) {
-  // Override "virtual functions table"
   EEBUS_CLI_HANDLER_INTERFACE(self) = &eg_lp_cli_methods;
 
-  self->eg_lp            = eg_lp;
-  self->entity_addr      = NULL;
+  self->eg_lp            = NULL;
+  self->addr_list        = NULL;
   self->energy_direction = energy_direction;
   self->cmd_name         = NULL;
   self->cmd_name_caps    = NULL;
 
-  if ((eg_lp == NULL) || (entity_addr == NULL)) {
+  if ((eg_lp == NULL) || (addr_list == NULL)) {
     return kEebusErrorInputArgumentNull;
   }
 
-  self->entity_addr = EntityAddressCopy(entity_addr);
-  if (self->entity_addr == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+  self->eg_lp     = eg_lp;
+  self->addr_list = addr_list;
 
   if (energy_direction == kEnergyDirectionTypeConsume) {
     self->cmd_name      = "eg_lpc";
@@ -128,13 +145,13 @@ EebusError EgLpCliConstruct(
 }
 
 EebusCliHandlerObject*
-EgLpCliCreate(EnergyDirectionType energy_direction, EgLpUseCaseObject* eg_lp, const EntityAddressType* entity_addr) {
+EgLpCliCreate(EnergyDirectionType energy_direction, EgLpUseCaseObject* eg_lp, const EntityAddressList* addr_list) {
   EgLpCli* cli_eg_lp = (EgLpCli*)EEBUS_MALLOC(sizeof(EgLpCli));
   if (cli_eg_lp == NULL) {
     return NULL;
   }
 
-  if (EgLpCliConstruct(cli_eg_lp, energy_direction, eg_lp, entity_addr) != kEebusErrorOk) {
+  if (EgLpCliConstruct(cli_eg_lp, energy_direction, eg_lp, addr_list) != kEebusErrorOk) {
     EgLpCliDelete(EEBUS_CLI_HANDLER_OBJECT(cli_eg_lp));
     return NULL;
   }
@@ -144,9 +161,26 @@ EgLpCliCreate(EnergyDirectionType energy_direction, EgLpUseCaseObject* eg_lp, co
 
 void Destruct(EebusCliHandlerObject* self) {
   EgLpCli* const eg_lp_cli = EG_LP_CLI(self);
+  eg_lp_cli->addr_list     = NULL;
+}
 
-  EntityAddressDelete((EntityAddressType*)eg_lp_cli->entity_addr);
-  eg_lp_cli->entity_addr = NULL;
+//-------------------------------------------------------------------------------------------//
+//
+// EG LP List Handling
+//
+//-------------------------------------------------------------------------------------------//
+static void HandleCmdList(const EgLpCli* self) {
+  const size_t count = EntityAddressListGetSize(self->addr_list);
+  if (count == 0) {
+    printf("%s: no remotes connected\n", self->cmd_name);
+    return;
+  }
+  printf("%s connected remotes (%zu):\n", self->cmd_name, count);
+  for (size_t i = 0; i < count; i++) {
+    char formatted[EEBUS_CLI_ENTITY_ADDR_STR_MAX];
+    CliFormatEntityAddress(EntityAddressListGet(self->addr_list, i), formatted, sizeof(formatted));
+    printf("  %s\n", formatted);
+  }
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -154,12 +188,17 @@ void Destruct(EebusCliHandlerObject* self) {
 // EG LP Getters Handling
 //
 //-------------------------------------------------------------------------------------------//
-void HandleCmdGetPowerLimit(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdGetPowerLimit(
+    const EgLpCli*           self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+) {
   UNUSED(tokens);
   UNUSED(num_tokens);
 
   LoadLimit limit = {0};
-  if (EgLpGetActivePowerLimit(self->eg_lp, self->entity_addr, &limit) != kEebusErrorOk) {
+  if (EgLpGetActivePowerLimit(self->eg_lp, entity_addr, &limit) != kEebusErrorOk) {
     printf("%s getting power limit failed\n", self->cmd_name_caps);
     return;
   }
@@ -170,12 +209,17 @@ void HandleCmdGetPowerLimit(const EgLpCli* self, const char* const* tokens, size
   printf("active=%s\n", EebusBoolToString(limit.is_active));
 }
 
-void HandleCmdGetFailsafeLimit(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdGetFailsafeLimit(
+    const EgLpCli*           self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+) {
   UNUSED(tokens);
   UNUSED(num_tokens);
 
   ScaledValue power_limit = {0};
-  if (EgLpGetFailsafeActivePowerLimit(self->eg_lp, self->entity_addr, &power_limit) != kEebusErrorOk) {
+  if (EgLpGetFailsafeActivePowerLimit(self->eg_lp, entity_addr, &power_limit) != kEebusErrorOk) {
     printf("%s getting failsafe limit failed\n", self->cmd_name_caps);
     return;
   }
@@ -184,12 +228,17 @@ void HandleCmdGetFailsafeLimit(const EgLpCli* self, const char* const* tokens, s
   ScaledValuePrint("Failsafe Active Power Limit: value=%s\n", &power_limit);
 }
 
-void HandleCmdGetFailsafeDuration(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdGetFailsafeDuration(
+    const EgLpCli*           self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+) {
   UNUSED(tokens);
   UNUSED(num_tokens);
 
   DurationType duration = {0};
-  if (EgLpGetFailsafeDurationMinimum(self->eg_lp, self->entity_addr, &duration) != kEebusErrorOk) {
+  if (EgLpGetFailsafeDurationMinimum(self->eg_lp, entity_addr, &duration) != kEebusErrorOk) {
     printf("%s getting failsafe duration failed\n", self->cmd_name_caps);
     return;
   }
@@ -198,12 +247,17 @@ void HandleCmdGetFailsafeDuration(const EgLpCli* self, const char* const* tokens
   EebusDurationPrint("Failsafe Duration Minimum: %s\n", &duration);
 }
 
-void HandleCmdGetPowerNominalMax(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdGetPowerNominalMax(
+    const EgLpCli*           self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+) {
   UNUSED(tokens);
   UNUSED(num_tokens);
 
   ScaledValue power_limit = {0};
-  const EebusError err    = EgLpGetPowerNominalMax(self->eg_lp, self->entity_addr, &power_limit);
+  const EebusError err    = EgLpGetPowerNominalMax(self->eg_lp, entity_addr, &power_limit);
 
   if (err != kEebusErrorOk) {
     printf("%s getting Power Nominal Max failed\n", self->cmd_name_caps);
@@ -214,7 +268,12 @@ void HandleCmdGetPowerNominalMax(const EgLpCli* self, const char* const* tokens,
   ScaledValuePrint("Power Nominal Max: value=%s\n", &power_limit);
 }
 
-void HandleCmdGet(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdGet(
+    const EgLpCli*           self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+) {
   if (num_tokens != 3) {
     printf("Insufficient arguments for %s get command\n", self->cmd_name);
     return;
@@ -222,13 +281,13 @@ void HandleCmdGet(const EgLpCli* self, const char* const* tokens, size_t num_tok
 
   const char* subcommand = tokens[2];
   if (strcmp(subcommand, "power_limit") == 0) {
-    HandleCmdGetPowerLimit(self, tokens, num_tokens);
+    HandleCmdGetPowerLimit(self, entity_addr, tokens, num_tokens);
   } else if (strcmp(subcommand, "failsafe_limit") == 0) {
-    HandleCmdGetFailsafeLimit(self, tokens, num_tokens);
+    HandleCmdGetFailsafeLimit(self, entity_addr, tokens, num_tokens);
   } else if (strcmp(subcommand, "failsafe_duration") == 0) {
-    HandleCmdGetFailsafeDuration(self, tokens, num_tokens);
+    HandleCmdGetFailsafeDuration(self, entity_addr, tokens, num_tokens);
   } else if (strcmp(subcommand, "power_nominal_max") == 0) {
-    HandleCmdGetPowerNominalMax(self, tokens, num_tokens);
+    HandleCmdGetPowerNominalMax(self, entity_addr, tokens, num_tokens);
   } else {
     printf("Unknown subcommand for %s get: %s\n", self->cmd_name, subcommand);
   }
@@ -239,11 +298,11 @@ void HandleCmdGet(const EgLpCli* self, const char* const* tokens, size_t num_tok
 // EG LP Setters Handling
 //
 //-------------------------------------------------------------------------------------------//
-void OnSetPowerLimitResult(
-    const ResultMessage* result_msg,
+static void OnSetPowerLimitResult(
+    const ResultMessage*      result_msg,
     const FeatureAddressType* remote_feature_addr,
-    EebusError err,
-    void* ctx
+    EebusError                err,
+    void*                     ctx
 ) {
   UNUSED(err);
   const char* const cmd_name_caps         = (const char*)ctx;
@@ -261,7 +320,12 @@ void OnSetPowerLimitResult(
   }
 }
 
-void HandleCmdSetPowerLimit(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdSetPowerLimit(
+    const EgLpCli*           self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+) {
   if (num_tokens != 6) {
     printf("Insufficient arguments for %s set power_limit command\n", self->cmd_name);
     return;
@@ -283,7 +347,7 @@ void HandleCmdSetPowerLimit(const EgLpCli* self, const char* const* tokens, size
     return;
   }
 
-  if (EgLpSetActivePowerLimit(self->eg_lp, self->entity_addr, &limit, OnSetPowerLimitResult, (void*)self->cmd_name_caps)
+  if (EgLpSetActivePowerLimit(self->eg_lp, entity_addr, &limit, OnSetPowerLimitResult, (void*)self->cmd_name_caps)
       != kEebusErrorOk) {
     printf("%s setting Active Power Limit failed\n", self->cmd_name_caps);
     return;
@@ -292,11 +356,11 @@ void HandleCmdSetPowerLimit(const EgLpCli* self, const char* const* tokens, size
   printf("%s setting Active Power Limit succeeded\n", self->cmd_name_caps);
 }
 
-void OnSetFailsafeLimitResult(
-    const ResultMessage* result_msg,
+static void OnSetFailsafeLimitResult(
+    const ResultMessage*      result_msg,
     const FeatureAddressType* remote_feature_addr,
-    EebusError err,
-    void* ctx
+    EebusError                err,
+    void*                     ctx
 ) {
   UNUSED(err);
   const char* const cmd_name_caps         = (const char*)ctx;
@@ -314,7 +378,12 @@ void OnSetFailsafeLimitResult(
   }
 }
 
-void HandleCmdSetFailsafeLimit(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdSetFailsafeLimit(
+    const EgLpCli*           self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+) {
   if (num_tokens != 4) {
     printf("Insufficient arguments for %s set failsafe_limit command\n", self->cmd_name);
     return;
@@ -326,7 +395,6 @@ void HandleCmdSetFailsafeLimit(const EgLpCli* self, const char* const* tokens, s
     return;
   }
 
-  const EntityAddressType* entity_addr = self->entity_addr;
   if (EgLpSetFailsafeActivePowerLimit(
           self->eg_lp,
           entity_addr,
@@ -342,11 +410,11 @@ void HandleCmdSetFailsafeLimit(const EgLpCli* self, const char* const* tokens, s
   printf("%s setting Failsafe Active Power Limit succeeded\n", self->cmd_name_caps);
 }
 
-void OnSetFailsafeDurationResult(
-    const ResultMessage* result_msg,
+static void OnSetFailsafeDurationResult(
+    const ResultMessage*      result_msg,
     const FeatureAddressType* remote_feature_addr,
-    EebusError err,
-    void* ctx
+    EebusError                err,
+    void*                     ctx
 ) {
   UNUSED(err);
   const char* const cmd_name_caps         = (const char*)ctx;
@@ -364,7 +432,12 @@ void OnSetFailsafeDurationResult(
   }
 }
 
-void HandleCmdSetFailsafeDuration(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdSetFailsafeDuration(
+    const EgLpCli*           self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+) {
   if (num_tokens != 4) {
     printf("Insufficient arguments for %s set failsafe_duration command\n", self->cmd_name);
     return;
@@ -378,7 +451,7 @@ void HandleCmdSetFailsafeDuration(const EgLpCli* self, const char* const* tokens
 
   if (EgLpSetFailsafeDurationMinimum(
           self->eg_lp,
-          self->entity_addr,
+          entity_addr,
           &duration,
           OnSetFailsafeDurationResult,
           (void*)self->cmd_name_caps
@@ -391,7 +464,12 @@ void HandleCmdSetFailsafeDuration(const EgLpCli* self, const char* const* tokens
   printf("%s setting Failsafe Duration succeeded\n", self->cmd_name_caps);
 }
 
-void HandleCmdSet(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdSet(
+    const EgLpCli*           self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+) {
   if (num_tokens < 3) {
     printf("Insufficient arguments for %s set command\n", self->cmd_name);
     return;
@@ -399,11 +477,11 @@ void HandleCmdSet(const EgLpCli* self, const char* const* tokens, size_t num_tok
 
   const char* subcommand = tokens[2];
   if (strcmp(subcommand, "power_limit") == 0) {
-    HandleCmdSetPowerLimit(self, tokens, num_tokens);
+    HandleCmdSetPowerLimit(self, entity_addr, tokens, num_tokens);
   } else if (strcmp(subcommand, "failsafe_limit") == 0) {
-    HandleCmdSetFailsafeLimit(self, tokens, num_tokens);
+    HandleCmdSetFailsafeLimit(self, entity_addr, tokens, num_tokens);
   } else if (strcmp(subcommand, "failsafe_duration") == 0) {
-    HandleCmdSetFailsafeDuration(self, tokens, num_tokens);
+    HandleCmdSetFailsafeDuration(self, entity_addr, tokens, num_tokens);
   } else {
     printf("Unknown subcommand for %s set: %s\n", self->cmd_name, subcommand);
   }
@@ -414,7 +492,7 @@ void HandleCmdSet(const EgLpCli* self, const char* const* tokens, size_t num_tok
 // EG LP Start/Stop Handling
 //
 //-------------------------------------------------------------------------------------------//
-void HandleCmdStart(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdStart(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
   if (num_tokens < 3) {
     printf("Insufficient arguments for %s start command\n", self->cmd_name);
     return;
@@ -429,7 +507,7 @@ void HandleCmdStart(const EgLpCli* self, const char* const* tokens, size_t num_t
   }
 }
 
-void HandleCmdStop(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdStop(const EgLpCli* self, const char* const* tokens, size_t num_tokens) {
   if (num_tokens < 3) {
     printf("Insufficient arguments for %s stop command\n", self->cmd_name);
     return;
@@ -444,7 +522,7 @@ void HandleCmdStop(const EgLpCli* self, const char* const* tokens, size_t num_to
   }
 }
 
-void HandleCmd(const EebusCliHandlerObject* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmd(const EebusCliHandlerObject* self, const char* const* tokens, size_t num_tokens) {
   const EgLpCli* const eg_lp_cli = EG_LP_CLI(self);
 
   if (num_tokens < 2) {
@@ -452,15 +530,40 @@ void HandleCmd(const EebusCliHandlerObject* self, const char* const* tokens, siz
     return;
   }
 
-  if (strcmp(tokens[1], "set") == 0) {
-    HandleCmdSet(eg_lp_cli, tokens, num_tokens);
-  } else if (strcmp(tokens[1], "get") == 0) {
-    HandleCmdGet(eg_lp_cli, tokens, num_tokens);
-  } else if (strcmp(tokens[1], "start") == 0) {
+  if (strcmp(tokens[1], "list") == 0) {
+    HandleCmdList(eg_lp_cli);
+    return;
+  }
+
+  // start/stop commands don't target a remote address — dispatch before --remote extraction
+  if (strcmp(tokens[1], "start") == 0) {
     HandleCmdStart(eg_lp_cli, tokens, num_tokens);
-  } else if (strcmp(tokens[1], "stop") == 0) {
+    return;
+  }
+  if (strcmp(tokens[1], "stop") == 0) {
     HandleCmdStop(eg_lp_cli, tokens, num_tokens);
+    return;
+  }
+
+  const char* adjusted[10];
+  size_t      adjusted_count                 = 0;
+  const EntityAddressType* const remote_addr = CliExtractRemoteArg(
+      tokens, num_tokens, eg_lp_cli->addr_list, eg_lp_cli->cmd_name, adjusted, &adjusted_count
+  );
+  if (remote_addr == NULL) {
+    return;
+  }
+
+  if (adjusted_count < 2) {
+    printf("Insufficient arguments for %s command\n", eg_lp_cli->cmd_name);
+    return;
+  }
+
+  if (strcmp(adjusted[1], "set") == 0) {
+    HandleCmdSet(eg_lp_cli, remote_addr, adjusted, adjusted_count);
+  } else if (strcmp(adjusted[1], "get") == 0) {
+    HandleCmdGet(eg_lp_cli, remote_addr, adjusted, adjusted_count);
   } else {
-    printf("Unknown subcommand for %s: %s\n", eg_lp_cli->cmd_name, tokens[1]);
+    printf("Unknown subcommand for %s: %s\n", eg_lp_cli->cmd_name, adjusted[1]);
   }
 }

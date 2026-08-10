@@ -58,6 +58,13 @@
 #define LWS_SERVER_OPTION_MBEDTLS_VERIFY_CLIENT_CERT_POST_HANDSHAKE 0
 #endif  // LWS_SERVER_OPTION_MBEDTLS_VERIFY_CLIENT_CERT_POST_HANDSHAKE
 
+typedef struct {
+  struct lws*      wsi;
+  WebsocketObject* ws;
+} WsiWsEntry;
+
+#define HTTP_SERVER_MAX_CONNECTIONS 10
+
 typedef struct HttpServer HttpServer;
 
 struct HttpServer {
@@ -71,7 +78,8 @@ struct HttpServer {
   struct lws_context* lws_ctx;
   WebsocketServerCallbackType conn_establish_cb;
   void* conn_establish_ctx;
-  WebsocketObject* ws;
+  WsiWsEntry wsi_ws_table[HTTP_SERVER_MAX_CONNECTIONS];
+  size_t     wsi_ws_count;
 
   int port;
   const TlsCertificateObject* tls_cert;
@@ -136,7 +144,7 @@ void HttpServerConstruct(
   self->conn_establish_ctx = conn_establish_ctx;
 
   self->port         = port;
-  self->ws           = NULL;
+  self->wsi_ws_count = 0;
 
   self->lws_ctx = NULL;
 
@@ -174,8 +182,10 @@ void HttpServerStaggerCallback(lws_sorted_usec_list_t* sul) {
   HttpServer* const srv = lws_container_of(sul, HttpServer, sul_stagger);
 
   EEBUS_MUTEX_LOCK(srv->mutex);
-  if ((srv->ws != NULL) && !WEBSOCKET_IS_CLOSED(srv->ws)) {
-    WEBSOCKET_SCHEDULE_WRITE(srv->ws);
+  for (size_t i = 0; i < srv->wsi_ws_count; ++i) {
+    if (!WEBSOCKET_IS_CLOSED(srv->wsi_ws_table[i].ws)) {
+      WEBSOCKET_SCHEDULE_WRITE(srv->wsi_ws_table[i].ws);
+    }
   }
   EEBUS_MUTEX_UNLOCK(srv->mutex);
 
@@ -274,23 +284,19 @@ void HttpServerUnbindWsi(HttpServerObject* self, struct lws* wsi) {
   }
 
   EEBUS_MUTEX_LOCK(srv->mutex);
-  srv->ws = NULL;
+  for (size_t i = 0; i < srv->wsi_ws_count; ++i) {
+    if (srv->wsi_ws_table[i].wsi == wsi) {
+      /* Swap-with-last-and-pop to remove without shifting */
+      srv->wsi_ws_table[i] = srv->wsi_ws_table[--srv->wsi_ws_count];
+      break;
+    }
+  }
   lws_set_wsi_user(wsi, NULL);
   EEBUS_MUTEX_UNLOCK(srv->mutex);
 }
 
 // LWS Handlers
 int HttpServerOnClientConnect(HttpServer* self, struct lws* wsi) {
-  EEBUS_MUTEX_LOCK(self->mutex);
-  const bool already_active = (self->ws != NULL);
-  EEBUS_MUTEX_UNLOCK(self->mutex);
-
-  if (already_active) {
-    // Currently only a single connection is supported
-    HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is already created\n", __func__);
-    return -1;
-  }
-
   const char* ski = WebsocketGetSkiWithWsi(wsi);
   if (ski == NULL) {
     HTTP_SERVER_DEBUG_PRINTF("%s(), WebsocketGetSkiWithWsi() failed\n", __func__);
@@ -320,7 +326,11 @@ int HttpServerOnClientConnect(HttpServer* self, struct lws* wsi) {
   }
 
   EEBUS_MUTEX_LOCK(self->mutex);
-  self->ws = ws;
+  if (self->wsi_ws_count < HTTP_SERVER_MAX_CONNECTIONS) {
+    self->wsi_ws_table[self->wsi_ws_count].wsi = wsi;
+    self->wsi_ws_table[self->wsi_ws_count].ws  = ws;
+    self->wsi_ws_count++;
+  }
   EEBUS_MUTEX_UNLOCK(self->mutex);
 
   lws_sul_schedule(self->lws_ctx, 0, &self->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);

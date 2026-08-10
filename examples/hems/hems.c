@@ -26,6 +26,7 @@
 #include "src/common/array_util.h"
 #include "src/common/eebus_errors.h"
 #include "src/common/eebus_malloc.h"
+#include "src/common/entity_address_list.h"
 
 #include "examples/hems/cem_ohpcf_listener.h"
 #include "examples/hems/eg_lpc_listener.h"
@@ -64,6 +65,11 @@ struct Hems {
   MaMgcpUseCaseObject* ma_mgcp;
   MaMgcpListenerObject* ma_mgcp_listener;
   EebusCliObject* cli;
+
+  EntityAddressList eg_lpc_remotes;
+  EntityAddressList eg_lpp_remotes;
+  EntityAddressList ma_mpc_remotes;
+  EntityAddressList ma_mgcp_remotes;
 };
 
 #define HEMS(obj) ((Hems*)(obj))
@@ -114,6 +120,11 @@ EebusError HemsConstruct(Hems* self) {
   if (self->cli == NULL) {
     return kEebusErrorMemoryAllocate;
   }
+
+  EntityAddressListInit(&self->eg_lpc_remotes);
+  EntityAddressListInit(&self->eg_lpp_remotes);
+  EntityAddressListInit(&self->ma_mpc_remotes);
+  EntityAddressListInit(&self->ma_mgcp_remotes);
 
   return kEebusErrorOk;
 }
@@ -296,9 +307,6 @@ HemsObject* HemsOpen(int32_t port, const char* role, TlsCertificateObject* tls_c
 void Destruct(ServiceReaderObject* self) {
   Hems* const hems = HEMS(self);
 
-  EebusCliDelete(hems->cli);
-  hems->cli = NULL;
-
   if (hems->service != NULL) {
     EEBUS_SERVICE_STOP(hems->service);
     EebusServiceDelete(hems->service);
@@ -310,6 +318,14 @@ void Destruct(ServiceReaderObject* self) {
 
   CemOhpcfListenerDelete(hems->cem_ohpcf_listener);
   hems->cem_ohpcf_listener = NULL;
+
+  EebusCliDelete(hems->cli);
+  hems->cli = NULL;
+
+  EntityAddressListRelease(&hems->eg_lpc_remotes);
+  EntityAddressListRelease(&hems->eg_lpp_remotes);
+  EntityAddressListRelease(&hems->ma_mpc_remotes);
+  EntityAddressListRelease(&hems->ma_mgcp_remotes);
 
   UseCaseDelete(USE_CASE_OBJECT(hems->ma_mgcp));
   hems->ma_mgcp = NULL;
@@ -390,51 +406,73 @@ void HemsUnregisterRemoteSki(HemsObject* self, const char* ski) {
 
 void HemsSetEgLpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
   Hems* const hems = HEMS(self);
-
-  if (hems->cli == NULL) {
+  if ((hems->cli == NULL) || (entity_addr == NULL)) {
     return;
   }
+  EntityAddressListAdd(&hems->eg_lpc_remotes, entity_addr);
+  if (EntityAddressListGetSize(&hems->eg_lpc_remotes) == 1) {
+    EEBUS_CLI_SET_EG_LPC(hems->cli, hems->eg_lpc, &hems->eg_lpc_remotes);
+  }
+}
 
-  EgLpUseCaseObject* const eg_lpc = (entity_addr == NULL) ? NULL : hems->eg_lpc;
-  EEBUS_CLI_SET_EG_LPC(hems->cli, eg_lpc, entity_addr);
+void HemsRemoveEgLpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
+  Hems* const hems = HEMS(self);
+  if (entity_addr == NULL) {
+    return;
+  }
+  EntityAddressListRemove(&hems->eg_lpc_remotes, entity_addr);
+  if (EntityAddressListGetSize(&hems->eg_lpc_remotes) == 0) {
+    EEBUS_CLI_SET_EG_LPC(hems->cli, NULL, NULL);
+  }
 }
 
 void HemsSetEgLppRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
   Hems* const hems = HEMS(self);
-
-  if (hems->cli == NULL) {
+  if ((hems->cli == NULL) || (entity_addr == NULL)) {
     return;
   }
+  EntityAddressListAdd(&hems->eg_lpp_remotes, entity_addr);
+  if (EntityAddressListGetSize(&hems->eg_lpp_remotes) == 1) {
+    EEBUS_CLI_SET_EG_LPP(hems->cli, hems->eg_lpp, &hems->eg_lpp_remotes);
+  }
+}
 
-  EgLpUseCaseObject* const eg_lpp = (entity_addr == NULL) ? NULL : hems->eg_lpp;
-  EEBUS_CLI_SET_EG_LPP(hems->cli, eg_lpp, entity_addr);
+void HemsRemoveEgLppRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
+  Hems* const hems = HEMS(self);
+  if (entity_addr == NULL) {
+    return;
+  }
+  EntityAddressListRemove(&hems->eg_lpp_remotes, entity_addr);
+  if (EntityAddressListGetSize(&hems->eg_lpp_remotes) == 0) {
+    EEBUS_CLI_SET_EG_LPP(hems->cli, NULL, NULL);
+  }
 }
 
 void HemsAddMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
   Hems* const hems = HEMS(self);
-
   if ((hems->cli == NULL) || (entity_addr == NULL)) {
     return;
   }
-
   // Simplified check to avoid dealing with the subentity
   // (as there is OHPCF with optional MPC attached to subentity)
   if (entity_addr->entity_size == 1) {
-    EEBUS_CLI_SET_MA_MPC(hems->cli, hems->ma_mpc, entity_addr);
+    EntityAddressListAdd(&hems->ma_mpc_remotes, entity_addr);
+    if (EntityAddressListGetSize(&hems->ma_mpc_remotes) == 1) {
+      EEBUS_CLI_SET_MA_MPC(hems->cli, hems->ma_mpc, &hems->ma_mpc_remotes);
+    }
   }
 }
 
 void HemsRemoveMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
   Hems* const hems = HEMS(self);
-
   if ((hems->cli == NULL) || (entity_addr == NULL)) {
     return;
   }
-
-  // Simplified check to avoid dealing with the subentity
-  // (as there is OHPCF with optional MPC attached to subentity)
   if (entity_addr->entity_size == 1) {
-    EEBUS_CLI_SET_MA_MPC(hems->cli, NULL, NULL);
+    EntityAddressListRemove(&hems->ma_mpc_remotes, entity_addr);
+    if (EntityAddressListGetSize(&hems->ma_mpc_remotes) == 0) {
+      EEBUS_CLI_SET_MA_MPC(hems->cli, NULL, NULL);
+    }
   }
 }
 
@@ -451,13 +489,24 @@ void HemsSetCemOhpcfRemoteEntity(HemsObject* self, const EntityAddressType* enti
 
 void HemsSetMaMgcpRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
   Hems* const hems = HEMS(self);
-
-  if (hems->cli == NULL) {
+  if ((hems->cli == NULL) || (entity_addr == NULL)) {
     return;
   }
+  EntityAddressListAdd(&hems->ma_mgcp_remotes, entity_addr);
+  if (EntityAddressListGetSize(&hems->ma_mgcp_remotes) == 1) {
+    EEBUS_CLI_SET_MA_MGCP(hems->cli, hems->ma_mgcp, &hems->ma_mgcp_remotes);
+  }
+}
 
-  MaMgcpUseCaseObject* const ma_mgcp = (entity_addr == NULL) ? NULL : hems->ma_mgcp;
-  EEBUS_CLI_SET_MA_MGCP(hems->cli, ma_mgcp, entity_addr);
+void HemsRemoveMaMgcpRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
+  Hems* const hems = HEMS(self);
+  if (entity_addr == NULL) {
+    return;
+  }
+  EntityAddressListRemove(&hems->ma_mgcp_remotes, entity_addr);
+  if (EntityAddressListGetSize(&hems->ma_mgcp_remotes) == 0) {
+    EEBUS_CLI_SET_MA_MGCP(hems->cli, NULL, NULL);
+  }
 }
 
 void HemsHandleCmd(HemsObject* self, char* cmd) {
