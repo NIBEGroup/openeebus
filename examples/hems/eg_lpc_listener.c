@@ -108,13 +108,9 @@ void OnRemoteCsAdded(EgLpListenerObject* self, const EntityAddressType* entity_a
 }
 
 void OnRemoteCsRemoved(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
-  UNUSED(entity_addr);
-
   EgLpcListener* const lpc_listener = EG_LP_LISTENER(self);
 
-  // Currently only single remote entity is supported,
-  // so just clear the remote entity address
-  HemsSetEgLpcRemoteEntity(lpc_listener->hems, NULL);
+  HemsRemoveEgLpcRemoteEntity(lpc_listener->hems, entity_addr);
 }
 
 void OnPowerLimitReceive(

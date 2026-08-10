@@ -1,0 +1,118 @@
+namespace two_remote_test {
+namespace receive {
+
+static constexpr char use_case_reply[] = R"({
+  "datagram": [
+    {
+      "header": [
+        {
+          "specificationVersion": "1.3.0"
+        },
+        {
+          "addressSource": [
+            {
+              "device": "d:_n:EV_123456789"
+            },
+            {
+              "entity": [
+                0
+              ]
+            },
+            {
+              "feature": 0
+            }
+          ]
+        },
+        {
+          "addressDestination": [
+            {
+              "device": "d:_n:HEMS_123456789"
+            },
+            {
+              "entity": [
+                0
+              ]
+            },
+            {
+              "feature": 0
+            }
+          ]
+        },
+        {
+          "msgCounter": 6
+        },
+        {
+          "msgCounterReference": 4
+        },
+        {
+          "cmdClassifier": "reply"
+        }
+      ]
+    },
+    {
+      "payload": [
+        {
+          "cmd": [
+            [
+              {
+                "nodeManagementUseCaseData": [
+                  {
+                    "useCaseInformation": [
+                      [
+                        {
+                          "address": [
+                            {
+                              "device": "d:_n:EV_123456789"
+                            },
+                            {
+                              "entity": [
+                                1
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "actor": "MonitoredUnit"
+                        },
+                        {
+                          "useCaseSupport": [
+                            [
+                              {
+                                "useCaseName": "monitoringOfPowerConsumption"
+                              },
+                              {
+                                "useCaseVersion": "1.0.0"
+                              },
+                              {
+                                "useCaseAvailable": true
+                              },
+                              {
+                                "scenarioSupport": [
+                                  1,
+                                  2,
+                                  3,
+                                  4,
+                                  5
+                                ]
+                              },
+                              {
+                                "useCaseDocumentSubRevision": "release"
+                              }
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+})";
+
+}  // namespace receive
+}  // namespace two_remote_test

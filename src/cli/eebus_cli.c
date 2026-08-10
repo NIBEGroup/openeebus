@@ -61,16 +61,12 @@ struct EebusCli {
 static void Destruct(EebusCliObject* self);
 static void SetCsLpc(EebusCliObject* self, CsLpUseCaseObject* cs_lpc_use_case);
 static void SetCsLpp(EebusCliObject* self, CsLpUseCaseObject* cs_lpp_use_case);
-static void
-SetEgLpc(EebusCliObject* self, EgLpUseCaseObject* eg_lpc_use_case, const EntityAddressType* remote_entity_address);
+static void SetEgLpc(EebusCliObject* self, EgLpUseCaseObject* eg_lpc_use_case, EntityAddressList* addr_list);
 static void SetMuMpc(EebusCliObject* self, MuMpcUseCaseObject* mu_mpc_use_case);
-static void
-SetEgLpp(EebusCliObject* self, EgLpUseCaseObject* eg_lpp_use_case, const EntityAddressType* remote_entity_address);
-static void
-SetMaMpc(EebusCliObject* self, MaMpcUseCaseObject* ma_mpc_use_case, const EntityAddressType* remote_entity_address);
+static void SetEgLpp(EebusCliObject* self, EgLpUseCaseObject* eg_lpp_use_case, EntityAddressList* addr_list);
+static void SetMaMpc(EebusCliObject* self, MaMpcUseCaseObject* ma_mpc_use_case, EntityAddressList* addr_list);
 static void SetGcpMgcp(EebusCliObject* self, GcpMgcpUseCaseObject* gcp_mgcp_use_case);
-static void
-SetMaMgcp(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_case, const EntityAddressType* remote_entity_address);
+static void SetMaMgcp(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_case, EntityAddressList* addr_list);
 static void HandleCmd(const EebusCliObject* self, char* cmd);
 
 static const EebusCliInterface eebus_cli_methods = {
@@ -166,23 +162,14 @@ void SetCsLpp(EebusCliObject* self, CsLpUseCaseObject* cs_lpp_use_case) {
   eebus_cli->cs_lpp_cli = CsLpCliCreate(kEnergyDirectionTypeProduce, cs_lpp_use_case);
 }
 
-void SetEgLpc(
-    EebusCliObject* self,
-    EgLpUseCaseObject* eg_lpc_use_case,
-    const EntityAddressType* remote_entity_address
-) {
+void SetEgLpc(EebusCliObject* self, EgLpUseCaseObject* eg_lpc_use_case, EntityAddressList* addr_list) {
   EebusCli* const eebus_cli = EEBUS_CLI(self);
 
-  // Always tear down the existing CLI instance — this function may be called
-  // multiple times (e.g. on reconnection), so the old instance must be released
-  // first to prevent a memory leak. A NULL remote address signals disconnection,
-  // in which case no new instance will be created below.
   EgLpCliDelete(eebus_cli->eg_lpc_cli);
   eebus_cli->eg_lpc_cli = NULL;
 
-  // Create a new CLI instance if remote entity address is not NULL
-  if (remote_entity_address != NULL) {
-    eebus_cli->eg_lpc_cli = EgLpCliCreate(kEnergyDirectionTypeConsume, eg_lpc_use_case, remote_entity_address);
+  if ((eg_lpc_use_case != NULL) && (addr_list != NULL)) {
+    eebus_cli->eg_lpc_cli = EgLpCliCreate(kEnergyDirectionTypeConsume, eg_lpc_use_case, addr_list);
   }
 }
 
@@ -196,43 +183,25 @@ static void SetMuMpc(EebusCliObject* self, MuMpcUseCaseObject* mu_mpc_use_case) 
   eebus_cli->mu_mpc_cli = MuMpcCliCreate(mu_mpc_use_case);
 }
 
-void SetEgLpp(
-    EebusCliObject* self,
-    EgLpUseCaseObject* eg_lpp_use_case,
-    const EntityAddressType* remote_entity_address
-) {
+void SetEgLpp(EebusCliObject* self, EgLpUseCaseObject* eg_lpp_use_case, EntityAddressList* addr_list) {
   EebusCli* const eebus_cli = EEBUS_CLI(self);
 
-  // Always tear down the existing CLI instance — this function may be called
-  // multiple times (e.g. on reconnection), so the old instance must be released
-  // first to prevent a memory leak. A NULL remote address signals disconnection,
-  // in which case no new instance will be created below.
   EgLpCliDelete(eebus_cli->eg_lpp_cli);
   eebus_cli->eg_lpp_cli = NULL;
 
-  // Create a new CLI instance if remote entity address is not NULL
-  if (remote_entity_address != NULL) {
-    eebus_cli->eg_lpp_cli = EgLpCliCreate(kEnergyDirectionTypeProduce, eg_lpp_use_case, remote_entity_address);
+  if ((eg_lpp_use_case != NULL) && (addr_list != NULL)) {
+    eebus_cli->eg_lpp_cli = EgLpCliCreate(kEnergyDirectionTypeProduce, eg_lpp_use_case, addr_list);
   }
 }
 
-void SetMaMpc(
-    EebusCliObject* self,
-    MaMpcUseCaseObject* ma_mpc_use_case,
-    const EntityAddressType* remote_entity_address
-) {
+void SetMaMpc(EebusCliObject* self, MaMpcUseCaseObject* ma_mpc_use_case, EntityAddressList* addr_list) {
   EebusCli* const eebus_cli = EEBUS_CLI(self);
 
-  // Always tear down the existing CLI instance — this function may be called
-  // multiple times (e.g. on reconnection), so the old instance must be released
-  // first to prevent a memory leak. A NULL remote address signals disconnection,
-  // in which case no new instance will be created below.
   MaMpcCliDelete(eebus_cli->ma_mpc_cli);
   eebus_cli->ma_mpc_cli = NULL;
 
-  // Create a new CLI instance if remote entity address is not NULL
-  if (remote_entity_address != NULL) {
-    eebus_cli->ma_mpc_cli = MaMpcCliCreate(ma_mpc_use_case, remote_entity_address);
+  if ((ma_mpc_use_case != NULL) && (addr_list != NULL)) {
+    eebus_cli->ma_mpc_cli = MaMpcCliCreate(ma_mpc_use_case, addr_list);
   }
 }
 
@@ -246,20 +215,14 @@ static void SetGcpMgcp(EebusCliObject* self, GcpMgcpUseCaseObject* gcp_mgcp_use_
   eebus_cli->gcp_mgcp_cli = GcpMgcpCliCreate(gcp_mgcp_use_case);
 }
 
-static void
-SetMaMgcp(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_case, const EntityAddressType* remote_entity_address) {
+static void SetMaMgcp(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_case, EntityAddressList* addr_list) {
   EebusCli* const eebus_cli = EEBUS_CLI(self);
 
-  // Always tear down the existing CLI instance — this function may be called
-  // multiple times (e.g. on reconnection), so the old instance must be released
-  // first to prevent a memory leak. A NULL remote address signals disconnection,
-  // in which case no new instance will be created below.
   MaMgcpCliDelete(eebus_cli->ma_mgcp_cli);
   eebus_cli->ma_mgcp_cli = NULL;
 
-  // Create a new CLI instance if remote entity address is not NULL
-  if (remote_entity_address != NULL) {
-    eebus_cli->ma_mgcp_cli = MaMgcpCliCreate(ma_mgcp_use_case, remote_entity_address);
+  if ((ma_mgcp_use_case != NULL) && (addr_list != NULL)) {
+    eebus_cli->ma_mgcp_cli = MaMgcpCliCreate(ma_mgcp_use_case, addr_list);
   }
 }
 

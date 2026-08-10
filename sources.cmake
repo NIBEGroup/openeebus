@@ -19,6 +19,7 @@ set(SOURCES
   src/common/string_util.c
   src/common/uint64_lut.c
   src/common/vector.c
+  src/common/entity_address_list.c
   src/common/eebus_bool/eebus_bool.c
   src/service/service/eebus_service_config.c
   src/service/service/eebus_service.c
@@ -185,6 +186,7 @@ set(HEADERS
   src/common/struct_util.h
   src/common/uint64_lut.h
   src/common/vector.h
+  src/common/entity_address_list.h
   src/service/api/eebus_service_config.h
   src/service/api/eebus_service_interface.h
   src/service/api/service_reader_interface.h

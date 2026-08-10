@@ -97,8 +97,12 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/common/eebus_queue/eebus_queue.c
   ${MAIN_PROJ_SOURCES_PATH}/common/eebus_thread/eebus_thread.c
   ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/string_lut.c
   ${MAIN_PROJ_SOURCES_PATH}/common/service_details.c
   ${MAIN_PROJ_SOURCES_PATH}/common/vector.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_timer/eebus_timer_linux.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_timer/eebus_timer_apple.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_timer/eebus_timer_windows.c
   ${MAIN_PROJ_SOURCES_PATH}/ship/websocket/http_server.c
   ${MAIN_PROJ_SOURCES_PATH}/ship/websocket/websocket_client_creator.c
   ${MAIN_PROJ_SOURCES_PATH}/ship/websocket/websocket_server_creator.c
@@ -141,6 +145,68 @@ endif()
 
 target_link_libraries(
   ${TEST_NAME}
+  PRIVATE
+  ${THREAD_LIBRARY}
+  ${DNS_SD_LIB}
+  ${LIBWEBSOCKETS_TARGET}
+  ${OPEN_SSL_LIBRARIES}
+)
+
+# ── Multi-connection test ────────────────────────────────────────────────────
+set(MULTI_TEST_NAME ship_node_multi_test)
+
+add_executable(${MULTI_TEST_NAME})
+
+if(WIN32)
+  set_property(TARGET ${MULTI_TEST_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+  target_link_options(${MULTI_TEST_NAME} PRIVATE "/NODEFAULTLIB:LIBCMT")
+  if(BONJOUR_FOUND)
+    target_include_directories(${MULTI_TEST_NAME} PRIVATE "${BONJOUR_SDK_HOME}/Include")
+    target_link_directories(${MULTI_TEST_NAME} PUBLIC "${BONJOUR_SDK_HOME}/Lib/x64")
+  endif()
+endif()
+
+target_sources(
+  ${MULTI_TEST_NAME}
+  PRIVATE
+  ${MAIN_PROJ_SOURCES_PATH}/ship/ship_node/ship_node.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/mdns/ship_mdns_bonjour.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/mdns/mdns_entry.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/mdns/mdns_debug.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/tls_certificate/tls_certificate.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_device_info.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_mutex/eebus_mutex.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_queue/eebus_queue.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_thread/eebus_thread.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/string_lut.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/service_details.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/vector.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_timer/eebus_timer_linux.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_timer/eebus_timer_apple.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_timer/eebus_timer_windows.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/websocket/http_server.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/websocket/websocket_client_creator.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/websocket/websocket_server_creator.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/websocket/websocket.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/websocket/websocket_client.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/websocket/websocket_server.c
+  ship_node_multi_test.cpp
+)
+
+target_include_directories(${MULTI_TEST_NAME} PRIVATE ${PROJECT_INCLUDES_PATH})
+
+target_compile_options(${MULTI_TEST_NAME} PRIVATE ${PROJECT_COMPILE_OPTIONS})
+
+target_compile_definitions(
+  ${MULTI_TEST_NAME}
+  PRIVATE
+  ${PROJECT_COMPILE_DEFINITIONS}
+  MEMORY_LEAKS_TEST
+)
+
+target_link_libraries(
+  ${MULTI_TEST_NAME}
   PRIVATE
   ${THREAD_LIBRARY}
   ${DNS_SD_LIB}

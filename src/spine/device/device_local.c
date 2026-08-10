@@ -245,7 +245,7 @@ void DeviceLocalConstruct(
   self->thread    = NULL;
   self->timer     = NULL;
 
-  static const size_t kQueueMaxMsg = 15;
+  static const size_t kQueueMaxMsg = 30;
 
   self->msg_queue = EebusQueueCreate(kQueueMaxMsg, sizeof(DeviceLocalQueueMessage), DeviceLocalQueueMsgDeallocator);
 
@@ -329,6 +329,16 @@ void DeviceLocalTick(DeviceLocalObject* self) {
   }
 }
 
+static bool IsRemoteDeviceAlive(const DeviceLocal* dl, const DeviceRemoteObject* remote_device) {
+  const size_t n = StringLutGetSize(&dl->remote_devices);
+  for (size_t i = 0; i < n; ++i) {
+    if (StringLutGetElementValue(&dl->remote_devices, i) == (const void*)remote_device) {
+      return true;
+    }
+  }
+  return false;
+}
+
 EebusError HandleQueueMessage(DeviceLocalObject* self) {
   DeviceLocal* const dl = DEVICE_LOCAL(self);
 
@@ -344,7 +354,9 @@ EebusError HandleQueueMessage(DeviceLocalObject* self) {
     DatagramType* const datagram = DatagramParse((const char*)queue_msg.msg_buf.data);
 
     EEBUS_MUTEX_LOCK(dl->mutex);
-    err = ProcessDatagram(self, datagram, queue_msg.remote_device);
+    if (IsRemoteDeviceAlive(dl, queue_msg.remote_device)) {
+      err = ProcessDatagram(self, datagram, queue_msg.remote_device);
+    }
     EEBUS_MUTEX_UNLOCK(dl->mutex);
 
     DatagramDelete(datagram);
@@ -534,6 +546,12 @@ DataReaderObject* SetupRemoteDevice(DeviceLocalObject* self, const char* ski, Da
   SenderObject* const sender = SenderCreate(writer);
   DeviceRemoteObject* dr     = DeviceRemoteCreate(DEVICE_LOCAL_OBJECT(dl), ski, sender);
   EEBUS_MUTEX_LOCK(dl->mutex);
+
+  // Guard against reconnect before the previous disconnect fires: remove stale entry
+  if (DEVICE_LOCAL_GET_REMOTE_DEVICE_WITH_SKI(self, ski) != NULL) {
+    DEVICE_LOCAL_REMOVE_REMOTE_DEVICE(self, ski);
+  }
+
   AddRemoteDeviceForSki(self, ski, dr);
 
   // Request Detailed Discovery Data
@@ -566,9 +584,7 @@ void RemoveRemoteDeviceConnection(DeviceLocalObject* self, const char* ski) {
     return;
   }
 
-  DEVICE_LOCAL_REMOVE_REMOTE_DEVICE(self, ski);
-
-  // inform about the disconnection
+  // Publish before removal so listeners receive a valid device pointer
   const EventPayload payload = {
       .ski         = ski,
       .event_type  = kEventTypeDeviceChange,
@@ -576,7 +592,9 @@ void RemoveRemoteDeviceConnection(DeviceLocalObject* self, const char* ski) {
       .device      = remote_device,
   };
 
-  EVENTS_PUBLISH(dl->events_manager, &payload);
+  EventPublish(&payload);
+
+  DEVICE_LOCAL_REMOVE_REMOTE_DEVICE(self, ski);
   EEBUS_MUTEX_UNLOCK(dl->mutex);
 }
 

@@ -69,18 +69,32 @@ void HemsRegisterRemoteSki(HemsObject* self, const char* ski);
 void HemsUnregisterRemoteSki(HemsObject* self, const char* ski);
 
 /**
- * @brief Set the EG LPC remote entity address to be used for sending the power limit
- * @param self HEMS instance to set the remote entity for
+ * @brief Add an EG LPC remote entity address
+ * @param self HEMS instance
  * @param entity_addr Pointer to the entity address
  */
 void HemsSetEgLpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
 
 /**
- * @brief Set the EG LPP remote entity address to be used for sending the power limit
- * @param self HEMS instance to set the remote entity for
+ * @brief Remove an EG LPC remote entity address
+ * @param self HEMS instance
+ * @param entity_addr Pointer to the entity address to remove
+ */
+void HemsRemoveEgLpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
+
+/**
+ * @brief Add an EG LPP remote entity address
+ * @param self HEMS instance
  * @param entity_addr Pointer to the entity address
  */
 void HemsSetEgLppRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
+
+/**
+ * @brief Remove an EG LPP remote entity address
+ * @param self HEMS instance
+ * @param entity_addr Pointer to the entity address to remove
+ */
+void HemsRemoveEgLppRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
 
 /**
  * @brief Add the MA MPC remote entity address to be used for sending the power limit
@@ -97,11 +111,18 @@ void HemsAddMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_
 void HemsRemoveMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
 
 /**
- * @brief Set the MA MGCP remote entity address
- * @param self HEMS instance to set the remote entity for
- * @param entity_addr Pointer to the entity address (NULL = disconnected)
+ * @brief Add the MA MGCP remote entity address
+ * @param self HEMS instance
+ * @param entity_addr Pointer to the entity address
  */
 void HemsSetMaMgcpRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
+
+/**
+ * @brief Remove the MA MGCP remote entity address
+ * @param self HEMS instance
+ * @param entity_addr Pointer to the entity address to remove
+ */
+void HemsRemoveMaMgcpRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
 
 /**
  * @brief Handle command line input

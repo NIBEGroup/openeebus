@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "src/cli/eebus_cli_ma_mpc.h"
+#include "src/cli/eebus_cli_remote_arg.h"
 #include "src/use_case/model/scaled_value.h"
 
 typedef struct MaMpcCli MaMpcCli;
@@ -32,8 +33,8 @@ struct MaMpcCli {
 
   /** MA MPC instance to deal with */
   MaMpcUseCaseObject* ma_mpc;
-  /** MA MPC remote entity address to communicate with */
-  const EntityAddressType* entity_addr;
+  /** Connected remote entity address list (not owned — pointer into caller's storage) */
+  const EntityAddressList* addr_list;
 };
 
 #define MA_MPC_CLI(obj) ((MaMpcCli*)(obj))
@@ -46,36 +47,41 @@ static const EebusCliHandlerInterface ma_mpc_cli_methods = {
     .handle_cmd = HandleCmd,
 };
 
-static EebusError MaMpcCliConstruct(MaMpcCli* self, MaMpcUseCaseObject* ma_mpc, const EntityAddressType* entity_addr);
+static EebusError
+MaMpcCliConstruct(MaMpcCli* self, MaMpcUseCaseObject* ma_mpc, const EntityAddressList* addr_list);
 
-static void HandleCmdMaMpcGet(const MaMpcCli* self, const char* const* tokens, size_t num_tokens);
+static void HandleCmdList(const MaMpcCli* self);
+static void HandleCmdMaMpcGet(
+    const MaMpcCli*          self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+);
 
-EebusError MaMpcCliConstruct(MaMpcCli* self, MaMpcUseCaseObject* ma_mpc, const EntityAddressType* entity_addr) {
-  // Override "virtual functions table"
+static EebusError
+MaMpcCliConstruct(MaMpcCli* self, MaMpcUseCaseObject* ma_mpc, const EntityAddressList* addr_list) {
   EEBUS_CLI_HANDLER_INTERFACE(self) = &ma_mpc_cli_methods;
 
-  self->ma_mpc      = ma_mpc;
-  self->entity_addr = NULL;
+  self->ma_mpc    = NULL;
+  self->addr_list = NULL;
 
-  if ((ma_mpc == NULL) || (entity_addr == NULL)) {
+  if ((ma_mpc == NULL) || (addr_list == NULL)) {
     return kEebusErrorInputArgumentNull;
   }
 
-  self->entity_addr = EntityAddressCopy(entity_addr);
-  if (self->entity_addr == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+  self->ma_mpc    = ma_mpc;
+  self->addr_list = addr_list;
 
   return kEebusErrorOk;
 }
 
-EebusCliHandlerObject* MaMpcCliCreate(MaMpcUseCaseObject* ma_mpc, const EntityAddressType* entity_addr) {
+EebusCliHandlerObject* MaMpcCliCreate(MaMpcUseCaseObject* ma_mpc, const EntityAddressList* addr_list) {
   MaMpcCli* ma_mpc_cli = (MaMpcCli*)EEBUS_MALLOC(sizeof(MaMpcCli));
   if (ma_mpc_cli == NULL) {
     return NULL;
   }
 
-  if (MaMpcCliConstruct(ma_mpc_cli, ma_mpc, entity_addr) != kEebusErrorOk) {
+  if (MaMpcCliConstruct(ma_mpc_cli, ma_mpc, addr_list) != kEebusErrorOk) {
     MaMpcCliDelete(EEBUS_CLI_HANDLER_OBJECT(ma_mpc_cli));
     return NULL;
   }
@@ -83,11 +89,28 @@ EebusCliHandlerObject* MaMpcCliCreate(MaMpcUseCaseObject* ma_mpc, const EntityAd
   return EEBUS_CLI_HANDLER_OBJECT(ma_mpc_cli);
 }
 
-void Destruct(EebusCliHandlerObject* self) {
+static void Destruct(EebusCliHandlerObject* self) {
   MaMpcCli* ma_mpc_cli = MA_MPC_CLI(self);
+  ma_mpc_cli->addr_list = NULL;
+}
 
-  EntityAddressDelete((EntityAddressType*)ma_mpc_cli->entity_addr);
-  ma_mpc_cli->entity_addr = NULL;
+//-------------------------------------------------------------------------------------------//
+//
+// MA MPC List Handling
+//
+//-------------------------------------------------------------------------------------------//
+static void HandleCmdList(const MaMpcCli* self) {
+  const size_t count = EntityAddressListGetSize(self->addr_list);
+  if (count == 0) {
+    printf("ma_mpc: no remotes connected\n");
+    return;
+  }
+  printf("ma_mpc connected remotes (%zu):\n", count);
+  for (size_t i = 0; i < count; i++) {
+    char formatted[EEBUS_CLI_ENTITY_ADDR_STR_MAX];
+    CliFormatEntityAddress(EntityAddressListGet(self->addr_list, i), formatted, sizeof(formatted));
+    printf("  %s\n", formatted);
+  }
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -95,7 +118,12 @@ void Destruct(EebusCliHandlerObject* self) {
 // MA MPC Getters Handling
 //
 //-------------------------------------------------------------------------------------------//
-void HandleCmdMaMpcGet(const MaMpcCli* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmdMaMpcGet(
+    const MaMpcCli*          self,
+    const EntityAddressType* entity_addr,
+    const char* const*       tokens,
+    size_t                   num_tokens
+) {
   if (num_tokens != 3) {
     printf("Insufficient arguments for ma_mpc get command\n");
     return;
@@ -110,7 +138,7 @@ void HandleCmdMaMpcGet(const MaMpcCli* self, const char* const* tokens, size_t n
   }
 
   ScaledValue value = {0};
-  if (MaMpcGetMeasurementData(self->ma_mpc, *name_id, self->entity_addr, &value) != kEebusErrorOk) {
+  if (MaMpcGetMeasurementData(self->ma_mpc, *name_id, entity_addr, &value) != kEebusErrorOk) {
     printf("Getting MA MPC measurement value failed\n");
     return;
   }
@@ -119,7 +147,7 @@ void HandleCmdMaMpcGet(const MaMpcCli* self, const char* const* tokens, size_t n
   ScaledValuePrint("value=%s\n", &value);
 }
 
-void HandleCmd(const EebusCliHandlerObject* self, const char* const* tokens, size_t num_tokens) {
+static void HandleCmd(const EebusCliHandlerObject* self, const char* const* tokens, size_t num_tokens) {
   const MaMpcCli* const ma_mpc_cli = MA_MPC_CLI(self);
 
   if (num_tokens < 2) {
@@ -127,9 +155,28 @@ void HandleCmd(const EebusCliHandlerObject* self, const char* const* tokens, siz
     return;
   }
 
-  if (strcmp(tokens[1], "get") == 0) {
-    HandleCmdMaMpcGet(ma_mpc_cli, tokens, num_tokens);
+  if (strcmp(tokens[1], "list") == 0) {
+    HandleCmdList(ma_mpc_cli);
+    return;
+  }
+
+  const char* adjusted[10];
+  size_t      adjusted_count                  = 0;
+  const EntityAddressType* const remote_addr  = CliExtractRemoteArg(
+      tokens, num_tokens, ma_mpc_cli->addr_list, "ma_mpc", adjusted, &adjusted_count
+  );
+  if (remote_addr == NULL) {
+    return;
+  }
+
+  if (adjusted_count < 2) {
+    printf("Insufficient arguments for ma_mpc command\n");
+    return;
+  }
+
+  if (strcmp(adjusted[1], "get") == 0) {
+    HandleCmdMaMpcGet(ma_mpc_cli, remote_addr, adjusted, adjusted_count);
   } else {
-    printf("Unknown subcommand for ma_mpc: %s\n", tokens[1]);
+    printf("Unknown subcommand for ma_mpc: %s\n", adjusted[1]);
   }
 }

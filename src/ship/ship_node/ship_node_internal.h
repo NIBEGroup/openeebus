@@ -17,11 +17,14 @@
 #define SRC_SHIP_SHIP_NODE_SHIP_NODE_INTERNAL_H_
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "src/common/api/eebus_mutex_interface.h"
 #include "src/common/api/eebus_queue_interface.h"
 #include "src/common/api/eebus_thread_interface.h"
 #include "src/common/service_details.h"
+#include "src/common/api/eebus_timer_interface.h"
+#include "src/common/string_lut.h"
 #include "src/ship/api/http_server_interface.h"
 #include "src/ship/api/ship_connection_interface.h"
 #include "src/ship/api/ship_mdns_interface.h"
@@ -38,13 +41,15 @@ extern "C" {
 typedef struct ConnectionMapping ConnectionMapping;
 
 struct ConnectionMapping {
-  const char* ski;
-  ShipConnectionInterface* connection;
-  /** Which attempt is it to initate an connection to the remote SKI */
-  int attempt_cnt;
-  bool is_attempt_running;
-  ServiceDetails* service_details;
+  char*                  ski;               /* owned copy */
+  ShipConnectionObject*  connection;        /* NULL = not connected */
+  int                    attempt_cnt;
+  bool                   is_attempt_running;
+  bool                   handshake_complete; /* true once kDataExchange confirmed */
+  ServiceDetails*        service_details;   /* owned */
 };
+
+#define SHIP_NODE_MAX_CONNECTIONS 10
 
 typedef struct ShipNode ShipNode;
 
@@ -53,7 +58,6 @@ struct ShipNode {
   ShipNodeObject sc_object;
 
   EebusQueueObject* msg_queue;
-  char* remote_ski;
   ShipMdnsObject* mdns;
   Vector* mdns_entries;
   EebusMutexObject* mutex;
@@ -61,25 +65,14 @@ struct ShipNode {
   bool cancel;
   EebusThreadObject* connection_thread;
 
-  ConnectionMapping* connections_table;
+  StringLut           connections;     /* SKI → ConnectionMapping* (owned) */
+  size_t              max_connections; /* default SHIP_NODE_MAX_CONNECTIONS */
+  EebusTimerObject*   retry_timer;     /* single deferred retry timer */
   ShipNodeReaderObject* ship_node_reader;
   const TlsCertificateObject* tsl_certificate;
   ServiceDetails* local_service_details;
-  // Temporary single SHIP Connection object instance
-  // for early stage of Ship Node development and testing.
-  // To be replaces with multiple instances handling
-  ShipConnectionObject* ship_connection;
-  // Old client connection superseded by the simultaneous-open tiebreaker.
-  // Stopped and freed by the DiscardSuperseded handler on the connection loop thread.
-  ShipConnectionObject* superseded_connection;
   WebsocketCreatorObject* websocket_creator;
   HttpServerObject* http_server;
-  bool connection_attempt_running;
-  // True only while a CLIENT ShipConnection is alive.  Distinct from
-  // connection_attempt_running (which is also true for active servers) so that
-  // the SIMOPEN detector can tell whether there is a real concurrent outgoing
-  // client, not just an already-established server.
-  bool client_connection_running;
   ShipRole role;
 };
 

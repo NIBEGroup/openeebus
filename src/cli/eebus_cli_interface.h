@@ -22,6 +22,7 @@
 #define SRC_CLI_EEBUS_CLI_INTERFACE_H_
 
 #include "src/common/eebus_malloc.h"
+#include "src/common/entity_address_list.h"
 #include "src/spine/model/entity_types.h"
 #include "src/use_case/actor/cs/cs_lp.h"
 #include "src/use_case/actor/eg/eg_lp.h"
@@ -72,23 +73,23 @@ struct EebusCliInterface {
    * @brief Set the EG LPC use case instance to be used by the CLI handler
    * @param self Pointer to the EEBUS CLI handler instance
    * @param eg_lpc_use_case EG LPC use case instance to be used by the CLI handler
-   * @param remote_entity_address EG LPC remote entity address to be used by the CLI handler
+   * @param addr_list Connected remote entity address list; NULL to tear down the handler
    */
   void (*set_eg_lpc)(
       EebusCliObject* self,
       EgLpUseCaseObject* eg_lpc_use_case,
-      const EntityAddressType* remote_entity_address
+      EntityAddressList* addr_list
   );
   /**
    * @brief Set the EG LPP use case instance to be used by the CLI handler
    * @param self Pointer to the EEBUS CLI handler instance
    * @param eg_lpp_use_case EG LPP use case instance to be used by the CLI handler
-   * @param remote_entity_address EG LPP remote entity address to be used by the CLI handler
+   * @param addr_list Connected remote entity address list; NULL to tear down the handler
    */
   void (*set_eg_lpp)(
       EebusCliObject* self,
       EgLpUseCaseObject* eg_lpp_use_case,
-      const EntityAddressType* remote_entity_address
+      EntityAddressList* addr_list
   );
   /**
    * @brief Set the MU MPC use case instance to be used by the CLI handler
@@ -100,12 +101,12 @@ struct EebusCliInterface {
    * @brief Set the MA MPC use case instance to be used by the CLI handler
    * @param self Pointer to the EEBUS CLI handler instance
    * @param ma_mpc_use_case MA MPC use case instance to be used by the CLI handler
-   * @param remote_entity_address MA MPC remote entity address to be used by the CLI handler
+   * @param addr_list Connected remote entity address list; NULL to tear down the handler
    */
   void (*set_ma_mpc)(
       EebusCliObject* self,
       MaMpcUseCaseObject* ma_mpc_use_case,
-      const EntityAddressType* remote_entity_address
+      EntityAddressList* addr_list
   );
   /**
    * @brief Set the GCP MGCP use case instance to be used by the CLI handler
@@ -117,12 +118,12 @@ struct EebusCliInterface {
    * @brief Set the MA MGCP use case instance to be used by the CLI handler
    * @param self Pointer to the EEBUS CLI handler instance
    * @param ma_mgcp_use_case MA MGCP use case instance to be used by the CLI handler
-   * @param remote_entity_address MA MGCP remote entity address to be used by the CLI handler
+   * @param addr_list Connected remote entity address list; NULL to tear down the handler
    */
   void (*set_ma_mgcp)(
       EebusCliObject* self,
       MaMgcpUseCaseObject* ma_mgcp_use_case,
-      const EntityAddressType* remote_entity_address
+      EntityAddressList* addr_list
   );
   /**
    * @brief Handle the command passed as a string
@@ -168,14 +169,14 @@ struct EebusCliObject {
 /**
  * @brief EEBUS CLI Set EG LPC caller definition
  */
-#define EEBUS_CLI_SET_EG_LPC(obj, eg_lpc_use_case, remote_entity_address) \
-  (EEBUS_CLI_INTERFACE(obj)->set_eg_lpc(obj, eg_lpc_use_case, remote_entity_address))
+#define EEBUS_CLI_SET_EG_LPC(obj, eg_lpc_use_case, addr_list) \
+  (EEBUS_CLI_INTERFACE(obj)->set_eg_lpc(obj, eg_lpc_use_case, addr_list))
 
 /**
  * @brief EEBUS CLI Set EG LPP caller definition
  */
-#define EEBUS_CLI_SET_EG_LPP(obj, eg_lpp_use_case, remote_entity_address) \
-  (EEBUS_CLI_INTERFACE(obj)->set_eg_lpp(obj, eg_lpp_use_case, remote_entity_address))
+#define EEBUS_CLI_SET_EG_LPP(obj, eg_lpp_use_case, addr_list) \
+  (EEBUS_CLI_INTERFACE(obj)->set_eg_lpp(obj, eg_lpp_use_case, addr_list))
 
 /**
  * @brief EEBUS CLI Set MU MPC caller definition
@@ -185,8 +186,8 @@ struct EebusCliObject {
 /**
  * @brief EEBUS CLI Set Ma Mpc caller definition
  */
-#define EEBUS_CLI_SET_MA_MPC(obj, ma_mpc_use_case, remote_entity_address) \
-  (EEBUS_CLI_INTERFACE(obj)->set_ma_mpc(obj, ma_mpc_use_case, remote_entity_address))
+#define EEBUS_CLI_SET_MA_MPC(obj, ma_mpc_use_case, addr_list) \
+  (EEBUS_CLI_INTERFACE(obj)->set_ma_mpc(obj, ma_mpc_use_case, addr_list))
 
 /**
  * @brief EEBUS CLI Set GCP MGCP caller definition
@@ -196,8 +197,8 @@ struct EebusCliObject {
 /**
  * @brief EEBUS CLI Set MA MGCP caller definition
  */
-#define EEBUS_CLI_SET_MA_MGCP(obj, ma_mgcp_use_case, remote_entity_address) \
-  (EEBUS_CLI_INTERFACE(obj)->set_ma_mgcp(obj, ma_mgcp_use_case, remote_entity_address))
+#define EEBUS_CLI_SET_MA_MGCP(obj, ma_mgcp_use_case, addr_list) \
+  (EEBUS_CLI_INTERFACE(obj)->set_ma_mgcp(obj, ma_mgcp_use_case, addr_list))
 
 /**
  * @brief EEBUS CLI Handle Cmd caller definition
