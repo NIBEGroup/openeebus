@@ -98,18 +98,19 @@ void WebsocketWrQueueMsgRelease(void* msg) {
 void WebsocketDestruct(WebsocketObject* self) {
   Websocket* const ws = WEBSOCKET(self);
 
-  ws->wsi = NULL;
+  ws->wsi       = NULL;
+  ws->is_closed = true;
+
+  if (ws->lws_ctx != NULL) {
+    lws_context_destroy(ws->lws_ctx);
+    ws->lws_ctx = NULL;
+  }
 
   EebusMutexDelete(ws->wr_mutex);
   ws->wr_mutex = NULL;
 
   EebusQueueDelete(ws->wr_queue);
   ws->wr_queue = NULL;
-
-  if (ws->lws_ctx != NULL) {
-    lws_context_destroy(ws->lws_ctx);
-    ws->lws_ctx = NULL;
-  }
 
   if (ws->buf_tmp != NULL) {
     EEBUS_FREE(ws->buf_tmp);
@@ -192,15 +193,23 @@ void WebsocketStaggerCallback(lws_sorted_usec_list_t* sul) {
     if (!WEBSOCKET_IS_CLOSED(WEBSOCKET_OBJECT(ws))) {
       WEBSOCKET_SCHEDULE_WRITE(WEBSOCKET_OBJECT(ws));
     }
-  }
 
-  lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
+    lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
+  }
 }
 
 // LWS event handlers
 
 int WebsocketOnWritable(WebsocketObject* self) {
   Websocket* const ws = (Websocket*)WEBSOCKET(self);
+
+  // Snapshot wsi once: WebsocketClose() can set ws->wsi = NULL from another thread.
+  // If wsi is non-NULL here the LWS wsi object is still alive — lws_context_destroy
+  // runs only after the LWS service thread exits.
+  struct lws* const wsi = ws->wsi;
+  if (wsi == NULL) {
+    return 0;
+  }
 
   WriteMessage wr_msg = {0};
 
@@ -213,7 +222,7 @@ int WebsocketOnWritable(WebsocketObject* self) {
   const size_t sz = wr_msg.data_size - LWS_PRE;
 
   WEBSOCKET_DEBUG_HEXDUMP(&wr_msg.data[LWS_PRE], sz);
-  const int n = lws_write(ws->wsi, &wr_msg.data[LWS_PRE], sz, LWS_WRITE_BINARY);
+  const int n = lws_write(wsi, &wr_msg.data[LWS_PRE], sz, LWS_WRITE_BINARY);
 
   EEBUS_FREE(wr_msg.data);
   if ((n < 0) || ((size_t)n != sz)) {
@@ -221,7 +230,7 @@ int WebsocketOnWritable(WebsocketObject* self) {
     return -1;
   }
 
-  lws_callback_on_writable(ws->wsi);
+  lws_callback_on_writable(wsi);
   return 0;
 }
 

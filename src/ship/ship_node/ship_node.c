@@ -227,6 +227,8 @@ ShipNodeObject* ShipNodeCreate(
 void Destruct(InfoProviderObject* self) {
   ShipNode* const sn = SHIP_NODE(self);
 
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): begin\n", __func__);
+
   StringDelete(sn->remote_ski);
   sn->remote_ski = NULL;
 
@@ -268,6 +270,7 @@ void Destruct(InfoProviderObject* self) {
   sn->msg_queue = NULL;
 
   sn->connection_attempt_running = false;
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): end\n", __func__);
 }
 
 void ShipNodeOnMdnsEntriesFoundCallback(Vector* found_entries, void* ctx) {
@@ -349,6 +352,10 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
 
 void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, bool had_error) {
   ShipNode* const sn = SHIP_NODE(self);
+
+  if (sn->cancel) {
+    return;
+  }
 
   ShipNodeQueueMessage queue_msg = {
       .type            = kShipNodeQueueMsgTypeShipConnectionClosed,
@@ -664,6 +671,7 @@ void Start(ShipNodeObject* self) {
 void Stop(ShipNodeObject* self) {
   ShipNode* const sn = SHIP_NODE(self);
 
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): begin\n", __func__);
   sn->cancel = true;
 
   if (sn->connection_thread != NULL) {
@@ -674,11 +682,29 @@ void Stop(ShipNodeObject* self) {
     sn->connection_thread = NULL;
   }
 
+  // ShipNodeConnectionLoop may have exited via kCancel before processing a
+  // kShipConnectionClosed that arrived during the concurrent close handshake
+  // (e.g. during the 500 ms wait in DataExchangeHandleClose). Stop and delete
+  // the connection here so Destruct never encounters a live ship_connection.
+  EEBUS_MUTEX_LOCK(sn->mutex);
+  ShipConnectionObject* const sc = sn->ship_connection;
+
+  sn->ship_connection = NULL;
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
+  if (sc != NULL) {
+    SHIP_CONNECTION_STOP(sc);
+    SHIP_NODE_READER_ON_REMOTE_SKI_DISCONNECTED(sn->ship_node_reader, SHIP_CONNECTION_GET_REMOTE_SKI(sc));
+    ShipConnectionDelete(sc);
+  }
+
   SHIP_MDNS_STOP(sn->mdns);
 
   if (ShipNodeIsServerSupported(sn)) {
     HTTP_SERVER_STOP(sn->http_server);
   }
+
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): end\n", __func__);
 }
 
 void ShipNodeRegisterSki(ShipNodeObject* self, const char* ski, bool is_trusted) {

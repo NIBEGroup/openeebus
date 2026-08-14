@@ -321,6 +321,9 @@ void CloseConnection(ShipConnectionObject* self, bool safe, int32_t code, const 
     };
 
     ShipConnectionSerializeAndSendMessage(sc, &sme_close, kSmeClose);
+    // TODO: Instead of sleeping unconditionally, dequeue messages here and wait
+    // for kConnectionClosePhaseTypeConfirm (via DataExchangeHandleClose) with a
+    // 500ms timeout, closing immediately on Confirm or on timeout expiry.
     EebusThreadUsleep(500000);  // Wait 0.5s for the message to be sent
     WEBSOCKET_CLOSE(sc->websocket, 4001, "close");
   } else {
@@ -1065,6 +1068,14 @@ EebusError DataExchangeHandleClose(ShipConnection* self, const ConnectionClose* 
     WEBSOCKET_CLOSE(self->websocket, 4001, "close");
   }
 
+  // Mirror what CloseConnection does after WEBSOCKET_CLOSE: stop timers, set shutdown_once
+  // so that the subsequent CloseConnection call from Stop() is a no-op and does not send a
+  // duplicate kShipConnectionClosed message with a dangling sc pointer.
+  EEBUS_TIMER_STOP(self->wait_for_ready_timer);
+  EEBUS_TIMER_STOP(self->send_prolongation_request_timer);
+  EEBUS_TIMER_STOP(self->prolongation_request_reply_timer);
+  self->cancel        = true;
+  self->shutdown_once = true;
   INFO_PROVIDER_HANDLE_CONNECTION_CLOSED(self->info_provider, SHIP_CONNECTION_OBJECT(self), true);
   return kEebusErrorOk;
 }

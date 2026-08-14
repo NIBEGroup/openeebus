@@ -62,7 +62,7 @@ void MainLoop() {
 }
 
 int main(int argc, char** argv) {
-  if (argc != 5) {
+  if (argc < 5 || argc > 6) {
     PrintUsage();
     return -1;
   }
@@ -72,6 +72,7 @@ int main(int argc, char** argv) {
   const char* const remote_ski = argv[2];
   const char* const cert       = argv[3];
   const char* const pkey       = argv[4];
+  const char* const role       = (argc == 6) ? argv[5] : "auto";
 
   TlsCertificateObject* const tls_cert = TlsCertificateLoadX509KeyPair(cert, pkey);
   if (tls_cert == NULL) {
@@ -79,7 +80,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  hems = HemsOpen(port, "auto", tls_cert);
+  hems = HemsOpen(port, role, tls_cert);
   if (hems == NULL) {
     printf("Failed to open heat pump EEBUS service!\n");
     return -1;

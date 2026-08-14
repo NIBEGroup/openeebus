@@ -200,18 +200,61 @@ struct lws_context* WebsocketClientLwsContextCreate(WebsocketClient* self) {
   return lws_create_context(&lws_ctx_creation_info);
 }
 
+// ParseUri() is a drop-in replacement for lws_parse_uri() that is compatible
+// with both lws < 5.0 (delegates directly) and lws >= 5.0 (uses the new
+// lws_parse_uri_create() API). In the lws >= 5.0 path, the parsed tokens are
+// written back into the mutable buffer uri so the returned pointers remain valid
+// after the lws_parse_uri_t is destroyed — identical lifetime semantics to the
+// old API.
+static int ParseUri(char* uri, const char** prot, const char** ads, int* port, const char** path) {
+#if LWS_LIBRARY_VERSION_NUMBER >= 5000000
+  lws_parse_uri_t* parsed = lws_parse_uri_create(uri);
+  if (parsed == NULL) {
+    return 1;
+  }
+
+  // Write scheme\0host\0path\0 sequentially into uri (always shorter than the
+  // original URI) so that the returned pointers into uri outlive parsed.
+  char* p = uri;
+
+  *prot    = p;
+  size_t n = strlen(parsed->scheme);
+  memcpy(p, parsed->scheme, n);
+  p += n;
+  *p++ = '\0';
+
+  *ads = p;
+  n    = strlen(parsed->host);
+  memcpy(p, parsed->host, n);
+  p += n;
+  *p++ = '\0';
+
+  *port = parsed->port;
+
+  *path = p;
+  n     = strlen(parsed->path);
+  memcpy(p, parsed->path, n);
+  p[n] = '\0';
+
+  lws_parse_uri_destroy(&parsed);
+  return 0;
+#else
+  return lws_parse_uri(uri, prot, ads, port, path);
+#endif
+}
+
 EebusError WebsocketClientParse(WebsocketClient* self) {
   const char* path     = NULL;
   const char* protocol = NULL;
 
-  if (lws_parse_uri(self->uri, &protocol, &self->address, &self->port, &path)) {
+  if (ParseUri(self->uri, &protocol, &self->address, &self->port, &path)) {
     WEBSOCKET_DEBUG_PRINTF("%s(), error parsing uri\n", __func__);
     return kEebusErrorParse;
   }
 
   if ((protocol == NULL) || (strcmp(protocol, "wss"))) {
     WEBSOCKET_DEBUG_PRINTF("%s(), Unsopported protocol specified", __func__);
-    WEBSOCKET_DEBUG_PRINTF("\"%s\"\n", (protocol != NULL) ? "" : protocol);
+    WEBSOCKET_DEBUG_PRINTF("\"%s\"\n", (protocol != NULL) ? protocol : "");
     return kEebusErrorInputArgument;
   }
 

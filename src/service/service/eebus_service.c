@@ -20,6 +20,7 @@
 
 #include <string.h>
 
+#include "src/common/debug.h"
 #include "src/common/eebus_arguments.h"
 #include "src/common/eebus_malloc.h"
 #include "src/service/api/service_reader_interface.h"
@@ -30,6 +31,17 @@
 #include "src/spine/api/device_local_interface.h"
 #include "src/spine/device/device_local.h"
 #include "src/spine/entity/entity_local.h"
+
+/** Set EEBUS_SERVICE_DEBUG 1 to enable debug prints */
+#ifndef EEBUS_SERVICE_DEBUG
+#define EEBUS_SERVICE_DEBUG 0
+#endif
+
+#if EEBUS_SERVICE_DEBUG
+#define EEBUS_SERVICE_DEBUG_PRINTF(fmt, ...) DebugPrintf(fmt, ##__VA_ARGS__)
+#else
+#define EEBUS_SERVICE_DEBUG_PRINTF(fmt, ...)
+#endif
 
 typedef struct EebusService EebusService;
 
@@ -193,6 +205,7 @@ EebusServiceObject* EebusServiceCreate(
 
 void Destruct(ShipNodeReaderObject* self) {
   EebusService* const service = EEBUS_SERVICE(self);
+  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): begin\n", __func__);
 
   // Note: Service shall not own Service Reader therefore it is not released here
 
@@ -212,6 +225,8 @@ void Destruct(ShipNodeReaderObject* self) {
 
   EebusDeviceInfoDelete(service->device_info);
   service->device_info = NULL;
+
+  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): end\n", __func__);
 }
 
 void OnRemoteSkiConnected(ShipNodeReaderObject* self, const char* ski) {
@@ -260,8 +275,12 @@ void Start(EebusServiceObject* self) {
 
 void Stop(EebusServiceObject* self) {
   EebusService* const service = EEBUS_SERVICE(self);
-  SHIP_NODE_STOP(service->ship_node);
+  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): begin\n", __func__);
+  // Stop DeviceLocal first so its loop thread is joined before ShipNode
+  // frees remote-device objects — prevents dangling-pointer DeviceLocal::ProcessDatagram() crash
   DEVICE_LOCAL_STOP(service->spine_local_device);
+  SHIP_NODE_STOP(service->ship_node);
+  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): end\n", __func__);
 }
 
 const ServiceDetails* GetLocalService(const EebusServiceObject* self) {
