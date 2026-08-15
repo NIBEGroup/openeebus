@@ -27,7 +27,8 @@ _SETTLE      = 2.0
 @pytest.fixture(scope="module")
 def nodes_mgcp(nodes):
     hp, hems = nodes
-    time.sleep(5.0)  # let use-case subscriptions settle
+    assert hems.wait_for("MA MGCP remote entity connected", 30), \
+        "MA MGCP use case not ready after 30 s"
     return hp, hems
 
 
