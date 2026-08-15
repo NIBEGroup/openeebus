@@ -11,7 +11,7 @@ from pytest_html import extras as html_extras
 
 ROOT      = Path(__file__).parent.parent
 BUILD_DIR = ROOT / "build"
-CERTS_DIR = ROOT / "scripts" / "certificates"
+CERTS_DIR = ROOT / "integration_tests" / "certificates"
 
 HP_BINARY   = str(BUILD_DIR / "heat_pump")
 HEMS_BINARY = str(BUILD_DIR / "hems")
@@ -57,6 +57,18 @@ class NodeProcess:
                 if marker in f.read():
                     return True
             time.sleep(0.5)
+        return False
+
+    def line_count(self) -> int:
+        return len(self.log_lines())
+
+    def wait_for_new(self, marker: str, after: int, timeout: float) -> bool:
+        """Return True once marker appears in any log line at index >= after."""
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if any(marker in ln for ln in self.log_lines()[after:]):
+                return True
+            time.sleep(0.1)
         return False
 
     def log_lines(self) -> list:
@@ -117,7 +129,7 @@ def require_binaries():
         pytest.skip(f"Binaries not found: {missing!r}  — build the project first")
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def nodes(request):
     """Start heat_pump + hems and wait for the SHIP connection; tear down after the test."""
     require_binaries()

@@ -10,8 +10,6 @@ Scenarios:
   5. CS (heat_pump) announces its own active power limit → EG (HEMS) reads it
 """
 
-import time
-
 import pytest
 
 from conftest import parse_field, parse_pt
@@ -20,7 +18,7 @@ _PROPAGATION = 3.0
 _SETTLE      = 1.0
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def nodes_lpc(nodes):
     """Extends the base nodes fixture with LPC-specific readiness wait."""
     hp, hems = nodes
@@ -35,11 +33,14 @@ def nodes_lpc(nodes):
 
 def test_lpc_s1_failsafe_power_limit(nodes_lpc):
     hp, hems = nodes_lpc
+    pos_hems = hems.line_count()
     hp.send("cs_lpc set failsafe_limit 5000 true")
-    time.sleep(_PROPAGATION)
+    hems.wait_for_new("EG LPC Failsafe Active Power Limit received", pos_hems, _PROPAGATION)
+    pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send("cs_lpc get failsafe_limit")
     hems.send("eg_lpc get failsafe_limit")
-    time.sleep(_SETTLE)
+    hp.wait_for_new("CS LPC Failsafe Active Power Limit: value", pos_hp, _SETTLE)
+    hems.wait_for_new("EG LPC Failsafe Active Power Limit: value", pos_hems, _SETTLE)
 
     cs = parse_field(hp.last_line_with("CS LPC Failsafe Active Power Limit"), "value")
     eg = parse_field(hems.last_line_with("EG LPC Failsafe Active Power Limit"), "value")
@@ -50,11 +51,14 @@ def test_lpc_s1_failsafe_power_limit(nodes_lpc):
 
 def test_lpc_s1_failsafe_duration(nodes_lpc):
     hp, hems = nodes_lpc
+    pos_hems = hems.line_count()
     hp.send("cs_lpc set failsafe_duration PT2H true")
-    time.sleep(_PROPAGATION)
+    hems.wait_for_new("EG LPC Failsafe Duration Minimum received", pos_hems, _PROPAGATION)
+    pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send("cs_lpc get failsafe_duration")
     hems.send("eg_lpc get failsafe_duration")
-    time.sleep(_SETTLE)
+    hp.wait_for_new("CS LPC Failsafe Duration Minimum:", pos_hp, _SETTLE)
+    hems.wait_for_new("EG LPC Failsafe Duration Minimum:", pos_hems, _SETTLE)
 
     cs = parse_pt(hp.last_line_with("CS LPC Failsafe Duration Minimum"))
     eg = parse_pt(hems.last_line_with("EG LPC Failsafe Duration Minimum"))
@@ -69,11 +73,14 @@ def test_lpc_s1_failsafe_duration(nodes_lpc):
 
 def test_lpc_s2_active_power_limit(nodes_lpc):
     hp, hems = nodes_lpc
+    pos_hp = hp.line_count()
     hems.send("eg_lpc set power_limit 7000 PT0S true")
-    time.sleep(_PROPAGATION)
+    hp.wait_for_new("CS LPC Power Limit received", pos_hp, _PROPAGATION)
+    pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send("cs_lpc get power_limit")
     hems.send("eg_lpc get power_limit")
-    time.sleep(_SETTLE)
+    hp.wait_for_new("CS LPC Active Power Limit: value", pos_hp, _SETTLE)
+    hems.wait_for_new("EG LPC Active Power Limit: value", pos_hems, _SETTLE)
 
     cs_val = parse_field(hp.last_line_with("CS LPC Active Power Limit", exclude="Failsafe"), "value")
     eg_val = parse_field(hems.last_line_with("EG LPC Active Power Limit", exclude="Failsafe"), "value")
@@ -84,11 +91,14 @@ def test_lpc_s2_active_power_limit(nodes_lpc):
 
 def test_lpc_s2_active_power_limit_duration(nodes_lpc):
     hp, hems = nodes_lpc
+    pos_hp = hp.line_count()
     hems.send("eg_lpc set power_limit 7000 PT0S true")
-    time.sleep(_PROPAGATION)
+    hp.wait_for_new("CS LPC Power Limit received", pos_hp, _PROPAGATION)
+    pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send("cs_lpc get power_limit")
     hems.send("eg_lpc get power_limit")
-    time.sleep(_SETTLE)
+    hp.wait_for_new("CS LPC Active Power Limit: value", pos_hp, _SETTLE)
+    hems.wait_for_new("EG LPC Active Power Limit: value", pos_hems, _SETTLE)
 
     cs_dur = parse_field(hp.last_line_with("CS LPC Active Power Limit", exclude="Failsafe"), "duration")
     eg_dur = parse_field(hems.last_line_with("EG LPC Active Power Limit", exclude="Failsafe"), "duration")
@@ -99,11 +109,14 @@ def test_lpc_s2_active_power_limit_duration(nodes_lpc):
 
 def test_lpc_s2_active_power_limit_is_active(nodes_lpc):
     hp, hems = nodes_lpc
+    pos_hp = hp.line_count()
     hems.send("eg_lpc set power_limit 7000 PT0S true")
-    time.sleep(_PROPAGATION)
+    hp.wait_for_new("CS LPC Power Limit received", pos_hp, _PROPAGATION)
+    pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send("cs_lpc get power_limit")
     hems.send("eg_lpc get power_limit")
-    time.sleep(_SETTLE)
+    hp.wait_for_new("CS LPC Active Power Limit: value", pos_hp, _SETTLE)
+    hems.wait_for_new("EG LPC Active Power Limit: value", pos_hems, _SETTLE)
 
     cs_act = parse_field(hp.last_line_with("CS LPC Active Power Limit", exclude="Failsafe"), "is active")
     eg_act = parse_field(hems.last_line_with("EG LPC Active Power Limit", exclude="Failsafe"), "active")
@@ -118,11 +131,14 @@ def test_lpc_s2_active_power_limit_is_active(nodes_lpc):
 
 def test_lpc_s3_eg_writes_failsafe_limit(nodes_lpc):
     hp, hems = nodes_lpc
+    pos_hp = hp.line_count()
     hems.send("eg_lpc set failsafe_limit 600")
-    time.sleep(_PROPAGATION)
+    hp.wait_for_new("CS LPC Failsafe Active Power Limit received", pos_hp, _PROPAGATION)
+    pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send("cs_lpc get failsafe_limit")
     hems.send("eg_lpc get failsafe_limit")
-    time.sleep(_SETTLE)
+    hp.wait_for_new("CS LPC Failsafe Active Power Limit: value", pos_hp, _SETTLE)
+    hems.wait_for_new("EG LPC Failsafe Active Power Limit: value", pos_hems, _SETTLE)
 
     cs = parse_field(hp.last_line_with("CS LPC Failsafe Active Power Limit"), "value")
     eg = parse_field(hems.last_line_with("EG LPC Failsafe Active Power Limit"), "value")
@@ -133,11 +149,14 @@ def test_lpc_s3_eg_writes_failsafe_limit(nodes_lpc):
 
 def test_lpc_s3_eg_writes_failsafe_duration(nodes_lpc):
     hp, hems = nodes_lpc
+    pos_hp = hp.line_count()
     hems.send("eg_lpc set failsafe_duration PT3H")
-    time.sleep(_PROPAGATION)
+    hp.wait_for_new("CS LPC Failsafe Duration Minimum received", pos_hp, _PROPAGATION)
+    pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send("cs_lpc get failsafe_duration")
     hems.send("eg_lpc get failsafe_duration")
-    time.sleep(_SETTLE)
+    hp.wait_for_new("CS LPC Failsafe Duration Minimum:", pos_hp, _SETTLE)
+    hems.wait_for_new("EG LPC Failsafe Duration Minimum:", pos_hems, _SETTLE)
 
     cs = parse_pt(hp.last_line_with("CS LPC Failsafe Duration Minimum"))
     eg = parse_pt(hems.last_line_with("EG LPC Failsafe Duration Minimum"))
@@ -154,10 +173,8 @@ def test_lpc_s3_eg_writes_failsafe_duration(nodes_lpc):
 def test_lpc_s4_nominal_max(nodes_lpc):
     hp, hems = nodes_lpc
     hp.send("cs_lpc set nominal_max 11000")
-    time.sleep(_PROPAGATION)
     hp.send("cs_lpc get nominal_max")
     hems.send("eg_lpc get power_nominal_max")
-    time.sleep(_SETTLE)
 
     cs = parse_field(hp.last_line_with("CS LPC Nominal Max"), "value")
     eg = parse_field(hems.last_line_with("EG LPC Power Nominal Max"), "value")
@@ -172,11 +189,14 @@ def test_lpc_s4_nominal_max(nodes_lpc):
 
 def test_lpc_s5_cs_announces_active_limit(nodes_lpc):
     hp, hems = nodes_lpc
+    pos_hems = hems.line_count()
     hp.send("cs_lpc set power_limit 9000 true true")
-    time.sleep(_PROPAGATION)
+    hems.wait_for_new("EG LPC Power Limit received", pos_hems, _PROPAGATION)
+    pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send("cs_lpc get power_limit")
     hems.send("eg_lpc get power_limit")
-    time.sleep(_SETTLE)
+    hp.wait_for_new("CS LPC Active Power Limit: value", pos_hp, _SETTLE)
+    hems.wait_for_new("EG LPC Active Power Limit: value", pos_hems, _SETTLE)
 
     cs_val = parse_field(hp.last_line_with("CS LPC Active Power Limit", exclude="Failsafe"), "value")
     eg_val = parse_field(hems.last_line_with("EG LPC Active Power Limit", exclude="Failsafe"), "value")
@@ -187,11 +207,14 @@ def test_lpc_s5_cs_announces_active_limit(nodes_lpc):
 
 def test_lpc_s5_cs_announces_active_limit_is_active(nodes_lpc):
     hp, hems = nodes_lpc
+    pos_hems = hems.line_count()
     hp.send("cs_lpc set power_limit 9000 true true")
-    time.sleep(_PROPAGATION)
+    hems.wait_for_new("EG LPC Power Limit received", pos_hems, _PROPAGATION)
+    pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send("cs_lpc get power_limit")
     hems.send("eg_lpc get power_limit")
-    time.sleep(_SETTLE)
+    hp.wait_for_new("CS LPC Active Power Limit: value", pos_hp, _SETTLE)
+    hems.wait_for_new("EG LPC Active Power Limit: value", pos_hems, _SETTLE)
 
     cs_act = parse_field(hp.last_line_with("CS LPC Active Power Limit", exclude="Failsafe"), "is active")
     eg_act = parse_field(hems.last_line_with("EG LPC Active Power Limit", exclude="Failsafe"), "active")

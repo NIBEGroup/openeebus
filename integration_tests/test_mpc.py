@@ -23,7 +23,7 @@ _PROPAGATION = 3.0
 _SETTLE      = 2.0
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def nodes_mpc(nodes):
     hp, hems = nodes
     time.sleep(5.0)  # let use-case subscriptions settle
@@ -33,19 +33,22 @@ def nodes_mpc(nodes):
 def _set_and_verify(hp, hems, measurements):
     """Set a list of (name, value) measurements on MU, read back from both sides."""
     for name, value in measurements:
+        pos = hems.line_count()
         hp.send(f"mu_mpc set {name} {value}")
-        time.sleep(0.3)
+        hems.wait_for_new(f"MA MPC Measurement received: {name}", pos, _PROPAGATION)
 
-    time.sleep(_PROPAGATION)
-
+    pos_hp = hp.line_count()
     for name, _ in measurements:
         hp.send(f"mu_mpc get {name}")
         time.sleep(0.2)
+    pos_hems = hems.line_count()
     for name, _ in measurements:
         hems.send(f"ma_mpc get {name}")
         time.sleep(0.2)
 
-    time.sleep(_SETTLE)
+    last_name = measurements[-1][0]
+    hp.wait_for_new(f"MU MPC measurement {last_name}:", pos_hp, _SETTLE)
+    hems.wait_for_new(f"MA MPC measurement {last_name}:", pos_hems, _SETTLE)
 
     for name, expected in measurements:
         mu_line = hp.last_line_with(f"MU MPC measurement {name}:")

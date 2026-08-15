@@ -110,17 +110,17 @@ def test_close_timing(request):
                 hems_times.append(None)
                 continue
 
-            time.sleep(3.0)  # let use-case subscriptions settle
+            hems.wait_for("EG LPC Failsafe Active Power Limit received", 10.0)
 
             print("  LPC exchange...")
+            pos_hems = hems.line_count()
             hp.send("cs_lpc set failsafe_limit 5000 true")
             time.sleep(0.3)
             hp.send("cs_lpc set failsafe_duration PT2H true")
-            time.sleep(0.3)
-            time.sleep(2.0)
+            hems.wait_for_new("EG LPC Failsafe Duration Minimum received", pos_hems, 3.0)
+            pos_hp = hp.line_count()
             hems.send("eg_lpc set power_limit 7000 PT0S true")
-            time.sleep(0.3)
-            time.sleep(2.0)
+            hp.wait_for_new("CS LPC Power Limit received", pos_hp, 3.0)
 
             print("  Sending exit...")
             hp.send("exit")

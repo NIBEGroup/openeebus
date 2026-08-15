@@ -24,7 +24,7 @@ _PROPAGATION = 3.0
 _SETTLE      = 2.0
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def nodes_mgcp(nodes):
     hp, hems = nodes
     time.sleep(5.0)  # let use-case subscriptions settle
@@ -33,31 +33,52 @@ def nodes_mgcp(nodes):
 
 def _gcp_line(hp, name):
     if name == "pv_curtailment_limit_factor":
-        return hp.last_line_with(f"GCP MGCP pv_curtailment_limit_factor:")
+        return hp.last_line_with("GCP MGCP pv_curtailment_limit_factor:")
     return hp.last_line_with(f"GCP MGCP measurement {name}:")
 
 
 def _ma_line(hems, name):
     if name == "pv_curtailment_limit_factor":
-        return hems.last_line_with(f"MA MGCP pv_curtailment_limit_factor:")
+        return hems.last_line_with("MA MGCP pv_curtailment_limit_factor:")
     return hems.last_line_with(f"MA MGCP measurement {name}:")
+
+
+def _ma_receive_marker(name):
+    if name == "pv_curtailment_limit_factor":
+        return "MA MGCP PV curtailment limit factor received:"
+    return f"MA MGCP Measurement received: {name}"
+
+
+def _gcp_settle_marker(name):
+    if name == "pv_curtailment_limit_factor":
+        return "GCP MGCP pv_curtailment_limit_factor:"
+    return f"GCP MGCP measurement {name}:"
+
+
+def _ma_settle_marker(name):
+    if name == "pv_curtailment_limit_factor":
+        return "MA MGCP pv_curtailment_limit_factor:"
+    return f"MA MGCP measurement {name}:"
 
 
 def _set_and_verify(hp, hems, measurements):
     for name, value in measurements:
+        pos = hems.line_count()
         hp.send(f"gcp_mgcp set {name} {value}")
-        time.sleep(0.3)
+        hems.wait_for_new(_ma_receive_marker(name), pos, _PROPAGATION)
 
-    time.sleep(_PROPAGATION)
-
+    pos_hp = hp.line_count()
     for name, _ in measurements:
         hp.send(f"gcp_mgcp get {name}")
         time.sleep(0.2)
+    pos_hems = hems.line_count()
     for name, _ in measurements:
         hems.send(f"ma_mgcp get {name}")
         time.sleep(0.2)
 
-    time.sleep(_SETTLE)
+    last_name = measurements[-1][0]
+    hp.wait_for_new(_gcp_settle_marker(last_name), pos_hp, _SETTLE)
+    hems.wait_for_new(_ma_settle_marker(last_name), pos_hems, _SETTLE)
 
     for name, expected in measurements:
         gcp_val = parse_field(_gcp_line(hp, name),   "value")
