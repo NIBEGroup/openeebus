@@ -155,6 +155,15 @@ def nodes(request):
                     pass
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--close-timing-iter",
+        type=int,
+        default=50,
+        help="Number of close-timing iterations (default: 50)",
+    )
+
+
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield

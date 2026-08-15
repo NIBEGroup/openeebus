@@ -15,7 +15,6 @@ The iteration count can be overridden with the --close-timing-iter pytest option
 """
 
 import re
-import time
 
 import pytest
 
@@ -35,14 +34,6 @@ CLOSE_TIMEOUT    = 60.0
 # DebugPrintf timestamp: [YYYY/MM/DD HH:MM:SS:TTTT] where TTTT = tv_usec/100
 _TS_RE = re.compile(r'\[(\d{4}/\d{2}/\d{2}) (\d{2}):(\d{2}):(\d{2}):(\d{4})\]')
 
-
-def pytest_addoption(parser):
-    parser.addoption(
-        "--close-timing-iter",
-        type=int,
-        default=DEFAULT_ITER,
-        help=f"Number of close-timing iterations (default: {DEFAULT_ITER})",
-    )
 
 
 def _ts_to_tenth_ms(h: int, m: int, s: int, t: int) -> int:
@@ -79,6 +70,44 @@ def _stats(values):
     return {"n": len(nums), "min": min(nums), "max": max(nums), "avg": sum(nums) // len(nums)}
 
 
+def _connect_and_close(hp: NodeProcess, hems: NodeProcess) -> str:
+    """Connect, perform a minimal LPC exchange, send exit, return status string."""
+    connected = (
+        hp.wait_for("Remote SKI connected", CONNECT_TIMEOUT) and
+        hems.wait_for("Remote SKI connected", CONNECT_TIMEOUT)
+    )
+    if not connected:
+        print("  ERROR: connection timeout — skipping iteration")
+        return "CONN_TIMEOUT"
+
+    hems.wait_for("EG LPC Failsafe Active Power Limit received", 10.0)
+
+    print("  LPC exchange...")
+    pos_hems = hems.line_count()
+    hp.send("cs_lpc set failsafe_limit 5000 true")
+    hems.wait_for_new("EG LPC Failsafe Active Power Limit received", pos_hems, 3.0)
+    pos_hems = hems.line_count()
+    hp.send("cs_lpc set failsafe_duration PT2H true")
+    hems.wait_for_new("EG LPC Failsafe Duration Minimum received", pos_hems, 3.0)
+    pos_hp = hp.line_count()
+    hems.send("eg_lpc set power_limit 7000 PT0S true")
+    hp.wait_for_new("CS LPC Power Limit received", pos_hp, 3.0)
+
+    print("  Sending exit...")
+    hp.send("exit")
+    hems.send("exit")
+
+    hp_died   = hp.wait_dead(CLOSE_TIMEOUT)
+    hems_died = hems.wait_dead(CLOSE_TIMEOUT)
+
+    if not hp_died or not hems_died:
+        print(f"  WARNING: process(es) did not exit within {CLOSE_TIMEOUT:.0f}s, "
+              "force-killing")
+        return "FORCE_KILL"
+
+    return "OK"
+
+
 @pytest.mark.debug_flags
 def test_close_timing(request):
     require_binaries()
@@ -99,47 +128,17 @@ def test_close_timing(request):
         hems = NodeProcess(HEMS_BINARY, 4710, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY)
 
         try:
-            connected = (
-                hp.wait_for("Remote SKI connected", CONNECT_TIMEOUT) and
-                hems.wait_for("Remote SKI connected", CONNECT_TIMEOUT)
-            )
-            if not connected:
-                print("  ERROR: connection timeout — skipping iteration")
-                statuses.append("CONN_TIMEOUT")
-                hp_times.append(None)
-                hems_times.append(None)
-                continue
-
-            hems.wait_for("EG LPC Failsafe Active Power Limit received", 10.0)
-
-            print("  LPC exchange...")
-            pos_hems = hems.line_count()
-            hp.send("cs_lpc set failsafe_limit 5000 true")
-            time.sleep(0.3)
-            hp.send("cs_lpc set failsafe_duration PT2H true")
-            hems.wait_for_new("EG LPC Failsafe Duration Minimum received", pos_hems, 3.0)
-            pos_hp = hp.line_count()
-            hems.send("eg_lpc set power_limit 7000 PT0S true")
-            hp.wait_for_new("CS LPC Power Limit received", pos_hp, 3.0)
-
-            print("  Sending exit...")
-            hp.send("exit")
-            hems.send("exit")
-
-            hp_died   = hp.wait_dead(CLOSE_TIMEOUT)
-            hems_died = hems.wait_dead(CLOSE_TIMEOUT)
-
-            status = "OK"
-            if not hp_died or not hems_died:
-                print(f"  WARNING: process(es) did not exit within {CLOSE_TIMEOUT:.0f}s, "
-                      "force-killing")
-                status = "FORCE_KILL"
-
-            statuses.append(status)
-
+            status = _connect_and_close(hp, hems)
         finally:
             hp.stop(timeout=2.0)
             hems.stop(timeout=2.0)
+
+        statuses.append(status)
+
+        if status == "CONN_TIMEOUT":
+            hp_times.append(None)
+            hems_times.append(None)
+            continue
 
         hp_ms   = _close_duration_ms(hp.log_path)
         hems_ms = _close_duration_ms(hems.log_path)
@@ -149,8 +148,6 @@ def test_close_timing(request):
         hp_str   = f"{hp_ms}ms"   if hp_ms   is not None else "N/A"
         hems_str = f"{hems_ms}ms" if hems_ms is not None else "N/A"
         print(f"  RESULT  heat_pump={hp_str}  hems={hems_str}  status={status}")
-
-        time.sleep(3.0)
 
     # -----------------------------------------------------------------------
     # Summary table
