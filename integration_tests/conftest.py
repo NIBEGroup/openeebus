@@ -25,6 +25,16 @@ HP_KEY          = os.environ.get("EEBUS_HP_KEY",    str(CERTS_DIR / "heat_pump.k
 HEMS_CERT       = os.environ.get("EEBUS_HEMS_CERT", str(CERTS_DIR / "hems.crt"))
 HEMS_KEY        = os.environ.get("EEBUS_HEMS_KEY",  str(CERTS_DIR / "hems.key"))
 
+HP_PORT   = 4712
+HEMS_PORT = 4710
+
+SHIP_CONNECTED_MARKER = "Remote SKI connected"
+NODES_CONNECT_TIMEOUT = 120.0
+UC_READY_TIMEOUT      = 30.0
+
+DEFAULT_PROPAGATION = 3.0
+DEFAULT_SETTLE      = 2.0
+
 _STDBUF = shutil.which("stdbuf")
 
 
@@ -128,7 +138,7 @@ def monitor_set_and_verify(hp, hems, measurements,
                            receive_marker_fn, hp_settle_fn, hems_settle_fn,
                            hp_log_fn, hems_log_fn,
                            hp_label, hems_label="MA",
-                           propagation=3.0, settle=2.0):
+                           propagation=DEFAULT_PROPAGATION, settle=DEFAULT_SETTLE):
     """Shared set/get/verify loop for MPC and MGCP monitoring use cases.
 
     Callables receive a measurement name and return the appropriate log marker
@@ -159,6 +169,22 @@ def monitor_set_and_verify(hp, hems, measurements,
         assert hems_val == str(expected), f"{hems_label} {name}: expected {expected}, got {hems_val!r}"
 
 
+def make_node_pair():
+    """Create a fresh heat_pump + hems NodeProcess pair on the standard ports."""
+    return (
+        NodeProcess(HP_BINARY,   HP_PORT,   HP_REMOTE_SKI,   HP_CERT,   HP_KEY),
+        NodeProcess(HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY),
+    )
+
+
+def await_uc_ready(nodes, ready_marker: str):
+    """Wait for a use-case handshake marker on hems, then return (hp, hems)."""
+    hp, hems = nodes
+    assert hems.wait_for(ready_marker, UC_READY_TIMEOUT), \
+        f"Use case not ready after {UC_READY_TIMEOUT:.0f}s: {ready_marker!r}"
+    return hp, hems
+
+
 def require_binaries():
     missing = [b for b in (HP_BINARY, HEMS_BINARY) if not os.path.isfile(b)]
     if missing:
@@ -169,11 +195,10 @@ def require_binaries():
 def nodes(request):
     """Start heat_pump + hems and wait for the SHIP connection; tear down after the test."""
     require_binaries()
-    hp   = NodeProcess(HP_BINARY,   4712, HP_REMOTE_SKI,   HP_CERT,   HP_KEY)
-    hems = NodeProcess(HEMS_BINARY, 4710, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY)
+    hp, hems = make_node_pair()
     try:
-        assert hp.wait_for("Remote SKI connected", 120),   "heat_pump: SHIP connection timeout"
-        assert hems.wait_for("Remote SKI connected", 120), "hems: SHIP connection timeout"
+        assert hp.wait_for(SHIP_CONNECTED_MARKER, NODES_CONNECT_TIMEOUT),   "heat_pump: SHIP connection timeout"
+        assert hems.wait_for(SHIP_CONNECTED_MARKER, NODES_CONNECT_TIMEOUT), "hems: SHIP connection timeout"
         yield hp, hems
     finally:
         hp.stop()

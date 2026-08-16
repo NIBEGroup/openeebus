@@ -8,6 +8,7 @@ used in the C implementation (cs_lpc.c / cs_lpp.c over cs_lp.c).
 
 import pytest
 
+from conftest import await_uc_ready
 from _lp_tests import (
     lp_s1_failsafe_power_limit,
     lp_s1_failsafe_duration,
@@ -27,10 +28,7 @@ _CS  = 10000  # S5 CS announces active limit (W)
 
 @pytest.fixture(scope="module")
 def nodes_lpp(nodes):
-    hp, hems = nodes
-    assert hems.wait_for("EG LPP Failsafe Active Power Limit received", 30), \
-        "EG LPP use case not ready after 30 s"
-    return hp, hems
+    return await_uc_ready(nodes, "EG LPP Failsafe Active Power Limit received")
 
 
 # ---------------------------------------------------------------------------

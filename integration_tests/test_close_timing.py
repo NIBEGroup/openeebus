@@ -19,12 +19,10 @@ import re
 import pytest
 
 from conftest import (
-    HP_BINARY, HEMS_BINARY,
-    HP_REMOTE_SKI, HEMS_REMOTE_SKI,
-    HP_CERT, HP_KEY,
-    HEMS_CERT, HEMS_KEY,
     NodeProcess,
+    make_node_pair,
     require_binaries,
+    SHIP_CONNECTED_MARKER,
 )
 
 DEFAULT_ITER     = 50
@@ -73,8 +71,8 @@ def _stats(values):
 def _connect_and_close(hp: NodeProcess, hems: NodeProcess) -> str:
     """Connect, perform a minimal LPC exchange, send exit, return status string."""
     connected = (
-        hp.wait_for("Remote SKI connected", CONNECT_TIMEOUT) and
-        hems.wait_for("Remote SKI connected", CONNECT_TIMEOUT)
+        hp.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT) and
+        hems.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT)
     )
     if not connected:
         print("  ERROR: connection timeout — skipping iteration")
@@ -124,8 +122,7 @@ def test_close_timing(request):
     for it in range(1, max_iter + 1):
         print(f"\n=== Iteration {it} / {max_iter} ===")
 
-        hp   = NodeProcess(HP_BINARY,   4712, HP_REMOTE_SKI,   HP_CERT,   HP_KEY)
-        hems = NodeProcess(HEMS_BINARY, 4710, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY)
+        hp, hems = make_node_pair()
 
         try:
             status = _connect_and_close(hp, hems)

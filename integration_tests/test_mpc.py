@@ -15,15 +15,12 @@ Scenarios:
 
 import pytest
 
-from conftest import monitor_set_and_verify
+from conftest import await_uc_ready, monitor_set_and_verify
 
 
 @pytest.fixture(scope="module")
 def nodes_mpc(nodes):
-    hp, hems = nodes
-    assert hems.wait_for("MA MPC remote entity connected", 30), \
-        "MA MPC use case not ready after 30 s"
-    return hp, hems
+    return await_uc_ready(nodes, "MA MPC remote entity connected")
 
 
 def _set_and_verify(hp, hems, measurements):

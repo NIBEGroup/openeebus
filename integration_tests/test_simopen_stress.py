@@ -15,12 +15,10 @@ import time
 import pytest
 
 from conftest import (
-    HP_BINARY, HEMS_BINARY,
-    HP_REMOTE_SKI, HEMS_REMOTE_SKI,
-    HP_CERT, HP_KEY,
-    HEMS_CERT, HEMS_KEY,
     NodeProcess,
+    make_node_pair,
     require_binaries,
+    SHIP_CONNECTED_MARKER,
 )
 
 TOTAL            = 20
@@ -41,9 +39,7 @@ def _branch_of(node: NodeProcess) -> str:
 
 
 def _start_pair():
-    hp   = NodeProcess(HP_BINARY,   4712, HP_REMOTE_SKI,   HP_CERT,   HP_KEY)
-    hems = NodeProcess(HEMS_BINARY, 4710, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY)
-    return hp, hems
+    return make_node_pair()
 
 
 def _stop_pair(hp, hems):
@@ -70,8 +66,8 @@ def test_simopen_stress():
         start = time.monotonic()
 
         connected = (
-            hp.wait_for("Remote SKI connected", CONNECT_TIMEOUT) and
-            hems.wait_for("Remote SKI connected", CONNECT_TIMEOUT)
+            hp.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT) and
+            hems.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT)
         )
         elapsed = time.monotonic() - start
 

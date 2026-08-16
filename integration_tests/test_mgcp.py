@@ -16,15 +16,12 @@ Scenarios:
 
 import pytest
 
-from conftest import monitor_set_and_verify
+from conftest import await_uc_ready, monitor_set_and_verify
 
 
 @pytest.fixture(scope="module")
 def nodes_mgcp(nodes):
-    hp, hems = nodes
-    assert hems.wait_for("MA MGCP remote entity connected", 30), \
-        "MA MGCP use case not ready after 30 s"
-    return hp, hems
+    return await_uc_ready(nodes, "MA MGCP remote entity connected")
 
 
 def _gcp_line(hp, name):
