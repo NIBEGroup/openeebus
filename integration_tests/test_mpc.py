@@ -15,7 +15,8 @@ Scenarios:
 
 import pytest
 
-from conftest import await_uc_ready, monitor_set_and_verify
+from conftest import await_uc_ready
+from _monitor_tests import MeasurementVerifier
 
 
 @pytest.fixture(scope="module")
@@ -23,18 +24,23 @@ def nodes_mpc(nodes):
     return await_uc_ready(nodes, "MA MPC remote entity connected")
 
 
+class _MpcConfig(MeasurementVerifier):
+    hp_prefix   = "mu_mpc"
+    hems_prefix = "ma_mpc"
+    hp_label    = "MU"
+
+    def receive_marker(self, n): return f"MA MPC Measurement received: {n}"
+    def hp_settle(self,      n): return f"MU MPC measurement {n}:"
+    def hems_settle(self,    n): return f"MA MPC measurement {n}:"
+    def hp_log(self,   hp,   n): return hp.last_line_with(f"MU MPC measurement {n}:")
+    def hems_log(self, hems, n): return hems.last_line_with(f"MA MPC measurement {n}:")
+
+
+_CFG = _MpcConfig()
+
+
 def _set_and_verify(hp, hems, measurements):
-    monitor_set_and_verify(
-        hp, hems, measurements,
-        hp_prefix         = "mu_mpc",
-        hems_prefix       = "ma_mpc",
-        receive_marker_fn = lambda n: f"MA MPC Measurement received: {n}",
-        hp_settle_fn      = lambda n: f"MU MPC measurement {n}:",
-        hems_settle_fn    = lambda n: f"MA MPC measurement {n}:",
-        hp_log_fn         = lambda n: hp.last_line_with(f"MU MPC measurement {n}:"),
-        hems_log_fn       = lambda n: hems.last_line_with(f"MA MPC measurement {n}:"),
-        hp_label          = "MU",
-    )
+    _CFG.run(hp, hems, measurements)
 
 
 # ---------------------------------------------------------------------------

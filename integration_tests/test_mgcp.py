@@ -16,7 +16,8 @@ Scenarios:
 
 import pytest
 
-from conftest import await_uc_ready, monitor_set_and_verify
+from conftest import await_uc_ready
+from _monitor_tests import MeasurementVerifier
 
 
 @pytest.fixture(scope="module")
@@ -24,48 +25,40 @@ def nodes_mgcp(nodes):
     return await_uc_ready(nodes, "MA MGCP remote entity connected")
 
 
-def _gcp_line(hp, name):
-    if name == "pv_curtailment_limit_factor":
-        return hp.last_line_with("GCP MGCP pv_curtailment_limit_factor:")
-    return hp.last_line_with(f"GCP MGCP measurement {name}:")
+_PV = "pv_curtailment_limit_factor"
 
 
-def _ma_line(hems, name):
-    if name == "pv_curtailment_limit_factor":
-        return hems.last_line_with("MA MGCP pv_curtailment_limit_factor:")
-    return hems.last_line_with(f"MA MGCP measurement {name}:")
+class _MgcpConfig(MeasurementVerifier):
+    hp_prefix   = "gcp_mgcp"
+    hems_prefix = "ma_mgcp"
+    hp_label    = "GCP"
+
+    def receive_marker(self, n):
+        if n == _PV: return "MA MGCP PV curtailment limit factor received:"
+        return f"MA MGCP Measurement received: {n}"
+
+    def hp_settle(self, n):
+        if n == _PV: return "GCP MGCP pv_curtailment_limit_factor:"
+        return f"GCP MGCP measurement {n}:"
+
+    def hems_settle(self, n):
+        if n == _PV: return "MA MGCP pv_curtailment_limit_factor:"
+        return f"MA MGCP measurement {n}:"
+
+    def hp_log(self, hp, n):
+        if n == _PV: return hp.last_line_with("GCP MGCP pv_curtailment_limit_factor:")
+        return hp.last_line_with(f"GCP MGCP measurement {n}:")
+
+    def hems_log(self, hems, n):
+        if n == _PV: return hems.last_line_with("MA MGCP pv_curtailment_limit_factor:")
+        return hems.last_line_with(f"MA MGCP measurement {n}:")
 
 
-def _ma_receive_marker(name):
-    if name == "pv_curtailment_limit_factor":
-        return "MA MGCP PV curtailment limit factor received:"
-    return f"MA MGCP Measurement received: {name}"
-
-
-def _gcp_settle_marker(name):
-    if name == "pv_curtailment_limit_factor":
-        return "GCP MGCP pv_curtailment_limit_factor:"
-    return f"GCP MGCP measurement {name}:"
-
-
-def _ma_settle_marker(name):
-    if name == "pv_curtailment_limit_factor":
-        return "MA MGCP pv_curtailment_limit_factor:"
-    return f"MA MGCP measurement {name}:"
+_CFG = _MgcpConfig()
 
 
 def _set_and_verify(hp, hems, measurements):
-    monitor_set_and_verify(
-        hp, hems, measurements,
-        hp_prefix         = "gcp_mgcp",
-        hems_prefix       = "ma_mgcp",
-        receive_marker_fn = _ma_receive_marker,
-        hp_settle_fn      = _gcp_settle_marker,
-        hems_settle_fn    = _ma_settle_marker,
-        hp_log_fn         = lambda n: _gcp_line(hp, n),
-        hems_log_fn       = lambda n: _ma_line(hems, n),
-        hp_label          = "GCP",
-    )
+    _CFG.run(hp, hems, measurements)
 
 
 # ---------------------------------------------------------------------------
