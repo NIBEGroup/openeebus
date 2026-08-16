@@ -68,6 +68,27 @@ def _stats(values):
     return {"n": len(nums), "min": min(nums), "max": max(nums), "avg": sum(nums) // len(nums)}
 
 
+def _print_summary(hp_times, hems_times, statuses):
+    print(f"\n{'='*72}")
+    print(f"  Close-Timing Summary  ({len(hp_times)} iterations)")
+    print(f"{'='*72}")
+    print(f"{'Iter':<6}  {'heat_pump (ms)':>14}  {'hems (ms)':>14}  {'Status':<12}")
+    print(f"{'------':<6}  {'--------------':>14}  {'--------------':>14}  {'------------':<12}")
+    for i, (hp_ms, hems_ms, st) in enumerate(zip(hp_times, hems_times, statuses), 1):
+        hp_s   = str(hp_ms)   if hp_ms   is not None else "N/A"
+        hems_s = str(hems_ms) if hems_ms is not None else "N/A"
+        print(f"{i:<6}  {hp_s:>14}  {hems_s:>14}  {st:<12}")
+    for label, vals in (("heat_pump", hp_times), ("hems", hems_times)):
+        s = _stats(vals)
+        if s:
+            print(f"  {label:<14}  n={s['n']:<4}  "
+                  f"min={s['min']:<6}  avg={s['avg']:<6}  max={s['max']} ms")
+        else:
+            print(f"  {label:<14}  no numeric data "
+                  "(build with EEBUS_SERVICE_DEBUG=1 to enable timestamps)")
+    print(f"{'='*72}")
+
+
 def _connect_and_close(hp: NodeProcess, hems: NodeProcess) -> str:
     """Connect, perform a minimal LPC exchange, send exit, return status string."""
     connected = (
@@ -146,29 +167,7 @@ def test_close_timing(request):
         hems_str = f"{hems_ms}ms" if hems_ms is not None else "N/A"
         print(f"  RESULT  heat_pump={hp_str}  hems={hems_str}  status={status}")
 
-    # -----------------------------------------------------------------------
-    # Summary table
-    # -----------------------------------------------------------------------
-    print(f"\n{'='*72}")
-    print(f"  Close-Timing Summary  ({len(hp_times)} iterations)")
-    print(f"{'='*72}")
-    print(f"{'Iter':<6}  {'heat_pump (ms)':>14}  {'hems (ms)':>14}  {'Status':<12}")
-    print(f"{'------':<6}  {'--------------':>14}  {'--------------':>14}  {'------------':<12}")
-    for i, (hp_ms, hems_ms, st) in enumerate(zip(hp_times, hems_times, statuses), 1):
-        hp_s   = str(hp_ms)   if hp_ms   is not None else "N/A"
-        hems_s = str(hems_ms) if hems_ms is not None else "N/A"
-        print(f"{i:<6}  {hp_s:>14}  {hems_s:>14}  {st:<12}")
-
-    for label, vals in (("heat_pump", hp_times), ("hems", hems_times)):
-        s = _stats(vals)
-        if s:
-            print(f"  {label:<14}  n={s['n']:<4}  "
-                  f"min={s['min']:<6}  avg={s['avg']:<6}  max={s['max']} ms")
-        else:
-            print(f"  {label:<14}  no numeric data "
-                  "(build with EEBUS_SERVICE_DEBUG=1 to enable timestamps)")
-
-    print(f"{'='*72}")
+    _print_summary(hp_times, hems_times, statuses)
 
     force_kills = statuses.count("FORCE_KILL")
     conn_timeouts = statuses.count("CONN_TIMEOUT")

@@ -25,6 +25,28 @@ TOTAL            = 20
 CONNECT_TIMEOUT  = 90.0
 
 
+def _print_summary(passed, failed, times, hp_branches, hems_branches):
+    min_t = min(times)
+    max_t = max(times)
+    avg_t = sum(times) / len(times)
+    hp_server   = hp_branches.count("took-server")
+    hp_yield    = hp_branches.count("yielded")
+    hp_none     = hp_branches.count("no-simopen")
+    hems_server = hems_branches.count("took-server")
+    hems_yield  = hems_branches.count("yielded")
+    hems_none   = hems_branches.count("no-simopen")
+    print(f"\n{'='*70}")
+    print("  SUMMARY")
+    print(f"{'='*70}")
+    print(f"  Passed : {passed} / {TOTAL}")
+    print(f"  Failed : {failed} / {TOTAL}")
+    print(f"  Connect time: min={min_t:.1f}s  avg={avg_t:.1f}s  max={max_t:.1f}s")
+    print(f"  hp   branches: took-server={hp_server}  yielded={hp_yield}  "
+          f"no-simopen={hp_none}")
+    print(f"  hems branches: took-server={hems_server}  yielded={hems_yield}  "
+          f"no-simopen={hems_none}")
+
+
 def _branch_of(node: NodeProcess) -> str:
     for line in node.log_lines():
         if "SHIP-SIMOPEN" in line and "take server" in line:
@@ -92,28 +114,7 @@ def test_simopen_stress():
         hp_branches.append(hp_b)
         hems_branches.append(hems_b)
 
-    min_t = min(times)
-    max_t = max(times)
-    avg_t = sum(times) / len(times)
-
-    hp_server = hp_branches.count("took-server")
-    hp_yield  = hp_branches.count("yielded")
-    hp_none   = hp_branches.count("no-simopen")
-
-    hems_server = hems_branches.count("took-server")
-    hems_yield  = hems_branches.count("yielded")
-    hems_none   = hems_branches.count("no-simopen")
-
-    print(f"\n{'='*70}")
-    print("  SUMMARY")
-    print(f"{'='*70}")
-    print(f"  Passed : {passed} / {TOTAL}")
-    print(f"  Failed : {failed} / {TOTAL}")
-    print(f"  Connect time: min={min_t:.1f}s  avg={avg_t:.1f}s  max={max_t:.1f}s")
-    print(f"  hp   branches: took-server={hp_server}  yielded={hp_yield}  "
-          f"no-simopen={hp_none}")
-    print(f"  hems branches: took-server={hems_server}  yielded={hems_yield}  "
-          f"no-simopen={hems_none}")
+    _print_summary(passed, failed, times, hp_branches, hems_branches)
 
     if hp_branches.count("unknown") == TOTAL:
         pytest.warns(
