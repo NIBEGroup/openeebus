@@ -14,14 +14,9 @@ Scenarios:
   7. Frequency
 """
 
-import time
-
 import pytest
 
-from conftest import parse_field
-
-_PROPAGATION = 3.0
-_SETTLE      = 2.0
+from conftest import monitor_set_and_verify
 
 
 @pytest.fixture(scope="module")
@@ -63,32 +58,17 @@ def _ma_settle_marker(name):
 
 
 def _set_and_verify(hp, hems, measurements):
-    for name, value in measurements:
-        pos = hems.line_count()
-        hp.send(f"gcp_mgcp set {name} {value}")
-        hems.wait_for_new(_ma_receive_marker(name), pos, _PROPAGATION)
-
-    pos_hp = hp.line_count()
-    for name, _ in measurements:
-        hp.send(f"gcp_mgcp get {name}")
-        time.sleep(0.2)
-    pos_hems = hems.line_count()
-    for name, _ in measurements:
-        hems.send(f"ma_mgcp get {name}")
-        time.sleep(0.2)
-
-    last_name = measurements[-1][0]
-    hp.wait_for_new(_gcp_settle_marker(last_name), pos_hp, _SETTLE)
-    hems.wait_for_new(_ma_settle_marker(last_name), pos_hems, _SETTLE)
-
-    for name, expected in measurements:
-        gcp_val = parse_field(_gcp_line(hp, name),   "value")
-        ma_val  = parse_field(_ma_line(hems, name),  "value")
-        print(f"  {name}: GCP={gcp_val}  MA={ma_val}")
-        assert gcp_val == str(expected), \
-            f"GCP {name}: expected {expected}, got {gcp_val!r}"
-        assert ma_val == str(expected), \
-            f"MA {name}: expected {expected}, got {ma_val!r}"
+    monitor_set_and_verify(
+        hp, hems, measurements,
+        hp_prefix         = "gcp_mgcp",
+        hems_prefix       = "ma_mgcp",
+        receive_marker_fn = _ma_receive_marker,
+        hp_settle_fn      = _gcp_settle_marker,
+        hems_settle_fn    = _ma_settle_marker,
+        hp_log_fn         = lambda n: _gcp_line(hp, n),
+        hems_log_fn       = lambda n: _ma_line(hems, n),
+        hp_label          = "GCP",
+    )
 
 
 # ---------------------------------------------------------------------------

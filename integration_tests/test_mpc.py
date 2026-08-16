@@ -13,14 +13,9 @@ Scenarios:
   5. Frequency               — frequency
 """
 
-import time
-
 import pytest
 
-from conftest import parse_field
-
-_PROPAGATION = 3.0
-_SETTLE      = 2.0
+from conftest import monitor_set_and_verify
 
 
 @pytest.fixture(scope="module")
@@ -32,35 +27,17 @@ def nodes_mpc(nodes):
 
 
 def _set_and_verify(hp, hems, measurements):
-    """Set a list of (name, value) measurements on MU, read back from both sides."""
-    for name, value in measurements:
-        pos = hems.line_count()
-        hp.send(f"mu_mpc set {name} {value}")
-        hems.wait_for_new(f"MA MPC Measurement received: {name}", pos, _PROPAGATION)
-
-    pos_hp = hp.line_count()
-    for name, _ in measurements:
-        hp.send(f"mu_mpc get {name}")
-        time.sleep(0.2)
-    pos_hems = hems.line_count()
-    for name, _ in measurements:
-        hems.send(f"ma_mpc get {name}")
-        time.sleep(0.2)
-
-    last_name = measurements[-1][0]
-    hp.wait_for_new(f"MU MPC measurement {last_name}:", pos_hp, _SETTLE)
-    hems.wait_for_new(f"MA MPC measurement {last_name}:", pos_hems, _SETTLE)
-
-    for name, expected in measurements:
-        mu_line = hp.last_line_with(f"MU MPC measurement {name}:")
-        ma_line = hems.last_line_with(f"MA MPC measurement {name}:")
-        mu_val  = parse_field(mu_line, "value")
-        ma_val  = parse_field(ma_line, "value")
-        print(f"  {name}: MU={mu_val}  MA={ma_val}")
-        assert mu_val == str(expected), \
-            f"MU {name}: expected {expected}, got {mu_val!r}"
-        assert ma_val == str(expected), \
-            f"MA {name}: expected {expected}, got {ma_val!r}"
+    monitor_set_and_verify(
+        hp, hems, measurements,
+        hp_prefix         = "mu_mpc",
+        hems_prefix       = "ma_mpc",
+        receive_marker_fn = lambda n: f"MA MPC Measurement received: {n}",
+        hp_settle_fn      = lambda n: f"MU MPC measurement {n}:",
+        hems_settle_fn    = lambda n: f"MA MPC measurement {n}:",
+        hp_log_fn         = lambda n: hp.last_line_with(f"MU MPC measurement {n}:"),
+        hems_log_fn       = lambda n: hems.last_line_with(f"MA MPC measurement {n}:"),
+        hp_label          = "MU",
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -123,6 +123,42 @@ def parse_pt(line: str) -> str:
     return m.group(1) if m else None
 
 
+def monitor_set_and_verify(hp, hems, measurements,
+                           hp_prefix, hems_prefix,
+                           receive_marker_fn, hp_settle_fn, hems_settle_fn,
+                           hp_log_fn, hems_log_fn,
+                           hp_label, hems_label="MA",
+                           propagation=3.0, settle=2.0):
+    """Shared set/get/verify loop for MPC and MGCP monitoring use cases.
+
+    Callables receive a measurement name and return the appropriate log marker
+    or log-line string.  Call sites pass simple lambdas (MPC) or existing
+    special-case helpers (MGCP) — the loop body is identical either way.
+    """
+    for name, value in measurements:
+        pos = hems.line_count()
+        hp.send(f"{hp_prefix} set {name} {value}")
+        hems.wait_for_new(receive_marker_fn(name), pos, propagation)
+
+    pos_hp = hp.line_count()
+    for name, _ in measurements:
+        hp.send(f"{hp_prefix} get {name}")
+    pos_hems = hems.line_count()
+    for name, _ in measurements:
+        hems.send(f"{hems_prefix} get {name}")
+
+    last_name = measurements[-1][0]
+    hp.wait_for_new(hp_settle_fn(last_name), pos_hp, settle)
+    hems.wait_for_new(hems_settle_fn(last_name), pos_hems, settle)
+
+    for name, expected in measurements:
+        hp_val   = parse_field(hp_log_fn(name),   "value")
+        hems_val = parse_field(hems_log_fn(name), "value")
+        print(f"  {name}: {hp_label}={hp_val}  {hems_label}={hems_val}")
+        assert hp_val   == str(expected), f"{hp_label} {name}: expected {expected}, got {hp_val!r}"
+        assert hems_val == str(expected), f"{hems_label} {name}: expected {expected}, got {hems_val!r}"
+
+
 def require_binaries():
     missing = [b for b in (HP_BINARY, HEMS_BINARY) if not os.path.isfile(b)]
     if missing:
