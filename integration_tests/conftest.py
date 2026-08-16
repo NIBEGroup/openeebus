@@ -56,7 +56,7 @@ class NodeProcess:
             with open(self.log_path) as f:
                 if marker in f.read():
                     return True
-            time.sleep(0.5)
+            time.sleep(0.1)
         return False
 
     def line_count(self) -> int:
