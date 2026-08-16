@@ -1,6 +1,5 @@
 """
 MGCP integration tests — Monitoring of Grid Connection Point.
-Equivalent of scripts/test_mgcp.sh.
 
 All measurements are set on heat_pump (GCP) and verified on both
 heat_pump (GCP get) and HEMS (MA get).

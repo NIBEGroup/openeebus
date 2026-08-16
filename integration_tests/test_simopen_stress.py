@@ -1,5 +1,5 @@
 """
-SIMOPEN stress test — equivalent of scripts/test_simopen_stress.sh.
+SIMOPEN stress test.
 
 Runs TOTAL iterations back-to-back and verifies both nodes always connect.
 Reports which SHIP simultaneous-open tiebreaker branch each node took

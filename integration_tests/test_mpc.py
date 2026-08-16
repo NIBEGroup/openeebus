@@ -1,6 +1,5 @@
 """
 MPC integration tests — Monitoring of Power Consumption.
-Equivalent of scripts/test_mpc.sh.
 
 All measurements are set on heat_pump (MU) and verified on both
 heat_pump (MU get) and HEMS (MA get).

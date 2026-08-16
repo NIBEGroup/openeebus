@@ -1,5 +1,5 @@
 """
-Close-timing test — equivalent of scripts/test_close_timing.sh.
+Close-timing test.
 
 Measures wall-clock time from EebusService::Stop(): begin to
 EebusService::Destruct(): end over MAX_ITER iterations.
