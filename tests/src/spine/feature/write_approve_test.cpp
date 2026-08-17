@@ -16,7 +16,7 @@
 
 #include "tests/src/spine/feature/write_approve_test_suite.h"
 
-using namespace std::literals;
+using std::literals::string_view_literals::operator""sv;
 
 struct WriteApproveTestInput {
   std::string_view description = ""sv;
@@ -24,6 +24,10 @@ struct WriteApproveTestInput {
 
   std::vector<WriteApprovalCallback> cbs = {};
 };
+
+std::ostream& operator<<(std::ostream& os, WriteApproveTestInput test_input) {
+  return os << test_input.description;
+}
 
 class WriteApproveTests : public WriteApproveTestSuite, public ::testing::WithParamInterface<WriteApproveTestInput> {};
 
@@ -68,14 +72,14 @@ TEST_P(WriteApproveTests, WriteApproveTests) {
   Message msg = CreateTestMessage(kFunctionTypeActuatorLevelData, 12345);
 
   // Verify no pending write requests before handling message
-  EXPECT_EQ(VectorGetSize(&feature_local->pending_write_requests), 0);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 0);
 
   // Act: Handle messages
   EebusError ret = FEATURE_LOCAL_HANDLE_MESSAGE(feature_local_object_.get(), &msg);
   EXPECT_EQ(ret, kEebusErrorOk);
 
   // Assert: Verify with expected return value and number of pending write requests
-  EXPECT_EQ(VectorGetSize(&feature_local->pending_write_requests), 0);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -103,12 +107,12 @@ INSTANTIATE_TEST_SUITE_P(
             .cbs         = {TryApproveShouldPass, TryApproveShouldPass},
         },
         WriteApproveTestInput{
-            .description = "Message deny after approve passes"sv,
+            .description = "Message deny fails after successful message approve"sv,
             .send_err    = true,
             .cbs         = {TryApproveShouldPass, DenyShouldPass},
         },
         WriteApproveTestInput{
-            .description = "Message approve after deny fails"sv,
+            .description = "Message approve fails after message is denied"sv,
             .send_err    = true,
             .cbs         = {DenyShouldPass, TryApproveShouldFail},
         },

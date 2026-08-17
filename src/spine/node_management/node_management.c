@@ -27,6 +27,8 @@
 #include "src/spine/node_management/node_management_internal.h"
 
 static EebusError HandleMessage(FeatureLocalObject* self, const Message* msg);
+static void
+NodeManagementCleanRemoteDeviceCaches(FeatureLocalObject* self, const DeviceAddressType* remote_addr, const char* ski);
 
 static const FeatureLocalInterface node_management_methods = {
     .feature_interface = {
@@ -44,17 +46,13 @@ static const FeatureLocalInterface node_management_methods = {
     .get_entity                            = FeatureLocalGetEntity,
     .get_data                              = FeatureLocalGetData,
     .set_function_operations               = FeatureLocalSetFunctionOperations,
-    .add_response_callback                 = FeatureLocalAddResponseCallback,
-    .add_result_callback                   = FeatureLocalAddResultCallback,
     .add_write_approval_callback           = FeatureLocalAddWriteApprovalCallback,
     .try_approve_write                     = FeatureLocalTryApproveWrite,
     .deny_write                            = FeatureLocalDenyWrite,
-    .clean_remote_device_caches            = FeatureLocalCleanRemoteDeviceCaches,
+    .clean_remote_device_caches            = NodeManagementCleanRemoteDeviceCaches,
     .data_copy                             = FeatureLocalDataCopy,
     .update_data                           = FeatureLocalUpdateData,
     .set_data                              = FeatureLocalSetData,
-    .request_remote_data                   = FeatureLocalRequestRemoteData,
-    .request_remote_data_by_sender_address = FeatureLocalRequestRemoteDataBySenderAddress,
     .has_subscription_to_remote            = FeatureLocalHasSubscriptionToRemote,
     .subscribe_to_remote                   = FeatureLocalSubscribeToRemote,
     .remove_remote_subscription            = FeatureLocalRemoveRemoteSubscription,
@@ -66,6 +64,8 @@ static const FeatureLocalInterface node_management_methods = {
     .handle_message                        = HandleMessage,
     .create_information                    = FeatureLocalCreateInformation,
     .tick                                  = FeatureLocalTick,
+    .write_to_remote                       = FeatureLocalWriteToRemote,
+    .read_from_remote                      = FeatureLocalReadFromRemote,
 };
 
 static void NodeManagementConstruct(NodeManagement* self, uint32_t id, EntityLocalObject* entity);
@@ -134,4 +134,13 @@ EebusError HandleMessage(FeatureLocalObject* self, const Message* msg) {
     case kFunctionTypeNodeManagementDestinationListData: return HandleMsgDestinationListData(nm, msg);
     default: return kEebusErrorNotImplemented;
   }
+}
+
+void NodeManagementCleanRemoteDeviceCaches(
+    FeatureLocalObject* self,
+    const DeviceAddressType* remote_addr,
+    const char* ski
+) {
+  FeatureLocalCleanRemoteDeviceCaches(self, remote_addr, ski);
+  PENDING_REPLY_CONTAINER_REMOVE_FOR_SKI(FEATURE_LOCAL(self)->pending_replies, ski);
 }

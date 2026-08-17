@@ -41,8 +41,8 @@ struct EgLppListener {
 #define EG_LP_LISTENER(obj) ((EgLppListener*)(obj))
 
 static void Destruct(EgLpListenerObject* self);
-static void OnRemoteEntityConnect(EgLpListenerObject* self, const EntityAddressType* entity_addr);
-static void OnRemoteEntityDisconnect(EgLpListenerObject* self, const EntityAddressType* entity_addr);
+static void OnRemoteCsAdded(EgLpListenerObject* self, const EntityAddressType* entity_addr);
+static void OnRemoteCsRemoved(EgLpListenerObject* self, const EntityAddressType* entity_addr);
 static void OnPowerLimitReceive(
     EgLpListenerObject* self,
     const EntityAddressType* entity_addr,
@@ -59,15 +59,21 @@ static void
 OnFailsafeDurationReceive(EgLpListenerObject* self, const EntityAddressType* entity_addr, const DurationType* duration);
 static void
 OnHeartbeatReceive(EgLpListenerObject* self, const EntityAddressType* entity_addr, uint64_t heartbeat_counter);
+static void OnPowerNominalMaxReceive(
+    EgLpListenerObject* self,
+    const EntityAddressType* entity_addr,
+    const ScaledValue* power_limit
+);
 
 static const EgLpListenerInterface eg_lpp_listener_methods = {
     .destruct                        = Destruct,
-    .on_remote_entity_connect        = OnRemoteEntityConnect,
-    .on_remote_entity_disconnect     = OnRemoteEntityDisconnect,
+    .on_remote_cs_added              = OnRemoteCsAdded,
+    .on_remote_cs_removed            = OnRemoteCsRemoved,
     .on_power_limit_receive          = OnPowerLimitReceive,
     .on_failsafe_power_limit_receive = OnFailsafePowerLimitReceive,
     .on_failsafe_duration_receive    = OnFailsafeDurationReceive,
     .on_heartbeat_receive            = OnHeartbeatReceive,
+    .on_power_nominal_max_receive    = OnPowerNominalMaxReceive,
 };
 
 static void EgLppListenerConstruct(EgLppListener* self, HemsObject* hems);
@@ -80,14 +86,14 @@ void EgLppListenerConstruct(EgLppListener* self, HemsObject* hems) {
 }
 
 EgLpListenerObject* EgLppListenerCreate(HemsObject* hems) {
-  EgLppListener* const cs_lpp_listener = (EgLppListener*)EEBUS_MALLOC(sizeof(EgLppListener));
-  if (cs_lpp_listener == NULL) {
+  EgLppListener* const eg_lpp_listener = (EgLppListener*)EEBUS_MALLOC(sizeof(EgLppListener));
+  if (eg_lpp_listener == NULL) {
     return NULL;
   }
 
-  EgLppListenerConstruct(cs_lpp_listener, hems);
+  EgLppListenerConstruct(eg_lpp_listener, hems);
 
-  return EG_LP_LISTENER_OBJECT(cs_lpp_listener);
+  return EG_LP_LISTENER_OBJECT(eg_lpp_listener);
 }
 
 void Destruct(EgLpListenerObject* self) {
@@ -95,13 +101,13 @@ void Destruct(EgLpListenerObject* self) {
   // Nothing to be deallocated yet
 }
 
-void OnRemoteEntityConnect(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
+void OnRemoteCsAdded(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
   EgLppListener* const lpp_listener = EG_LP_LISTENER(self);
 
   HemsSetEgLppRemoteEntity(lpp_listener->hems, entity_addr);
 }
 
-void OnRemoteEntityDisconnect(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
+void OnRemoteCsRemoved(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
   UNUSED(entity_addr);
 
   EgLppListener* const lpp_listener = EG_LP_LISTENER(self);
@@ -153,4 +159,15 @@ void OnHeartbeatReceive(EgLpListenerObject* self, const EntityAddressType* entit
   UNUSED(entity_addr);
 
   printf("EG LPP Heartbeat received, counter = %" PRIu64 "\n", heartbeat_counter);
+}
+
+void OnPowerNominalMaxReceive(
+    EgLpListenerObject* self,
+    const EntityAddressType* entity_addr,
+    const ScaledValue* power_limit
+) {
+  UNUSED(self);
+  UNUSED(entity_addr);
+
+  ScaledValuePrint("EG LPP Power Nominal Max received: %sW\n", power_limit);
 }

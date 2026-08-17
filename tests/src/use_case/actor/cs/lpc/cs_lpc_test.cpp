@@ -54,6 +54,7 @@
 #include "tests/src/use_case/actor/cs/lpc/receive/heartbeat_notify.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/limits_request.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/limits_write.inc"
+#include "tests/src/use_case/actor/cs/lpc/receive/limits_write_delete_duration.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/load_control_binding_request.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/load_control_description_request.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/load_control_subscription_request.inc"
@@ -66,14 +67,19 @@
 #include "tests/src/use_case/actor/cs/lpc/send/device_configuration_description_reply.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/device_configuration_key_value_list_reply.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/device_diagnosis_heartbeat_notify.inc"
+#include "tests/src/use_case/actor/cs/lpc/send/device_diagnosis_heartbeat_notify_second.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/device_diagnosis_heartbeat_read.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/device_diagnosis_heartbeat_reply.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/discovery_read.inc"
+#include "tests/src/use_case/actor/cs/lpc/send/discovery_read_retry.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/discovery_reply.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/electrical_connection_characteristic_notify.inc"
+#include "tests/src/use_case/actor/cs/lpc/send/failsafe_duration_local_notify.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/failsafe_duration_notify.inc"
+#include "tests/src/use_case/actor/cs/lpc/send/failsafe_power_limit_local_notify.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/failsafe_power_limit_notify.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/limits_notify.inc"
+#include "tests/src/use_case/actor/cs/lpc/send/limits_notify_no_duration.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/limits_reply.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/load_control_description_reply.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/load_control_subscription_call.inc"
@@ -89,6 +95,7 @@
 #include "tests/src/use_case/actor/cs/lpc/send/result_data_msg_cnt_ref_24.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/result_data_msg_cnt_ref_25.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/result_data_msg_cnt_ref_26.inc"
+#include "tests/src/use_case/actor/cs/lpc/send/result_data_msg_cnt_ref_27.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/result_data_msg_cnt_ref_3.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/result_data_msg_cnt_ref_8.inc"
 #include "tests/src/use_case/actor/cs/lpc/send/result_data_msg_cnt_ref_9.inc"
@@ -163,6 +170,7 @@ class CsLpcTestFixture : public UseCaseTestFixture {
     // 5. Receive the Use Case reply and send LoadControl subscription + heartbeat read
     ExpectSendMessage(send::load_control_subscription_call);
     ExpectSendMessage(send::device_diagnosis_heartbeat_read);
+    EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnRemoteEgAdded(_, _)).WillOnce(Return());
     HandleMessage(receive::use_case_reply);
 
     // 6. Receive the result with message counter reference 5
@@ -315,9 +323,62 @@ class CsLpcTestFixture : public UseCaseTestFixture {
     EXPECT_THAT(&consumption_nominal_max_get, ScaledValueEq(700, 1));
   }
 
+  void VerifyActivePowerLimitWriteNullDuration() {
+    ExpectSendMessage(send::limits_notify_no_duration);
+    ExpectSendMessage(send::result_data_msg_cnt_ref_27);
+
+    EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnPowerLimitReceive(_, ScaledValueEq(200, 0), testing::IsNull(), true));
+
+    HandleMessage(receive::limits_write_delete_duration);
+
+    LoadLimit limit{};
+    EXPECT_EQ(CsLpcGetActiveConsumptionPowerLimit(use_case_.get(), &limit), kEebusErrorOk);
+    EXPECT_THAT(&limit.value, ScaledValueEq(200, 0));
+    EXPECT_TRUE(limit.delete_duration);
+  }
+
   void VerifyHeartbeat() {
     EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnHeartbeatReceive(_, _)).WillOnce(Return());
     HandleMessage(receive::heartbeat_notify);
+    EXPECT_TRUE(CsLpcIsHeartbeatWithinDuration(use_case_.get()));
+  }
+
+  void VerifyHeartbeatStopStart() {
+    CsLpcStopHeartbeat(use_case_.get());
+    for (size_t i = 0; i < kHeartbeatTimeout; ++i) {
+      HandleTick();
+    }
+
+    ExpectSendHeartbeat(send::device_diagnosis_heartbeat_notify_second);
+    CsLpcStartHeartbeat(use_case_.get());
+    for (size_t i = 0; i < kHeartbeatTimeout; ++i) {
+      HandleTick();
+    }
+  }
+
+  void VerifyLocalSetFailsafePowerLimit() {
+    ExpectSendMessage(send::failsafe_power_limit_local_notify);
+    const ScaledValue power_limit{2000, 0};
+    EXPECT_EQ(CsLpcSetFailsafeConsumptionActivePowerLimit(use_case_.get(), &power_limit, true), kEebusErrorOk);
+
+    ScaledValue result{0, 0};
+    bool is_changeable = false;
+    EXPECT_EQ(CsLpcGetFailsafeConsumptionActivePowerLimit(use_case_.get(), &result, &is_changeable), kEebusErrorOk);
+    EXPECT_THAT(&result, ScaledValueEq(2000, 0));
+    EXPECT_TRUE(is_changeable);
+  }
+
+  void VerifyLocalSetFailsafeDuration() {
+    ExpectSendMessage(send::failsafe_duration_local_notify);
+    DurationType duration{};
+    duration.hours = 3;
+    EXPECT_EQ(CsLpcSetFailsafeDurationMinimum(use_case_.get(), &duration, true), kEebusErrorOk);
+
+    DurationType result{};
+    bool is_changeable = false;
+    EXPECT_EQ(CsLpcGetFailsafeDurationMinimum(use_case_.get(), &result, &is_changeable), kEebusErrorOk);
+    EXPECT_THAT(&result, DurationTypeEq(3, 0, 0));
+    EXPECT_TRUE(is_changeable);
   }
 
  protected:
@@ -328,6 +389,18 @@ class CsLpcTestFixture : public UseCaseTestFixture {
 
   std::unique_ptr<CsLpUseCaseObject, decltype(&CsLpUseCaseDelete)> use_case_{nullptr, CsLpUseCaseDelete};
 };
+
+// Verify that no response within the timeout triggers a re-send of the discovery read request.
+TEST_F(CsLpcTestFixture, RetryDetailedDiscoveryOnTimeout) {
+  // kDefaultMaxResponseDelayMs = 10000ms → 10 ticks to expire, +1 tick to fire the callback
+  static constexpr size_t kDiscoveryTimeoutTicks = 11;
+
+  // After timeout the pending discovery reply fires with NULL → expect retry read (msgCounter=2)
+  ExpectSendMessage(send::discovery_read_retry);
+  for (size_t i = 0; i < kDiscoveryTimeoutTicks; ++i) {
+    HandleTick();
+  }
+}
 
 TEST_F(CsLpcTestFixture, CsLpcTest) {
   // 1-20. Set up the remote connection by processing the incoming messages in the right order
@@ -359,6 +432,21 @@ TEST_F(CsLpcTestFixture, CsLpcTest) {
 
   // 29. Verify that the Heartbeat message is received and processed correctly
   VerifyHeartbeat();
+
+  // 30. Verify that a write with an empty timePeriod triggers OnPowerLimitReceive with null duration
+  VerifyActivePowerLimitWriteNullDuration();
+
+  // 31. Verify that stopping the heartbeat suppresses further NOTIFYs and re-starting resumes them
+  VerifyHeartbeatStopStart();
+
+  // 32. Verify the local failsafe power limit setter sends NOTIFY and updates stored state
+  VerifyLocalSetFailsafePowerLimit();
+
+  // 33. Verify the local failsafe duration minimum setter sends NOTIFY and updates stored state
+  VerifyLocalSetFailsafeDuration();
+
+  // 34. Expect the remote EG disconnect event while tearing down the use case
+  EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnRemoteEgRemoved(_, _));
 }
 
 }  // namespace cs_lpc_test

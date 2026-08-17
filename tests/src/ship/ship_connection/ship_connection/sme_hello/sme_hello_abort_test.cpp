@@ -17,72 +17,43 @@
 
 #include <string_view>
 
-#include "tests/src/json.h"
+#include "ship_hello_state_messages.inc"
 #include "tests/src/ship/ship_connection/ship_connection/ship_connection_test_suite.h"
 
-using std::literals::string_view_literals::operator""sv;
-using testing::_;
-using testing::Return;
+class SmeHelloAbortStateTests : public ShipConnectionTestSuite {
+ protected:
+  void SetUp() override {
+    ShipConnectionTestSuite::SetUp();
+    SetShipConnectionState(kSmeHelloStateAbort);
+    ASSERT_EQ(MessageBufferInitHelper(&msg_buf, kSmeHelloStateAbortMsg), kEebusErrorOk) << "Wrong test input!";
+    ShipConnectionWebsocketCallback(kWebsocketCallbackTypeRead, msg_buf.data, msg_buf.data_size, &sc);
+  }
 
-struct ShipSmeHelloAbortTestInput {
-  std::string_view description     = ""sv;
-  const char* close_error_msg      = "SME Hello state connection aborted";
-  std::string_view msg             = R"({"connectionHello": [{"phase": "aborted"}]})"sv;
-  bool msg_send_successful         = false;
+  MessageBuffer msg_buf{0};
 };
 
-class ShipConnectionHelloStateAbortTests : public ShipConnectionTestSuite,
-                                           public ::testing::WithParamInterface<ShipSmeHelloAbortTestInput> {};
-
-std::ostream& operator<<(std::ostream& os, const ShipSmeHelloAbortTestInput& input) {
-  return os << input.description;
-}
-
-TEST_P(ShipConnectionHelloStateAbortTests, SmeHelloAbortTest) {
-  // Arrange:
-  // Unformat JSON message
-  std::unique_ptr<char[], decltype(&JsonFree)> s(JsonUnformat(GetParam().msg), JsonFree);
-  ASSERT_NE(s, nullptr) << "Wrong test input!";
-
-  // Set initial state and calculate message size
-  SetShipConnectionState(kSmeHelloStateAbort);
-  const size_t msg_size      = strlen(s.get()) + 1;
-  const size_t ret_num_bytes = GetParam().msg_send_successful ? msg_size : 0;
-  EXPECT_CALL(*websocket_mock->gmock, Write(sc.websocket, _, msg_size))
-      .WillOnce(Return(static_cast<int32_t>(ret_num_bytes)));
-
-  // Expect connection closing function calls
-  EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer));
-  EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
-  EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer));
-  EXPECT_CALL(
-      *ifp_mock->gmock,
-      HandleShipStateUpdate(
-          sc.info_provider,
-          testing::StrCaseEq(TEST_REMOTE_SKI),
-          kSmeStateError,
-          testing::StrCaseEq("")
-      )
-  );
-  ExpectCloseWithError(GetParam().close_error_msg, false);
+TEST_F(SmeHelloAbortStateTests, MessageSuccessfullySent) {
+  // Arrange: Expect abort message to be sent successfully
+  ExpectWebsocketWrite(msg_buf, true);
+  ExpectStateUpdate(kSmeStateError);
+  ExpectConnectionClose("SME Hello state connection aborted", false);
 
   // Act: Abort connection
   SmeHelloStateAbort(&sc);
 
-  // Assert: SME state changed accordingly
-  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, NULL), kSmeStateError);
+  // Assert: SME is in kSmeStateError
+  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), kSmeStateError);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    ShipConnectionHelloStateAbortTests,
-    ShipConnectionHelloStateAbortTests,
-    ::testing::Values(
-        ShipSmeHelloAbortTestInput{
-            .description         = "Abort message sent successfully"sv,
-            .msg_send_successful = true,
-        },
-        ShipSmeHelloAbortTestInput{
-            .description = "Abort message failed to send"sv,
-        }
-    )
-);
+TEST_F(SmeHelloAbortStateTests, MessageFailedToSend) {
+  // Arrange: Expect abort message to fail to send
+  ExpectWebsocketWrite(msg_buf, false);
+  ExpectStateUpdate(kSmeStateError);
+  ExpectConnectionClose("SME Hello state connection aborted", false);
+
+  // Act: Abort connection
+  SmeHelloStateAbort(&sc);
+
+  // Assert: SME is in kSmeStateError
+  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), kSmeStateError);
+}

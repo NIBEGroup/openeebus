@@ -54,7 +54,7 @@ static constexpr char heartbeat_notify[] = R"({
               {
                 "deviceDiagnosisHeartbeatData": [
                   {
-                    "timestamp": "2025-03-03T16:39:59Z"
+                    "timestamp": "2099-01-01T00:00:00Z"
                   },
                   {
                     "heartbeatCounter": 2

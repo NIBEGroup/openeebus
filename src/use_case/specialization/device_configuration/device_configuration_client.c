@@ -21,7 +21,6 @@
 #include "src/use_case/specialization/device_configuration/device_configuration_client.h"
 
 #include "src/spine/model/device_configuration_types.h"
-#include "src/spine/model/filter.h"
 
 static const FunctionType key_value_fcn = kFunctionTypeDeviceConfigurationKeyValueListData;
 
@@ -50,25 +49,40 @@ EebusError DeviceConfigurationClientRequestKeyValueDescription(
     const DeviceConfigurationKeyValueDescriptionListDataSelectorsType* selectors,
     const DeviceConfigurationKeyValueDescriptionDataElementsType* elements
 ) {
-  return RequestData(
-      &self->feature_info_client,
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
       kFunctionTypeDeviceConfigurationKeyValueDescriptionListData,
       selectors,
-      elements
+      elements,
+      NULL,
+      NULL
   );
 }
 
 EebusError DeviceConfigurationClientRequestKeyValue(
     DeviceConfigurationClient* self,
     const DeviceConfigurationKeyValueListDataSelectorsType* selectors,
-    const DeviceConfigurationKeyValueDataElementsType* elements
+    const DeviceConfigurationKeyValueDataElementsType* elements,
+    ReplyMessageCallback cb,
+    void* ctx
 ) {
-  return RequestData(&self->feature_info_client, key_value_fcn, selectors, elements);
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      key_value_fcn,
+      selectors,
+      elements,
+      cb,
+      ctx
+  );
 }
 
 EebusError DeviceConfigurationClientWriteKeyValueList(
     DeviceConfigurationClient* self,
-    const DeviceConfigurationKeyValueListDataType* key_value_list
+    const DeviceConfigurationKeyValueListDataType* key_value_list,
+    ResultMessageCallback cb,
+    void* ctx
 ) {
   if (key_value_list == NULL) {
     return kEebusErrorInputArgumentNull;
@@ -79,31 +93,14 @@ EebusError DeviceConfigurationClientWriteKeyValueList(
     return kEebusErrorInputArgument;
   }
 
-  FeatureRemoteObject* const fr = self->feature_info_client.remote_feature;
-
-  const OperationsObject* const operations = FEATURE_GET_FUNCTION_OPERATIONS(FEATURE_OBJECT(fr), key_value_fcn);
-
-  if ((operations == NULL) || !OPERATIONS_GET_WRITE_PARTIAL(operations)) {
-    const EebusError err = FEATURE_REMOTE_UPDATE_DATA(fr, key_value_fcn, key_value_list, NULL, NULL, false);
-    if (err != kEebusErrorOk) {
-      return err;
-    }
-
-    const CmdType cmd = {
-        .data_choice         = FEATURE_REMOTE_GET_DATA(fr, key_value_fcn),
-        .data_choice_type_id = key_value_fcn,
-    };
-
-    return WriteCmd(&self->feature_info_client, &cmd);
-  } else {
-    const CmdType cmd = {
-        .data_choice         = key_value_list,
-        .data_choice_type_id = key_value_fcn,
-        .filter              = &(const FilterType*){&FILTER_PARTIAL(key_value_fcn, NULL, NULL, NULL)},
-        .filter_size         = 1,
-        .function            = &(FunctionType){key_value_fcn},
-    };
-
-    return WriteCmd(&self->feature_info_client, &cmd);
-  }
+  return FEATURE_LOCAL_WRITE_TO_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      key_value_fcn,
+      key_value_list,
+      NULL,
+      NULL,
+      cb,
+      ctx
+  );
 }

@@ -20,8 +20,6 @@
 
 #include "src/use_case/specialization/feature_info_client.h"
 
-#include "src/spine/model/filter.h"
-
 EebusError GetLocalAndRemoteFeatures(FeatureInfoClient* self) {
   self->local_feature
       = ENTITY_LOCAL_GET_FEATURE_WITH_TYPE_AND_ROLE(self->local_entity, self->feature_type, self->local_role);
@@ -99,59 +97,4 @@ EebusError Bind(FeatureInfoClient* self) {
 
 EebusError Unbind(FeatureInfoClient* self) {
   return FEATURE_LOCAL_REMOVE_REMOTE_BINDING(self->local_feature, GetFeatureRemoteAddress(self));
-}
-
-EebusError
-AddResponseCallback(FeatureInfoClient* self, MsgCounterType msg_counter_ref, ResponseMessageCallback cb, void* ctx) {
-  return FEATURE_LOCAL_ADD_RESPONSE_CALLBACK(self->local_feature, msg_counter_ref, cb, ctx);
-}
-
-void AddResultCallback(FeatureInfoClient* self, ResponseMessageCallback cb, void* ctx) {
-  FEATURE_LOCAL_ADD_RESULT_CALLBACK(self->local_feature, cb, ctx);
-}
-
-EebusError
-RequestData(FeatureInfoClient* self, FunctionType function_type, const void* selectors, const void* elements) {
-  if (self->remote_feature == NULL) {
-    return kEebusErrorNoChange;
-  }
-
-  const OperationsObject* const ops
-      = FEATURE_GET_FUNCTION_OPERATIONS(FEATURE_OBJECT(self->remote_feature), function_type);
-
-  if ((ops == NULL) || (!OPERATIONS_GET_READ(ops))) {
-    return kEebusErrorNoChange;
-  }
-
-  const FilterType* filter_partial = &FILTER_PARTIAL(function_type, NULL, selectors, elements);
-  // Skip the selectors if the remote does not allow partial reads
-  // or partial writes, because in that case we need to have all data
-  if ((selectors == NULL) || (!OPERATIONS_GET_READ_PARTIAL(ops)) || (!OPERATIONS_GET_WRITE_PARTIAL(ops))) {
-    filter_partial = NULL;
-  }
-
-  return FEATURE_LOCAL_REQUEST_REMOTE_DATA(self->local_feature, function_type, filter_partial, self->remote_feature);
-}
-
-EebusError WriteCmd(FeatureInfoClient* self, const CmdType* cmd) {
-  if ((self == NULL) || (cmd == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
-
-  const FeatureLocalObject* const fl  = self->local_feature;
-  const FeatureRemoteObject* const fr = self->remote_feature;
-
-  SenderObject* const sender = DEVICE_REMOTE_GET_SENDER(self->remote_device);
-  if (sender == NULL) {
-    return kEebusErrorInit;
-  }
-
-  const FeatureAddressType* const sender_addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(fl));
-  const FeatureAddressType* const dest_addr   = FEATURE_GET_ADDRESS(FEATURE_OBJECT(fr));
-
-  if ((sender_addr == NULL) || (dest_addr == NULL)) {
-    return kEebusErrorNoChange;
-  }
-
-  return SEND_WRITE(sender, sender_addr, dest_addr, cmd);
 }

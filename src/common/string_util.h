@@ -63,7 +63,18 @@ static inline void StringDelete(char* s) {
  * @brief Check if the string specified is empty (string is NULL or zero length)
  * @param s String to be checked
  */
-static inline bool StringIsEmpty(const char* s) { return (s == NULL) || (strlen(s) == 0); }
+static inline bool StringIsEmpty(const char* s) {
+  return (s == NULL) || (strlen(s) == 0);
+}
+
+/**
+ * @brief Check if two strings are identical and no longer than n characters
+ * @param a First string
+ * @param b Second string
+ * @param n Maximum allowed length of both strings
+ * @return true if both strings are identical and their lengths do not exceed n
+ */
+bool StringNCompare(const char* a, const char* b, size_t n);
 
 /**
  * @brief Dynamically allocates buffer and performs formatted sprintf() into it
@@ -121,6 +132,23 @@ char* StringWithHex(const uint8_t* data, size_t data_len);
  *       until all tokens have been processed.
  */
 char* StringToken(char* s, const char* delimiters, char** p);
+
+/**
+ * @brief Converts all characters to uppercase
+ * @param s String to be converted to uppercase
+ * @return A new dynamically allocated string with all characters converted to uppercase. The caller is responsible for
+ * deallocating the returned string with StringDelete().
+ */
+char* StringToUpper(const char* s);
+
+/**
+ * @brief Inserts a space every n characters
+ * @param s String to be grouped
+ * @param n Number of characters per group
+ * @return A new dynamically allocated grouped string. The caller is responsible for deallocating the returned string
+ * with StringDelete().
+ */
+char* StringGroupByN(const char* s, size_t n);
 
 #ifdef __cplusplus
 }

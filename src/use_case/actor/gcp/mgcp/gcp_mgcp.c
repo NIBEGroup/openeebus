@@ -21,6 +21,7 @@
 #include "src/use_case/actor/gcp/mgcp/gcp_mgcp.h"
 
 #include "src/common/array_util.h"
+#include "src/common/eebus_arguments.h"
 #include "src/use_case/actor/common/eebus_monitor_features.h"
 #include "src/use_case/actor/gcp/mgcp/gcp_mgcp_internal.h"
 #include "src/use_case/actor/gcp/mgcp/gcp_mgcp_monitor.h"
@@ -45,7 +46,7 @@ static EebusError AddGcpMgcpScenario1(GcpMgcpUseCase* self) {
 
   static const FeatureTypeType scenario1_features[] = {kFeatureTypeTypeDeviceConfiguration};
 
-  self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+  self->gcp_mgcp_scenarios[self->gcp_mgcp_scenarios_size++] = (UseCaseScenario){
       .scenario             = (UseCaseScenarioSupportType)1,
       .mandatory            = false,
       .server_features      = scenario1_features,
@@ -68,7 +69,7 @@ static EebusError AddGcpMgcpScenario2(GcpMgcpUseCase* self, const GcpMgcpMonitor
       kFeatureTypeTypeMeasurement,
   };
 
-  self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+  self->gcp_mgcp_scenarios[self->gcp_mgcp_scenarios_size++] = (UseCaseScenario){
       .scenario             = (UseCaseScenarioSupportType)2,
       .mandatory            = true,
       .server_features      = use_case_scenario_2_features,
@@ -92,7 +93,7 @@ static EebusError AddGcpMgcpEnergyScenarios(GcpMgcpUseCase* self, const GcpMgcpM
   };
 
   if (energy_cfg->energy_feed_in_cfg != NULL) {
-    self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+    self->gcp_mgcp_scenarios[self->gcp_mgcp_scenarios_size++] = (UseCaseScenario){
         .scenario             = (UseCaseScenarioSupportType)3,
         .mandatory            = false,
         .server_features      = energy_features,
@@ -101,7 +102,7 @@ static EebusError AddGcpMgcpEnergyScenarios(GcpMgcpUseCase* self, const GcpMgcpM
   }
 
   if (energy_cfg->energy_consumed_cfg != NULL) {
-    self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+    self->gcp_mgcp_scenarios[self->gcp_mgcp_scenarios_size++] = (UseCaseScenario){
         .scenario             = (UseCaseScenarioSupportType)4,
         .mandatory            = false,
         .server_features      = energy_features,
@@ -125,7 +126,7 @@ static EebusError AddGcpMgcpScenario5(GcpMgcpUseCase* self, const GcpMgcpMonitor
       kFeatureTypeTypeMeasurement,
   };
 
-  self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+  self->gcp_mgcp_scenarios[self->gcp_mgcp_scenarios_size++] = (UseCaseScenario){
       .scenario             = (UseCaseScenarioSupportType)5,
       .mandatory            = false,
       .server_features      = use_case_scenario_5_features,
@@ -148,7 +149,7 @@ static EebusError AddGcpMgcpScenario6(GcpMgcpUseCase* self, const GcpMgcpMonitor
       kFeatureTypeTypeMeasurement,
   };
 
-  self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+  self->gcp_mgcp_scenarios[self->gcp_mgcp_scenarios_size++] = (UseCaseScenario){
       .scenario             = (UseCaseScenarioSupportType)6,
       .mandatory            = false,
       .server_features      = use_case_scenario_6_features,
@@ -171,7 +172,7 @@ static EebusError AddGcpMgcpScenario7(GcpMgcpUseCase* self, const GcpMgcpMonitor
       kFeatureTypeTypeMeasurement,
   };
 
-  self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+  self->gcp_mgcp_scenarios[self->gcp_mgcp_scenarios_size++] = (UseCaseScenario){
       .scenario             = (UseCaseScenarioSupportType)7,
       .mandatory            = false,
       .server_features      = use_case_scenario_7_features,
@@ -214,7 +215,7 @@ static EebusError GcpMgcpUseCaseConstruct(
   USE_CASE_INTERFACE(self) = &gcp_mgcp_use_case_methods;
 
   self->electrical_connection_id = ec_id;
-  self->use_case_scenarios_size  = 0;
+  self->gcp_mgcp_scenarios_size  = 0;
   self->has_scenario1            = false;
 
   const EebusError container_err = EebusMonitorContainerConstruct(&self->monitor_container);
@@ -273,8 +274,8 @@ static EebusError GcpMgcpUseCaseConstruct(
       .valid_actor_types_size  = ARRAY_SIZE(valid_actor_types),
       .valid_entity_types      = NULL,
       .valid_entity_types_size = 0,
-      .use_case_scenarios      = self->use_case_scenarios,
-      .use_case_scenarios_size = self->use_case_scenarios_size,
+      .use_case_scenarios      = self->gcp_mgcp_scenarios,
+      .use_case_scenarios_size = self->gcp_mgcp_scenarios_size,
       .actor                   = kUseCaseActorTypeGridConnectionPoint,
       .use_case_name_id        = kUseCaseNameTypeMonitoringOfGridConnectionPoint,
       .version                 = "1.0.0",
@@ -325,7 +326,8 @@ static void Destruct(UseCaseObject* self) {
 }
 
 static bool IsEntityCompatible(const UseCaseObject* self, const EntityRemoteObject* remote_entity) {
-  (void)self;
-  (void)remote_entity;
+  UNUSED(self);
+  UNUSED(remote_entity);
+
   return true;
 }

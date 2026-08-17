@@ -42,8 +42,8 @@ struct MaMpcListener {
 #define MA_MPC_LISTENER(obj) ((MaMpcListener*)(obj))
 
 static void Destruct(MaMpcListenerObject* self);
-static void OnRemoteEntityConnect(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
-static void OnRemoteEntityDisconnect(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
+static void OnRemoteMuAdded(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
+static void OnRemoteMuRemoved(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
 static void OnMeasurementReceive(
     MaMpcListenerObject* self,
     MuMpcMeasurementNameId name_id,
@@ -52,10 +52,10 @@ static void OnMeasurementReceive(
 );
 
 static const MaMpcListenerInterface ma_mpc_listener_methods = {
-    .destruct                    = Destruct,
-    .on_remote_entity_connect    = OnRemoteEntityConnect,
-    .on_remote_entity_disconnect = OnRemoteEntityDisconnect,
-    .on_measurement_receive      = OnMeasurementReceive,
+    .destruct               = Destruct,
+    .on_remote_mu_added     = OnRemoteMuAdded,
+    .on_remote_mu_removed   = OnRemoteMuRemoved,
+    .on_measurement_receive = OnMeasurementReceive,
 };
 
 static EebusError MaMpcListenerConstruct(MaMpcListener* self, HemsObject* hems);
@@ -89,16 +89,16 @@ void Destruct(MaMpcListenerObject* self) {
   // Nothing to be deallocated yet
 }
 
-void OnRemoteEntityConnect(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
+void OnRemoteMuAdded(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
   MaMpcListener* const ma_mpc_listener = MA_MPC_LISTENER(self);
 
-  HemsSetMaMpcRemoteEntity(ma_mpc_listener->hems, entity_addr);
+  HemsAddMaMpcRemoteEntity(ma_mpc_listener->hems, entity_addr);
 }
 
-void OnRemoteEntityDisconnect(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
+void OnRemoteMuRemoved(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
   MaMpcListener* const ma_mpc_listener = MA_MPC_LISTENER(self);
 
-  HemsSetMaMpcRemoteEntity(ma_mpc_listener->hems, entity_addr);
+  HemsRemoveMaMpcRemoteEntity(ma_mpc_listener->hems, entity_addr);
 }
 
 void OnMeasurementReceive(

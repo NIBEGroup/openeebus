@@ -39,14 +39,14 @@ target_sources(
 
   ship_connection_test_suite.cpp
   ship_connection_test.cpp
-  client/cmi/cmi_client_send_test.cpp
-  client/cmi/cmi_client_wait_test.cpp
-  client/cmi/cmi_client_evaluate_test.cpp
+  client/cmi/client_send_init_message_test.cpp
+  client/cmi/client_wait_for_init_message_test.cpp
+  client/cmi/client_evaluate_init_message_test.cpp
   data_exchange/data_exchange_test.cpp
-  server/cmi/cmi_server_wait_test.cpp
-  server/cmi/cmi_server_evaluate_test.cpp
-  client/sme_prot_handshake/sme_prot_handshake_client_init_test.cpp
-  client/sme_prot_handshake/sme_prot_handshake_client_listen_choice_test.cpp
+  server/cmi/server_wait_test.cpp
+  server/cmi/server_evaluate_init_message_test.cpp
+  client/sme_prot_handshake/announce_protocol_version_test.cpp
+  client/sme_prot_handshake/select_protocol_version_test.cpp
   server/sme_prot_handshake/sme_prot_handshake_server_init_test.cpp
   server/sme_prot_handshake/sme_prot_handshake_server_listen_proposal_test.cpp
   server/sme_prot_handshake/sme_prot_handshake_server_listen_confirm_test.cpp

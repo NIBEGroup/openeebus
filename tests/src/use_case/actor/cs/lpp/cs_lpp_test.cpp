@@ -54,6 +54,7 @@
 #include "tests/src/use_case/actor/cs/lpp/receive/heartbeat_notify.inc"
 #include "tests/src/use_case/actor/cs/lpp/receive/limits_request.inc"
 #include "tests/src/use_case/actor/cs/lpp/receive/limits_write.inc"
+#include "tests/src/use_case/actor/cs/lpp/receive/limits_write_delete_duration.inc"
 #include "tests/src/use_case/actor/cs/lpp/receive/load_control_binding_request.inc"
 #include "tests/src/use_case/actor/cs/lpp/receive/load_control_description_request.inc"
 #include "tests/src/use_case/actor/cs/lpp/receive/load_control_subscription_request.inc"
@@ -66,6 +67,7 @@
 #include "tests/src/use_case/actor/cs/lpp/send/device_configuration_description_reply.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/device_configuration_key_value_list_reply.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/device_diagnosis_heartbeat_notify.inc"
+#include "tests/src/use_case/actor/cs/lpp/send/device_diagnosis_heartbeat_notify_second.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/device_diagnosis_heartbeat_read.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/device_diagnosis_heartbeat_reply.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/discovery_read.inc"
@@ -74,6 +76,7 @@
 #include "tests/src/use_case/actor/cs/lpp/send/failsafe_duration_notify.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/failsafe_power_limit_notify.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/limits_notify.inc"
+#include "tests/src/use_case/actor/cs/lpp/send/limits_notify_no_duration.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/limits_reply.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/load_control_description_reply.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/load_control_subscription_call.inc"
@@ -89,6 +92,7 @@
 #include "tests/src/use_case/actor/cs/lpp/send/result_data_msg_cnt_ref_24.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/result_data_msg_cnt_ref_25.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/result_data_msg_cnt_ref_26.inc"
+#include "tests/src/use_case/actor/cs/lpp/send/result_data_msg_cnt_ref_27.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/result_data_msg_cnt_ref_3.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/result_data_msg_cnt_ref_8.inc"
 #include "tests/src/use_case/actor/cs/lpp/send/result_data_msg_cnt_ref_9.inc"
@@ -163,6 +167,7 @@ class CsLppTestFixture : public UseCaseTestFixture {
     // 5. Receive the Use Case reply and send LoadControl subscription + heartbeat read
     ExpectSendMessage(send::load_control_subscription_call);
     ExpectSendMessage(send::device_diagnosis_heartbeat_read);
+    EXPECT_CALL(*cs_lpp_listener_mock_->gmock, OnRemoteEgAdded(_, _)).WillOnce(Return());
     HandleMessage(receive::use_case_reply);
 
     // 6. Receive the result with message counter reference 5
@@ -315,9 +320,37 @@ class CsLppTestFixture : public UseCaseTestFixture {
     EXPECT_THAT(&production_nominal_max_get, ScaledValueEq(700, 1));
   }
 
+  void VerifyActivePowerLimitWriteNullDuration() {
+    ExpectSendMessage(send::limits_notify_no_duration);
+    ExpectSendMessage(send::result_data_msg_cnt_ref_27);
+
+    EXPECT_CALL(*cs_lpp_listener_mock_->gmock, OnPowerLimitReceive(_, ScaledValueEq(200, 0), testing::IsNull(), true));
+
+    HandleMessage(receive::limits_write_delete_duration);
+
+    LoadLimit limit{};
+    EXPECT_EQ(CsLppGetActiveProductionPowerLimit(use_case_.get(), &limit), kEebusErrorOk);
+    EXPECT_THAT(&limit.value, ScaledValueEq(200, 0));
+    EXPECT_TRUE(limit.delete_duration);
+  }
+
   void VerifyHeartbeat() {
     EXPECT_CALL(*cs_lpp_listener_mock_->gmock, OnHeartbeatReceive(_, _)).WillOnce(Return());
     HandleMessage(receive::heartbeat_notify);
+    EXPECT_TRUE(CsLppIsHeartbeatWithinDuration(use_case_.get()));
+  }
+
+  void VerifyHeartbeatStopStart() {
+    CsLppStopHeartbeat(use_case_.get());
+    for (size_t i = 0; i < kHeartbeatTimeout; ++i) {
+      HandleTick();
+    }
+
+    ExpectSendHeartbeat(send::device_diagnosis_heartbeat_notify_second);
+    CsLppStartHeartbeat(use_case_.get());
+    for (size_t i = 0; i < kHeartbeatTimeout; ++i) {
+      HandleTick();
+    }
   }
 
  protected:
@@ -359,6 +392,15 @@ TEST_F(CsLppTestFixture, CsLppTest) {
 
   // 29. Verify that the Heartbeat message is received and processed correctly
   VerifyHeartbeat();
+
+  // 30. Verify that a write with an empty timePeriod triggers OnPowerLimitReceive with null duration
+  VerifyActivePowerLimitWriteNullDuration();
+
+  // 31. Verify that stopping the heartbeat suppresses further NOTIFYs and re-starting resumes them
+  VerifyHeartbeatStopStart();
+
+  // 32. Expect the remote EG disconnect event while tearing down the use case
+  EXPECT_CALL(*cs_lpp_listener_mock_->gmock, OnRemoteEgRemoved(_, _));
 }
 
 }  // namespace cs_lpp_test

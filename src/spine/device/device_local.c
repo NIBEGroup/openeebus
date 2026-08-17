@@ -20,6 +20,7 @@
 
 #include "device.h"
 #include "src/common/debug.h"
+#include "src/common/eebus_arguments.h"
 #include "src/common/eebus_assert.h"
 #include "src/common/eebus_device_info.h"
 #include "src/common/eebus_malloc.h"
@@ -102,7 +103,8 @@ static EebusError Start(DeviceLocalObject* self);
 static void Stop(DeviceLocalObject* self);
 static DataReaderObject* SetupRemoteDevice(DeviceLocalObject* self, const char* ski, DataWriterObject* writer);
 static void AddRemoteDeviceForSki(DeviceLocalObject* self, const char* ski, DeviceRemoteObject* remote_device);
-static EebusError RequestRemoteDetailedDiscoveryData(DeviceLocalObject* self, const DeviceRemoteObject* remote_device);
+static EebusError
+RequestDeviceRemoteDetailedDiscoveryData(DeviceLocalObject* self, const DeviceRemoteObject* remote_device);
 static void RemoveRemoteDeviceConnection(DeviceLocalObject* self, const char* ski);
 static void RemoveRemoteDevice(DeviceLocalObject* self, const char* ski);
 static DeviceRemoteObject* GetRemoteDeviceWithAddress(const DeviceLocalObject* self, const char* device_addr);
@@ -138,7 +140,7 @@ static const DeviceLocalInterface device_local_methods = {
     .stop                                   = Stop,
     .setup_remote_device                    = SetupRemoteDevice,
     .add_remote_device_for_ski              = AddRemoteDeviceForSki,
-    .request_remote_detailed_discovery_data = RequestRemoteDetailedDiscoveryData,
+    .request_remote_detailed_discovery_data = RequestDeviceRemoteDetailedDiscoveryData,
     .remove_remote_device_connection        = RemoveRemoteDeviceConnection,
     .remove_remote_device                   = RemoveRemoteDevice,
     .get_remote_device_with_address         = GetRemoteDeviceWithAddress,
@@ -166,8 +168,25 @@ static void DeviceLocalConstruct(
     const NetworkManagementFeatureSetType* feature_set
 );
 static void DeviceLocalQueueMsgDeallocator(void* msg);
-static void DeivceLocalHandleEvent(const EventPayload* payload, void* ctx);
+static void DeviceLocalTick(DeviceLocalObject* self);
+static void* DeviceLocalLoop(void* parameters);
+static EebusError DeviceLocalTryStart(DeviceLocal* self);
+static EebusError RequestDeviceRemoteUseCaseData(DeviceLocalObject* self, const DeviceRemoteObject* remote_device);
+static void OnUseCaseDataReadReply(
+    const ReplyMessage* reply_msg,
+    const FeatureAddressType* remote_feature_addr,
+    EebusError err,
+    void* ctx
+);
+static void OnDetailedDiscoveryReadReply(
+    const ReplyMessage* reply_msg,
+    const FeatureAddressType* remote_feature_addr,
+    EebusError err,
+    void* ctx
+);
 static void RemoteDeviceDeleter(void* dr);
+static void
+NotifySubscribersOfEntity(DeviceLocal* self, EntityLocalObject* entity, NetworkManagementStateChangeType state);
 static EebusError
 ProcessDatagram(DeviceLocalObject* self, const DatagramType* datagram, DeviceRemoteObject* remote_device);
 
@@ -233,8 +252,6 @@ void DeviceLocalConstruct(
   self->mutex = EebusMutexCreateRecursive();
 
   AddDeviceInformation(self, device_info);
-
-  EVENTS_SUBSCRIBE(self->events_manager, kEventHandlerLevelCore, DeivceLocalHandleEvent, self);
 }
 
 DeviceLocalObject*
@@ -265,8 +282,6 @@ void Destruct(DeviceObject* self) {
 
   EebusQueueDelete(dl->msg_queue);
   dl->msg_queue = NULL;
-
-  EVENTS_UNSUBSCRIBE(dl->events_manager, kEventHandlerLevelCore, DeivceLocalHandleEvent, dl);
 
   StringLutRelease(&dl->remote_devices);
 
@@ -429,61 +444,100 @@ static void Stop(DeviceLocalObject* self) {
   EEBUS_QUEUE_CLEAR(dl->msg_queue);
 }
 
-void DeivceLocalHandleEvent(const EventPayload* payload, void* ctx) {
-  DeviceLocal* const dl = (DeviceLocal*)(ctx);
+EebusError RequestDeviceRemoteUseCaseData(DeviceLocalObject* self, const DeviceRemoteObject* remote_device) {
+  DeviceLocal* const dl = DEVICE_LOCAL(self);
 
-  // Subscribe to NodeManagement after DetailedDiscovery is received
-  if ((payload->event_type != kEventTypeDeviceChange) || (payload->change_type != kElementChangeAdd)) {
+  NodeManagementObject* const nm = dl->node_management;
+
+  const char* const addr     = DEVICE_GET_ADDRESS(DEVICE_OBJECT(remote_device));
+  const char* const ski      = DEVICE_REMOTE_GET_SKI(remote_device);
+  SenderObject* const sender = DEVICE_REMOTE_GET_SENDER(remote_device);
+  return RequestUseCaseData(nm, addr, ski, sender, OnUseCaseDataReadReply, self);
+}
+
+void OnUseCaseDataReadReply(
+    const ReplyMessage* reply_msg,
+    const FeatureAddressType* remote_feature_addr,
+    EebusError err,
+    void* ctx
+) {
+  UNUSED(remote_feature_addr);
+
+  DeviceLocalObject* const dl = (DeviceLocalObject*)ctx;
+
+  if (DEVICE_LOCAL(dl)->cancel) {
     return;
   }
 
-  if ((payload->function_data == NULL) || StringIsEmpty(payload->ski)) {
+  if (err == kEebusErrorOk) {
     return;
   }
 
-  DeviceRemoteObject* const remote_device
-      = DEVICE_LOCAL_GET_REMOTE_DEVICE_WITH_SKI(DEVICE_LOCAL_OBJECT(dl), payload->ski);
+  DeviceRemoteObject* const remote_device = DEVICE_LOCAL_GET_REMOTE_DEVICE_WITH_SKI(dl, reply_msg->ski);
   if (remote_device == NULL) {
     return;
   }
 
-  if (payload->function_type == kFunctionTypeNodeManagementDetailedDiscoveryData) {
-    const char* const remote_device_addr = DEVICE_GET_ADDRESS(DEVICE_OBJECT(remote_device));
-
-    FeatureAddressType addr = *FEATURE_GET_ADDRESS(FEATURE_OBJECT(payload->feature));
-    if (addr.device == NULL) {
-      addr.device = (char*)remote_device_addr;
-    }
-
-    FEATURE_LOCAL_SUBSCRIBE_TO_REMOTE(FEATURE_LOCAL_OBJECT(dl->node_management), &addr);
-
-    const char* const remote_device_ski = DEVICE_REMOTE_GET_SKI(remote_device);
-
-    SenderObject* const sender = DEVICE_REMOTE_GET_SENDER(remote_device);
-    RequestUseCaseData(dl->node_management, remote_device_ski, remote_device_addr, sender);
-  }
+  RequestDeviceRemoteUseCaseData(dl, remote_device);
 }
 
-EebusError RequestRemoteDetailedDiscoveryData(DeviceLocalObject* self, const DeviceRemoteObject* remote_device) {
+EebusError RequestDeviceRemoteDetailedDiscoveryData(DeviceLocalObject* self, const DeviceRemoteObject* remote_device) {
   DeviceLocal* const dl = DEVICE_LOCAL(self);
 
-  // Request Detailed Discovery Data
-  const char* const ski      = DEVICE_REMOTE_GET_SKI(remote_device);
-  const char* const addr     = DEVICE_GET_ADDRESS(DEVICE_OBJECT(remote_device));
-  SenderObject* const sender = DEVICE_REMOTE_GET_SENDER(remote_device);
+  NodeManagementObject* const nm = dl->node_management;
 
-  return RequestDetailedDiscovery(dl->node_management, ski, addr, sender);
+  const char* const addr     = DEVICE_GET_ADDRESS(DEVICE_OBJECT(remote_device));
+  const char* const ski      = DEVICE_REMOTE_GET_SKI(remote_device);
+  SenderObject* const sender = DEVICE_REMOTE_GET_SENDER(remote_device);
+  return RequestDetailedDiscovery(nm, addr, ski, sender, OnDetailedDiscoveryReadReply, self);
+}
+
+void OnDetailedDiscoveryReadReply(
+    const ReplyMessage* reply_msg,
+    const FeatureAddressType* remote_feature_addr,
+    EebusError err,
+    void* ctx
+) {
+  UNUSED(remote_feature_addr);
+
+  DeviceLocalObject* const dlo = (DeviceLocalObject*)ctx;
+
+  DeviceLocal* const dl = DEVICE_LOCAL(dlo);
+
+  if (dl->cancel) {
+    return;
+  }
+
+  DeviceRemoteObject* const dr = DEVICE_LOCAL_GET_REMOTE_DEVICE_WITH_SKI(dlo, reply_msg->ski);
+  if (dr == NULL) {
+    return;
+  }
+
+  if ((err != kEebusErrorOk) || (reply_msg->function_data == NULL)) {
+    RequestDeviceRemoteDetailedDiscoveryData(dlo, dr);
+    return;
+  }
+
+  FeatureAddressType addr = *FEATURE_GET_ADDRESS(FEATURE_OBJECT(reply_msg->feature_remote));
+  if (addr.device == NULL) {
+    addr.device = DEVICE_GET_ADDRESS(DEVICE_OBJECT(dr));
+  }
+
+  FEATURE_LOCAL_SUBSCRIBE_TO_REMOTE(FEATURE_LOCAL_OBJECT(dl->node_management), &addr);
+
+  RequestDeviceRemoteUseCaseData(dlo, dr);
 }
 
 DataReaderObject* SetupRemoteDevice(DeviceLocalObject* self, const char* ski, DataWriterObject* writer) {
-  DeviceLocal* const dl      = DEVICE_LOCAL(self);
+  DeviceLocal* const dl = DEVICE_LOCAL(self);
+
   SenderObject* const sender = SenderCreate(writer);
   DeviceRemoteObject* dr     = DeviceRemoteCreate(DEVICE_LOCAL_OBJECT(dl), ski, sender);
   EEBUS_MUTEX_LOCK(dl->mutex);
   AddRemoteDeviceForSki(self, ski, dr);
 
   // Request Detailed Discovery Data
-  RequestRemoteDetailedDiscoveryData(self, dr);
+  RequestDeviceRemoteDetailedDiscoveryData(self, dr);
 
   // TODO: Add error handling
   // If the request returned an error, it should be retried until it does not
@@ -542,11 +596,6 @@ void RemoveRemoteDevice(DeviceLocalObject* self, const char* ski) {
   BindingManagerObject* bm = DEVICE_LOCAL_GET_BINDING_MANAGER(self);
   BINDING_MANAGER_REMOVE_DEVICE_BINDINGS(bm, remote_device);
 
-  // Only unsubscribe if we don't have any remote devices left
-  if (StringLutGetSize(&dl->remote_devices) == 0) {
-    EVENTS_UNSUBSCRIBE(dl->events_manager, kEventHandlerLevelCore, DeivceLocalHandleEvent, dl);
-  }
-
   const DeviceAddressType remote_device_addr = {
       .device = (char*)DEVICE_GET_ADDRESS(DEVICE_OBJECT(remote_device)),
   };
@@ -559,7 +608,7 @@ void RemoveRemoteDevice(DeviceLocalObject* self, const char* ski) {
       FeatureLocalObject* const fl = VectorGetElement(features, j);
       // TODO: Add feature cache cleaning:
       // feature.CleanWriteApprovalCaches(ski);
-      FEATURE_LOCAL_CLEAN_REMOTE_DEVICE_CACHES(fl, &remote_device_addr);
+      FEATURE_LOCAL_CLEAN_REMOTE_DEVICE_CACHES(fl, &remote_device_addr, ski);
     }
   }
 

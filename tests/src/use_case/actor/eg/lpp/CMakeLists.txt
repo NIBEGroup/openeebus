@@ -50,7 +50,12 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/feature.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/feature_functions.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/operations.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result_container.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature_link/feature_link.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature_link/feature_link_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/function/function.c
@@ -60,6 +65,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/cmd.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/datagram.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/device_configuration_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/electrical_connection_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/filter.c
@@ -83,13 +89,14 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/eg/eg_lp_events.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/eg/eg_lp_public.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/eg/eg_lp.c
-  ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/common/load_control.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/model/load_limit_types.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/model/scaled_value.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/device_configuration/device_configuration_client.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/device_configuration/device_configuration_common.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/device_diagnosis/device_diagnosis_client.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/device_diagnosis/device_diagnosis_common.c
+  ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/electrical_connection/electrical_connection_client.c
+  ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/electrical_connection/electrical_connection_common.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/feature_info_client.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/helper.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/load_control/load_control_client.c

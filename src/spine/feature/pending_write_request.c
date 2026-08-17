@@ -21,6 +21,7 @@
 #include "src/spine/feature/pending_write_request.h"
 #include "src/common/api/eebus_data_interface.h"
 #include "src/common/api/eebus_timer_interface.h"
+#include "src/common/eebus_countdown/eebus_countdown.h"
 #include "src/common/eebus_malloc.h"
 #include "src/common/string_util.h"
 #include "src/spine/api/device_local_interface.h"
@@ -38,8 +39,7 @@ struct PendingWriteRequest {
   const char* ski;
   uint64_t msg_counter;
   uint64_t num_approvals;
-  uint32_t time_counter;
-  bool has_expired;
+  EebusCountdown countdown;
 
   CommandClassifierType cmd_classifier;
   CmdType* cmd;
@@ -103,9 +103,8 @@ EebusError PendingWriteRequestConstruct(PendingWriteRequest* self, const Message
   self->ski             = NULL;
   self->msg_counter     = 0;
   self->num_approvals   = 0;
-  self->time_counter    = TIME_MS_TO_S(kDefaultMaxResponseDelayMs);
-  self->has_expired     = false;
   self->cmd_classifier  = (CommandClassifierType)0;
+  self->countdown       = EEBUS_COUNTDOWN(TIME_MS_TO_S(kDefaultMaxResponseDelayMs));
   self->cmd             = NULL;
   self->header          = NULL;
   self->feature_address = NULL;
@@ -223,22 +222,13 @@ void AddApproval(PendingWriteRequestObject* self) {
 }
 
 uint32_t GetRemainingTime(PendingWriteRequestObject* self) {
-  PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
-  return pwr->time_counter;
+  return EebusCountdownGetRemaining(&PENDING_WRITE_REQUEST(self)->countdown);
 }
 
 void UpdateRemainingTime(PendingWriteRequestObject* self) {
-  PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
-  if (pwr->time_counter > 0) {
-    pwr->time_counter--;
-  }
-
-  if (pwr->time_counter == 0) {
-    pwr->has_expired = true;
-  }
+  EebusCountdownTick(&PENDING_WRITE_REQUEST(self)->countdown);
 }
 
 bool HasExpired(PendingWriteRequestObject* self) {
-  PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
-  return pwr->has_expired;
+  return EebusCountdownHasExpired(&PENDING_WRITE_REQUEST(self)->countdown);
 }

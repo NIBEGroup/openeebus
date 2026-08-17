@@ -50,7 +50,15 @@ EebusError LoadControlClientRequestLimitDescriptions(
     const LoadControlLimitDescriptionListDataSelectorsType* selectors,
     const LoadControlLimitDescriptionDataElementsType* elements
 ) {
-  return RequestData(&self->feature_info_client, kFunctionTypeLoadControlLimitDescriptionListData, selectors, elements);
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      kFunctionTypeLoadControlLimitDescriptionListData,
+      selectors,
+      elements,
+      NULL,
+      NULL
+  );
 }
 
 EebusError LoadControlClientRequestLimitConstraints(
@@ -58,22 +66,52 @@ EebusError LoadControlClientRequestLimitConstraints(
     const LoadControlLimitConstraintsListDataSelectorsType* selectors,
     const LoadControlLimitConstraintsDataElementsType* elements
 ) {
-  return RequestData(&self->feature_info_client, kFunctionTypeLoadControlLimitConstraintsListData, selectors, elements);
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      kFunctionTypeLoadControlLimitConstraintsListData,
+      selectors,
+      elements,
+      NULL,
+      NULL
+  );
 }
 
-EebusError LoadControlClientRequestLimitData(
+EebusError LoadControlClientReadLimit(
     LoadControlClient* self,
-    const LoadControlLimitListDataSelectorsType* selectors,
-    const LoadControlLimitDataElementsType* elements
+    const LoadControlLimitDescriptionDataType* filter,
+    ReplyMessageCallback cb,
+    void* ctx
 ) {
-  return RequestData(&self->feature_info_client, limit_fcn, selectors, elements);
+  const LoadControlLimitDescriptionDataType* const description
+      = LoadControlCommonGetLimitDescriptionWithFilter(&self->load_control_common, filter);
+
+  if ((description == NULL) || (description->limit_id == NULL)) {
+    return kEebusErrorNoChange;
+  }
+
+  const LoadControlLimitListDataSelectorsType selectors = {
+      .limit_id = description->limit_id,
+  };
+
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      limit_fcn,
+      &selectors,
+      NULL,
+      cb,
+      ctx
+  );
 }
 
 EebusError LoadControlClientWriteLimitList(
     LoadControlClient* self,
     const LoadControlLimitListDataType* limit_list,
     const LoadControlLimitListDataSelectorsType* delete_selectors,
-    const LoadControlLimitDataElementsType* delete_elements
+    const LoadControlLimitDataElementsType* delete_elements,
+    ResultMessageCallback cb,
+    void* ctx
 ) {
   if (limit_list == NULL) {
     return kEebusErrorInputArgumentNull;
@@ -83,42 +121,19 @@ EebusError LoadControlClientWriteLimitList(
     return kEebusErrorInputArgument;
   }
 
-  FeatureRemoteObject* const fr = self->feature_info_client.remote_feature;
+  const FilterType filter_delete_tmp = FILTER_DELETE(limit_fcn, NULL, delete_selectors, delete_elements);
 
-  const OperationsObject* const operations = FEATURE_GET_FUNCTION_OPERATIONS(FEATURE_OBJECT(fr), limit_fcn);
+  const FilterType* const filter_delete
+      = ((delete_selectors != NULL) && (delete_elements != NULL)) ? &filter_delete_tmp : NULL;
 
-  if ((operations == NULL) || !OPERATIONS_GET_WRITE_PARTIAL(operations)) {
-    // All limit_list data shall be sent
-    const EebusError err = FEATURE_REMOTE_UPDATE_DATA(fr, limit_fcn, limit_list, NULL, NULL, false);
-    if (err != kEebusErrorOk) {
-      return err;
-    }
-
-    const CmdType cmd = {
-        .data_choice         = FEATURE_REMOTE_GET_DATA(fr, limit_fcn),
-        .data_choice_type_id = limit_fcn,
-    };
-
-    return WriteCmd(&self->feature_info_client, &cmd);
-  } else {
-    const FilterType filter_partial = FILTER_PARTIAL(limit_fcn, NULL, NULL, NULL);
-    const FilterType filter_delete  = FILTER_DELETE(limit_fcn, NULL, delete_selectors, delete_elements);
-
-    const FilterType* filters[2] = {&filter_partial, NULL};
-    size_t filters_size          = 1;
-
-    if ((delete_elements != NULL) && (delete_selectors != NULL)) {
-      filters[filters_size++] = &filter_delete;
-    }
-
-    const CmdType cmd = {
-        .data_choice         = limit_list,
-        .data_choice_type_id = limit_fcn,
-        .filter              = filters,
-        .filter_size         = filters_size,
-        .function            = &(FunctionType){limit_fcn},
-    };
-
-    return WriteCmd(&self->feature_info_client, &cmd);
-  }
+  return FEATURE_LOCAL_WRITE_TO_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      limit_fcn,
+      limit_list,
+      NULL,
+      filter_delete,
+      cb,
+      ctx
+  );
 }

@@ -25,12 +25,9 @@
 using std::literals::string_view_literals::operator""sv;
 
 TEST_F(ShipConnectionTestSuite, ShipConnectionCreationTest) {
-  EXPECT_EQ(sc.role, kShipRoleClient);
+  EXPECT_EQ(sc.role, kShipRoleAuto);
   EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), kCmiStateClientSend);
   EXPECT_EQ(sc.sme_error, kEebusErrorOk);
-  EXPECT_EQ(std::string_view(SHIP_CONNECTION_GET_REMOTE_SKI(&sc)), "RemoteSKI"sv);
-  ExpectCloseWithError("", false);
-  EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer));
-  EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
-  EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer));
+  EXPECT_EQ(std::string_view(SHIP_CONNECTION_GET_REMOTE_SKI(&sc)), kShipRemoteSki);
+  ExpectConnectionClose("", false);
 }

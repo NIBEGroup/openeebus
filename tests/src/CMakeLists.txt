@@ -15,6 +15,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common/eebus_timer
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common/string_lut
     ${EXECUTABLE_OUTPUT_PATH}/common/string_lut)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common/string_util
+    ${EXECUTABLE_OUTPUT_PATH}/common/string_util)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_connection/ship_connection
     ${EXECUTABLE_OUTPUT_PATH}/ship/ship_connection/ship_connection)
 

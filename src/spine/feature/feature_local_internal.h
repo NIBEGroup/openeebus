@@ -21,10 +21,12 @@
 #ifndef SRC_SPINE_FEATURE_FEATURE_LOCAL_INTERNAL_H_
 #define SRC_SPINE_FEATURE_FEATURE_LOCAL_INTERNAL_H_
 
-#include "src/common/uint64_lut.h"
 #include "src/common/vector.h"
 #include "src/spine/api/entity_local_interface.h"
 #include "src/spine/api/feature_local_interface.h"
+#include "src/spine/api/pending_reply_container_interface.h"
+#include "src/spine/api/pending_result_container_interface.h"
+#include "src/spine/api/pending_write_request_container_interface.h"
 #include "src/spine/feature/feature_address_container.h"
 
 #ifdef __cplusplus
@@ -38,10 +40,10 @@ struct FeatureLocal {
   Feature obj;
 
   EntityLocalObject* entity;
-  Uint64Lut resp_msg_cbs;
-  Vector result_cbs;
+  PendingReplyContainerObject* pending_replies;
+  PendingResultContainerObject* pending_results;
+  PendingWriteRequestContainerObject* pending_write_requests;
   Vector wr_approval_cbs;
-  Vector pending_write_requests;
 
   FeatureAddressContainer bindings;
   FeatureAddressContainer subscriptions;
@@ -64,18 +66,15 @@ DeviceLocalObject* FeatureLocalGetDevice(const FeatureLocalObject* self);
 EntityLocalObject* FeatureLocalGetEntity(const FeatureLocalObject* self);
 const void* FeatureLocalGetData(const FeatureLocalObject* self, FunctionType function_type);
 void FeatureLocalSetFunctionOperations(FeatureLocalObject* self, FunctionType type, bool read, bool write);
-EebusError FeatureLocalAddResponseCallback(
-    FeatureLocalObject* self,
-    MsgCounterType msg_counter_ref,
-    ResponseMessageCallback cb,
-    void* ctx
-);
-void FeatureLocalAddResultCallback(FeatureLocalObject* self, ResponseMessageCallback cb, void* ctx);
 EebusError FeatureLocalAddWriteApprovalCallback(FeatureLocalObject* self, WriteApprovalCallback cb, void* ctx);
 EebusError FeatureLocalTryApproveWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt);
 EebusError
 FeatureLocalDenyWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err);
-void FeatureLocalCleanRemoteDeviceCaches(FeatureLocalObject* self, const DeviceAddressType* remote_addr);
+void FeatureLocalCleanRemoteDeviceCaches(
+    FeatureLocalObject* self,
+    const DeviceAddressType* remote_addr,
+    const char* ski
+);
 void* FeatureLocalDataCopy(const FeatureLocalObject* self, FunctionType function_type);
 EebusError FeatureLocalUpdateData(
     FeatureLocalObject* self,
@@ -85,20 +84,6 @@ EebusError FeatureLocalUpdateData(
     const FilterType* filter_delete
 );
 void FeatureLocalSetData(FeatureLocalObject* self, FunctionType function_type, void* data);
-EebusError FeatureLocalRequestRemoteData(
-    FeatureLocalObject* self,
-    FunctionType function_type,
-    const FilterType* filter_partial,
-    FeatureRemoteObject* dest_feature
-);
-EebusError FeatureLocalRequestRemoteDataBySenderAddress(
-    FeatureLocalObject* self,
-    const CmdType* cmd,
-    SenderObject* sender,
-    const char* dest_ski,
-    const FeatureAddressType* dest_addr,
-    uint32_t max_delay
-);
 bool FeatureLocalHasSubscriptionToRemote(const FeatureLocalObject* self, const FeatureAddressType* remote_addr);
 EebusError FeatureLocalSubscribeToRemote(FeatureLocalObject* self, const FeatureAddressType* remote_addr);
 EebusError FeatureLocalRemoveRemoteSubscription(FeatureLocalObject* self, const FeatureAddressType* remote_addr);
@@ -109,6 +94,25 @@ EebusError FeatureLocalRemoveRemoteBinding(FeatureLocalObject* self, const Featu
 void FeatureLocalRemoveAllRemoteBindings(FeatureLocalObject* self);
 NodeManagementDetailedDiscoveryFeatureInformationType* FeatureLocalCreateInformation(const FeatureLocalObject* self);
 void FeatureLocalTick(FeatureLocalObject* self);
+EebusError FeatureLocalWriteToRemote(
+    FeatureLocalObject* self,
+    FeatureRemoteObject* dest_feature,
+    FunctionType fcn_type,
+    const void* data,
+    const FilterType* filter_partial,
+    const FilterType* filter_delete,
+    ResultMessageCallback cb,
+    void* ctx
+);
+EebusError FeatureLocalReadFromRemote(
+    FeatureLocalObject* self,
+    FeatureRemoteObject* dest_feature,
+    FunctionType function_type,
+    const void* selectors,
+    const void* elements,
+    ReplyMessageCallback cb,
+    void* ctx
+);
 
 #ifdef __cplusplus
 }

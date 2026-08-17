@@ -1,0 +1,8 @@
+PendingReply
+void Destruct()
+MsgCounterType GetMsgCntRef()
+const FeatureAddressType* GetRemoteFeatureAddress()
+const char* GetSki()
+bool HasExpired()
+void UpdateTime()
+void Fire(const ReplyMessage* reply_msg, EebusError err)

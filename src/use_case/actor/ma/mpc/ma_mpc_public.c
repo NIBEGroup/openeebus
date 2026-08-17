@@ -21,8 +21,56 @@
 #include "src/common/eebus_errors.h"
 
 #include "src/use_case/actor/ma/mpc/ma_mpc.h"
+#include "src/use_case/actor/ma/mpc/ma_mpc_internal.h"
 #include "src/use_case/actor/ma/mpc/ma_mpc_measurement.h"
+#include "src/use_case/specialization/measurement/measurement_client.h"
 #include "src/use_case/use_case.h"
+
+static EebusError MaMpcReadMeasurementsDataInternal(
+    const MaMpcUseCase* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
+) {
+  const UseCase* const use_case = USE_CASE(self);
+
+  EntityRemoteObject* const remote_entity
+      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+
+  if (remote_entity == NULL) {
+    return kEebusErrorNoChange;
+  }
+
+  MeasurementClient mcl = {0};
+
+  const EebusError err = MeasurementClientConstruct(&mcl, use_case->local_entity, remote_entity);
+  if (err != kEebusErrorOk) {
+    return err;
+  }
+
+  return MeasurementClientRequestData(&mcl, NULL, NULL, cb, ctx);
+}
+
+EebusError MaMpcReadMeasurementsData(
+    const MaMpcUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
+) {
+  const UseCase* const use_case = USE_CASE(self);
+
+  if (remote_entity_addr == NULL) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  EebusError err = kEebusErrorOk;
+
+  DEVICE_LOCAL_LOCK(use_case->local_device);
+  err = MaMpcReadMeasurementsDataInternal(MA_MPC_USE_CASE(self), remote_entity_addr, cb, ctx);
+  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+
+  return err;
+}
 
 EebusError MaMpcGetMeasurementData(
     const MaMpcUseCaseObject* self,

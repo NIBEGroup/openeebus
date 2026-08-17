@@ -21,6 +21,8 @@
 #include "src/spine/model/feature_types.h"
 
 #include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "src/common/bool_ptr.h"
 #include "src/common/eebus_data/eebus_data.h"
@@ -66,6 +68,30 @@ FeatureAddressType* FeatureAddressCopy(const FeatureAddressType* self) {
 bool FeatureAddressCompare(const FeatureAddressType* addr_a, const FeatureAddressType* addr_b) {
   EebusDataCfg cfg = EEBUS_DATA_SEQUENCE_TMP(FeatureAddressType, ModelGetFeatureAddressCfg());
   return EEBUS_DATA_COMPARE(&cfg, &addr_a, &cfg, &addr_b);
+}
+
+bool FeatureAddressMatchDevice(const FeatureAddressType* addr, const char* device) {
+  if ((addr == NULL) || (device == NULL)) {
+    return false;
+  }
+
+  return (addr->device != NULL) && (strcmp(addr->device, device) == 0);
+}
+
+void FeatureAddressPrint(const char* fmt, const FeatureAddressType* addr) {
+  if (addr == NULL) {
+    printf(fmt, "NULL");
+    return;
+  }
+
+  const char* feature_addr_string = EEBUS_DATA_PRINT_UNFORMATTED(ModelGetFeatureAddressCfg(), &addr);
+  if (feature_addr_string != NULL) {
+    printf(fmt, feature_addr_string);
+  } else {
+    printf(fmt, "<error converting to string>");
+  }
+
+  StringDelete((char*)feature_addr_string);
 }
 
 void FeatureAddressDelete(FeatureAddressType* self) {

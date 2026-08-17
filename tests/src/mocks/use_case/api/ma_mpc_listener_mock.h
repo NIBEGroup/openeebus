@@ -31,9 +31,9 @@
 class MaMpcListenerGMockInterface {
  public:
   virtual ~MaMpcListenerGMockInterface() {};
-  virtual void Destruct(MaMpcListenerObject* self)                                                       = 0;
-  virtual void OnRemoteEntityConnect(MaMpcListenerObject* self, const EntityAddressType* entity_addr)    = 0;
-  virtual void OnRemoteEntityDisconnect(MaMpcListenerObject* self, const EntityAddressType* entity_addr) = 0;
+  virtual void Destruct(MaMpcListenerObject* self)                                                = 0;
+  virtual void OnRemoteMuAdded(MaMpcListenerObject* self, const EntityAddressType* entity_addr)   = 0;
+  virtual void OnRemoteMuRemoved(MaMpcListenerObject* self, const EntityAddressType* entity_addr) = 0;
   virtual void OnMeasurementReceive(
       MaMpcListenerObject* self,
       MuMpcMeasurementNameId name_id,
@@ -46,8 +46,8 @@ class MaMpcListenerGMock : public MaMpcListenerGMockInterface {
  public:
   virtual ~MaMpcListenerGMock() {};
   MOCK_METHOD1(Destruct, void(MaMpcListenerObject*));
-  MOCK_METHOD2(OnRemoteEntityConnect, void(MaMpcListenerObject*, const EntityAddressType*));
-  MOCK_METHOD2(OnRemoteEntityDisconnect, void(MaMpcListenerObject*, const EntityAddressType*));
+  MOCK_METHOD2(OnRemoteMuAdded, void(MaMpcListenerObject*, const EntityAddressType*));
+  MOCK_METHOD2(OnRemoteMuRemoved, void(MaMpcListenerObject*, const EntityAddressType*));
   MOCK_METHOD4(
       OnMeasurementReceive,
       void(MaMpcListenerObject*, MuMpcMeasurementNameId, const ScaledValue*, const EntityAddressType*)

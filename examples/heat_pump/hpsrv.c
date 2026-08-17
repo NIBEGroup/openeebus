@@ -29,6 +29,7 @@
 
 #include "examples/heat_pump/cs_lpc_listener.h"
 #include "examples/heat_pump/cs_lpp_listener.h"
+#include "examples/heat_pump/mu_mpc_listener.h"
 #include "src/cli/eebus_cli.h"
 #include "src/common/array_util.h"
 #include "src/common/eebus_arguments.h"
@@ -57,6 +58,7 @@ struct Hpsrv {
   CsLpUseCaseObject* cs_lpc;
   CsLpListenerObject* cs_lpp_listener;
   CsLpUseCaseObject* cs_lpp;
+  MuMpcListenerObject* mu_mpc_listener;
   MuMpcUseCaseObject* mu_mpc;
   GcpMgcpUseCaseObject* gcp_mgcp;
   EebusCliObject* cli;
@@ -128,6 +130,7 @@ static EebusError HpsrvConstruct(Hpsrv* self) {
   self->cs_lpc          = NULL;
   self->cs_lpp_listener = NULL;
   self->cs_lpp          = NULL;
+  self->mu_mpc_listener = NULL;
   self->mu_mpc          = NULL;
   self->gcp_mgcp        = NULL;
   self->cli             = NULL;
@@ -223,8 +226,15 @@ static EebusError AddMpc(Hpsrv* self, DeviceLocalObject* device_local, EntityLoc
     .frequency_cfg = &frequency_cfg
   };
 
-  self->mu_mpc = MuMpcUseCaseCreate(entity_local, kHpsrvElectricalConnectionId, &cfg);
+  self->mu_mpc_listener = MuMpcListenerCreate();
+  if (self->mu_mpc_listener == NULL) {
+    return kEebusErrorInit;
+  }
+
+  self->mu_mpc = MuMpcUseCaseCreate(entity_local, kHpsrvElectricalConnectionId, &cfg, self->mu_mpc_listener);
   if (self->mu_mpc == NULL) {
+    MuMpcListenerDelete(self->mu_mpc_listener);
+    self->mu_mpc_listener = NULL;
     return kEebusErrorInit;
   }
 
@@ -459,6 +469,9 @@ void Destruct(ServiceReaderObject* self) {
 
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->mu_mpc));
   hpsrv->mu_mpc = NULL;
+
+  MuMpcListenerDelete(hpsrv->mu_mpc_listener);
+  hpsrv->mu_mpc_listener = NULL;
 
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->cs_lpp));
   hpsrv->cs_lpp = NULL;

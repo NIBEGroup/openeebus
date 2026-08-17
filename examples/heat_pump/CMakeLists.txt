@@ -27,6 +27,7 @@ target_sources(${PROJECT_NAME}
     hpsrv.c
     cs_lpc_listener.c
     cs_lpp_listener.c
+    mu_mpc_listener.c
 )
 
 target_include_directories(${PROJECT_NAME}

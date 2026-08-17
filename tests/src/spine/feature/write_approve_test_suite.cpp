@@ -140,7 +140,7 @@ void TryApproveWriteRequestBeforeTimeoutCallback(const Message* msg, void* ctx) 
   MsgCounterType msg_cnt = *msg->request_header->msg_cnt;
 
   // There should be one pending write request
-  EXPECT_EQ(VectorGetSize(&feature_local->pending_write_requests), 1);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 1);
 
   // User waits just before the maximum response time to pass
   for (int i = 0; i < (kMaxResponseTimeSec - 1); ++i) {
@@ -148,14 +148,13 @@ void TryApproveWriteRequestBeforeTimeoutCallback(const Message* msg, void* ctx) 
   }
 
   // Check that all pending write requests are not expired yet
-  EXPECT_EQ(VectorGetSize(&feature_local->pending_write_requests), 1);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 1);
 
-  // Check remaining time for all pending write requests
-  for (size_t i = 0; i < VectorGetSize(&feature_local->pending_write_requests); ++i) {
-    PendingWriteRequestObject* pwr
-        = (PendingWriteRequestObject*)VectorGetElement(&feature_local->pending_write_requests, i);
-    EXPECT_EQ(PENDING_WRITE_REQUEST_GET_REMAINING_TIME(pwr), 1);
-  }
+  // Check remaining time for the pending write request
+  PendingWriteRequestObject* pwr_before
+      = PENDING_WRITE_REQUEST_CONTAINER_FIND(feature_local->pending_write_requests, ski, msg_cnt);
+  ASSERT_NE(pwr_before, nullptr);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_GET_REMAINING_TIME(pwr_before), 1);
 
   // Approve write request before timeout
   EebusError ret = FEATURE_LOCAL_TRY_APPROVE_WRITE(FEATURE_LOCAL_OBJECT(ctx), ski, msg_cnt);
@@ -171,16 +170,15 @@ void TryApproveWriteRequestAfterTimeoutCallback(const Message* msg, void* ctx) {
   // Get the message counter from the request header
   MsgCounterType msg_cnt = *msg->request_header->msg_cnt;
 
-  // Check that all pending write requests are not expired yet
-  for (size_t i = 0; i < VectorGetSize(&feature_local->pending_write_requests); ++i) {
-    PendingWriteRequestObject* pwr
-        = (PendingWriteRequestObject*)VectorGetElement(&feature_local->pending_write_requests, i);
-    EXPECT_EQ(PENDING_WRITE_REQUEST_HAS_EXPIRED(pwr), false);
-    EXPECT_EQ(PENDING_WRITE_REQUEST_GET_REMAINING_TIME(pwr), kMaxResponseTimeSec);
-  }
+  // Check that the pending write request is not expired yet
+  PendingWriteRequestObject* pwr_after
+      = PENDING_WRITE_REQUEST_CONTAINER_FIND(feature_local->pending_write_requests, ski, msg_cnt);
+  ASSERT_NE(pwr_after, nullptr);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_HAS_EXPIRED(pwr_after), false);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_GET_REMAINING_TIME(pwr_after), kMaxResponseTimeSec);
 
   // There should be one pending write request
-  EXPECT_EQ(VectorGetSize(&feature_local->pending_write_requests), 1);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 1);
 
   // User waits for the maximum response time to pass
   for (int i = 0; i < (kMaxResponseTimeSec + 1); ++i) {
@@ -202,7 +200,7 @@ void DenyWriteRequestCallback(const Message* msg, void* ctx) {
   MsgCounterType msg_cnt = *msg->request_header->msg_cnt;
 
   // Verify that there is one pending write request
-  EXPECT_EQ(VectorGetSize(&feature_local->pending_write_requests), 1);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 1);
 
   // Deny write request
   const ErrorType err = {

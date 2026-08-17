@@ -1016,15 +1016,13 @@ bool SmeHandshakeAccessMethodsCheckMessageVal(ShipConnection* self, ShipMessageD
     return false;
   }
 
-  const size_t received_remote_ship_id_size = strlen(access_msg_val->id);
-
-  if (!StringIsEmpty(self->remote_ship_id)
-      && (strncmp(self->remote_ship_id, access_msg_val->id, received_remote_ship_id_size) != 0)) {
-    SHIP_CONNECTION_DEBUG_PRINTF("Saved remote id: %s, Received id: %s\n", self->remote_ship_id, access_msg_val->id);
-    return false;
-  }
-
-  if (StringIsEmpty(self->remote_ship_id)) {
+  if (!StringIsEmpty(self->remote_ship_id)) {
+    const size_t remote_ship_id_len = strlen(self->remote_ship_id);
+    if (!StringNCompare(self->remote_ship_id, access_msg_val->id, remote_ship_id_len)) {
+      SHIP_CONNECTION_DEBUG_PRINTF("Saved remote id: %s, Received id: %s\n", self->remote_ship_id, access_msg_val->id);
+      return false;
+    }
+  } else {
     StringDelete((char*)self->remote_ship_id);
     self->remote_ship_id = StringCopy(access_msg_val->id);
     SHIP_CONNECTION_DEBUG_PRINTF("Saved remote SHIP id: %s\n", self->remote_ship_id);
@@ -1157,13 +1155,13 @@ EebusError DataExchangeHandle(ShipConnection* self) {
     return ret;
   } else if (queue_msg.type == kShipConnectionQueueMsgTypeCancel) {
     SHIP_CONNECTION_DEBUG_PRINTF("%s(), cancelled\n", __func__);
-    return kEebusErrorOk;
+    return kEebusErrorDeactivate;
   } else if (queue_msg.type == kShipConnectionQueueMsgTypeTimeout) {
     SHIP_CONNECTION_DEBUG_PRINTF("%s(), timed out\n", __func__);
     return kEebusErrorCommunication;
   } else if (queue_msg.type == kShipConnectionQueueMsgTypeWebsocketClose) {
     SHIP_CONNECTION_CLOSE_CONNECTION(self, true, 0, NULL);
-    return kEebusErrorOk;
+    return kEebusErrorCommunicationEnd;
   } else if (queue_msg.type == kShipConnectionQueueMsgTypeWebsocketError) {
     return kEebusErrorCommunication;
   } else {

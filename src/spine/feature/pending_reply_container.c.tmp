@@ -1,0 +1,7 @@
+PendingReplyContainer
+void Destruct()
+EebusError Add(MsgCounterType msg_cnt_ref, ReplyMessageCallback cb, void* ctx)
+void Process(const ReplyMessage* reply_msg)
+void Tick()
+void RemoveForDevice(const char* device_addr)
+void RemoveForSki(const char* ski)

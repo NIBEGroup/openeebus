@@ -15,6 +15,7 @@
  */
 
 #include "src/use_case/actor/mu/mpc/mu_mpc.h"
+#include "src/use_case/actor/mu/mpc/mu_mpc_events.h"
 
 #include "src/common/array_util.h"
 #include "src/common/eebus_arguments.h"
@@ -41,7 +42,8 @@ static EebusError MuMpcUseCaseConstruct(
     MuMpcUseCase* self,
     EntityLocalObject* local_entity,
     ElectricalConnectionIdType ec_id,
-    const MuMpcConfig* cfg
+    const MuMpcConfig* cfg,
+    MuMpcListenerObject* listener
 );
 
 EebusError AddMuMpcScenario1(MuMpcUseCase* self, const MuMpcMonitorPowerConfig* power_cfg) {
@@ -57,7 +59,7 @@ EebusError AddMuMpcScenario1(MuMpcUseCase* self, const MuMpcMonitorPowerConfig* 
       kFeatureTypeTypeMeasurement,
   };
 
-  self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+  self->mu_mpc_scenarios[self->mu_mpc_scenarios_size++] = (UseCaseScenario){
       .scenario             = (UseCaseScenarioSupportType)1,
       .mandatory            = true,
       .server_features      = use_case_scenario_support_1_features,
@@ -80,7 +82,7 @@ EebusError AddMuMpcScenario2(MuMpcUseCase* self, const MuMpcMonitorEnergyConfig*
       kFeatureTypeTypeMeasurement,
   };
 
-  self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+  self->mu_mpc_scenarios[self->mu_mpc_scenarios_size++] = (UseCaseScenario){
       .scenario             = (UseCaseScenarioSupportType)2,
       .mandatory            = false,
       .server_features      = use_case_scenario_support_2_features,
@@ -103,7 +105,7 @@ EebusError AddMuMpcScenario3(MuMpcUseCase* self, const MuMpcMonitorCurrentConfig
       kFeatureTypeTypeMeasurement,
   };
 
-  self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+  self->mu_mpc_scenarios[self->mu_mpc_scenarios_size++] = (UseCaseScenario){
       .scenario             = (UseCaseScenarioSupportType)3,
       .mandatory            = false,
       .server_features      = use_case_scenario_support_3_features,
@@ -126,7 +128,7 @@ EebusError AddMuMpcScenario4(MuMpcUseCase* self, const MuMpcMonitorVoltageConfig
       kFeatureTypeTypeMeasurement,
   };
 
-  self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+  self->mu_mpc_scenarios[self->mu_mpc_scenarios_size++] = (UseCaseScenario){
       .scenario             = (UseCaseScenarioSupportType)4,
       .mandatory            = false,
       .server_features      = use_case_scenario_support_4_features,
@@ -149,7 +151,7 @@ EebusError AddMuMpcScenario5(MuMpcUseCase* self, const MuMpcMonitorFrequencyConf
       kFeatureTypeTypeMeasurement,
   };
 
-  self->use_case_scenarios[self->use_case_scenarios_size++] = (UseCaseScenario){
+  self->mu_mpc_scenarios[self->mu_mpc_scenarios_size++] = (UseCaseScenario){
       .scenario             = (UseCaseScenarioSupportType)5,
       .mandatory            = false,
       .server_features      = use_case_scenario_support_5_features,
@@ -163,13 +165,15 @@ EebusError MuMpcUseCaseConstruct(
     MuMpcUseCase* self,
     EntityLocalObject* local_entity,
     ElectricalConnectionIdType ec_id,
-    const MuMpcConfig* cfg
+    const MuMpcConfig* cfg,
+    MuMpcListenerObject* listener
 ) {
   // Override "virtual functions table"
   USE_CASE_INTERFACE(self) = &mu_mpc_use_case_methods;
 
   self->electrical_connection_id = ec_id;
-  self->use_case_scenarios_size  = 0;
+  self->mu_mpc_listener          = listener;
+  self->mu_mpc_scenarios_size    = 0;
 
   const EebusError container_err = EebusMonitorContainerConstruct(&self->monitor_container);
   if (container_err != kEebusErrorOk) {
@@ -214,8 +218,8 @@ EebusError MuMpcUseCaseConstruct(
       .valid_actor_types_size  = ARRAY_SIZE(valid_actor_types),
       .valid_entity_types      = NULL,
       .valid_entity_types_size = 0,
-      .use_case_scenarios      = self->use_case_scenarios,
-      .use_case_scenarios_size = self->use_case_scenarios_size,
+      .use_case_scenarios      = self->mu_mpc_scenarios,
+      .use_case_scenarios_size = self->mu_mpc_scenarios_size,
       .actor                   = kUseCaseActorTypeMonitoredUnit,
       .use_case_name_id        = kUseCaseNameTypeMonitoringOfPowerConsumption,
       .version                 = "1.0.0",
@@ -223,13 +227,17 @@ EebusError MuMpcUseCaseConstruct(
       .available               = true,
   };
 
-  UseCaseConstruct(USE_CASE(self), &self->mu_mpc_use_case_info, local_entity, NULL);
+  UseCaseConstruct(USE_CASE(self), &self->mu_mpc_use_case_info, local_entity, MuMpcHandleEvent);
 
   return EebusMonitorFeaturesSetup(&self->monitor_container, local_entity, self->electrical_connection_id);
 }
 
-MuMpcUseCaseObject*
-MuMpcUseCaseCreate(EntityLocalObject* local_entity, ElectricalConnectionIdType ec_id, const MuMpcConfig* cfg) {
+MuMpcUseCaseObject* MuMpcUseCaseCreate(
+    EntityLocalObject* local_entity,
+    ElectricalConnectionIdType ec_id,
+    const MuMpcConfig* cfg,
+    MuMpcListenerObject* listener
+) {
   if (cfg == NULL) {
     return NULL;
   }
@@ -239,7 +247,7 @@ MuMpcUseCaseCreate(EntityLocalObject* local_entity, ElectricalConnectionIdType e
     return NULL;
   }
 
-  if (MuMpcUseCaseConstruct(mu_mpc_use_case, local_entity, ec_id, cfg) != kEebusErrorOk) {
+  if (MuMpcUseCaseConstruct(mu_mpc_use_case, local_entity, ec_id, cfg, listener) != kEebusErrorOk) {
     MuMpcUseCaseDelete(MU_MPC_USE_CASE_OBJECT(mu_mpc_use_case));
     return NULL;
   }

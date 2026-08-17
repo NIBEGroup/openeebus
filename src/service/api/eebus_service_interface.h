@@ -61,6 +61,7 @@ struct EebusServiceInterface {
   void (*cancel_pairing_with_ski)(EebusServiceObject* self, const char* ski);
   void (*set_pairing_possible)(EebusServiceObject* self, bool is_pairing_possible);
   const char* (*get_local_ski)(EebusServiceObject* self);
+  const char* (*get_qr_code_string)(EebusServiceObject* self);
 };
 
 /**
@@ -139,6 +140,11 @@ struct EebusServiceObject {
  * @brief EEBUS Service Get Local Ski caller definition
  */
 #define EEBUS_SERVICE_GET_LOCAL_SKI(obj) (EEBUS_SERVICE_INTERFACE(obj)->get_local_ski(obj))
+
+/**
+ * @brief Eebus Service Get Qr Code String caller definition
+ */
+#define EEBUS_SERVICE_GET_QR_CODE_STRING(obj) (EEBUS_SERVICE_INTERFACE(obj)->get_qr_code_string(obj))
 
 #ifdef __cplusplus
 }

@@ -50,7 +50,12 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/feature.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/feature_functions.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/operations.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result_container.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature_link/feature_link.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature_link/feature_link_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/function/function.c
@@ -83,6 +88,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/mu/mpc/mu_mpc_monitor.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/mu/mpc/mu_mpc_public.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/mu/mpc/mu_mpc.c
+  ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/mu/mpc/mu_mpc_events.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/model/scaled_value.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/device_configuration/device_configuration_common.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/device_configuration/device_configuration_server.c
@@ -102,6 +108,7 @@ target_sources(
   # Mocks sources
   ${MOCKS_SOURCES_PATH}/ship/ship_connection/data_writer_mock.cpp
   ${MOCKS_SOURCES_PATH}/common/eebus_timer/eebus_timer_mock.cpp
+  ${MOCKS_SOURCES_PATH}/use_case/api/mu_mpc_listener_mock.cpp
 
   # Test helpers
   ${CMAKE_SOURCE_DIR}/src/spine/function_data.c

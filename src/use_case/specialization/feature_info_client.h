@@ -85,34 +85,6 @@ EebusError Bind(FeatureInfoClient* self);
  */
 EebusError Unbind(FeatureInfoClient* self);
 
-/**
- * @brief Add a callback function to be invoked once a result or reply message for a msgCounter came in
- */
-EebusError
-AddResponseCallback(FeatureInfoClient* self, MsgCounterType msg_counter_ref, ResponseMessageCallback cb, void* ctx);
-
-/**
- * @brief Add a callback function to be invoked once a result came in
- */
-void AddResultCallback(FeatureInfoClient* self, ResponseMessageCallback cb, void* ctx);
-
-/**
- * @brief Helper method which adds checking if the feature is available and the operation is allowed
- * selectors and elements are used if specific data should be requested by using
- * model.FilterType DataSelectors (selectors) and/or DataElements (elements)
- * both should use the proper data types for the used function
- */
-EebusError
-RequestData(FeatureInfoClient* self, FunctionType function_type, const void* selectors, const void* elements);
-
-/**
- * @brief Helper method which writes data to remote
- * @param self Pointer to the Feature Info Client instance
- * @param cmd Pointer to the command to be written
- * @return EebusError Error code indicating the success or failure of the operation
- */
-EebusError WriteCmd(FeatureInfoClient* self, const CmdType* cmd);
-
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

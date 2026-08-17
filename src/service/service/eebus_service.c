@@ -56,6 +56,7 @@ struct EebusService {
   const TlsCertificateObject* tls_certificate;
   ServiceReaderObject* service_reader;
   bool is_pairing_possible;
+  char* ship_qr_code_string;
 };
 
 #define EEBUS_SERVICE(obj) ((EebusService*)(obj))
@@ -79,6 +80,9 @@ static void UnregisterRemoteSki(EebusServiceObject* self, const char* ski);
 static void CancelPairingWithSki(EebusServiceObject* self, const char* ski);
 static void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible);
 static const char* GetLocalSki(EebusServiceObject* self);
+static const char* GetQrCodeString(EebusServiceObject* self);
+static char*
+CreateQrCodeString(const char* ski, const char* ship_id, const char* brand, const char* type, const char* model);
 
 static const EebusServiceInterface service_methods = {
     .ship_node_reader_interface = {
@@ -103,6 +107,7 @@ static const EebusServiceInterface service_methods = {
     .cancel_pairing_with_ski             = CancelPairingWithSki,
     .set_pairing_possible                = SetPairingPossible,
     .get_local_ski                       = GetLocalSki,
+    .get_qr_code_string                  = GetQrCodeString,
 };
 
 static EebusError ServiceConstruct(
@@ -112,6 +117,33 @@ static EebusError ServiceConstruct(
     const TlsCertificateObject* tls_certificate,
     ServiceReaderObject* service_reader
 );
+
+static char*
+CreateQrCodeString(const char* ski, const char* ship_id, const char* brand, const char* type, const char* model) {
+  if (StringIsEmpty(ski) || StringIsEmpty(ship_id)) {
+    return NULL;
+  }
+
+  char* const normalized_ski = StringToUpper(ski);
+  if (normalized_ski == NULL) {
+    return NULL;
+  }
+
+  StringRemoveToken(normalized_ski, " ");
+
+  const char* const grouped_ski = StringGroupByN(normalized_ski, 4);
+  StringDelete((char*)normalized_ski);
+  if (grouped_ski == NULL) {
+    return NULL;
+  }
+
+  char* qr_string = (char*)
+      StringFmtSprintf("SHIP;SKI:%s;ID:%s;BRAND:%s;TYPE:%s;MODEL:%s;", grouped_ski, ship_id, brand, type, model);
+
+  StringDelete((char*)grouped_ski);
+
+  return qr_string;
+}
 
 EebusError ServiceConstruct(
     EebusService* self,
@@ -129,6 +161,7 @@ EebusError ServiceConstruct(
   self->spine_local_device    = NULL;
   self->tls_certificate       = NULL;
   self->service_reader        = NULL;
+  self->ship_qr_code_string   = NULL;
 
   const char* const type    = EebusServiceConfigGetDeviceType(cfg);
   const char* const ship_id = EebusServiceConfigGetShipId(cfg);
@@ -147,6 +180,11 @@ EebusError ServiceConstruct(
 
   self->device_info = EebusDeviceInfoCreate(type, vendor, brand, model, serial, ship_id);
   if (self->device_info == NULL) {
+    return kEebusErrorInit;
+  }
+
+  self->ship_qr_code_string = CreateQrCodeString(ski, ship_id, brand, type, model);
+  if (self->ship_qr_code_string == NULL) {
     return kEebusErrorInit;
   }
 
@@ -181,6 +219,7 @@ EebusError ServiceConstruct(
 
   self->service_reader      = service_reader;
   self->is_pairing_possible = false;
+
   return kEebusErrorOk;
 }
 
@@ -225,6 +264,9 @@ void Destruct(ShipNodeReaderObject* self) {
 
   EebusDeviceInfoDelete(service->device_info);
   service->device_info = NULL;
+
+  StringDelete(service->ship_qr_code_string);
+  service->ship_qr_code_string = NULL;
 
   EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): end\n", __func__);
 }
@@ -324,4 +366,9 @@ void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible) {
 const char* GetLocalSki(EebusServiceObject* self) {
   EebusService* const service = EEBUS_SERVICE(self);
   return service->local_service_details->ski;
+}
+
+const char* GetQrCodeString(EebusServiceObject* self) {
+  EebusService* const service = EEBUS_SERVICE(self);
+  return (service->ship_qr_code_string != NULL) ? service->ship_qr_code_string : "";
 }

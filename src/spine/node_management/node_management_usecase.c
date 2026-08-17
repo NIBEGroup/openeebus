@@ -28,8 +28,14 @@
 #include "src/spine/node_management/node_management_internal.h"
 
 EebusError RequestUseCaseData(
-    NodeManagementObject* self, const char* remote_device_ski, const char* remote_device_addr, SenderObject* sender) {
-  FeatureLocalObject* fl = FEATURE_LOCAL_OBJECT(self);
+    NodeManagementObject* self,
+    const char* remote_device_addr,
+    const char* ski,
+    SenderObject* sender,
+    ReplyMessageCallback cb,
+    void* ctx
+) {
+  FeatureLocalObject* const fl = FEATURE_LOCAL_OBJECT(self);
 
   static const NodeManagementUseCaseDataType usecase_data = {0};
 
@@ -49,8 +55,22 @@ EebusError RequestUseCaseData(
       .device      = remote_device_addr,
   };
 
-  return FEATURE_LOCAL_REQUEST_REMOTE_DATA_BY_SENDER_ADDRESS(
-      fl, &cmd, sender, remote_device_ski, &addr, kDefaultMaxResponseDelayMs);
+  MsgCounterType msg_cnt = 0;
+  const EebusError err   = SEND_READ(sender, FEATURE_GET_ADDRESS(FEATURE_OBJECT(fl)), &addr, &cmd, &msg_cnt);
+
+  if ((err == kEebusErrorOk) && (cb != NULL)) {
+    PENDING_REPLY_CONTAINER_ADD(
+        FEATURE_LOCAL(fl)->pending_replies,
+        msg_cnt,
+        &addr,
+        kFunctionTypeNodeManagementUseCaseData,
+        ski,
+        cb,
+        ctx
+    );
+  }
+
+  return err;
 }
 
 EebusError ProcessReadUseCaseData(NodeManagement* self, const Message* msg) {
@@ -98,6 +118,22 @@ EebusError ProcessReplyUseCaseData(NodeManagement* self, const Message* msg) {
   };
 
   EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self))), &payload);
+
+  if ((msg->request_header != NULL) && (msg->request_header->msg_cnt_ref != NULL)) {
+    const ReplyMessage reply_msg = {
+        .msg_cnt_ref    = *msg->request_header->msg_cnt_ref,
+        .function_data  = usecase_data,
+        .function_type  = kFunctionTypeNodeManagementUseCaseData,
+        .feature_local  = FEATURE_LOCAL_OBJECT(self),
+        .feature_remote = fr,
+        .entity_remote  = FEATURE_REMOTE_GET_ENTITY(fr),
+        .device_remote  = dr,
+        .ski            = DEVICE_REMOTE_GET_SKI(dr),
+    };
+
+    PENDING_REPLY_CONTAINER_PROCESS(self->obj.pending_replies, &reply_msg, kEebusErrorOk);
+  }
+
   return kEebusErrorOk;
 }
 

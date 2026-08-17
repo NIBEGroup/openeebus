@@ -41,7 +41,8 @@
 #include "src/ship/tls_certificate/tls_certificate.h"
 #include "src/ship/websocket/websocket_debug.h"
 
-static const size_t kWriteQueueSize = 50;
+static const size_t kWriteQueueSize  = 50;
+static const size_t kMaxInputMsgSize = EEBUS_WEBSOCKET_MAX_INPUT_MSG_SIZE;
 
 typedef struct WriteMessage WriteMessage;
 
@@ -266,10 +267,17 @@ void BufTmpRelease(Websocket* self) {
 
 int WebsocketOnReceive(WebsocketObject* self, void* in, size_t len) {
   Websocket* const ws = (Websocket*)WEBSOCKET(self);
-  WEBSOCKET_DEBUG_HEXDUMP(in, len);
   if (ws->wsi == NULL) {
     return -1;
   }
+
+  if ((len > kMaxInputMsgSize) || (ws->buf_tmp_size > kMaxInputMsgSize - len)) {
+    WEBSOCKET_DEBUG_PRINTF("%s(), input message exceeds maximum size (%zu), closing\n", __func__, kMaxInputMsgSize);
+    BufTmpRelease(ws);
+    return -1;
+  }
+
+  WEBSOCKET_DEBUG_HEXDUMP(in, len);
 
   if (lws_is_final_fragment(ws->wsi) && !lws_remaining_packet_payload(ws->wsi)) {
     if (ws->buf_tmp != NULL) {

@@ -24,40 +24,6 @@
 #include "tests/src/memory_leak.inc"
 #include "tests/src/mocks/common/eebus_timer/eebus_timer_mock.h"
 
-#define TEST_SHIP_URI "wss://DESKTOP-IAKQS71.local:4769"
-#define LOCAL_SHIP_ID "LocalShipID"
-#define REMOTE_SHIP_ID "RemoteShipID"
-#define DEFAULT_CLOSE_CODE 4001
-
-using testing::_;
-
-EebusError ShipConnectionTestSuite::MessageBufferInitHelper(MessageBuffer* msg_buf, const std::string_view& msg) {
-  std::unique_ptr<char[], decltype(&JsonFree)> msg_unformatted{JsonUnformat(msg), JsonFree};
-  if (msg_unformatted == nullptr) {
-    return kEebusErrorInit;
-  }
-
-  const size_t msg_unformatted_size = strlen(msg_unformatted.get()) + 1;
-
-  const size_t data_size = sizeof(uint8_t) + msg_unformatted_size;
-  uint8_t* const data    = (uint8_t*)malloc(data_size);
-  if (data == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
-
-  data[0] = kMsgTypeControl;
-  memcpy(data + 1, msg_unformatted.get(), msg_unformatted_size);
-  msg_buf->data        = data;
-  msg_buf->data_size   = data_size;
-  msg_buf->deallocator = free;
-  return kEebusErrorOk;
-}
-
-void ShipConnectionTestSuite::ExpectCloseWithError(const char* error_msg, bool had_error) {
-  EXPECT_CALL(*websocket_mock->gmock, Close(sc.websocket, DEFAULT_CLOSE_CODE, testing::StrCaseEq(error_msg)));
-  EXPECT_CALL(*ifp_mock->gmock, HandleConnectionClosed(sc.info_provider, SHIP_CONNECTION_OBJECT(&sc), had_error));
-}
-
 void ShipConnectionTestSuite::SetUp() {
   tls_cert_mock          = TlsCertificateMockCreate();
   ifp_mock               = InfoProviderMockCreate();
@@ -66,10 +32,10 @@ void ShipConnectionTestSuite::SetUp() {
   ShipConnectionConstruct(
       &sc,
       INFO_PROVIDER_OBJECT(ifp_mock),
-      kShipRoleClient,
-      LOCAL_SHIP_ID,
-      TEST_REMOTE_SKI,
-      REMOTE_SHIP_ID
+      kShipRoleAuto,
+      "LocalShipID",
+      kShipRemoteSki.data(),
+      "RemoteShipID"
   );
 
   SHIP_CONNECTION_START(SHIP_CONNECTION_OBJECT(&sc), WEBSOCKET_CREATOR_OBJECT(websocket_creator_mock));
@@ -104,7 +70,50 @@ void ShipConnectionTestSuite::TearDown() {
   CheckForMemoryLeaks();
 }
 
+EebusError ShipConnectionTestSuite::MessageBufferInitHelper(MessageBuffer* msg_buf, const std::string_view& msg) {
+  std::unique_ptr<char[], decltype(&JsonFree)> msg_unformatted{JsonUnformat(msg), JsonFree};
+  if (msg_unformatted == nullptr) {
+    return kEebusErrorInit;
+  }
+
+  const size_t msg_unformatted_size{strlen(msg_unformatted.get()) + 1};
+  const size_t data_size{msg_unformatted_size + 1};
+
+  uint8_t* const data = static_cast<uint8_t*>(malloc(data_size));
+  if (data == nullptr) {
+    return kEebusErrorMemoryAllocate;
+  }
+
+  data[0] = kMsgTypeControl;
+  memcpy(data + 1, msg_unformatted.get(), msg_unformatted_size);
+  MessageBufferInitWithDeallocator(msg_buf, data, data_size, free);
+  return kEebusErrorOk;
+}
+
+void ShipConnectionTestSuite::ExpectStateUpdate(SmeState state) {
+  EXPECT_CALL(*ifp_mock->gmock, HandleShipStateUpdate(sc.info_provider, sc.remote_ski, state, testing::StrCaseEq("")));
+}
+
 void ShipConnectionTestSuite::SetShipConnectionState(SmeState state) {
-  EXPECT_CALL(*ifp_mock->gmock, HandleShipStateUpdate(INFO_PROVIDER_OBJECT(ifp_mock), sc.remote_ski, state, _));
+  ExpectStateUpdate(state);
   ShipConnectionSetSmeState(&sc, state);
+}
+
+void ShipConnectionTestSuite::ExpectWebsocketWrite(const MessageBuffer& expected_msg, bool should_succeed) {
+  const size_t msg_size{expected_msg.data_size - 1};
+  const size_t ret_num_bytes{should_succeed ? msg_size : 0};
+  EXPECT_CALL(*websocket_mock->gmock, Write(sc.websocket, MsgBufEq(expected_msg), msg_size))
+      .WillOnce(testing::Return(static_cast<int32_t>(ret_num_bytes)));
+}
+
+void ShipConnectionTestSuite::ExpectWebsocketClose(const char* error_msg, bool had_error) {
+  EXPECT_CALL(*websocket_mock->gmock, Close(sc.websocket, 4001, testing::StrCaseEq(error_msg)));
+  EXPECT_CALL(*ifp_mock->gmock, HandleConnectionClosed(sc.info_provider, SHIP_CONNECTION_OBJECT(&sc), had_error));
+}
+
+void ShipConnectionTestSuite::ExpectConnectionClose(const char* error_msg, bool had_error) {
+  EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer));
+  EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
+  EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer));
+  ExpectWebsocketClose(error_msg, had_error);
 }

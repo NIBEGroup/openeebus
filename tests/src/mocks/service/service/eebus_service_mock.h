@@ -43,6 +43,7 @@ class EebusServiceGMockInterface : public ShipNodeReaderGMockInterface {
   virtual void CancelPairingWithSki(EebusServiceObject* self, const char* ski)                                  = 0;
   virtual void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible)                           = 0;
   virtual const char* GetLocalSki(EebusServiceObject* self)                                                     = 0;
+  virtual const char* GetQrCodeString(EebusServiceObject* self)                                                 = 0;
 };
 
 class EebusServiceGMock : public EebusServiceGMockInterface {
@@ -67,6 +68,7 @@ class EebusServiceGMock : public EebusServiceGMockInterface {
   MOCK_METHOD2(CancelPairingWithSki, void(EebusServiceObject*, const char*));
   MOCK_METHOD2(SetPairingPossible, void(EebusServiceObject*, bool));
   MOCK_METHOD1(GetLocalSki, const char*(EebusServiceObject*));
+  MOCK_METHOD1(GetQrCodeString, const char*(EebusServiceObject*));
 };
 
 typedef struct EebusServiceMock {

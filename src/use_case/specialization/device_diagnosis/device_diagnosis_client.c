@@ -58,9 +58,25 @@ DeviceDiagnosisClient* DeviceDiagnosisClientCreate(EntityLocalObject* local_enti
 }
 
 EebusError DeviceDiagnosisClientRequestState(DeviceDiagnosisClient* self) {
-  return RequestData(&self->feature_info_client, kFunctionTypeDeviceDiagnosisStateData, NULL, NULL);
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      kFunctionTypeDeviceDiagnosisStateData,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+  );
 }
 
 EebusError DeviceDiagnosisClientRequestHeartbeat(DeviceDiagnosisClient* self) {
-  return RequestData(&self->feature_info_client, kFunctionTypeDeviceDiagnosisHeartbeatData, NULL, NULL);
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      kFunctionTypeDeviceDiagnosisHeartbeatData,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+  );
 }

@@ -40,8 +40,9 @@ void FeatureAddressContainerConstruct(FeatureAddressContainer* self);
 void FeatureAddressContainerDestruct(FeatureAddressContainer* self);
 void FeatureAddressContainerAdd(FeatureAddressContainer* self, const FeatureAddressType* addr);
 void FeatureAddressContainerRemove(FeatureAddressContainer* self, const FeatureAddressType* addr);
-const FeatureAddressType* FeatureAddressContainerFind(
-    const FeatureAddressContainer* self, const FeatureAddressType* addr);
+void FeatureAddressContainerRemoveForDevice(FeatureAddressContainer* self, const char* device);
+const FeatureAddressType*
+FeatureAddressContainerFind(const FeatureAddressContainer* self, const FeatureAddressType* addr);
 size_t FeatureAddressContainerGetSize(const FeatureAddressContainer* self);
 const FeatureAddressType* FeatureAddressContainerGetElement(const FeatureAddressContainer* self, size_t idx);
 

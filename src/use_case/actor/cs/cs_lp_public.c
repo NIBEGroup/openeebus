@@ -23,7 +23,6 @@
 #include "src/common/eebus_errors.h"
 #include "src/spine/model/loadcontrol_types.h"
 #include "src/spine/model/model.h"
-#include "src/use_case/actor/common/load_control.h"
 #include "src/use_case/actor/cs/cs_lp.h"
 #include "src/use_case/actor/cs/cs_lp_internal.h"
 #include "src/use_case/model/load_limit_types.h"
@@ -355,13 +354,10 @@ bool CsLpIsHeartbeatWithinDuration(CsLpUseCaseObject* self) {
 //-------------------------------------------------------------------------------------------//
 const ElectricalConnectionCharacteristicDataType*
 CsLpGetElectricalConnectionCharacteristics(const CsLpUseCase* self, const ElectricalConnectionServer* ecs) {
-  ElectricalConnectionCharacteristicContextType characteristic_context
-      = kElectricalConnectionCharacteristicContextTypeEntity;
-
   ElectricalConnectionCharacteristicDataType filter = {
       .electrical_connection_id = &self->electrical_connection_id,
       .parameter_id             = &(ElectricalConnectionParameterIdType){0},
-      .characteristic_context   = &characteristic_context,
+      .characteristic_context   = &kEccContextEntity,
       .characteristic_type      = &self->nominal_max_characteristic,
   };
 
@@ -384,7 +380,7 @@ EebusError CsLpGetNominalMaxInternal(const CsLpUseCase* self, ScaledValue* nomin
   const ElectricalConnectionCharacteristicDataType* const characteristic
       = CsLpGetElectricalConnectionCharacteristics(self, &ecs);
 
-  if ((characteristic->characteristic_id == NULL) || (characteristic->value == NULL)) {
+  if ((characteristic == NULL) || (characteristic->characteristic_id == NULL) || (characteristic->value == NULL)) {
     return kEebusErrorNoChange;
   }
 
@@ -416,7 +412,7 @@ EebusError CsLpSetNominalMaxInternal(CsLpUseCase* self, const ScaledValue* new_n
   const ElectricalConnectionCharacteristicDataType* const characteristic
       = CsLpGetElectricalConnectionCharacteristics(self, &ecs);
 
-  if (characteristic->characteristic_id == NULL) {
+  if ((characteristic == NULL) || (characteristic->characteristic_id == NULL)) {
     return kEebusErrorNoChange;
   }
 

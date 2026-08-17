@@ -18,27 +18,20 @@
  * @brief Feature Local implementation
  */
 
-#include <string.h>
-
 #include "src/common/eebus_arguments.h"
 #include "src/common/eebus_malloc.h"
-#include "src/common/uint64_lut.h"
 #include "src/spine/api/device_local_interface.h"
 #include "src/spine/api/message.h"
-#include "src/spine/api/pending_write_request_interface.h"
 #include "src/spine/events/events.h"
 #include "src/spine/feature/feature.h"
 #include "src/spine/feature/feature_local_internal.h"
+#include "src/spine/feature/pending_reply_container.h"
+#include "src/spine/feature/pending_result_container.h"
 #include "src/spine/feature/pending_write_request.h"
+#include "src/spine/feature/pending_write_request_container.h"
 #include "src/spine/model/cmd.h"
+#include "src/spine/model/filter.h"
 #include "src/spine/model/result_types.h"
-
-typedef struct ResponseMessageCbRecord ResponseMessageCbRecord;
-
-struct ResponseMessageCbRecord {
-  ResponseMessageCallback cb;
-  void* ctx;
-};
 
 typedef struct WriteApprovalCbRecord WriteApprovalCbRecord;
 
@@ -65,8 +58,6 @@ static const FeatureLocalInterface feature_local_methods = {
      .get_entity                             = FeatureLocalGetEntity,
      .get_data                               = FeatureLocalGetData,
      .set_function_operations                = FeatureLocalSetFunctionOperations,
-     .add_response_callback                  = FeatureLocalAddResponseCallback,
-     .add_result_callback                    = FeatureLocalAddResultCallback,
      .add_write_approval_callback            = FeatureLocalAddWriteApprovalCallback,
      .try_approve_write                      = FeatureLocalTryApproveWrite,
      .deny_write                             = FeatureLocalDenyWrite,
@@ -74,8 +65,6 @@ static const FeatureLocalInterface feature_local_methods = {
      .data_copy                              = FeatureLocalDataCopy,
      .update_data                            = FeatureLocalUpdateData,
      .set_data                               = FeatureLocalSetData,
-     .request_remote_data                    = FeatureLocalRequestRemoteData,
-     .request_remote_data_by_sender_address  = FeatureLocalRequestRemoteDataBySenderAddress,
      .has_subscription_to_remote             = FeatureLocalHasSubscriptionToRemote,
      .subscribe_to_remote                    = FeatureLocalSubscribeToRemote,
      .remove_remote_subscription             = FeatureLocalRemoveRemoteSubscription,
@@ -87,6 +76,8 @@ static const FeatureLocalInterface feature_local_methods = {
      .handle_message                         = HandleMessage,
      .create_information                     = FeatureLocalCreateInformation,
      .tick                                   = FeatureLocalTick,
+     .write_to_remote                        = FeatureLocalWriteToRemote,
+     .read_from_remote                       = FeatureLocalReadFromRemote,
  };
 
 static EebusError FunctionUpdateNotifySubscribers(
@@ -109,10 +100,6 @@ static EebusError ProcessNotify(FeatureLocal* self, const Message* msg);
 static EebusError ProcessWriteInternal(FeatureLocal* self, const Message* msg);
 static EebusError ProcessWrite(FeatureLocal* self, const Message* msg);
 static EebusError ProcessReply(FeatureLocal* self, const Message* msg);
-static void AddPendingWriteRequest(FeatureLocal* self, const Message* msg);
-static PendingWriteRequestObject*
-FindPendingWriteRequest(const FeatureLocal* self, const char* ski, MsgCounterType msg_cnt);
-static void FeatureLocalUpdatePendingWriteRequestTime(FeatureLocalObject* self);
 
 void FeatureLocalConstruct(
     FeatureLocal* self,
@@ -126,11 +113,11 @@ void FeatureLocalConstruct(
   //  Override "virtual functions table"
   FEATURE_LOCAL_INTERFACE(self) = &feature_local_methods;
 
-  self->entity = entity;
-  Uint64LutConstruct(&self->resp_msg_cbs);
-  VectorConstruct(&self->result_cbs);
+  self->entity                 = entity;
+  self->pending_replies        = PendingReplyContainerCreate();
+  self->pending_results        = PendingResultContainerCreate();
+  self->pending_write_requests = PendingWriteRequestContainerCreate();
   VectorConstruct(&self->wr_approval_cbs);
-  VectorConstruct(&self->pending_write_requests);
 
   FeatureAddressContainerConstruct(&self->bindings);
   FeatureAddressContainerConstruct(&self->subscriptions);
@@ -150,13 +137,11 @@ void FeatureLocalDestruct(FeatureObject* self) {
   FeatureAddressContainerDestruct(&fl->subscriptions);
   FeatureAddressContainerDestruct(&fl->bindings);
 
-  VectorFreeElements(&fl->pending_write_requests);
-  VectorDestruct(&fl->pending_write_requests);
   VectorFreeElements(&fl->wr_approval_cbs);
   VectorDestruct(&fl->wr_approval_cbs);
-  VectorFreeElements(&fl->result_cbs);
-  VectorDestruct(&fl->result_cbs);
-  Uint64LutDestruct(&fl->resp_msg_cbs);
+  PendingWriteRequestContainerDelete(fl->pending_write_requests);
+  PendingResultContainerDelete(fl->pending_results);
+  PendingReplyContainerDelete(fl->pending_replies);
 
   // TODO: Implement destructor
   FeatureDestruct(self);
@@ -204,80 +189,6 @@ void FeatureLocalSetFunctionOperations(FeatureLocalObject* self, FunctionType ty
   }
 }
 
-ResponseMessageCbRecord* ResponseMessageCbRecordCreate(ResponseMessageCallback cb, void* ctx) {
-  ResponseMessageCbRecord* const resp_msg_record
-      = (ResponseMessageCbRecord*)EEBUS_MALLOC(sizeof(ResponseMessageCbRecord));
-  if (resp_msg_record != NULL) {
-    resp_msg_record->cb  = cb;
-    resp_msg_record->ctx = ctx;
-  }
-
-  return resp_msg_record;
-}
-
-void ResponseMessageContainerDelete(void* p) {
-  if (p == NULL) {
-    return;
-  }
-
-  Vector* resp_msg_cbs_vec = (Vector*)p;
-  VectorFreeElements(resp_msg_cbs_vec);
-  VectorDestruct(resp_msg_cbs_vec);
-  EEBUS_FREE(resp_msg_cbs_vec);
-}
-
-EebusError FeatureLocalAddResponseCallback(
-    FeatureLocalObject* self,
-    MsgCounterType msg_counter_ref,
-    ResponseMessageCallback cb,
-    void* ctx
-) {
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
-
-  Vector* resp_msg_cbs_vec = (Vector*)Uint64LutFind(&fl->resp_msg_cbs, msg_counter_ref);
-
-  if (resp_msg_cbs_vec != NULL) {
-    for (size_t i = 0; i < VectorGetSize(resp_msg_cbs_vec); ++i) {
-      const ResponseMessageCbRecord* const resp_msg_cb_record = VectorGetElement(resp_msg_cbs_vec, i);
-      if ((resp_msg_cb_record->cb == cb) && (resp_msg_cb_record->ctx == ctx)) {
-        return kEebusErrorNoChange;
-      }
-    }
-  } else {
-    resp_msg_cbs_vec = VectorCreate();
-    Uint64LutInsert(&fl->resp_msg_cbs, msg_counter_ref, resp_msg_cbs_vec, ResponseMessageContainerDelete);
-  }
-
-  VectorPushBack(resp_msg_cbs_vec, ResponseMessageCbRecordCreate(cb, ctx));
-  return kEebusErrorOk;
-}
-
-void ProcessResponseMsgCallbacks(FeatureLocal* self, MsgCounterType msg_counter_ref, const ResponseMessage* resp_msg) {
-  Vector* resp_msg_cbs_vec = Uint64LutFind(&self->resp_msg_cbs, msg_counter_ref);
-  if (resp_msg_cbs_vec == NULL) {
-    return;
-  }
-
-  for (size_t i = 0; i < VectorGetSize(resp_msg_cbs_vec); ++i) {
-    ResponseMessageCbRecord* const resp_msg_record = VectorGetElement(resp_msg_cbs_vec, i);
-    resp_msg_record->cb(resp_msg, resp_msg_record->ctx);
-  }
-
-  Uint64LutRemove(&self->resp_msg_cbs, msg_counter_ref);
-}
-
-void FeatureLocalAddResultCallback(FeatureLocalObject* self, ResponseMessageCallback cb, void* ctx) {
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
-  VectorPushBack(&fl->result_cbs, ResponseMessageCbRecordCreate(cb, ctx));
-}
-
-void ProcessResultCallbacks(FeatureLocal* self, const ResponseMessage* resp_msg) {
-  for (size_t i = 0; i < VectorGetSize(&self->result_cbs); ++i) {
-    ResponseMessageCbRecord* const resp_msg_record = VectorGetElement(&self->result_cbs, i);
-    resp_msg_record->cb(resp_msg, resp_msg_record->ctx);
-  }
-}
-
 WriteApprovalCbRecord* WriteApprovalCbRecordCreate(WriteApprovalCallback cb, void* ctx) {
   WriteApprovalCbRecord* const wr_approval_record = (WriteApprovalCbRecord*)EEBUS_MALLOC(sizeof(WriteApprovalCbRecord));
   if (wr_approval_record != NULL) {
@@ -308,7 +219,8 @@ EebusError FeatureLocalTryApproveWrite(FeatureLocalObject* self, const char* ski
   }
 
   // Get pending write request for ski and message count
-  PendingWriteRequestObject* pending_write_request = FindPendingWriteRequest(fl, ski, msg_cnt);
+  PendingWriteRequestObject* const pending_write_request
+      = PENDING_WRITE_REQUEST_CONTAINER_FIND(fl->pending_write_requests, ski, msg_cnt);
   if (pending_write_request == NULL) {
     return kEebusErrorNoChange;
   }
@@ -316,7 +228,7 @@ EebusError FeatureLocalTryApproveWrite(FeatureLocalObject* self, const char* ski
   PENDING_WRITE_REQUEST_ADD_APPROVAL(pending_write_request);
 
   // Check if there are enough approvals for the write
-  size_t num_req_approvals = VectorGetSize(&fl->wr_approval_cbs);
+  const size_t num_req_approvals = VectorGetSize(&fl->wr_approval_cbs);
   if (num_req_approvals > PENDING_WRITE_REQUEST_GET_NUMBER_OF_APPROVALS(pending_write_request)) {
     return kEebusErrorOk;
   }
@@ -329,8 +241,7 @@ EebusError FeatureLocalTryApproveWrite(FeatureLocalObject* self, const char* ski
   }
 
   status = ProcessWriteInternal(FEATURE_LOCAL(self), &msg);
-  VectorRemove(&fl->pending_write_requests, pending_write_request);
-  PendingWriteRequestDelete(pending_write_request);
+  PENDING_WRITE_REQUEST_CONTAINER_REMOVE(fl->pending_write_requests, pending_write_request);
 
   return status;
 }
@@ -348,7 +259,8 @@ FeatureLocalDenyWrite(FeatureLocalObject* self, const char* ski, MsgCounterType 
   }
 
   // Get pending write request for ski and message count
-  PendingWriteRequestObject* pending_write_request = FindPendingWriteRequest(fl, ski, msg_cnt);
+  PendingWriteRequestObject* const pending_write_request
+      = PENDING_WRITE_REQUEST_CONTAINER_FIND(fl->pending_write_requests, ski, msg_cnt);
   if (pending_write_request == NULL) {
     return kEebusErrorNoChange;
   }
@@ -360,8 +272,7 @@ FeatureLocalDenyWrite(FeatureLocalObject* self, const char* ski, MsgCounterType 
   }
 
   SEND_RESULT_ERROR(MessageGetSender(&msg), msg.request_header, FEATURE_GET_ADDRESS(FEATURE_OBJECT(self)), err);
-  VectorRemove(&fl->pending_write_requests, pending_write_request);
-  PendingWriteRequestDelete(pending_write_request);
+  PENDING_WRITE_REQUEST_CONTAINER_REMOVE(fl->pending_write_requests, pending_write_request);
 
   return kEebusErrorOk;
 }
@@ -383,30 +294,22 @@ void* FeatureLocalDataCopy(const FeatureLocalObject* self, FunctionType function
   return FUNCTION_DATA_COPY(function);
 }
 
-void FeatureLocalCleanRemoteDeviceCaches(FeatureLocalObject* self, const DeviceAddressType* remote_addr) {
+void FeatureLocalCleanRemoteDeviceCaches(
+    FeatureLocalObject* self,
+    const DeviceAddressType* remote_addr,
+    const char* ski
+) {
+  UNUSED(ski);
+
   FeatureLocal* const fl = FEATURE_LOCAL(self);
 
   if ((remote_addr == NULL) || (remote_addr->device == NULL)) {
     return;
   }
 
-  size_t i = FeatureAddressContainerGetSize(&fl->subscriptions);
-  while (i > 0) {
-    --i;
-    const FeatureAddressType* const addr = FeatureAddressContainerGetElement(&fl->subscriptions, i);
-    if ((addr != NULL) && (addr->device != NULL) && (strcmp(addr->device, remote_addr->device) == 0)) {
-      FeatureAddressContainerRemove(&fl->subscriptions, addr);
-    }
-  }
-
-  i = FeatureAddressContainerGetSize(&fl->bindings);
-  while (i > 0) {
-    --i;
-    const FeatureAddressType* const addr = FeatureAddressContainerGetElement(&fl->bindings, i);
-    if ((addr != NULL) && (addr->device != NULL) && (strcmp(addr->device, remote_addr->device) == 0)) {
-      FeatureAddressContainerRemove(&fl->bindings, addr);
-    }
-  }
+  FeatureAddressContainerRemoveForDevice(&fl->subscriptions, remote_addr->device);
+  FeatureAddressContainerRemoveForDevice(&fl->bindings, remote_addr->device);
+  PENDING_REPLY_CONTAINER_REMOVE_FOR_DEVICE(fl->pending_replies, remote_addr->device);
 }
 
 EebusError FunctionUpdateNotifySubscribers(
@@ -449,48 +352,16 @@ EebusError FeatureLocalUpdateData(
   return FunctionUpdateNotifySubscribers(FEATURE_LOCAL(self), function, data, filter_partial, filter_delete);
 }
 
-void FeatureLocalUpdatePendingWriteRequestTime(FeatureLocalObject* self) {
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
-
-  size_t i = VectorGetSize(&fl->pending_write_requests);
-
-  while (i > 0) {
-    --i;
-    PendingWriteRequestObject* const request = VectorGetElement(&fl->pending_write_requests, i);
-    if (request == NULL) {
-      continue;
-    }
-
-    if (PENDING_WRITE_REQUEST_HAS_EXPIRED(request)) {
-      Message msg;
-      EebusError status = PENDING_WRITE_REQUEST_GET_MESSAGE(request, self, &msg);
-      if (status != kEebusErrorOk) {
-        continue;
-      }
-
-      const ErrorType err = {
-          .error_number = kErrorNumberTypeTimeout,
-          .description  = "Write request timed out",
-      };
-
-      SEND_RESULT_ERROR(MessageGetSender(&msg), msg.request_header, FEATURE_GET_ADDRESS(FEATURE_OBJECT(self)), &err);
-      VectorRemove(&fl->pending_write_requests, request);
-      PendingWriteRequestDelete(request);
-    } else {
-      PENDING_WRITE_REQUEST_UPDATE_REMAINING_TIME(request);
-    }
-  }
-}
-
 void FeatureLocalSetData(FeatureLocalObject* self, FunctionType function_type, void* data) {
   FEATURE_LOCAL_UPDATE_DATA(self, function_type, data, NULL, NULL);
 }
 
-EebusError FeatureLocalRequestRemoteData(
+static EebusError FeatureLocalRequestRemoteData(
     FeatureLocalObject* self,
     FunctionType function_type,
     const FilterType* filter_partial,
-    FeatureRemoteObject* dest_feature
+    FeatureRemoteObject* dest_feature,
+    MsgCounterType* msg_cnt
 ) {
   FunctionObject* function = FeatureGetFunction(FEATURE(self), function_type);
   if (function == NULL) {
@@ -505,28 +376,11 @@ EebusError FeatureLocalRequestRemoteData(
   const DeviceRemoteObject* const dest_device = FEATURE_REMOTE_GET_DEVICE(dest_feature);
 
   SenderObject* const sender     = DEVICE_REMOTE_GET_SENDER(dest_device);
-  const char* const ski          = DEVICE_REMOTE_GET_SKI(dest_device);
   const FeatureAddressType* addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(dest_feature));
-  const uint32_t max_resp_delay  = FEATURE_REMOTE_GET_MAX_RESPONSE_DELAY(dest_feature);
 
-  const EebusError ret
-      = FEATURE_LOCAL_REQUEST_REMOTE_DATA_BY_SENDER_ADDRESS(self, cmd, sender, ski, addr, max_resp_delay);
+  const EebusError ret = SEND_READ(sender, FEATURE_GET_ADDRESS(FEATURE_OBJECT(self)), addr, cmd, msg_cnt);
   CmdDelete((CmdType*)cmd);
   return ret;
-}
-
-EebusError FeatureLocalRequestRemoteDataBySenderAddress(
-    FeatureLocalObject* self,
-    const CmdType* cmd,
-    SenderObject* sender,
-    const char* dest_ski,
-    const FeatureAddressType* dest_addr,
-    uint32_t max_delay
-) {
-  UNUSED(dest_ski);
-  UNUSED(max_delay);
-
-  return SEND_READ(sender, FEATURE_GET_ADDRESS(FEATURE_OBJECT(self)), dest_addr, cmd);
 }
 
 bool FeatureLocalHasSubscriptionToRemote(const FeatureLocalObject* self, const FeatureAddressType* remote_addr) {
@@ -687,18 +541,16 @@ EebusError FeatureLocalProcessResult(FeatureLocal* self, const Message* msg) {
 
   const MsgCounterType msg_cnt_ref = *msg->request_header->msg_cnt_ref;
 
-  const ResponseMessage resp_msg = {
+  const ResultMessage result_msg = {
       .msg_cnt_ref    = msg_cnt_ref,
-      .function_data  = result_data,
-      .function_type  = kFunctionTypeResultData,
+      .result_data    = result_data,
       .feature_local  = FEATURE_LOCAL_OBJECT(self),
       .feature_remote = msg->feature_remote,
       .entity_remote  = msg->entity_remote,
       .device_remote  = msg->device_remote,
   };
 
-  ProcessResponseMsgCallbacks(self, msg_cnt_ref, &resp_msg);
-  ProcessResultCallbacks(self, &resp_msg);
+  PENDING_RESULT_CONTAINER_PROCESS(self->pending_results, &result_msg);
   return kEebusErrorOk;
 }
 
@@ -819,48 +671,9 @@ EebusError ProcessWriteInternal(FeatureLocal* self, const Message* msg) {
   return kEebusErrorOk;
 }
 
-PendingWriteRequestObject* FindPendingWriteRequest(const FeatureLocal* self, const char* ski, MsgCounterType msg_cnt) {
-  if (self == NULL || ski == NULL) {
-    return NULL;
-  }
-
-  for (size_t i = 0; i < VectorGetSize(&self->pending_write_requests); ++i) {
-    PendingWriteRequestObject* const request = VectorGetElement(&self->pending_write_requests, i);
-    if ((strcmp(PENDING_WRITE_REQUEST_GET_SKI(request), ski) == 0)
-        && (PENDING_WRITE_REQUEST_GET_MESSAGE_COUNTER(request) == msg_cnt)) {
-      return request;
-    }
-  }
-
-  return NULL;
-}
-
-void AddPendingWriteRequest(FeatureLocal* self, const Message* msg) {
-  Feature* const feature = FEATURE(self);
-  if ((FEATURE_GET_ROLE(FEATURE_OBJECT(feature)) != kRoleTypeServer) || msg == NULL || msg->device_remote == NULL
-      || msg->request_header == NULL || msg->request_header->msg_cnt == NULL) {
-    return;
-  }
-
-  const char* ski = DEVICE_REMOTE_GET_SKI(msg->device_remote);
-
-  PendingWriteRequestObject* pending_request = FindPendingWriteRequest(self, ski, *msg->request_header->msg_cnt);
-  if (pending_request != NULL) {
-    // If we already have a pending write request for this ski and msg_cnt, we don't want to add it again
-    return;
-  }
-
-  pending_request = PendingWriteRequestCreate(msg);
-  if (pending_request == NULL) {
-    return;
-  }
-
-  VectorPushBack(&self->pending_write_requests, pending_request);
-}
-
 EebusError ProcessWrite(FeatureLocal* self, const Message* msg) {
   if (VectorGetSize(&self->wr_approval_cbs) > 0) {
-    AddPendingWriteRequest(self, msg);
+    PENDING_WRITE_REQUEST_CONTAINER_ADD(self->pending_write_requests, msg);
     ProcessWriteApprovalCallbacks(self, msg);
     return kEebusErrorOk;
   } else {
@@ -889,7 +702,7 @@ EebusError ProcessReply(FeatureLocal* self, const Message* msg) {
 
   const MsgCounterType msg_cnt_ref = *msg->request_header->msg_cnt_ref;
 
-  const ResponseMessage resp_msg = {
+  const ReplyMessage reply_msg = {
       .msg_cnt_ref    = msg_cnt_ref,
       .function_data  = new_data,
       .function_type  = function_type,
@@ -899,7 +712,7 @@ EebusError ProcessReply(FeatureLocal* self, const Message* msg) {
       .device_remote  = msg->device_remote,
   };
 
-  ProcessResponseMsgCallbacks(self, msg_cnt_ref, &resp_msg);
+  PENDING_REPLY_CONTAINER_PROCESS(self->pending_replies, &reply_msg, kEebusErrorOk);
   return kEebusErrorOk;
 }
 
@@ -994,5 +807,113 @@ NodeManagementDetailedDiscoveryFeatureInformationType* FeatureLocalCreateInforma
 }
 
 void FeatureLocalTick(FeatureLocalObject* self) {
-  FeatureLocalUpdatePendingWriteRequestTime(self);
+  FeatureLocal* const fl = FEATURE_LOCAL(self);
+  PENDING_WRITE_REQUEST_CONTAINER_TICK(fl->pending_write_requests, self);
+  PENDING_REPLY_CONTAINER_TICK(fl->pending_replies);
+  PENDING_RESULT_CONTAINER_TICK(fl->pending_results);
+}
+
+EebusError FeatureLocalWriteToRemote(
+    FeatureLocalObject* self,
+    FeatureRemoteObject* dest_feature,
+    FunctionType fcn_type,
+    const void* data,
+    const FilterType* filter_partial,
+    const FilterType* filter_delete,
+    ResultMessageCallback cb,
+    void* ctx
+) {
+  if (data == NULL) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  SenderObject* const sender = DEVICE_REMOTE_GET_SENDER(FEATURE_REMOTE_GET_DEVICE(dest_feature));
+  if (sender == NULL) {
+    return kEebusErrorInit;
+  }
+
+  const FeatureAddressType* const sender_addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
+  const FeatureAddressType* const dest_addr   = FEATURE_GET_ADDRESS(FEATURE_OBJECT(dest_feature));
+  if ((sender_addr == NULL) || (dest_addr == NULL)) {
+    return kEebusErrorNoChange;
+  }
+
+  const OperationsObject* const ops = FEATURE_GET_FUNCTION_OPERATIONS(FEATURE_OBJECT(dest_feature), fcn_type);
+
+  MsgCounterType msg_cnt = 0;
+
+  EebusError err;
+  if ((ops == NULL) || !OPERATIONS_GET_WRITE_PARTIAL(ops)) {
+    err = FEATURE_REMOTE_UPDATE_DATA(dest_feature, fcn_type, data, NULL, NULL, false);
+    if (err != kEebusErrorOk) {
+      return err;
+    }
+
+    const CmdType cmd = {
+        .data_choice         = FEATURE_REMOTE_GET_DATA(dest_feature, fcn_type),
+        .data_choice_type_id = fcn_type,
+    };
+
+    err = SEND_WRITE(sender, sender_addr, dest_addr, &cmd, (cb != NULL) ? &msg_cnt : NULL);
+  } else {
+    const FilterType filter_t_partial_default = FILTER_PARTIAL(fcn_type, NULL, NULL, NULL);
+    const FilterType* const p_filter_partial  = (filter_partial != NULL) ? filter_partial : &filter_t_partial_default;
+    const FilterType* filters[2]              = {p_filter_partial, filter_delete};
+    const size_t filters_size                 = (filter_delete != NULL) ? 2 : 1;
+
+    const CmdType cmd = {
+        .data_choice         = data,
+        .data_choice_type_id = fcn_type,
+        .filter              = filters,
+        .filter_size         = filters_size,
+        .function            = &(FunctionType){fcn_type},
+    };
+
+    err = SEND_WRITE(sender, sender_addr, dest_addr, &cmd, (cb != NULL) ? &msg_cnt : NULL);
+  }
+
+  if ((err == kEebusErrorOk) && (cb != NULL)) {
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
+    PENDING_RESULT_CONTAINER_ADD(fl->pending_results, msg_cnt, fcn_type, dest_addr, cb, ctx);
+  }
+
+  return err;
+}
+
+EebusError FeatureLocalReadFromRemote(
+    FeatureLocalObject* self,
+    FeatureRemoteObject* dest_feature,
+    FunctionType function_type,
+    const void* selectors,
+    const void* elements,
+    ReplyMessageCallback cb,
+    void* ctx
+) {
+  FeatureLocal* const fl = FEATURE_LOCAL(self);
+
+  if (dest_feature == NULL) {
+    return kEebusErrorNoChange;
+  }
+
+  const OperationsObject* const ops = FEATURE_GET_FUNCTION_OPERATIONS(FEATURE_OBJECT(dest_feature), function_type);
+
+  if ((ops == NULL) || !OPERATIONS_GET_READ(ops)) {
+    return kEebusErrorNoChange;
+  }
+
+  const FilterType* filter_partial = &FILTER_PARTIAL(function_type, NULL, selectors, elements);
+  if ((selectors == NULL) || !OPERATIONS_GET_READ_PARTIAL(ops) || !OPERATIONS_GET_WRITE_PARTIAL(ops)) {
+    filter_partial = NULL;
+  }
+
+  MsgCounterType msg_cnt = 0;
+
+  const EebusError err = FeatureLocalRequestRemoteData(self, function_type, filter_partial, dest_feature, &msg_cnt);
+
+  if ((err == kEebusErrorOk) && (cb != NULL)) {
+    const FeatureAddressType* const dest_addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(dest_feature));
+    PENDING_REPLY_CONTAINER_ADD(fl->pending_replies, msg_cnt, dest_addr, function_type, NULL, cb, ctx);
+  }
+
+  return err;
 }

@@ -48,6 +48,8 @@ struct CsLpUseCase {
 
   CsLpListenerObject* cs_lp_listener;
 
+  EntityAddressType* remote_eg_entity_addr;
+
   DeviceDiagnosisClient* heartbeat_diag_client;
 
   // KEO Stack uses multiple identical entities for the same functionality,
@@ -56,6 +58,8 @@ struct CsLpUseCase {
 };
 
 #define CS_LP_USE_CASE(obj) ((CsLpUseCase*)(obj))
+
+void RemoveDeviceDiagnosisClient(CsLpUseCase* self);
 
 EebusError CsLpGetActivePowerLimitInternal(const CsLpUseCase* self, LoadLimit* limit);
 EebusError
