@@ -8,6 +8,7 @@ HP is always started before EV so entity[0] = HP and entity[1] = EV in the
 MA MPC remote list — allowing unambiguous entity targeting.
 """
 
+import os
 import random
 import time
 
@@ -24,10 +25,10 @@ from conftest import (
 )
 from _ev_tests import wait_for_entity_addresses
 
-TOTAL           = 20
-CONNECT_TIMEOUT = 90.0
-SETTLE_SECS     = 3.0
-ENTITY_TIMEOUT  = 15.0
+TOTAL             = int(os.environ.get("STRESS_TOTAL", 20))
+CONNECT_TIMEOUT   = 90.0
+ENTITY_TIMEOUT    = 15.0
+_MPC_READY_MARKER = "MA MPC remote entity connected"
 
 
 @pytest.mark.three_node
@@ -43,11 +44,11 @@ def test_hems_hp_ev_stress():
     print(f"{'='*70}")
 
     for i in range(1, TOTAL + 1):
+        t_start = time.monotonic()
         hp   = NodeProcess(HP_BINARY,   HP_PORT,   HP_REMOTE_SKI,   HP_CERT,   HP_KEY)
         hems = NodeProcess(HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY,
                            extra_args=("--remote", EV_SKI))
 
-        t_start = time.monotonic()
         connected_pair = (
             hp.wait_for(SHIP_CONNECTED_MARKER,   CONNECT_TIMEOUT) and
             hems.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT)
@@ -55,15 +56,16 @@ def test_hems_hp_ev_stress():
 
         ev = NodeProcess(EV_BINARY, EV_PORT, HP_REMOTE_SKI, EV_CERT, EV_KEY)
         connected_ev = connected_pair and (
-            ev.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT) and
+            ev.wait_for(SHIP_CONNECTED_MARKER,             CONNECT_TIMEOUT) and
             hems.wait_for_count(SHIP_CONNECTED_MARKER, 2, CONNECT_TIMEOUT)
         )
         elapsed = time.monotonic() - t_start
 
         if not connected_ev:
             fail_reason = "connection-timeout"
+        elif not hems.wait_for_count(_MPC_READY_MARKER, 2, ENTITY_TIMEOUT):
+            fail_reason = "entity-list-timeout"
         else:
-            time.sleep(SETTLE_SECS)
             addrs = wait_for_entity_addresses(hems, 2, ENTITY_TIMEOUT)
             if len(addrs) < 2:
                 fail_reason = "entity-list-timeout"
@@ -83,7 +85,7 @@ def test_hems_hp_ev_stress():
             failed += 1
             status = f"FAIL ({fail_reason})"
 
-        print(f"  Run {i:2d}/{TOTAL}: {status:<35s} {elapsed:5.1f}s")
+        print(f"  Run {i:2d}/{TOTAL}: {status:<20s}  total={elapsed:5.1f}s")
         times.append(elapsed)
 
     _print_summary(passed, failed, times)
@@ -101,6 +103,7 @@ def _run_data_check(hp, hems, ev, hp_entity, ev_entity) -> str:
     ev.send("mu_mpc set power_total 2000")
     hems.wait_for_new("MA MPC Measurement received: power_total", pos, DEFAULT_PROPAGATION)
 
+    time.sleep(0.2)
     pos_hems = hems.line_count()
     hems.send(f"ma_mpc get power_total --remote {hp_entity}")
     hems.send(f"ma_mpc get power_total --remote {ev_entity}")
@@ -116,10 +119,8 @@ def _run_data_check(hp, hems, ev, hp_entity, ev_entity) -> str:
     hp_val = parse_field(lines[0], "value") if len(lines) >= 1 else None
     ev_val = parse_field(lines[1], "value") if len(lines) >= 2 else None
 
-    if hp_val != "1000":
-        return f"MA-HP-mpc={hp_val!r}"
-    if ev_val != "2000":
-        return f"MA-EV-mpc={ev_val!r}"
+    if hp_val != "1000" or ev_val != "2000":
+        return f"MA-mpc-values={hp_val!r}/{ev_val!r}"
 
     # LPC: HEMS sends 5000 W limit to HP only
     pos_hp = hp.line_count()
@@ -140,12 +141,12 @@ def _run_data_check(hp, hems, ev, hp_entity, ev_entity) -> str:
 
 
 def _print_summary(passed: int, failed: int, times: list) -> None:
-    min_t = min(times)
-    max_t = max(times)
-    avg_t = sum(times) / len(times)
     print(f"\n{'='*70}")
     print("  SUMMARY")
     print(f"{'='*70}")
     print(f"  Passed : {passed} / {TOTAL}")
     print(f"  Failed : {failed} / {TOTAL}")
-    print(f"  Connect time: min={min_t:.1f}s  avg={avg_t:.1f}s  max={max_t:.1f}s")
+    min_t = min(times)
+    max_t = max(times)
+    avg_t = sum(times) / len(times)
+    print(f"  Total time: min={min_t:.1f}s  avg={avg_t:.1f}s  max={max_t:.1f}s")
