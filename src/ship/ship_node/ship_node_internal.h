@@ -47,6 +47,8 @@ struct ConnectionMapping {
   bool                   is_attempt_running;
   bool                   handshake_complete; /* true once kDataExchange confirmed */
   ServiceDetails*        service_details;   /* owned */
+  struct ShipNode*       owner;             /* back-pointer to owning ShipNode */
+  EebusTimerObject*      retry_timer;       /* per-SKI deferred retry timer */
 };
 
 #define SHIP_NODE_MAX_CONNECTIONS 10
@@ -67,7 +69,6 @@ struct ShipNode {
 
   StringLut           connections;     /* SKI → ConnectionMapping* (owned) */
   size_t              max_connections; /* default SHIP_NODE_MAX_CONNECTIONS */
-  EebusTimerObject*   retry_timer;     /* single deferred retry timer */
   ShipNodeReaderObject* ship_node_reader;
   const TlsCertificateObject* tsl_certificate;
   ServiceDetails* local_service_details;

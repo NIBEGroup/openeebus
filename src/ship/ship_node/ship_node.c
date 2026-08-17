@@ -138,6 +138,11 @@ static void ConnectionsMappingDestroy(void* p) {
   }
   ConnectionMapping* m = (ConnectionMapping*)p;
   /* connection must be stopped/deleted before removing the entry */
+  if (m->retry_timer != NULL) {
+    EEBUS_TIMER_STOP(m->retry_timer);
+    EebusTimerDelete(m->retry_timer);
+    m->retry_timer = NULL;
+  }
   EEBUS_FREE(m->ski);
   EEBUS_FREE(m);
 }
@@ -162,6 +167,8 @@ static ConnectionMapping* ConnectionsGetOrCreate(ShipNode* self, const char* ski
     EEBUS_FREE(m);
     return NULL;
   }
+  m->owner       = self;
+  m->retry_timer = EebusTimerCreate(ShipNodeRetryTimerCallback, m);
 
   if (StringLutInsert(&self->connections, ski, m, ConnectionsMappingDestroy) != kEebusErrorOk) {
     EEBUS_FREE(m->ski);
@@ -220,7 +227,8 @@ static uint32_t ShipNodeRetryDelayMs(int attempt_cnt) {
 }
 
 static void ShipNodeRetryTimerCallback(void* ctx) {
-  ShipNode* const sn = (ShipNode*)ctx;
+  ConnectionMapping* const m  = (ConnectionMapping*)ctx;
+  ShipNode* const          sn = m->owner;
   if (sn->cancel) {
     return;
   }
@@ -263,7 +271,6 @@ void ShipNodeConstruct(
 
   StringLutInit(&self->connections);
   self->max_connections    = SHIP_NODE_MAX_CONNECTIONS;
-  self->retry_timer        = EebusTimerCreate(ShipNodeRetryTimerCallback, self);
   self->ship_node_reader   = ship_node_reader;
   self->tsl_certificate    = tsl_certificate;
   self->local_service_details = local_service_details;
@@ -333,9 +340,6 @@ void Destruct(InfoProviderObject* self) {
     HttpServerDelete(sn->http_server);
     sn->http_server = NULL;
   }
-
-  EebusTimerDelete(sn->retry_timer);
-  sn->retry_timer = NULL;
 
   /* Stop and delete every active connection before releasing the table */
   for (size_t i = 0; i < StringLutGetSize(&sn->connections); ++i) {
@@ -410,9 +414,10 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
    * pointers from a double-close event on a superseded connection. */
   EEBUS_MUTEX_LOCK(self->mutex);
 
-  const char* ski_copy  = NULL;
-  bool        is_current = false;
-  uint32_t    retry_delay = 0;
+  const char*       ski_copy    = NULL;
+  bool              is_current  = false;
+  uint32_t          retry_delay = 0;
+  EebusTimerObject* retry_timer = NULL;
 
   for (size_t i = 0; i < StringLutGetSize(&self->connections); ++i) {
     ConnectionMapping* m = (ConnectionMapping*)StringLutGetElementValue(&self->connections, i);
@@ -423,6 +428,7 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
       m->attempt_cnt++;
       retry_delay           = ShipNodeRetryDelayMs(m->attempt_cnt);
       ski_copy              = m->ski;
+      retry_timer           = m->retry_timer;
       is_current            = true;
       break;
     }
@@ -439,9 +445,9 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
     if (!self->cancel) {
       if (retry_delay == 0) {
         ShipNodeConnectToAllPendingSkis(self);
-      } else if (self->retry_timer != NULL) {
-        EEBUS_TIMER_STOP(self->retry_timer);
-        EEBUS_TIMER_START(self->retry_timer, retry_delay, false);
+      } else if (retry_timer != NULL) {
+        EEBUS_TIMER_STOP(retry_timer);
+        EEBUS_TIMER_START(retry_timer, retry_delay, false);
       }
     }
   }
@@ -721,9 +727,6 @@ void Stop(ShipNodeObject* self) {
 
   SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): begin\n", __func__);
   sn->cancel = true;
-  if (sn->retry_timer != NULL) {
-    EEBUS_TIMER_STOP(sn->retry_timer);
-  }
 
   if (sn->connection_thread != NULL) {
     ShipNodeQueueMessage queue_msg = {.type = kShipNodeQueueMsgTypeCancel, .ski = NULL};
@@ -741,6 +744,9 @@ void Stop(ShipNodeObject* self) {
     ConnectionMapping* m     = (ConnectionMapping*)StringLutGetElementValue(&sn->connections, i);
     ShipConnectionObject* sc = m->connection;
     m->connection            = NULL;
+    if (m->retry_timer != NULL) {
+      EEBUS_TIMER_STOP(m->retry_timer);
+    }
     EEBUS_MUTEX_UNLOCK(sn->mutex);
 
     if (sc != NULL) {
