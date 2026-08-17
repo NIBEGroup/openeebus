@@ -123,7 +123,7 @@ class NodeProcess:
     def stop(self, timeout: float = 5.0) -> None:
         try:
             self.send("exit")
-        except OSError:
+        except (OSError, ValueError):
             pass
         try:
             self.proc.stdin.close()
