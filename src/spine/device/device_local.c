@@ -592,7 +592,7 @@ void RemoveRemoteDeviceConnection(DeviceLocalObject* self, const char* ski) {
       .device      = remote_device,
   };
 
-  EventPublish(&payload);
+  EVENTS_PUBLISH(dl->events_manager, &payload);
 
   DEVICE_LOCAL_REMOVE_REMOTE_DEVICE(self, ski);
   EEBUS_MUTEX_UNLOCK(dl->mutex);
