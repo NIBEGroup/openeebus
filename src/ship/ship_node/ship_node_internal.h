@@ -19,39 +19,21 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "node_connection_container.h"
 #include "src/common/api/eebus_mutex_interface.h"
 #include "src/common/api/eebus_queue_interface.h"
 #include "src/common/api/eebus_thread_interface.h"
 #include "src/common/service_details.h"
-#include "src/common/api/eebus_timer_interface.h"
-#include "src/common/string_lut.h"
 #include "src/ship/api/http_server_interface.h"
-#include "src/ship/api/ship_connection_interface.h"
 #include "src/ship/api/ship_mdns_interface.h"
 #include "src/ship/api/ship_node_interface.h"
 #include "src/ship/api/ship_node_reader_interface.h"
 #include "src/ship/api/tls_certificate_interface.h"
-#include "src/ship/api/websocket_creator_interface.h"
 #include "src/ship/ship_connection/types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
-
-typedef struct ConnectionMapping ConnectionMapping;
-
-struct ConnectionMapping {
-  char*                  ski;               /* owned copy */
-  ShipConnectionObject*  connection;        /* NULL = not connected */
-  int                    attempt_cnt;
-  bool                   is_attempt_running;
-  bool                   handshake_complete; /* true once kDataExchange confirmed */
-  ServiceDetails*        service_details;   /* owned */
-  struct ShipNode*       owner;             /* back-pointer to owning ShipNode */
-  EebusTimerObject*      retry_timer;       /* per-SKI deferred retry timer */
-};
-
-#define SHIP_NODE_MAX_CONNECTIONS 10
 
 typedef struct ShipNode ShipNode;
 
@@ -67,12 +49,10 @@ struct ShipNode {
   bool cancel;
   EebusThreadObject* connection_thread;
 
-  StringLut           connections;     /* SKI → ConnectionMapping* (owned) */
-  size_t              max_connections; /* default SHIP_NODE_MAX_CONNECTIONS */
+  NodeConnectionContainerObject* connections;
   ShipNodeReaderObject* ship_node_reader;
   const TlsCertificateObject* tsl_certificate;
   ServiceDetails* local_service_details;
-  WebsocketCreatorObject* websocket_creator;
   HttpServerObject* http_server;
   ShipRole role;
 };

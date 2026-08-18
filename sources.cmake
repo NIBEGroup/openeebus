@@ -32,6 +32,8 @@ set(SOURCES
   src/ship/ship_connection/ship_message_serialize.c
   src/ship/ship_connection/client.c
   src/ship/ship_connection/server.c
+  src/ship/ship_node/node_connection.c
+  src/ship/ship_node/node_connection_container.c
   src/ship/ship_node/ship_node.c
   src/ship/websocket/websocket.c
   src/ship/websocket/websocket_client_creator.c
@@ -204,10 +206,14 @@ set(HEADERS
   src/ship/api/tls_certificate_interface.h
   src/ship/api/websocket_creator_interface.h
   src/ship/api/http_server_interface.h
+  src/ship/api/node_connection_container_interface.h
+  src/ship/api/node_connection_interface.h
   src/ship/api/websocket_interface.h
   src/ship/mdns/ship_mdns.h
   src/ship/model/model.h
   src/ship/model/types.h
+  src/ship/ship_node/node_connection.h
+  src/ship/ship_node/node_connection_container.h
   src/ship/ship_node/ship_node.h
   src/ship/ship_node/ship_node_internal.h
   src/ship/ship_connection/ship_connection.h
