@@ -109,9 +109,15 @@ def lp_s3_eg_writes_failsafe_duration(hp, hems, uc):
 
 def lp_s4_nominal_max(hp, hems, uc, value):
     uc_up = uc.upper()
+    pos_hems = hems.line_count()
     hp.send(f"cs_{uc} set nominal_max {value}")
+    hems.wait_for_new(f"EG {uc_up} Power Nominal Max received", pos_hems, _PROPAGATION)
+
+    pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send(f"cs_{uc} get nominal_max")
     hems.send(f"eg_{uc} get power_nominal_max")
+    hp.wait_for_new(f"CS {uc_up} Nominal Max: value", pos_hp, _SETTLE)
+    hems.wait_for_new(f"EG {uc_up} Power Nominal Max: value", pos_hems, _SETTLE)
 
     cs = parse_field(hp.last_line_with(f"CS {uc_up} Nominal Max"), "value")
     eg = parse_field(hems.last_line_with(f"EG {uc_up} Power Nominal Max"), "value")

@@ -65,7 +65,6 @@ def test_lpc_s3_eg_writes_failsafe_duration(nodes_lpc):
 # Scenario 4 — CS (heat_pump) announces consumption nominal max
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(reason="cs_lpc nominal_max CLI command not yet implemented (N/A in bash script)")
 def test_lpc_s4_nominal_max(nodes_lpc):
     lp_s4_nominal_max(*nodes_lpc, _UC, _NOM)
 

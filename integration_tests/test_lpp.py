@@ -65,7 +65,6 @@ def test_lpp_s3_eg_writes_failsafe_duration(nodes_lpp):
 # Scenario 4 — CS (heat_pump) announces production nominal max
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(reason="cs_lpp nominal_max CLI command not yet implemented (N/A in bash script)")
 def test_lpp_s4_nominal_max(nodes_lpp):
     lp_s4_nominal_max(*nodes_lpp, _UC, _NOM)
 
