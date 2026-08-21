@@ -785,8 +785,6 @@ void ShipNodeCancelPairingSki(ShipNodeObject* self, const char* ski) {
     const char* const conn_ski = SHIP_CONNECTION_GET_REMOTE_SKI(sn->ship_connection);
     if (SkiMatches(ski, conn_ski)) {
       sc = sn->ship_connection;
-
-      sn->ship_connection = NULL;
     }
   }
 
@@ -794,7 +792,6 @@ void ShipNodeCancelPairingSki(ShipNodeObject* self, const char* ski) {
 
   if (sc != NULL) {
     SHIP_CONNECTION_CLOSE_CONNECTION(sc, true, 0, "pairing cancelled");
-    ShipConnectionDelete(sc);
   }
 }
 
