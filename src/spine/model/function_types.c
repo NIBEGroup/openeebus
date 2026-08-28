@@ -27,24 +27,24 @@
 
 const FunctionPropertyType*
 FunctionPropertyCreate(FunctionType function_type, const PossibleOperationsType* operations) {
-  const FunctionPropertyType function_property_tmp = {
-      .function            = &function_type,
-      .possible_operations = operations,
-  };
+    const FunctionPropertyType function_property_tmp = {
+        .function            = &function_type,
+        .possible_operations = operations,
+    };
 
-  const FunctionPropertyType* p_function_property_tmp = &function_property_tmp;
-  const FunctionPropertyType* p_function_property     = NULL;
-  EebusDataCfg cfg = EEBUS_DATA_SEQUENCE_TMP(FunctionPropertyType, ModelGetFunctionPropertyCfg());
-  EEBUS_DATA_COPY(&cfg, &p_function_property_tmp, &p_function_property);
-  return p_function_property;
+    const FunctionPropertyType* p_function_property_tmp = &function_property_tmp;
+    const FunctionPropertyType* p_function_property     = NULL;
+    EebusDataCfg cfg = EEBUS_DATA_SEQUENCE_TMP(FunctionPropertyType, ModelGetFunctionPropertyCfg());
+    EEBUS_DATA_COPY(&cfg, &p_function_property_tmp, &p_function_property);
+    return p_function_property;
 }
 
 void FunctionPropertyDelete(FunctionPropertyType* self) {
-  EebusDataCfg cfg = EEBUS_DATA_SEQUENCE_TMP(FunctionPropertyType, ModelGetFunctionPropertyCfg());
-  EEBUS_DATA_DELETE(&cfg, &self);
+    EebusDataCfg cfg = EEBUS_DATA_SEQUENCE_TMP(FunctionPropertyType, ModelGetFunctionPropertyCfg());
+    EEBUS_DATA_DELETE(&cfg, &self);
 }
 
 void FunctionPropertyElementsDelete(FunctionPropertyElementsType* self) {
-  EebusDataCfg cfg = EEBUS_DATA_SEQUENCE_TMP(FunctionPropertyElementsType, ModelGetFunctionPropertyElementsCfg());
-  EEBUS_DATA_DELETE(&cfg, &self);
+    EebusDataCfg cfg = EEBUS_DATA_SEQUENCE_TMP(FunctionPropertyElementsType, ModelGetFunctionPropertyElementsCfg());
+    EEBUS_DATA_DELETE(&cfg, &self);
 }

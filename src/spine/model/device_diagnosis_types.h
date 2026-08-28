@@ -37,84 +37,84 @@ typedef const char* LastErrorCodeType;
 typedef int32_t DeviceDiagnosisOperatingStateType;
 
 enum {
-  kDeviceDiagnosisOperatingStateTypeNormalOperation,     /**< "normalOperation" */
-  kDeviceDiagnosisOperatingStateTypeStandby,             /**< "standby" */
-  kDeviceDiagnosisOperatingStateTypeFailure,             /**< "failure" */
-  kDeviceDiagnosisOperatingStateTypeServiceNeeded,       /**< "serviceNeeded" */
-  kDeviceDiagnosisOperatingStateTypeOverrideDetected,    /**< "overrideDetected" */
-  kDeviceDiagnosisOperatingStateTypeInAlarm,             /**< "inAlarm" */
-  kDeviceDiagnosisOperatingStateTypeNotReachable,        /**< "notReachable" */
-  kDeviceDiagnosisOperatingStateTypeFinished,            /**< "finished" */
-  kDeviceDiagnosisOperatingStateTypeTemporarilyNotReady, /**< "temporarilyNotReady" */
-  kDeviceDiagnosisOperatingStateTypeOff,                 /**< "off" */
+    kDeviceDiagnosisOperatingStateTypeNormalOperation,     /**< "normalOperation" */
+    kDeviceDiagnosisOperatingStateTypeStandby,             /**< "standby" */
+    kDeviceDiagnosisOperatingStateTypeFailure,             /**< "failure" */
+    kDeviceDiagnosisOperatingStateTypeServiceNeeded,       /**< "serviceNeeded" */
+    kDeviceDiagnosisOperatingStateTypeOverrideDetected,    /**< "overrideDetected" */
+    kDeviceDiagnosisOperatingStateTypeInAlarm,             /**< "inAlarm" */
+    kDeviceDiagnosisOperatingStateTypeNotReachable,        /**< "notReachable" */
+    kDeviceDiagnosisOperatingStateTypeFinished,            /**< "finished" */
+    kDeviceDiagnosisOperatingStateTypeTemporarilyNotReady, /**< "temporarilyNotReady" */
+    kDeviceDiagnosisOperatingStateTypeOff,                 /**< "off" */
 };
 
 typedef int32_t PowerSupplyConditionType;
 
 enum {
-  kPowerSupplyConditionTypeGood,     /**< "good" */
-  kPowerSupplyConditionTypeLow,      /**< "low" */
-  kPowerSupplyConditionTypeCritical, /**< "critical" */
-  kPowerSupplyConditionTypeUnknown,  /**< "unknown" */
-  kPowerSupplyConditionTypeError,    /**< "error" */
+    kPowerSupplyConditionTypeGood,     /**< "good" */
+    kPowerSupplyConditionTypeLow,      /**< "low" */
+    kPowerSupplyConditionTypeCritical, /**< "critical" */
+    kPowerSupplyConditionTypeUnknown,  /**< "unknown" */
+    kPowerSupplyConditionTypeError,    /**< "error" */
 };
 
 typedef struct DeviceDiagnosisStateDataType DeviceDiagnosisStateDataType;
 
 struct DeviceDiagnosisStateDataType {
-  const AbsoluteOrRelativeTimeTypeType* timestamp;          /**< "timestamp" */
-  const DeviceDiagnosisOperatingStateType* operating_state; /**< "operatingState" */
-  VendorStateCodeType vendor_state_code;                    /**< "vendorStateCode" */
-  LastErrorCodeType last_error_code;                        /**< "lastErrorCode" */
-  const DurationType* up_time;                              /**< "upTime" */
-  const DurationType* total_up_time;                        /**< "totalUpTime" */
-  const PowerSupplyConditionType* power_supply_condition;   /**< "powerSupplyCondition" */
+    const AbsoluteOrRelativeTimeTypeType* timestamp;          /**< "timestamp" */
+    const DeviceDiagnosisOperatingStateType* operating_state; /**< "operatingState" */
+    VendorStateCodeType vendor_state_code;                    /**< "vendorStateCode" */
+    LastErrorCodeType last_error_code;                        /**< "lastErrorCode" */
+    const DurationType* up_time;                              /**< "upTime" */
+    const DurationType* total_up_time;                        /**< "totalUpTime" */
+    const PowerSupplyConditionType* power_supply_condition;   /**< "powerSupplyCondition" */
 };
 
 typedef struct DeviceDiagnosisStateDataElementsType DeviceDiagnosisStateDataElementsType;
 
 struct DeviceDiagnosisStateDataElementsType {
-  ElementTagType timestamp;              /**< "timestamp" */
-  ElementTagType operating_state;        /**< "operatingState" */
-  ElementTagType vendor_state_code;      /**< "vendorStateCode" */
-  ElementTagType last_error_code;        /**< "lastErrorCode" */
-  ElementTagType up_time;                /**< "upTime" */
-  ElementTagType total_up_time;          /**< "totalUpTime" */
-  ElementTagType power_supply_condition; /**< "powerSupplyCondition" */
+    ElementTagType timestamp;              /**< "timestamp" */
+    ElementTagType operating_state;        /**< "operatingState" */
+    ElementTagType vendor_state_code;      /**< "vendorStateCode" */
+    ElementTagType last_error_code;        /**< "lastErrorCode" */
+    ElementTagType up_time;                /**< "upTime" */
+    ElementTagType total_up_time;          /**< "totalUpTime" */
+    ElementTagType power_supply_condition; /**< "powerSupplyCondition" */
 };
 
 typedef struct DeviceDiagnosisHeartbeatDataType DeviceDiagnosisHeartbeatDataType;
 
 struct DeviceDiagnosisHeartbeatDataType {
-  const AbsoluteOrRelativeTimeType* timestamp; /**< "timestamp" */
-  const uint64_t* heartbeat_counter;           /**< "heartbeatCounter" */
-  const DurationType* heartbeat_timeout;       /**< "heartbeatTimeout" */
+    const AbsoluteOrRelativeTimeType* timestamp; /**< "timestamp" */
+    const uint64_t* heartbeat_counter;           /**< "heartbeatCounter" */
+    const DurationType* heartbeat_timeout;       /**< "heartbeatTimeout" */
 };
 
 typedef struct DeviceDiagnosisHeartbeatDataElementsType DeviceDiagnosisHeartbeatDataElementsType;
 
 struct DeviceDiagnosisHeartbeatDataElementsType {
-  ElementTagType timestamp;         /**< "timestamp" */
-  ElementTagType heartbeat_counter; /**< "heartbeatCounter" */
-  ElementTagType heartbeat_timeout; /**< "heartbeatTimeout" */
+    ElementTagType timestamp;         /**< "timestamp" */
+    ElementTagType heartbeat_counter; /**< "heartbeatCounter" */
+    ElementTagType heartbeat_timeout; /**< "heartbeatTimeout" */
 };
 
 typedef struct DeviceDiagnosisServiceDataType DeviceDiagnosisServiceDataType;
 
 struct DeviceDiagnosisServiceDataType {
-  const AbsoluteOrRelativeTimeType* timestamp;         /**< "timestamp" */
-  const AbsoluteOrRelativeTimeType* installation_time; /**< "installationTime" */
-  const uint64_t* boot_counter;                        /**< "bootCounter" */
-  const char* next_service;                            /**< "nextService" */
+    const AbsoluteOrRelativeTimeType* timestamp;         /**< "timestamp" */
+    const AbsoluteOrRelativeTimeType* installation_time; /**< "installationTime" */
+    const uint64_t* boot_counter;                        /**< "bootCounter" */
+    const char* next_service;                            /**< "nextService" */
 };
 
 typedef struct DeviceDiagnosisServiceDataElementsType DeviceDiagnosisServiceDataElementsType;
 
 struct DeviceDiagnosisServiceDataElementsType {
-  ElementTagType timestamp;         /**< "timestamp" */
-  ElementTagType installation_time; /**< "installationTime" */
-  ElementTagType boot_counter;      /**< "bootCounter" */
-  ElementTagType next_service;      /**< "nextService" */
+    ElementTagType timestamp;         /**< "timestamp" */
+    ElementTagType installation_time; /**< "installationTime" */
+    ElementTagType boot_counter;      /**< "bootCounter" */
+    ElementTagType next_service;      /**< "nextService" */
 };
 
 #ifdef __cplusplus

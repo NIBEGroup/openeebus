@@ -73,5 +73,5 @@ CsLpUseCaseObject* CsLpcUseCaseCreate(
     ElectricalConnectionIdType ec_id,
     CsLpListenerObject* cs_lpc_listener
 ) {
-  return CsLpUseCaseCreate(kEnergyDirectionTypeConsume, &cs_lpc_use_case_info, local_entity, ec_id, cs_lpc_listener);
+    return CsLpUseCaseCreate(kEnergyDirectionTypeConsume, &cs_lpc_use_case_info, local_entity, ec_id, cs_lpc_listener);
 }

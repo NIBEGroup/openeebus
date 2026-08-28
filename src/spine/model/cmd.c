@@ -25,69 +25,69 @@
 #include "src/spine/model/model.h"
 
 CmdType* CmdCreateEmpty(void) {
-  const EebusDataCfg* const cfg = ModelGetCmdCfg();
-  return ModelDataCreateEmpty(cfg);
+    const EebusDataCfg* const cfg = ModelGetCmdCfg();
+    return ModelDataCreateEmpty(cfg);
 }
 
 void CmdDelete(CmdType* cmd) {
-  if (cmd == NULL) {
-    return;
-  }
-  const EebusDataCfg* const cfg = ModelGetCmdCfg();
-  EEBUS_DATA_DELETE(cfg, &cmd);
+    if (cmd == NULL) {
+        return;
+    }
+    const EebusDataCfg* const cfg = ModelGetCmdCfg();
+    EEBUS_DATA_DELETE(cfg, &cmd);
 }
 
 CmdType* CmdCopy(const CmdType* cmd) {
-  const EebusDataCfg* const cfg = ModelGetCmdCfg();
+    const EebusDataCfg* const cfg = ModelGetCmdCfg();
 
-  CmdType* cmd_copy = NULL;
+    CmdType* cmd_copy = NULL;
 
-  const EebusError err = EEBUS_DATA_COPY(cfg, &cmd, &cmd_copy);
+    const EebusError err = EEBUS_DATA_COPY(cfg, &cmd, &cmd_copy);
 
-  if (err != kEebusErrorOk) {
-    CmdDelete(cmd_copy);
-    return NULL;
-  }
+    if (err != kEebusErrorOk) {
+        CmdDelete(cmd_copy);
+        return NULL;
+    }
 
-  return cmd_copy;
+    return cmd_copy;
 }
 
 const FilterType* CmdGetFilterWithType(const CmdType* cmd, FilterTypeType filter_type) {
-  if ((cmd == NULL) || (cmd->filter == NULL) || (cmd->filter_size == 0)) {
-    return NULL;
-  }
-
-  for (size_t i = 0; i < cmd->filter_size; ++i) {
-    if (FilterGetType(cmd->filter[i]) == filter_type) {
-      return cmd->filter[i];
+    if ((cmd == NULL) || (cmd->filter == NULL) || (cmd->filter_size == 0)) {
+        return NULL;
     }
-  }
 
-  return NULL;
+    for (size_t i = 0; i < cmd->filter_size; ++i) {
+        if (FilterGetType(cmd->filter[i]) == filter_type) {
+            return cmd->filter[i];
+        }
+    }
+
+    return NULL;
 }
 
 const FilterType* CmdGetFilterPartial(const CmdType* cmd) {
-  return CmdGetFilterWithType(cmd, kFilterTypePartial);
+    return CmdGetFilterWithType(cmd, kFilterTypePartial);
 }
 
 const FilterType* CmdGetFilterDelete(const CmdType* cmd) {
-  return CmdGetFilterWithType(cmd, kFilterTypeDelete);
+    return CmdGetFilterWithType(cmd, kFilterTypeDelete);
 }
 
 EebusError CmdAddFilterPartialEmpty(CmdType* cmd) {
-  cmd->filter_size                = 0;
-  const FilterType** const filter = (const FilterType**)EEBUS_MALLOC(sizeof(cmd->filter[0]));
+    cmd->filter_size                = 0;
+    const FilterType** const filter = (const FilterType**)EEBUS_MALLOC(sizeof(cmd->filter[0]));
 
-  cmd->filter = filter;
-  if (cmd->filter == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    cmd->filter = filter;
+    if (cmd->filter == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  filter[0] = FilterPartialCreate(0, NULL, NULL, NULL);
-  if (filter[0] == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    filter[0] = FilterPartialCreate(0, NULL, NULL, NULL);
+    if (filter[0] == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  cmd->filter_size++;
-  return kEebusErrorOk;
+    cmd->filter_size++;
+    return kEebusErrorOk;
 }

@@ -4,3 +4,4 @@ tests/build/
 .idea
 venv/
 *.egg-info/
+build-macos/

@@ -37,44 +37,44 @@ typedef const char* MessagingDataTextType;
 typedef int32_t MessagingTypeType;
 
 enum {
-  kMessagingTypeTypeLogging,     /**< "logging" */
-  kMessagingTypeTypeInformation, /**< "information" */
-  kMessagingTypeTypeWarning,     /**< "warning" */
-  kMessagingTypeTypeAlarm,       /**< "alarm" */
-  kMessagingTypeTypeEmergency,   /**< "emergency" */
-  kMessagingTypeTypeObsolete,    /**< "obsolete" */
+    kMessagingTypeTypeLogging,     /**< "logging" */
+    kMessagingTypeTypeInformation, /**< "information" */
+    kMessagingTypeTypeWarning,     /**< "warning" */
+    kMessagingTypeTypeAlarm,       /**< "alarm" */
+    kMessagingTypeTypeEmergency,   /**< "emergency" */
+    kMessagingTypeTypeObsolete,    /**< "obsolete" */
 };
 
 typedef struct MessagingDataType MessagingDataType;
 
 struct MessagingDataType {
-  const AbsoluteOrRelativeTimeType* timestamp; /**< "timestamp" */
-  const MessagingNumberType* messaging_number; /**< "messagingNumber" */
-  const MessagingTypeType* messaging_type;     /**< "type" */
-  MessagingDataTextType text;                  /**< "text" */
+    const AbsoluteOrRelativeTimeType* timestamp; /**< "timestamp" */
+    const MessagingNumberType* messaging_number; /**< "messagingNumber" */
+    const MessagingTypeType* messaging_type;     /**< "type" */
+    MessagingDataTextType text;                  /**< "text" */
 };
 
 typedef struct MessagingDataElementsType MessagingDataElementsType;
 
 struct MessagingDataElementsType {
-  ElementTagType timestamp;        /**< "timestamp" */
-  ElementTagType messaging_number; /**< "messagingNumber" */
-  ElementTagType messaging_type;   /**< "type" */
-  ElementTagType text;             /**< "text" */
+    ElementTagType timestamp;        /**< "timestamp" */
+    ElementTagType messaging_number; /**< "messagingNumber" */
+    ElementTagType messaging_type;   /**< "type" */
+    ElementTagType text;             /**< "text" */
 };
 
 typedef struct MessagingListDataType MessagingListDataType;
 
 struct MessagingListDataType {
-  const MessagingDataType* const* messaging_data; /**< "messagingData" */
-  size_t messaging_data_size;
+    const MessagingDataType* const* messaging_data; /**< "messagingData" */
+    size_t messaging_data_size;
 };
 
 typedef struct MessagingListDataSelectorsType MessagingListDataSelectorsType;
 
 struct MessagingListDataSelectorsType {
-  const TimestampIntervalType* timestamp_interval; /**< "timestampInterval" */
-  const MessagingNumberType* messaging_number;     /**< "messagingNumber" */
+    const TimestampIntervalType* timestamp_interval; /**< "timestampInterval" */
+    const MessagingNumberType* messaging_number;     /**< "messagingNumber" */
 };
 
 #ifdef __cplusplus

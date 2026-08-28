@@ -22,9 +22,9 @@
 #define SRC_SPINE_API_BINDING_MANAGER_INTERFACE_H_
 
 #include "src/common/eebus_errors.h"
+#include "src/spine/api/device_remote_interface.h"
 #include "src/spine/api/feature_local_interface.h"
 #include "src/spine/api/feature_remote_interface.h"
-#include "src/spine/api/device_remote_interface.h"
 #include "src/spine/model/binding_management_types.h"
 
 #ifdef __cplusplus
@@ -48,24 +48,35 @@ typedef struct BindingManagerObject BindingManagerObject;
  * @brief BindingManager Interface Structure
  */
 struct BindingManagerInterface {
-  void (*destruct)(BindingManagerObject* self);
-  EebusError (*add_binding)(
-      BindingManagerObject* self, DeviceRemoteObject* remote_device, const BindingManagementRequestCallType* data);
-  EebusError (*remove_binding)(
-      BindingManagerObject* self, const BindingManagementDeleteCallType* data, DeviceRemoteObject* remote_device);
-  void (*remove_device_bindings)(BindingManagerObject* self, DeviceRemoteObject* remote_device);
-  void (*remove_entity_bindings)(BindingManagerObject* self, EntityRemoteObject* remote_entity);
-  bool (*has_binding)(
-      const BindingManagerObject* self, const FeatureAddressType* local_addr, const FeatureAddressType* remote_addr);
-  NodeManagementBindingDataType* (*create_binding_data)(
-      const BindingManagerObject* self, const DeviceRemoteObject* remote_device);
+    void (*destruct)(BindingManagerObject* self);
+    EebusError (*add_binding)(
+        BindingManagerObject* self,
+        DeviceRemoteObject* remote_device,
+        const BindingManagementRequestCallType* data
+    );
+    EebusError (*remove_binding)(
+        BindingManagerObject* self,
+        const BindingManagementDeleteCallType* data,
+        DeviceRemoteObject* remote_device
+    );
+    void (*remove_device_bindings)(BindingManagerObject* self, DeviceRemoteObject* remote_device);
+    void (*remove_entity_bindings)(BindingManagerObject* self, EntityRemoteObject* remote_entity);
+    bool (*has_binding)(
+        const BindingManagerObject* self,
+        const FeatureAddressType* local_addr,
+        const FeatureAddressType* remote_addr
+    );
+    NodeManagementBindingDataType* (*create_binding_data)(
+        const BindingManagerObject* self,
+        const DeviceRemoteObject* remote_device
+    );
 };
 
 /**
  * @brief Binding Manager Object Structure
  */
 struct BindingManagerObject {
-  const BindingManagerInterface* interface_;
+    const BindingManagerInterface* interface_;
 };
 
 /**
@@ -87,37 +98,37 @@ struct BindingManagerObject {
  * @brief Binding Manager Add Binding caller definition
  */
 #define BINDING_MANAGER_ADD_BINDING(obj, remote_device, data) \
-  (BINDING_MANAGER_INTERFACE(obj)->add_binding(obj, remote_device, data))
+    (BINDING_MANAGER_INTERFACE(obj)->add_binding(obj, remote_device, data))
 
 /**
  * @brief Binding Manager Remove Binding caller definition
  */
 #define BINDING_MANAGER_REMOVE_BINDING(obj, data, remote_device) \
-  (BINDING_MANAGER_INTERFACE(obj)->remove_binding(obj, data, remote_device))
+    (BINDING_MANAGER_INTERFACE(obj)->remove_binding(obj, data, remote_device))
 
 /**
  * @brief Binding Manager Remove Device Bindings caller definition
  */
 #define BINDING_MANAGER_REMOVE_DEVICE_BINDINGS(obj, remote_device) \
-  (BINDING_MANAGER_INTERFACE(obj)->remove_device_bindings(obj, remote_device))
+    (BINDING_MANAGER_INTERFACE(obj)->remove_device_bindings(obj, remote_device))
 
 /**
  * @brief Binding Manager Remove Entity Bindings caller definition
  */
 #define BINDING_MANAGER_REMOVE_ENTITY_BINDINGS(obj, remote_entity) \
-  (BINDING_MANAGER_INTERFACE(obj)->remove_entity_bindings(obj, remote_entity))
+    (BINDING_MANAGER_INTERFACE(obj)->remove_entity_bindings(obj, remote_entity))
 
 /**
  * @brief Binding Manager Has Binding caller definition
  */
 #define BINDING_MANAGER_HAS_BINDING(obj, local_addr, remote_addr) \
-  (BINDING_MANAGER_INTERFACE(obj)->has_binding(obj, local_addr, remote_addr))
+    (BINDING_MANAGER_INTERFACE(obj)->has_binding(obj, local_addr, remote_addr))
 
 /**
  * @brief Binding Manager Create Binding Data caller definition
  */
 #define BINDING_MANAGER_CREATE_BINDING_DATA(obj, remote_device) \
-  (BINDING_MANAGER_INTERFACE(obj)->create_binding_data(obj, remote_device))
+    (BINDING_MANAGER_INTERFACE(obj)->create_binding_data(obj, remote_device))
 
 #ifdef __cplusplus
 }

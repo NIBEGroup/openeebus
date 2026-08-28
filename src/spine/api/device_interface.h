@@ -46,18 +46,18 @@ typedef struct DeviceObject DeviceObject;
  * @brief Device Interface Structure
  */
 struct DeviceInterface {
-  void (*destruct)(DeviceObject* self);
-  const char* (*get_address)(const DeviceObject* self);
-  const DeviceTypeType* (*get_device_type)(const DeviceObject* self);
-  const NetworkManagementFeatureSetType* (*get_feature_set)(const DeviceObject* self);
-  const NodeManagementDestinationDataType* (*create_destination_data)(const DeviceObject* self);
+    void (*destruct)(DeviceObject* self);
+    const char* (*get_address)(const DeviceObject* self);
+    const DeviceTypeType* (*get_device_type)(const DeviceObject* self);
+    const NetworkManagementFeatureSetType* (*get_feature_set)(const DeviceObject* self);
+    const NodeManagementDestinationDataType* (*create_destination_data)(const DeviceObject* self);
 };
 
 /**
  * @brief Device Object Structure
  */
 struct DeviceObject {
-  const DeviceInterface* interface_;
+    const DeviceInterface* interface_;
 };
 
 /**

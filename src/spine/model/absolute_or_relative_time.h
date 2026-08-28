@@ -28,24 +28,24 @@
 extern "C" {
 #endif  // __cplusplus
 
-#define ABSOLUTE_OR_RELATIVE_TIME_NOW                                            \
-  (AbsoluteOrRelativeTimeType) {                                                 \
-    .type = kAbsoluteOrRelativeTimeTypeDateTime, .date_time = EebusDateTimeNow() \
-  }
+#define ABSOLUTE_OR_RELATIVE_TIME_NOW                                                \
+    (AbsoluteOrRelativeTimeType) {                                                   \
+        .type = kAbsoluteOrRelativeTimeTypeDateTime, .date_time = EebusDateTimeNow() \
+    }
 
 /**
  * @brief Creates an AbsoluteOrRelativeTimeType pointer from an EebusDateTime pointer.
  * @note Cannot be returned from a function, as it is a pointer to a temporary object.
  */
-#define ABSOLUTE_OR_RELATIVE_TIME_PTR(time)                         \
-  ((time) == NULL) ? NULL : &(AbsoluteOrRelativeTimeType) {         \
-    .type = kAbsoluteOrRelativeTimeTypeDateTime, .date_time = *time \
-  }
+#define ABSOLUTE_OR_RELATIVE_TIME_PTR(time)                             \
+    ((time) == NULL) ? NULL : &(AbsoluteOrRelativeTimeType) {           \
+        .type = kAbsoluteOrRelativeTimeTypeDateTime, .date_time = *time \
+    }
 
-#define ABSOLUTE_OR_RELATIVE_TIME_WITH_DURATION(dur)             \
-  (AbsoluteOrRelativeTimeType) {                                 \
-    .type = kAbsoluteOrRelativeTimeTypeDuration, .duration = dur \
-  }
+#define ABSOLUTE_OR_RELATIVE_TIME_WITH_DURATION(dur)                 \
+    (AbsoluteOrRelativeTimeType) {                                   \
+        .type = kAbsoluteOrRelativeTimeTypeDuration, .duration = dur \
+    }
 
 /**
  * @brief Retrieves the absolute or relative time from the given AbsoluteOrRelativeTimeType object.

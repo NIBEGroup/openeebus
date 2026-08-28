@@ -38,10 +38,10 @@ PendingReplyObject* PendingReplyCreate(
 );
 
 static inline void PendingReplyDelete(PendingReplyObject* self) {
-  if (self != NULL) {
-    PENDING_REPLY_DESTRUCT(self);
-    EEBUS_FREE(self);
-  }
+    if (self != NULL) {
+        PENDING_REPLY_DESTRUCT(self);
+        EEBUS_FREE(self);
+    }
 }
 
 #ifdef __cplusplus

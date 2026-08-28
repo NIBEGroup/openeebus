@@ -23,21 +23,21 @@
 #include "src/common/eebus_malloc.h"
 
 static void MeasurementDeallocator(void* p) {
-  EebusMeasurementObject* const m = (EebusMeasurementObject*)p;
-  if (m != NULL) {
-    EEBUS_MEASUREMENT_DESTRUCT(m);
-    EEBUS_FREE(m);
-  }
+    EebusMeasurementObject* const m = (EebusMeasurementObject*)p;
+    if (m != NULL) {
+        EEBUS_MEASUREMENT_DESTRUCT(m);
+        EEBUS_FREE(m);
+    }
 }
 
 static void Destruct(EebusMonitorObject* self) {
-  EebusMonitorBase* const base = EEBUS_MONITOR_BASE(self);
-  VectorFreeElements(&base->measurements);
-  VectorDestruct(&base->measurements);
+    EebusMonitorBase* const base = EEBUS_MONITOR_BASE(self);
+    VectorFreeElements(&base->measurements);
+    VectorDestruct(&base->measurements);
 }
 
 static EebusMeasurementMonitorNameId GetName(const EebusMonitorObject* self) {
-  return EEBUS_MONITOR_BASE(self)->name;
+    return EEBUS_MONITOR_BASE(self)->name;
 }
 
 static EebusError Configure(
@@ -47,70 +47,71 @@ static EebusError Configure(
     ElectricalConnectionIdType ec_id,
     MeasurementConstraintsListDataType* constraints
 ) {
-  if ((msrv == NULL) || (ecsrv == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
-
-  EebusMonitorBase* const base = EEBUS_MONITOR_BASE(self);
-
-  for (size_t i = 0; i < VectorGetSize(&base->measurements); ++i) {
-    EebusMeasurementObject* const m = (EebusMeasurementObject*)VectorGetElement(&base->measurements, i);
-
-    EebusError err = EEBUS_MEASUREMENT_CONFIGURE(m, msrv, ecsrv, ec_id);
-    if (err != kEebusErrorOk) {
-      return err;
+    if ((msrv == NULL) || (ecsrv == NULL)) {
+        return kEebusErrorInputArgumentNull;
     }
 
-    const MeasurementConstraintsDataType* const c = EEBUS_MEASUREMENT_GET_CONSTRAINTS(m);
-    if (c != NULL) {
-      err = MeasurementConstraintsAdd(constraints, c);
-      if (err != kEebusErrorOk) {
-        return err;
-      }
-    }
-  }
+    EebusMonitorBase* const base = EEBUS_MONITOR_BASE(self);
 
-  return kEebusErrorOk;
+    for (size_t i = 0; i < VectorGetSize(&base->measurements); ++i) {
+        EebusMeasurementObject* const m = (EebusMeasurementObject*)VectorGetElement(&base->measurements, i);
+
+        EebusError err = EEBUS_MEASUREMENT_CONFIGURE(m, msrv, ecsrv, ec_id);
+        if (err != kEebusErrorOk) {
+            return err;
+        }
+
+        const MeasurementConstraintsDataType* const c = EEBUS_MEASUREMENT_GET_CONSTRAINTS(m);
+        if (c != NULL) {
+            err = MeasurementConstraintsAdd(constraints, c);
+            if (err != kEebusErrorOk) {
+                return err;
+            }
+        }
+    }
+
+    return kEebusErrorOk;
 }
 
 static EebusMeasurementObject* GetMeasurement(const EebusMonitorObject* self, EebusMeasurementNameId name_id) {
-  const EebusMonitorBase* const base = (const EebusMonitorBase*)self;
+    const EebusMonitorBase* const base = (const EebusMonitorBase*)self;
 
-  if (((uint8_t)name_id & (uint8_t)base->name_id_mask) != (uint8_t)base->name) {
-    return NULL;
-  }
-
-  for (size_t i = 0; i < VectorGetSize(&base->measurements); ++i) {
-    EebusMeasurementObject* const m = (EebusMeasurementObject*)VectorGetElement(&base->measurements, i);
-    if (EEBUS_MEASUREMENT_GET_NAME(m) == name_id) {
-      return m;
+    if (((uint8_t)name_id & (uint8_t)base->name_id_mask) != (uint8_t)base->name) {
+        return NULL;
     }
-  }
 
-  return NULL;
+    for (size_t i = 0; i < VectorGetSize(&base->measurements); ++i) {
+        EebusMeasurementObject* const m = (EebusMeasurementObject*)VectorGetElement(&base->measurements, i);
+        if (EEBUS_MEASUREMENT_GET_NAME(m) == name_id) {
+            return m;
+        }
+    }
+
+    return NULL;
 }
 
 static EebusError FlushMeasurementCache(EebusMonitorObject* self, MeasurementListDataType* list) {
-  if (list == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
-
-  EebusMonitorBase* const base = EEBUS_MONITOR_BASE(self);
-
-  for (size_t i = 0; i < VectorGetSize(&base->measurements); ++i) {
-    EebusMeasurementObject* const m = (EebusMeasurementObject*)VectorGetElement(&base->measurements, i);
-
-    MeasurementDataType* const data = EEBUS_MEASUREMENT_RELEASE_DATA_CACHE(m);
-    if (data != NULL) {
-      EebusError err = EebusDataListDataAppend((void***)&list->measurement_data, &list->measurement_data_size, data);
-      if (err != kEebusErrorOk) {
-        MeasurementDataDelete(data);
-        return err;
-      }
+    if (list == NULL) {
+        return kEebusErrorInputArgumentNull;
     }
-  }
 
-  return kEebusErrorOk;
+    EebusMonitorBase* const base = EEBUS_MONITOR_BASE(self);
+
+    for (size_t i = 0; i < VectorGetSize(&base->measurements); ++i) {
+        EebusMeasurementObject* const m = (EebusMeasurementObject*)VectorGetElement(&base->measurements, i);
+
+        MeasurementDataType* const data = EEBUS_MEASUREMENT_RELEASE_DATA_CACHE(m);
+        if (data != NULL) {
+            EebusError err
+                = EebusDataListDataAppend((void***)&list->measurement_data, &list->measurement_data_size, data);
+            if (err != kEebusErrorOk) {
+                MeasurementDataDelete(data);
+                return err;
+            }
+        }
+    }
+
+    return kEebusErrorOk;
 }
 
 static const EebusMonitorInterface kEebusMonitorMethods = {
@@ -127,12 +128,12 @@ EebusError EebusMonitorBaseConstruct(
     EebusMeasurementMonitorNameId name_id_mask,
     EebusMonitorMeasurementCreator measurement_creator
 ) {
-  EEBUS_MONITOR_INTERFACE(self) = &kEebusMonitorMethods;
-  self->name                    = name;
-  self->name_id_mask            = name_id_mask;
-  self->measurement_creator     = measurement_creator;
-  VectorConstructWithDeallocator(&self->measurements, MeasurementDeallocator);
-  return kEebusErrorOk;
+    EEBUS_MONITOR_INTERFACE(self) = &kEebusMonitorMethods;
+    self->name                    = name;
+    self->name_id_mask            = name_id_mask;
+    self->measurement_creator     = measurement_creator;
+    VectorConstructWithDeallocator(&self->measurements, MeasurementDeallocator);
+    return kEebusErrorOk;
 }
 
 EebusError EebusMonitorBaseAddMeasurements(
@@ -140,20 +141,20 @@ EebusError EebusMonitorBaseAddMeasurements(
     const EebusMonitorMeasurementParam* params,
     size_t params_size
 ) {
-  for (size_t i = 0; i < params_size; ++i) {
-    if (params[i].cfg == NULL) {
-      continue;
+    for (size_t i = 0; i < params_size; ++i) {
+        if (params[i].cfg == NULL) {
+            continue;
+        }
+
+        EebusMeasurementObject* const m = self->measurement_creator(params[i].name_id, params[i].cfg);
+        if (m == NULL) {
+            return kEebusErrorInit;
+        }
+
+        VectorPushBack(&self->measurements, m);
     }
 
-    EebusMeasurementObject* const m = self->measurement_creator(params[i].name_id, params[i].cfg);
-    if (m == NULL) {
-      return kEebusErrorInit;
-    }
-
-    VectorPushBack(&self->measurements, m);
-  }
-
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusMonitorObject* EebusMonitorCreate(
@@ -163,20 +164,20 @@ EebusMonitorObject* EebusMonitorCreate(
     const EebusMonitorMeasurementParam* params,
     size_t params_size
 ) {
-  EebusMonitorBase* const base = (EebusMonitorBase*)EEBUS_MALLOC(sizeof(EebusMonitorBase));
-  if (base == NULL) {
-    return NULL;
-  }
+    EebusMonitorBase* const base = (EebusMonitorBase*)EEBUS_MALLOC(sizeof(EebusMonitorBase));
+    if (base == NULL) {
+        return NULL;
+    }
 
-  if (EebusMonitorBaseConstruct(base, name, name_id_mask, measurement_creator) != kEebusErrorOk) {
-    EebusMonitorDelete(EEBUS_MONITOR_OBJECT(base));
-    return NULL;
-  }
+    if (EebusMonitorBaseConstruct(base, name, name_id_mask, measurement_creator) != kEebusErrorOk) {
+        EebusMonitorDelete(EEBUS_MONITOR_OBJECT(base));
+        return NULL;
+    }
 
-  if (EebusMonitorBaseAddMeasurements(base, params, params_size) != kEebusErrorOk) {
-    EebusMonitorDelete(EEBUS_MONITOR_OBJECT(base));
-    return NULL;
-  }
+    if (EebusMonitorBaseAddMeasurements(base, params, params_size) != kEebusErrorOk) {
+        EebusMonitorDelete(EEBUS_MONITOR_OBJECT(base));
+        return NULL;
+    }
 
-  return EEBUS_MONITOR_OBJECT(base);
+    return EEBUS_MONITOR_OBJECT(base);
 }

@@ -74,23 +74,23 @@ typedef struct MuMpcConfig MuMpcConfig;
  * @brief Mu Mpc Configuration structure
  */
 struct MuMpcConfig {
-  /** Required configuration parameters for MPC scenario 1 */
-  const MuMpcMonitorPowerConfig power_cfg;
-  /** Optional configuration parameters for MPC scenario 2, set NULL if shall not be supported */
-  const MuMpcMonitorEnergyConfig* energy_cfg;
-  /** Optional configuration parameters for MPC scenario 3, set NULL if shall not be supported */
-  const MuMpcMonitorCurrentConfig* current_cfg;
-  /** Optional configuration parameters for MPC scenario 4, set NULL if shall not be supported */
-  const MuMpcMonitorVoltageConfig* voltage_cfg;
-  /** Optional configuration parameters for MPC scenario 5, set NULL if shall not be supported */
-  const MuMpcMonitorFrequencyConfig* frequency_cfg;
+    /** Required configuration parameters for MPC scenario 1 */
+    const MuMpcMonitorPowerConfig power_cfg;
+    /** Optional configuration parameters for MPC scenario 2, set NULL if shall not be supported */
+    const MuMpcMonitorEnergyConfig* energy_cfg;
+    /** Optional configuration parameters for MPC scenario 3, set NULL if shall not be supported */
+    const MuMpcMonitorCurrentConfig* current_cfg;
+    /** Optional configuration parameters for MPC scenario 4, set NULL if shall not be supported */
+    const MuMpcMonitorVoltageConfig* voltage_cfg;
+    /** Optional configuration parameters for MPC scenario 5, set NULL if shall not be supported */
+    const MuMpcMonitorFrequencyConfig* frequency_cfg;
 };
 
 typedef struct MuMpcUseCaseObject MuMpcUseCaseObject;
 
 struct MuMpcUseCaseObject {
-  /** Inherits the Use Case */
-  UseCaseObject obj;
+    /** Inherits the Use Case */
+    UseCaseObject obj;
 };
 
 #define MU_MPC_USE_CASE_OBJECT(obj) ((MuMpcUseCaseObject*)(obj))
@@ -115,7 +115,7 @@ MuMpcUseCaseObject* MuMpcUseCaseCreate(
  * @param mu_mpc Pointer to the MuMpcUseCaseObject instance to be deleted
  */
 static inline void MuMpcUseCaseDelete(MuMpcUseCaseObject* mu_mpc) {
-  UseCaseDelete(USE_CASE_OBJECT(mu_mpc));
+    UseCaseDelete(USE_CASE_OBJECT(mu_mpc));
 }
 
 /**

@@ -23,17 +23,19 @@
 
 #include "src/common/eebus_malloc.h"
 
-#define SIMPLE_PTR_CREATE_IMPL(name, type)             \
-  type* name(type val) {                               \
-    type* const p = (type*)EEBUS_MALLOC(sizeof(type)); \
-    if (p != NULL) {                                   \
-      *p = val;                                        \
-    }                                                  \
-                                                       \
-    return p;                                          \
-  }
+#define SIMPLE_PTR_CREATE_IMPL(name, type)                 \
+    type* name(type val) {                                 \
+        type* const p = (type*)EEBUS_MALLOC(sizeof(type)); \
+        if (p != NULL) {                                   \
+            *p = val;                                      \
+        }                                                  \
+                                                           \
+        return p;                                          \
+    }
 
 #define SIMPLE_PTR_DELETE_IMPL(name, type) \
-  void name(type* p) { EEBUS_FREE(p); }
+    void name(type* p) {                   \
+        EEBUS_FREE(p);                     \
+    }
 
 #endif  // SRC_EEBUS_SRC_COMMON_SIMPLE_PTR_H_

@@ -31,10 +31,10 @@ extern "C" {
 PendingReplyContainerObject* PendingReplyContainerCreate(void);
 
 static inline void PendingReplyContainerDelete(PendingReplyContainerObject* self) {
-  if (self != NULL) {
-    PENDING_REPLY_CONTAINER_DESTRUCT(self);
-    EEBUS_FREE(self);
-  }
+    if (self != NULL) {
+        PENDING_REPLY_CONTAINER_DESTRUCT(self);
+        EEBUS_FREE(self);
+    }
 }
 
 #ifdef __cplusplus

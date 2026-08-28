@@ -20,90 +20,93 @@
 #include "src/spine/model/model.h"
 
 MeasurementListDataType* MeasurementsCreateEmpty(void) {
-  return (MeasurementListDataType*)ModelFunctionDataCreateEmpty(kFunctionTypeMeasurementListData);
+    return (MeasurementListDataType*)ModelFunctionDataCreateEmpty(kFunctionTypeMeasurementListData);
 }
 
 void MeasurementsDelete(MeasurementListDataType* measurement_data_list) {
-  ModelFunctionDataDelete(kFunctionTypeMeasurementListData, measurement_data_list);
+    ModelFunctionDataDelete(kFunctionTypeMeasurementListData, measurement_data_list);
 }
 
 EebusError MeasurementsAdd(MeasurementListDataType* measurement_data_list, MeasurementDataType* measurement_data) {
-  if ((measurement_data_list == NULL) || (measurement_data == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((measurement_data_list == NULL) || (measurement_data == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  MeasurementDataType* const measurement_data_copy = MeasurementDataCopy(measurement_data);
+    MeasurementDataType* const measurement_data_copy = MeasurementDataCopy(measurement_data);
 
-  EebusError err = EebusDataListDataAppend(
-      (void***)&measurement_data_list->measurement_data,
-      &measurement_data_list->measurement_data_size,
-      measurement_data_copy
-  );
+    EebusError err = EebusDataListDataAppend(
+        (void***)&measurement_data_list->measurement_data,
+        &measurement_data_list->measurement_data_size,
+        measurement_data_copy
+    );
 
-  if (err != kEebusErrorOk) {
-    MeasurementDataDelete(measurement_data_copy);
-  }
+    if (err != kEebusErrorOk) {
+        MeasurementDataDelete(measurement_data_copy);
+    }
 
-  return err;
+    return err;
 }
 
 MeasurementDataType* MeasurementDataCopy(const MeasurementDataType* measurement_data) {
-  return (MeasurementDataType*)ModelDataListElementCopy(kFunctionTypeMeasurementListData, measurement_data);
+    return (MeasurementDataType*)ModelDataListElementCopy(kFunctionTypeMeasurementListData, measurement_data);
 }
 
 void MeasurementDataDelete(MeasurementDataType* measurement_data) {
-  ModelDataListElementDelete(kFunctionTypeMeasurementListData, measurement_data);
+    ModelDataListElementDelete(kFunctionTypeMeasurementListData, measurement_data);
 }
 
 MeasurementConstraintsListDataType* MeasurementConstraintsCreateEmpty(void) {
-  return (MeasurementConstraintsListDataType*)ModelFunctionDataCreateEmpty(kFunctionTypeMeasurementConstraintsListData);
+    return (MeasurementConstraintsListDataType*)ModelFunctionDataCreateEmpty(
+        kFunctionTypeMeasurementConstraintsListData
+    );
 }
 
 void MeasurementConstraintsDelete(MeasurementConstraintsListDataType* measurement_constraints) {
-  ModelFunctionDataDelete(kFunctionTypeMeasurementConstraintsListData, measurement_constraints);
+    ModelFunctionDataDelete(kFunctionTypeMeasurementConstraintsListData, measurement_constraints);
 }
 
 EebusError MeasurementConstraintsAdd(
     MeasurementConstraintsListDataType* measurements_constraints,
     const MeasurementConstraintsDataType* constraints_data
 ) {
-  if ((measurements_constraints == NULL) || (constraints_data == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((measurements_constraints == NULL) || (constraints_data == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  MeasurementConstraintsDataType* const constraints_data_copy = MeasurementConstraintsDataCopy(constraints_data);
+    MeasurementConstraintsDataType* const constraints_data_copy = MeasurementConstraintsDataCopy(constraints_data);
 
-  EebusError err = EebusDataListDataAppend(
-      (void***)&measurements_constraints->measurement_constraints_data,
-      &measurements_constraints->measurement_constraints_data_size,
-      constraints_data_copy
-  );
+    EebusError err = EebusDataListDataAppend(
+        (void***)&measurements_constraints->measurement_constraints_data,
+        &measurements_constraints->measurement_constraints_data_size,
+        constraints_data_copy
+    );
 
-  if (err != kEebusErrorOk) {
-    MeasurementConstraintsDataDelete(constraints_data_copy);
-  }
+    if (err != kEebusErrorOk) {
+        MeasurementConstraintsDataDelete(constraints_data_copy);
+    }
 
-  return err;
+    return err;
 }
 
 MeasurementConstraintsDataType* MeasurementConstraintsDataCopy(const MeasurementConstraintsDataType* constraints_data) {
-  return (MeasurementConstraintsDataType*)
-      ModelDataListElementCopy(kFunctionTypeMeasurementConstraintsListData, constraints_data);
+    return (
+        MeasurementConstraintsDataType*
+    )ModelDataListElementCopy(kFunctionTypeMeasurementConstraintsListData, constraints_data);
 }
 
 void MeasurementConstraintsDataDelete(MeasurementConstraintsDataType* constraints_data) {
-  ModelDataListElementDelete(kFunctionTypeMeasurementConstraintsListData, constraints_data);
+    ModelDataListElementDelete(kFunctionTypeMeasurementConstraintsListData, constraints_data);
 }
 
 EebusError MeasurementConstraintsSetId(MeasurementConstraintsDataType* constraints_data, MeasurementIdType id) {
-  if (constraints_data == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (constraints_data == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  if (constraints_data->measurement_id != NULL) {
-    EEBUS_FREE((void*)constraints_data->measurement_id);
-  }
+    if (constraints_data->measurement_id != NULL) {
+        EEBUS_FREE((void*)constraints_data->measurement_id);
+    }
 
-  constraints_data->measurement_id = Uint32Create(id);
-  return (constraints_data->measurement_id != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
+    constraints_data->measurement_id = Uint32Create(id);
+    return (constraints_data->measurement_id != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
 }

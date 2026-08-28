@@ -30,16 +30,16 @@
 typedef struct PendingReply PendingReply;
 
 struct PendingReply {
-  /** Implements the Pending Reply Interface */
-  PendingReplyObject obj;
+    /** Implements the Pending Reply Interface */
+    PendingReplyObject obj;
 
-  MsgCounterType msg_cnt_ref;
-  ReplyMessageCallback cb;
-  void* ctx;
-  FeatureAddressType* remote_feature_addr;
-  FunctionType function_type;
-  char* ski;
-  EebusCountdown countdown;
+    MsgCounterType msg_cnt_ref;
+    ReplyMessageCallback cb;
+    void* ctx;
+    FeatureAddressType* remote_feature_addr;
+    FunctionType function_type;
+    char* ski;
+    EebusCountdown countdown;
 };
 
 #define PENDING_REPLY(obj) ((PendingReply*)(obj))
@@ -81,16 +81,16 @@ void PendingReplyConstruct(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  // Override "virtual functions table"
-  PENDING_REPLY_INTERFACE(self) = &pending_reply_methods;
+    // Override "virtual functions table"
+    PENDING_REPLY_INTERFACE(self) = &pending_reply_methods;
 
-  self->msg_cnt_ref         = msg_cnt_ref;
-  self->remote_feature_addr = FeatureAddressCopy(remote_feature_address);
-  self->function_type       = function_type;
-  self->ski                 = StringCopy(ski);
-  self->cb                  = cb;
-  self->ctx                 = ctx;
-  self->countdown           = EEBUS_COUNTDOWN(TIME_MS_TO_S(kDefaultMaxResponseDelayMs));
+    self->msg_cnt_ref         = msg_cnt_ref;
+    self->remote_feature_addr = FeatureAddressCopy(remote_feature_address);
+    self->function_type       = function_type;
+    self->ski                 = StringCopy(ski);
+    self->cb                  = cb;
+    self->ctx                 = ctx;
+    self->countdown           = EEBUS_COUNTDOWN(TIME_MS_TO_S(kDefaultMaxResponseDelayMs));
 }
 
 PendingReplyObject* PendingReplyCreate(
@@ -101,48 +101,48 @@ PendingReplyObject* PendingReplyCreate(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  PendingReply* const self = (PendingReply*)EEBUS_MALLOC(sizeof(PendingReply));
-  if (self == NULL) {
-    return NULL;
-  }
+    PendingReply* const self = (PendingReply*)EEBUS_MALLOC(sizeof(PendingReply));
+    if (self == NULL) {
+        return NULL;
+    }
 
-  PendingReplyConstruct(self, msg_cnt_ref, remote_feature_address, function_type, ski, cb, ctx);
-  return PENDING_REPLY_OBJECT(self);
+    PendingReplyConstruct(self, msg_cnt_ref, remote_feature_address, function_type, ski, cb, ctx);
+    return PENDING_REPLY_OBJECT(self);
 }
 
 void Destruct(PendingReplyObject* self) {
-  PendingReply* const pr = PENDING_REPLY(self);
-  FeatureAddressDelete(pr->remote_feature_addr);
-  EEBUS_FREE(pr->ski);
+    PendingReply* const pr = PENDING_REPLY(self);
+    FeatureAddressDelete(pr->remote_feature_addr);
+    EEBUS_FREE(pr->ski);
 }
 
 MsgCounterType GetMsgCntRef(const PendingReplyObject* self) {
-  return PENDING_REPLY(self)->msg_cnt_ref;
+    return PENDING_REPLY(self)->msg_cnt_ref;
 }
 
 const FeatureAddressType* GetRemoteFeatureAddress(const PendingReplyObject* self) {
-  return PENDING_REPLY(self)->remote_feature_addr;
+    return PENDING_REPLY(self)->remote_feature_addr;
 }
 
 const char* GetSki(const PendingReplyObject* self) {
-  return PENDING_REPLY(self)->ski;
+    return PENDING_REPLY(self)->ski;
 }
 
 bool HasExpired(const PendingReplyObject* self) {
-  return EebusCountdownHasExpired(&PENDING_REPLY(self)->countdown);
+    return EebusCountdownHasExpired(&PENDING_REPLY(self)->countdown);
 }
 
 void UpdateTime(PendingReplyObject* self) {
-  EebusCountdownTick(&PENDING_REPLY(self)->countdown);
+    EebusCountdownTick(&PENDING_REPLY(self)->countdown);
 }
 
 void Fire(const PendingReplyObject* self, const ReplyMessage* reply_msg, EebusError err) {
-  PendingReply* const pr = PENDING_REPLY(self);
-  if (err == kEebusErrorOk) {
-    pr->cb(reply_msg, pr->remote_feature_addr, err, pr->ctx);
-  } else {
-    const ReplyMessage timeout_msg
-        = {.msg_cnt_ref = pr->msg_cnt_ref, .ski = pr->ski, .function_type = pr->function_type};
-    pr->cb(&timeout_msg, pr->remote_feature_addr, err, pr->ctx);
-  }
+    PendingReply* const pr = PENDING_REPLY(self);
+    if (err == kEebusErrorOk) {
+        pr->cb(reply_msg, pr->remote_feature_addr, err, pr->ctx);
+    } else {
+        const ReplyMessage timeout_msg
+            = {.msg_cnt_ref = pr->msg_cnt_ref, .ski = pr->ski, .function_type = pr->function_type};
+        pr->cb(&timeout_msg, pr->remote_feature_addr, err, pr->ctx);
+    }
 }

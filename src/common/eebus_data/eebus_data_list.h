@@ -61,14 +61,14 @@ extern const EebusDataInterface eebus_data_list_simple_methods;
  * @param struct_field Structure field name
  * @param le_cfg Entry point of list element Data configuration
  */
-#define EEBUS_DATA_LIST(ed_name, struct_name, struct_field, le_cfg)          \
-  {                                                                          \
-      .interface_  = &eebus_data_list_methods,                               \
-      .name        = ed_name,                                                \
-      .offset      = STRUCT_MEMBER_OFFSET(struct_name, struct_field),        \
-      .size_offset = STRUCT_MEMBER_OFFSET(struct_name, struct_field##_size), \
-      .metadata    = le_cfg,                                                 \
-  }
+#define EEBUS_DATA_LIST(ed_name, struct_name, struct_field, le_cfg)            \
+    {                                                                          \
+        .interface_  = &eebus_data_list_methods,                               \
+        .name        = ed_name,                                                \
+        .offset      = STRUCT_MEMBER_OFFSET(struct_name, struct_field),        \
+        .size_offset = STRUCT_MEMBER_OFFSET(struct_name, struct_field##_size), \
+        .metadata    = le_cfg,                                                 \
+    }
 
 /**
  * @brief EEBUS Data List Simple configuration
@@ -77,14 +77,14 @@ extern const EebusDataInterface eebus_data_list_simple_methods;
  * @param struct_field Structure field name
  * @param le_cfg Entry point of list element Data configuration
  */
-#define EEBUS_DATA_LIST_SIMPLE(ed_name, struct_name, struct_field, le_cfg)   \
-  {                                                                          \
-      .interface_  = &eebus_data_list_simple_methods,                        \
-      .name        = ed_name,                                                \
-      .offset      = STRUCT_MEMBER_OFFSET(struct_name, struct_field),        \
-      .size_offset = STRUCT_MEMBER_OFFSET(struct_name, struct_field##_size), \
-      .metadata    = le_cfg,                                                 \
-  }
+#define EEBUS_DATA_LIST_SIMPLE(ed_name, struct_name, struct_field, le_cfg)     \
+    {                                                                          \
+        .interface_  = &eebus_data_list_simple_methods,                        \
+        .name        = ed_name,                                                \
+        .offset      = STRUCT_MEMBER_OFFSET(struct_name, struct_field),        \
+        .size_offset = STRUCT_MEMBER_OFFSET(struct_name, struct_field##_size), \
+        .metadata    = le_cfg,                                                 \
+    }
 
 /**
  * @brief An element of EEBUS Data List configuration
@@ -93,13 +93,13 @@ extern const EebusDataInterface eebus_data_list_simple_methods;
  * @param ce_cfg EEBUS Data Element child Data configuration entry point
  */
 #define EEBUS_DATA_LIST_ELEMENT(ed_type, ed_size, ed_cfg) \
-  {                                                       \
-      .interface_ = &eebus_data_##ed_type##_methods,      \
-      .name       = "",                                   \
-      .offset     = 0,                                    \
-      .size       = ed_size,                              \
-      .metadata   = ed_cfg,                               \
-  }
+    {                                                     \
+        .interface_ = &eebus_data_##ed_type##_methods,    \
+        .name       = "",                                 \
+        .offset     = 0,                                  \
+        .size       = ed_size,                            \
+        .metadata   = ed_cfg,                             \
+    }
 
 EebusError EebusDataListDataAppend(void*** ar, size_t* ar_size, const void* el);
 EebusError EebusDataListDataRemove(void*** ar, size_t* ar_size, const void* el);
@@ -108,13 +108,13 @@ EebusError EebusDataListDataAppendList(void*** ar, size_t* ar_size, const void**
 typedef struct EebusDataListMatchIterator EebusDataListMatchIterator;
 
 struct EebusDataListMatchIterator {
-  const EebusDataCfg* ar_element_cfg;
-  const void* const* ar;
-  size_t size;
-  const void* data_to_match_base_addr;
-  const void* const* first;
-  const void* const* last;
-  const void* const* current;
+    const EebusDataCfg* ar_element_cfg;
+    const void* const* ar;
+    size_t size;
+    const void* data_to_match_base_addr;
+    const void* const* first;
+    const void* const* last;
+    const void* const* current;
 };
 
 void EebusDataListMatchIteratorConstruct(

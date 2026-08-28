@@ -34,10 +34,10 @@ extern "C" {
 EebusCliHandlerObject* GcpMgcpCliCreate(GcpMgcpUseCaseObject* gcp_mgcp);
 
 static inline void GcpMgcpCliDelete(EebusCliHandlerObject* gcp_mgcp_cli) {
-  if (gcp_mgcp_cli != NULL) {
-    EEBUS_CLI_HANDLER_DESTRUCT(gcp_mgcp_cli);
-    EEBUS_FREE(gcp_mgcp_cli);
-  }
+    if (gcp_mgcp_cli != NULL) {
+        EEBUS_CLI_HANDLER_DESTRUCT(gcp_mgcp_cli);
+        EEBUS_FREE(gcp_mgcp_cli);
+    }
 }
 
 #ifdef __cplusplus

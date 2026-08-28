@@ -24,49 +24,55 @@
 #include "src/spine/node_management/node_management_internal.h"
 
 SubscriptionManagerObject* GetSubscriptionManager(NodeManagement* self) {
-  const FeatureLocalObject* const fl = FEATURE_LOCAL_OBJECT(self);
-  const DeviceLocalObject* const dl  = FEATURE_LOCAL_GET_DEVICE(fl);
-  return DEVICE_LOCAL_GET_SUBSCRIPTION_MANAGER(dl);
+    const FeatureLocalObject* const fl = FEATURE_LOCAL_OBJECT(self);
+    const DeviceLocalObject* const dl  = FEATURE_LOCAL_GET_DEVICE(fl);
+    return DEVICE_LOCAL_GET_SUBSCRIPTION_MANAGER(dl);
 }
 
 EebusError HandleMsgSubscriptionData(NodeManagement* self, const Message* msg) {
-  if (msg->cmd_classifier != kCommandClassifierTypeCall) {
-    return kEebusErrorNotImplemented;
-  }
+    if (msg->cmd_classifier != kCommandClassifierTypeCall) {
+        return kEebusErrorNotImplemented;
+    }
 
-  const SubscriptionManagerObject* sm = GetSubscriptionManager(self);
+    const SubscriptionManagerObject* sm = GetSubscriptionManager(self);
 
-  NodeManagementSubscriptionDataType* const subscription_data
-      = SUBSCRIPTION_MANAGER_CREATE_SUBSCRIPTION_DATA(sm, msg->device_remote);
-  if (subscription_data == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    NodeManagementSubscriptionDataType* const subscription_data
+        = SUBSCRIPTION_MANAGER_CREATE_SUBSCRIPTION_DATA(sm, msg->device_remote);
+    if (subscription_data == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  const EebusError err
-      = NodeManagementSendReply(self, subscription_data, kFunctionTypeNodeManagementSubscriptionData, msg);
-  NodeManagementSubscriptionDataDelete(subscription_data);
-  return err;
+    const EebusError err
+        = NodeManagementSendReply(self, subscription_data, kFunctionTypeNodeManagementSubscriptionData, msg);
+    NodeManagementSubscriptionDataDelete(subscription_data);
+    return err;
 }
 
 EebusError HandleMsgSubscriptionRequestCall(NodeManagement* self, const Message* msg) {
-  if (msg->cmd_classifier != kCommandClassifierTypeCall) {
-    return kEebusErrorNotImplemented;
-  }
+    if (msg->cmd_classifier != kCommandClassifierTypeCall) {
+        return kEebusErrorNotImplemented;
+    }
 
-  const NodeManagementSubscriptionRequestCallType* const data
-      = (const NodeManagementSubscriptionRequestCallType*)msg->cmd->data_choice;
+    const NodeManagementSubscriptionRequestCallType* const data
+        = (const NodeManagementSubscriptionRequestCallType*)msg->cmd->data_choice;
 
-  return SUBSCRIPTION_MANAGER_ADD_SUBSCRIPTION(
-      GetSubscriptionManager(self), msg->device_remote, data->subscription_request);
+    return SUBSCRIPTION_MANAGER_ADD_SUBSCRIPTION(
+        GetSubscriptionManager(self),
+        msg->device_remote,
+        data->subscription_request
+    );
 }
 
 EebusError HandleMsgSubscriptionDeleteCall(NodeManagement* self, const Message* msg) {
-  if (msg->cmd_classifier != kCommandClassifierTypeCall) {
-    return kEebusErrorNotImplemented;
-  }
+    if (msg->cmd_classifier != kCommandClassifierTypeCall) {
+        return kEebusErrorNotImplemented;
+    }
 
-  const NodeManagementSubscriptionDeleteCallType* const data
-      = (const NodeManagementSubscriptionDeleteCallType*)msg->cmd->data_choice;
-  return SUBSCRIPTION_MANAGER_REMOVE_SUBSCRIPTION(
-      GetSubscriptionManager(self), msg->device_remote, data->subscription_delete);
+    const NodeManagementSubscriptionDeleteCallType* const data
+        = (const NodeManagementSubscriptionDeleteCallType*)msg->cmd->data_choice;
+    return SUBSCRIPTION_MANAGER_REMOVE_SUBSCRIPTION(
+        GetSubscriptionManager(self),
+        msg->device_remote,
+        data->subscription_delete
+    );
 }

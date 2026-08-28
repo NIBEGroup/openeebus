@@ -29,28 +29,28 @@ extern "C" {
 #endif  // __cplusplus
 
 typedef struct EebusCountdown {
-  uint32_t remaining;
-  bool expired;
+    uint32_t remaining;
+    bool expired;
 } EebusCountdown;
 
 #define EEBUS_COUNTDOWN(ticks) ((EebusCountdown){.remaining = (ticks), .expired = false})
 
 static inline void EebusCountdownTick(EebusCountdown* self) {
-  if (self->remaining > 0) {
-    self->remaining--;
-  }
+    if (self->remaining > 0) {
+        self->remaining--;
+    }
 
-  if (self->remaining == 0) {
-    self->expired = true;
-  }
+    if (self->remaining == 0) {
+        self->expired = true;
+    }
 }
 
 static inline bool EebusCountdownHasExpired(const EebusCountdown* self) {
-  return self->expired;
+    return self->expired;
 }
 
 static inline uint32_t EebusCountdownGetRemaining(const EebusCountdown* self) {
-  return self->remaining;
+    return self->remaining;
 }
 
 #ifdef __cplusplus

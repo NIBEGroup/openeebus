@@ -35,10 +35,10 @@ extern "C" {
 EebusCliHandlerObject* CsLpCliCreate(EnergyDirectionType energy_direction, CsLpUseCaseObject* cs_lp);
 
 static inline void CsLpCliDelete(EebusCliHandlerObject* cs_lp_cli) {
-  if (cs_lp_cli != NULL) {
-    EEBUS_CLI_HANDLER_DESTRUCT(cs_lp_cli);
-    EEBUS_FREE(cs_lp_cli);
-  }
+    if (cs_lp_cli != NULL) {
+        EEBUS_CLI_HANDLER_DESTRUCT(cs_lp_cli);
+        EEBUS_FREE(cs_lp_cli);
+    }
 }
 
 #ifdef __cplusplus

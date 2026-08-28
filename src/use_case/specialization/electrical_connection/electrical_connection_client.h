@@ -33,8 +33,8 @@ extern "C" {
 typedef struct ElectricalConnectionClient ElectricalConnectionClient;
 
 struct ElectricalConnectionClient {
-  FeatureInfoClient feature_info_client;
-  ElectricalConnectionCommon el_connection_common;
+    FeatureInfoClient feature_info_client;
+    ElectricalConnectionCommon el_connection_common;
 };
 
 /**

@@ -44,15 +44,15 @@ typedef struct ShipMessageSerializeObject ShipMessageSerializeObject;
  * @brief ShipMessageSerialize Interface Structure
  */
 struct ShipMessageSerializeInterface {
-  void (*destruct)(ShipMessageSerializeObject* self);
-  MessageBuffer* (*get_buffer)(const ShipMessageSerializeObject* self);
+    void (*destruct)(ShipMessageSerializeObject* self);
+    MessageBuffer* (*get_buffer)(const ShipMessageSerializeObject* self);
 };
 
 /**
  * @brief Ship Message Serialize Object Structure
  */
 struct ShipMessageSerializeObject {
-  const ShipMessageSerializeInterface* interface_;
+    const ShipMessageSerializeInterface* interface_;
 };
 
 /**

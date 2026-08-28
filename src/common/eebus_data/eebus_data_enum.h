@@ -41,21 +41,21 @@ typedef struct EnumMapping EnumMapping;
  * @brief Enumeration name to identifier mapping structure
  */
 struct EnumMapping {
-  /**
-   * @brief Enumeration name (or text presentation)
-   */
-  const char* name;
-  /**
-   * @brief Related enumeration numeric value
-   */
-  int32_t value;
+    /**
+     * @brief Enumeration name (or text presentation)
+     */
+    const char* name;
+    /**
+     * @brief Related enumeration numeric value
+     */
+    int32_t value;
 };
 
 #define EEBUS_ENUM_MAPPING_END \
-  {                            \
-      .name  = NULL,           \
-      .value = 0,              \
-  }
+    {                          \
+        .name  = NULL,         \
+        .value = 0,            \
+    }
 
 extern const EebusDataInterface eebus_data_enum_methods;
 
@@ -73,14 +73,14 @@ extern const EebusDataInterface eebus_data_enum_methods;
  * @param ecfg Enumeration name to identifier table entry point
  * (see EnumMapping)
  */
-#define EEBUS_DATA_ENUM(ej_name, struct_name, struct_field, ecfg)    \
-  {                                                                  \
-      .interface_ = &eebus_data_enum_methods,                        \
-      .name       = ej_name,                                         \
-      .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field), \
-      .size       = sizeof(int32_t),                                 \
-      .metadata   = ecfg,                                            \
-  }
+#define EEBUS_DATA_ENUM(ej_name, struct_name, struct_field, ecfg)      \
+    {                                                                  \
+        .interface_ = &eebus_data_enum_methods,                        \
+        .name       = ej_name,                                         \
+        .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field), \
+        .size       = sizeof(int32_t),                                 \
+        .metadata   = ecfg,                                            \
+    }
 
 /**
  * @brief EEBUS Data Enumeration configuration with specific flags
@@ -93,14 +93,14 @@ extern const EebusDataInterface eebus_data_enum_methods;
  * @param ed_flags EebusData flags to be applied (see @EebusDataFlag)
  */
 #define EEBUS_DATA_ENUM_WITH_FLAGS(ed_name, struct_name, struct_field, ecfg, ed_flags) \
-  {                                                                                    \
-      .interface_ = &eebus_data_enum_methods,                                          \
-      .name       = ed_name,                                                           \
-      .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),                   \
-      .size       = sizeof(int32_t),                                                   \
-      .flags      = ed_flags,                                                          \
-      .metadata   = ecfg,                                                              \
-  }
+    {                                                                                  \
+        .interface_ = &eebus_data_enum_methods,                                        \
+        .name       = ed_name,                                                         \
+        .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),                 \
+        .size       = sizeof(int32_t),                                                 \
+        .flags      = ed_flags,                                                        \
+        .metadata   = ecfg,                                                            \
+    }
 
 #ifdef __cplusplus
 }

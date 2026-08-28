@@ -37,20 +37,25 @@ static const uint32_t kDefaultMaxResponseDelayMs = 10000;
 typedef struct Feature Feature;
 
 struct Feature {
-  /** Implements the (Feature) Interface */
-  FeatureObject obj;
+    /** Implements the (Feature) Interface */
+    FeatureObject obj;
 
-  FeatureTypeType type;
-  FeatureAddressType* address;
-  char* description;
-  RoleType role;
-  Vector functions;
+    FeatureTypeType type;
+    FeatureAddressType* address;
+    char* description;
+    RoleType role;
+    Vector functions;
 };
 
 #define FEATURE(obj) ((Feature*)(obj))
 
 void FeatureConstruct(
-    Feature* self, FeatureTypeType type, const EntityAddressType* entity_addr, uint32_t feature_id, RoleType role);
+    Feature* self,
+    FeatureTypeType type,
+    const EntityAddressType* entity_addr,
+    uint32_t feature_id,
+    RoleType role
+);
 void FeatureDestruct(FeatureObject* self);
 const FeatureAddressType* FeatureGetAddress(const FeatureObject* self);
 FeatureTypeType FeatureGetType(const FeatureObject* self);

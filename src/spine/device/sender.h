@@ -34,10 +34,10 @@ extern "C" {
 SenderObject* SenderCreate(DataWriterObject* writer);
 
 static inline void SenderDelete(SenderObject* sender) {
-  if (sender != NULL) {
-    SENDER_DESTRUCT(sender);
-    EEBUS_FREE(sender);
-  }
+    if (sender != NULL) {
+        SENDER_DESTRUCT(sender);
+        EEBUS_FREE(sender);
+    }
 }
 
 #ifdef __cplusplus

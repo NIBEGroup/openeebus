@@ -21,10 +21,10 @@
 #include <stdint.h>
 
 int64_t PowerOfTen(int8_t exponent) {
-  int64_t result = 1;
-  for (int8_t i = 0; i < exponent; ++i) {
-    result *= 10;
-  }
+    int64_t result = 1;
+    for (int8_t i = 0; i < exponent; ++i) {
+        result *= 10;
+    }
 
-  return result;
+    return result;
 }

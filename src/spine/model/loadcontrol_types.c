@@ -23,59 +23,59 @@
 #include "src/common/eebus_errors.h"
 
 bool LoadControlLimitIsValid(const LoadControlLimitDataType* limit) {
-  if (limit == NULL) {
-    return false;
-  }
+    if (limit == NULL) {
+        return false;
+    }
 
-  return (limit->limit_id != NULL) && (limit->value != NULL) && ((limit->value->number != NULL));
+    return (limit->limit_id != NULL) && (limit->value != NULL) && ((limit->value->number != NULL));
 }
 
 bool LoadControlLimitIsLimitChangeable(const LoadControlLimitDataType* limit) {
-  if (limit == NULL) {
-    return false;
-  }
+    if (limit == NULL) {
+        return false;
+    }
 
-  if (limit->is_limit_changeable == NULL) {
-    return false;
-  }
+    if (limit->is_limit_changeable == NULL) {
+        return false;
+    }
 
-  return *limit->is_limit_changeable;
+    return *limit->is_limit_changeable;
 }
 
 bool LoadControlLimitIsActive(const LoadControlLimitDataType* limit) {
-  if (limit == NULL) {
-    return false;
-  }
+    if (limit == NULL) {
+        return false;
+    }
 
-  if (limit->is_limit_active == NULL) {
-    return false;
-  }
+    if (limit->is_limit_active == NULL) {
+        return false;
+    }
 
-  return *limit->is_limit_active;
+    return *limit->is_limit_active;
 }
 
 EebusError LoadControlLimitGetDuration(const LoadControlLimitDataType* limit, DurationType* duration, bool* is_null) {
-  if ((duration == NULL) || (is_null == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((duration == NULL) || (is_null == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  *is_null = (limit->time_period == NULL) || (limit->time_period->end_time == NULL);
-  if (*is_null) {
+    *is_null = (limit->time_period == NULL) || (limit->time_period->end_time == NULL);
+    if (*is_null) {
+        return kEebusErrorOk;
+    }
+
+    if (limit->time_period->end_time->type != kAbsoluteOrRelativeTimeTypeDuration) {
+        return kEebusErrorNoChange;
+    }
+
+    *duration = limit->time_period->end_time->duration;
     return kEebusErrorOk;
-  }
-
-  if (limit->time_period->end_time->type != kAbsoluteOrRelativeTimeTypeDuration) {
-    return kEebusErrorNoChange;
-  }
-
-  *duration = limit->time_period->end_time->duration;
-  return kEebusErrorOk;
 }
 
 const ScaledNumberType* LoadControlLimitGetValue(const LoadControlLimitDataType* limit) {
-  if (limit == NULL) {
-    return NULL;
-  }
+    if (limit == NULL) {
+        return NULL;
+    }
 
-  return limit->value;
+    return limit->value;
 }

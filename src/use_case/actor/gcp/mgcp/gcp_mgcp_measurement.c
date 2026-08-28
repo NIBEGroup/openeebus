@@ -21,73 +21,73 @@
 #include "src/use_case/actor/gcp/mgcp/gcp_mgcp_measurement.h"
 
 static ScopeTypeType GetEnergyScopeType(GcpMeasurementNameId name) {
-  switch (name) {
-    case kGcpEnergyFeedIn: return kScopeTypeTypeGridFeedIn;
-    case kGcpEnergyConsumed: return kScopeTypeTypeGridConsumption;
-    default: return kScopeTypeTypeACEnergy;
-  }
+    switch (name) {
+        case kGcpEnergyFeedIn: return kScopeTypeTypeGridFeedIn;
+        case kGcpEnergyConsumed: return kScopeTypeTypeGridConsumption;
+        default: return kScopeTypeTypeACEnergy;
+    }
 }
 
 static ElectricalConnectionPhaseNameType GetCurrentPhase(GcpMeasurementNameId name) {
-  switch (name) {
-    case kGcpCurrentPhaseA: return kElectricalConnectionPhaseNameTypeA;
-    case kGcpCurrentPhaseB: return kElectricalConnectionPhaseNameTypeB;
-    case kGcpCurrentPhaseC: return kElectricalConnectionPhaseNameTypeC;
-    default: return kElectricalConnectionPhaseNameTypeNone;
-  }
+    switch (name) {
+        case kGcpCurrentPhaseA: return kElectricalConnectionPhaseNameTypeA;
+        case kGcpCurrentPhaseB: return kElectricalConnectionPhaseNameTypeB;
+        case kGcpCurrentPhaseC: return kElectricalConnectionPhaseNameTypeC;
+        default: return kElectricalConnectionPhaseNameTypeNone;
+    }
 }
 
 static ElectricalConnectionPhaseNameType GetVoltagePhase(GcpMeasurementNameId name) {
-  switch (name) {
-    case kGcpVoltagePhaseA: return kElectricalConnectionPhaseNameTypeA;
-    case kGcpVoltagePhaseB: return kElectricalConnectionPhaseNameTypeB;
-    case kGcpVoltagePhaseC: return kElectricalConnectionPhaseNameTypeC;
-    case kGcpVoltagePhaseAb: return kElectricalConnectionPhaseNameTypeAb;
-    case kGcpVoltagePhaseBc: return kElectricalConnectionPhaseNameTypeBc;
-    case kGcpVoltagePhaseAc: return kElectricalConnectionPhaseNameTypeAc;
-    default: return kElectricalConnectionPhaseNameTypeNone;
-  }
+    switch (name) {
+        case kGcpVoltagePhaseA: return kElectricalConnectionPhaseNameTypeA;
+        case kGcpVoltagePhaseB: return kElectricalConnectionPhaseNameTypeB;
+        case kGcpVoltagePhaseC: return kElectricalConnectionPhaseNameTypeC;
+        case kGcpVoltagePhaseAb: return kElectricalConnectionPhaseNameTypeAb;
+        case kGcpVoltagePhaseBc: return kElectricalConnectionPhaseNameTypeBc;
+        case kGcpVoltagePhaseAc: return kElectricalConnectionPhaseNameTypeAc;
+        default: return kElectricalConnectionPhaseNameTypeNone;
+    }
 }
 
 EebusMeasurementObject*
 GcpMgcpMeasurementPowerTotalCreate(ElectricalConnectionPhaseNameType phases, const GcpMgcpMeasurementConfig* cfg) {
-  return EebusMeasurementBaseCreate(
-      kGcpPowerTotal,
-      kScopeTypeTypeACPowerTotal,
-      phases,
-      cfg,
-      EebusMeasurementBaseConfigurePower
-  );
+    return EebusMeasurementBaseCreate(
+        kGcpPowerTotal,
+        kScopeTypeTypeACPowerTotal,
+        phases,
+        cfg,
+        EebusMeasurementBaseConfigurePower
+    );
 }
 
 EebusMeasurementObject* GcpMgcpMeasurementCreate(GcpMeasurementNameId name, const GcpMgcpMeasurementConfig* cfg) {
-  ScopeTypeType scope                        = (ScopeTypeType)0;
-  ElectricalConnectionPhaseNameType phase    = (ElectricalConnectionPhaseNameType)0;
-  EebusMeasurementConfigureStrategy strategy = NULL;
-  const int32_t measurement_group            = (int32_t)name & (int32_t)kGcpMonitorNameIdMask;
+    ScopeTypeType scope                        = (ScopeTypeType)0;
+    ElectricalConnectionPhaseNameType phase    = (ElectricalConnectionPhaseNameType)0;
+    EebusMeasurementConfigureStrategy strategy = NULL;
+    const int32_t measurement_group            = (int32_t)name & (int32_t)kGcpMonitorNameIdMask;
 
-  if (measurement_group == kGcpMonitorPower) {
-    // kGcpPowerTotal is the only power measurement; use GcpMgcpMeasurementPowerTotalCreate() instead
-    return NULL;
-  } else if (measurement_group == kGcpMonitorEnergy) {
-    scope    = GetEnergyScopeType(name);
-    phase    = kElectricalConnectionPhaseNameTypeNone;
-    strategy = EebusMeasurementBaseConfigureEnergy;
-  } else if (measurement_group == kGcpMonitorCurrent) {
-    scope    = kScopeTypeTypeACCurrent;
-    phase    = GetCurrentPhase(name);
-    strategy = EebusMeasurementBaseConfigureCurrent;
-  } else if (measurement_group == kGcpMonitorVoltage) {
-    scope    = kScopeTypeTypeACVoltage;
-    phase    = GetVoltagePhase(name);
-    strategy = EebusMeasurementBaseConfigureVoltage;
-  } else if (measurement_group == kGcpMonitorFrequency) {
-    scope    = kScopeTypeTypeACFrequency;
-    phase    = kElectricalConnectionPhaseNameTypeNone;
-    strategy = EebusMeasurementBaseConfigureFrequency;
-  } else {
-    return NULL;
-  }
+    if (measurement_group == kGcpMonitorPower) {
+        // kGcpPowerTotal is the only power measurement; use GcpMgcpMeasurementPowerTotalCreate() instead
+        return NULL;
+    } else if (measurement_group == kGcpMonitorEnergy) {
+        scope    = GetEnergyScopeType(name);
+        phase    = kElectricalConnectionPhaseNameTypeNone;
+        strategy = EebusMeasurementBaseConfigureEnergy;
+    } else if (measurement_group == kGcpMonitorCurrent) {
+        scope    = kScopeTypeTypeACCurrent;
+        phase    = GetCurrentPhase(name);
+        strategy = EebusMeasurementBaseConfigureCurrent;
+    } else if (measurement_group == kGcpMonitorVoltage) {
+        scope    = kScopeTypeTypeACVoltage;
+        phase    = GetVoltagePhase(name);
+        strategy = EebusMeasurementBaseConfigureVoltage;
+    } else if (measurement_group == kGcpMonitorFrequency) {
+        scope    = kScopeTypeTypeACFrequency;
+        phase    = kElectricalConnectionPhaseNameTypeNone;
+        strategy = EebusMeasurementBaseConfigureFrequency;
+    } else {
+        return NULL;
+    }
 
-  return EebusMeasurementBaseCreate(name, scope, phase, cfg, strategy);
+    return EebusMeasurementBaseCreate(name, scope, phase, cfg, strategy);
 }

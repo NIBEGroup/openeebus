@@ -27,12 +27,12 @@
 typedef struct WebsocketClientCreator WebsocketClientCreator;
 
 struct WebsocketClientCreator {
-  /** Implements the Websocket Creator Uri Interface */
-  WebsocketCreatorObject obj;
+    /** Implements the Websocket Creator Uri Interface */
+    WebsocketCreatorObject obj;
 
-  const char* uri;
-  TlsCertificateObject* tls_cert;
-  const char* remote_ski;
+    const char* uri;
+    TlsCertificateObject* tls_cert;
+    const char* remote_ski;
 };
 
 #define WEBSOCKET_CLIENT_CREATOR(obj) ((WebsocketClientCreator*)(obj))
@@ -58,34 +58,34 @@ void WebsocketClientCreatorConstruct(
     TlsCertificateObject* tls_cert,
     const char* remote_ski
 ) {
-  // Override "virtual functions table"
-  WEBSOCKET_CREATOR_INTERFACE(self) = &websocket_creator_methods;
+    // Override "virtual functions table"
+    WEBSOCKET_CREATOR_INTERFACE(self) = &websocket_creator_methods;
 
-  self->uri        = StringCopy(uri);
-  self->tls_cert   = tls_cert;
-  self->remote_ski = StringCopy(remote_ski);
+    self->uri        = StringCopy(uri);
+    self->tls_cert   = tls_cert;
+    self->remote_ski = StringCopy(remote_ski);
 }
 
 WebsocketCreatorObject*
 WebsocketClientCreatorCreate(const char* uri, TlsCertificateObject* tls_cert, const char* remote_ski) {
-  WebsocketClientCreator* const websocket_creator
-      = (WebsocketClientCreator*)EEBUS_MALLOC(sizeof(WebsocketClientCreator));
+    WebsocketClientCreator* const websocket_creator
+        = (WebsocketClientCreator*)EEBUS_MALLOC(sizeof(WebsocketClientCreator));
 
-  WebsocketClientCreatorConstruct(websocket_creator, uri, tls_cert, remote_ski);
+    WebsocketClientCreatorConstruct(websocket_creator, uri, tls_cert, remote_ski);
 
-  return WEBSOCKET_CREATOR_OBJECT(websocket_creator);
+    return WEBSOCKET_CREATOR_OBJECT(websocket_creator);
 }
 
 void Destruct(WebsocketCreatorObject* self) {
-  WebsocketClientCreator* const ws = WEBSOCKET_CLIENT_CREATOR(self);
-  StringDelete((char*)ws->uri);
-  ws->uri = NULL;
+    WebsocketClientCreator* const ws = WEBSOCKET_CLIENT_CREATOR(self);
+    StringDelete((char*)ws->uri);
+    ws->uri = NULL;
 
-  StringDelete((char*)ws->remote_ski);
-  ws->remote_ski = NULL;
+    StringDelete((char*)ws->remote_ski);
+    ws->remote_ski = NULL;
 }
 
 WebsocketObject* Create(WebsocketCreatorObject* self, WebsocketCallback cb, void* ctx) {
-  WebsocketClientCreator* const wsc = WEBSOCKET_CLIENT_CREATOR(self);
-  return WebsocketClientOpen(wsc->uri, wsc->tls_cert, wsc->remote_ski, cb, ctx);
+    WebsocketClientCreator* const wsc = WEBSOCKET_CLIENT_CREATOR(self);
+    return WebsocketClientOpen(wsc->uri, wsc->tls_cert, wsc->remote_ski, cb, ctx);
 }

@@ -29,10 +29,10 @@
 typedef struct WebsocketCreatorWsi WebsocketCreatorWsi;
 
 struct WebsocketCreatorWsi {
-  /** Implements the Websocket Creator Wsi Interface */
-  WebsocketCreatorObject obj;
-  HttpServerObject* srv;
-  struct lws* wsi;
+    /** Implements the Websocket Creator Wsi Interface */
+    WebsocketCreatorObject obj;
+    HttpServerObject* srv;
+    struct lws* wsi;
 };
 
 #define WEBSOCKET_SERVER_CREATOR(obj) ((WebsocketCreatorWsi*)(obj))
@@ -48,27 +48,27 @@ static const WebsocketCreatorInterface websocket_creator_methods = {
 static void WebsocketCreatorConstruct(WebsocketCreatorWsi* self, HttpServerObject* srv, struct lws* wsi);
 
 void WebsocketCreatorConstruct(WebsocketCreatorWsi* self, HttpServerObject* srv, struct lws* wsi) {
-  // Override "virtual functions table"
-  WEBSOCKET_CREATOR_INTERFACE(self) = &websocket_creator_methods;
+    // Override "virtual functions table"
+    WEBSOCKET_CREATOR_INTERFACE(self) = &websocket_creator_methods;
 
-  self->srv = srv;
-  self->wsi = wsi;
+    self->srv = srv;
+    self->wsi = wsi;
 }
 
 WebsocketCreatorObject* WebsocketServerCreatorCreate(HttpServerObject* srv, struct lws* wsi) {
-  WebsocketCreatorWsi* const websocket_creator = (WebsocketCreatorWsi*)EEBUS_MALLOC(sizeof(WebsocketCreatorWsi));
+    WebsocketCreatorWsi* const websocket_creator = (WebsocketCreatorWsi*)EEBUS_MALLOC(sizeof(WebsocketCreatorWsi));
 
-  WebsocketCreatorConstruct(websocket_creator, srv, wsi);
+    WebsocketCreatorConstruct(websocket_creator, srv, wsi);
 
-  return WEBSOCKET_CREATOR_OBJECT(websocket_creator);
+    return WEBSOCKET_CREATOR_OBJECT(websocket_creator);
 }
 
 void Destruct(WebsocketCreatorObject* self) {
-  UNUSED(self);
-  // WSI release is handled by the WebsocketServer, since it provides the WSI
+    UNUSED(self);
+    // WSI release is handled by the WebsocketServer, since it provides the WSI
 }
 
 WebsocketObject* Create(WebsocketCreatorObject* self, WebsocketCallback cb, void* ctx) {
-  WebsocketCreatorWsi* const wsc = WEBSOCKET_SERVER_CREATOR(self);
-  return WebsocketServerOpen(wsc->srv, wsc->wsi, cb, ctx);
+    WebsocketCreatorWsi* const wsc = WEBSOCKET_SERVER_CREATOR(self);
+    return WebsocketServerOpen(wsc->srv, wsc->wsi, cb, ctx);
 }

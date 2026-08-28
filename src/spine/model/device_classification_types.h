@@ -35,61 +35,61 @@ typedef const char* DeviceClassificationStringType;
 typedef int32_t PowerSourceType;
 
 enum {
-  kPowerSourceTypeUnknown,          /**< "unknown" */
-  kPowerSourceTypeMainssinglephase, /**< "mainsSinglePhase" */
-  kPowerSourceTypeMains3Phase,      /**< "mains3Phase" */
-  kPowerSourceTypeBattery,          /**< "battery" */
-  kPowerSourceTypeDc,               /**< "dc" */
+    kPowerSourceTypeUnknown,          /**< "unknown" */
+    kPowerSourceTypeMainssinglephase, /**< "mainsSinglePhase" */
+    kPowerSourceTypeMains3Phase,      /**< "mains3Phase" */
+    kPowerSourceTypeBattery,          /**< "battery" */
+    kPowerSourceTypeDc,               /**< "dc" */
 };
 
 typedef struct DeviceClassificationManufacturerDataType DeviceClassificationManufacturerDataType;
 
 struct DeviceClassificationManufacturerDataType {
-  DeviceClassificationStringType device_name;                      /**< "deviceName" */
-  DeviceClassificationStringType device_code;                      /**< "deviceCode" */
-  DeviceClassificationStringType serial_number;                    /**< "serialNumber" */
-  DeviceClassificationStringType software_revision;                /**< "softwareRevision" */
-  DeviceClassificationStringType hardware_revision;                /**< "hardwareRevision" */
-  DeviceClassificationStringType vendor_name;                      /**< "vendorName" */
-  DeviceClassificationStringType vendor_code;                      /**< "vendorCode" */
-  DeviceClassificationStringType brand_name;                       /**< "brandName" */
-  const PowerSourceType* power_source;                             /**< "powerSource" */
-  DeviceClassificationStringType manufacturer_node_identification; /**< "manufacturerNodeIdentification" */
-  LabelType manufacturer_label;                                    /**< "manufacturerLabel" */
-  DescriptionType manufacturer_description;                        /**< "manufacturerDescription" */
+    DeviceClassificationStringType device_name;                      /**< "deviceName" */
+    DeviceClassificationStringType device_code;                      /**< "deviceCode" */
+    DeviceClassificationStringType serial_number;                    /**< "serialNumber" */
+    DeviceClassificationStringType software_revision;                /**< "softwareRevision" */
+    DeviceClassificationStringType hardware_revision;                /**< "hardwareRevision" */
+    DeviceClassificationStringType vendor_name;                      /**< "vendorName" */
+    DeviceClassificationStringType vendor_code;                      /**< "vendorCode" */
+    DeviceClassificationStringType brand_name;                       /**< "brandName" */
+    const PowerSourceType* power_source;                             /**< "powerSource" */
+    DeviceClassificationStringType manufacturer_node_identification; /**< "manufacturerNodeIdentification" */
+    LabelType manufacturer_label;                                    /**< "manufacturerLabel" */
+    DescriptionType manufacturer_description;                        /**< "manufacturerDescription" */
 };
 
 typedef struct DeviceClassificationManufacturerDataElementsType DeviceClassificationManufacturerDataElementsType;
 
 struct DeviceClassificationManufacturerDataElementsType {
-  ElementTagType device_name;                      /**< "deviceName" */
-  ElementTagType device_code;                      /**< "deviceCode" */
-  ElementTagType serial_number;                    /**< "serialNumber" */
-  ElementTagType software_revision;                /**< "softwareRevision" */
-  ElementTagType hardware_revision;                /**< "hardwareRevision" */
-  ElementTagType vendor_name;                      /**< "vendorName" */
-  ElementTagType vendor_code;                      /**< "vendorCode" */
-  ElementTagType brand_name;                       /**< "brandName" */
-  ElementTagType power_source;                     /**< "powerSource" */
-  ElementTagType manufacturer_node_identification; /**< "manufacturerNodeIdentification" */
-  ElementTagType manufacturer_label;               /**< "manufacturerLabel" */
-  ElementTagType manufacturer_description;         /**< "manufacturerDescription" */
+    ElementTagType device_name;                      /**< "deviceName" */
+    ElementTagType device_code;                      /**< "deviceCode" */
+    ElementTagType serial_number;                    /**< "serialNumber" */
+    ElementTagType software_revision;                /**< "softwareRevision" */
+    ElementTagType hardware_revision;                /**< "hardwareRevision" */
+    ElementTagType vendor_name;                      /**< "vendorName" */
+    ElementTagType vendor_code;                      /**< "vendorCode" */
+    ElementTagType brand_name;                       /**< "brandName" */
+    ElementTagType power_source;                     /**< "powerSource" */
+    ElementTagType manufacturer_node_identification; /**< "manufacturerNodeIdentification" */
+    ElementTagType manufacturer_label;               /**< "manufacturerLabel" */
+    ElementTagType manufacturer_description;         /**< "manufacturerDescription" */
 };
 
 typedef struct DeviceClassificationUserDataType DeviceClassificationUserDataType;
 
 struct DeviceClassificationUserDataType {
-  DeviceClassificationStringType user_node_identification; /**< "userNodeIdentification" */
-  LabelType user_label;                                    /**< "userLabel" */
-  DescriptionType user_description;                        /**< "userDescription" */
+    DeviceClassificationStringType user_node_identification; /**< "userNodeIdentification" */
+    LabelType user_label;                                    /**< "userLabel" */
+    DescriptionType user_description;                        /**< "userDescription" */
 };
 
 typedef struct DeviceClassificationUserDataElementsType DeviceClassificationUserDataElementsType;
 
 struct DeviceClassificationUserDataElementsType {
-  ElementTagType user_node_identification; /**< "userNodeIdentification" */
-  ElementTagType user_label;               /**< "userLabel" */
-  ElementTagType user_description;         /**< "userDescription" */
+    ElementTagType user_node_identification; /**< "userNodeIdentification" */
+    ElementTagType user_label;               /**< "userLabel" */
+    ElementTagType user_description;         /**< "userDescription" */
 };
 
 #ifdef __cplusplus

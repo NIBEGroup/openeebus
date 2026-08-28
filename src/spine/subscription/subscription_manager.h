@@ -34,10 +34,10 @@ extern "C" {
 SubscriptionManagerObject* SubscriptionManagerCreate(DeviceLocalObject* local_device);
 
 static inline void SubscriptionManagerDelete(SubscriptionManagerObject* subscription_manager) {
-  if (subscription_manager != NULL) {
-    SUBSCRIPTION_MANAGER_DESTRUCT(subscription_manager);
-    EEBUS_FREE(subscription_manager);
-  }
+    if (subscription_manager != NULL) {
+        SUBSCRIPTION_MANAGER_DESTRUCT(subscription_manager);
+        EEBUS_FREE(subscription_manager);
+    }
 }
 
 #ifdef __cplusplus

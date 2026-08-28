@@ -25,37 +25,43 @@
 
 static void MessageBufferDeallocatorDefault(void* data);
 
-void MessageBufferDeallocatorDefault(void* data) { EEBUS_FREE(data); }
+void MessageBufferDeallocatorDefault(void* data) {
+    EEBUS_FREE(data);
+}
 
 void MessageBufferInit(MessageBuffer* msg_buf, uint8_t* data, size_t data_size) {
-  MessageBufferInitWithDeallocator(msg_buf, data, data_size, MessageBufferDeallocatorDefault);
+    MessageBufferInitWithDeallocator(msg_buf, data, data_size, MessageBufferDeallocatorDefault);
 }
 
 void MessageBufferInitWithDeallocator(
-    MessageBuffer* msg_buf, uint8_t* data, size_t data_size, MessageBufferDeallocator deallocator) {
-  msg_buf->data        = data;
-  msg_buf->data_size   = data_size;
-  msg_buf->deallocator = deallocator;
+    MessageBuffer* msg_buf,
+    uint8_t* data,
+    size_t data_size,
+    MessageBufferDeallocator deallocator
+) {
+    msg_buf->data        = data;
+    msg_buf->data_size   = data_size;
+    msg_buf->deallocator = deallocator;
 }
 
 void MessageBufferRelease(MessageBuffer* msg_buf) {
-  if ((msg_buf->deallocator != NULL) && (msg_buf->data != NULL)) {
-    msg_buf->deallocator(msg_buf->data);
-  }
+    if ((msg_buf->deallocator != NULL) && (msg_buf->data != NULL)) {
+        msg_buf->deallocator(msg_buf->data);
+    }
 
-  msg_buf->data        = NULL;
-  msg_buf->data_size   = 0;
-  msg_buf->deallocator = NULL;
+    msg_buf->data        = NULL;
+    msg_buf->data_size   = 0;
+    msg_buf->deallocator = NULL;
 }
 
 void MessageBufferMove(MessageBuffer* src, MessageBuffer* dst) {
-  MessageBufferRelease(dst);
+    MessageBufferRelease(dst);
 
-  dst->data        = src->data;
-  dst->data_size   = src->data_size;
-  dst->deallocator = src->deallocator;
+    dst->data        = src->data;
+    dst->data_size   = src->data_size;
+    dst->deallocator = src->deallocator;
 
-  src->data        = NULL;
-  src->data_size   = 0;
-  src->deallocator = 0;
+    src->data        = NULL;
+    src->data_size   = 0;
+    src->deallocator = 0;
 }

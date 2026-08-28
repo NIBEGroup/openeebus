@@ -35,10 +35,10 @@ extern "C" {
 HeartbeatManagerObject* HeartbeatManagerCreate(EntityLocalObject* local_entity, uint32_t period);
 
 static inline void HeartbeatManagerDelete(HeartbeatManagerObject* heartbeat_manager) {
-  if (heartbeat_manager != NULL) {
-    HEARTBEAT_MANAGER_DESTRUCT(heartbeat_manager);
-    EEBUS_FREE(heartbeat_manager);
-  }
+    if (heartbeat_manager != NULL) {
+        HEARTBEAT_MANAGER_DESTRUCT(heartbeat_manager);
+        EEBUS_FREE(heartbeat_manager);
+    }
 }
 
 #ifdef __cplusplus

@@ -32,8 +32,8 @@
 typedef struct HemsObject HemsObject;
 
 struct HemsObject {
-  /** Implement service reader interface */
-  ServiceReaderObject service_reader;
+    /** Implement service reader interface */
+    ServiceReaderObject service_reader;
 };
 
 #define HEMS_OBJECT(obj) ((HemsObject*)(obj))
@@ -48,10 +48,10 @@ struct HemsObject {
 HemsObject* HemsOpen(int32_t port, const char* role, TlsCertificateObject* tls_certificate);
 
 static inline void HemsClose(HemsObject* hpsrv) {
-  if (hpsrv != NULL) {
-    SERVICE_READER_DESTRUCT(SERVICE_READER_OBJECT(hpsrv));
-    EEBUS_FREE(hpsrv);
-  }
+    if (hpsrv != NULL) {
+        SERVICE_READER_DESTRUCT(SERVICE_READER_OBJECT(hpsrv));
+        EEBUS_FREE(hpsrv);
+    }
 }
 
 /**

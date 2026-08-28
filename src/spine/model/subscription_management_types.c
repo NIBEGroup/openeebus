@@ -18,13 +18,16 @@
 #include "src/spine/model/model.h"
 
 SubscriptionManagementEntryDataType* SubscriptionManagementEntryDataCreate(
-    SubscriptionIdType id, const FeatureAddressType* server_addr, const FeatureAddressType* client_addr) {
-  SubscriptionManagementEntryDataType subscription_entry_data_tmp = {
-      .subscription_id = &id,
-      .client_address  = client_addr,
-      .server_address  = server_addr,
-  };
+    SubscriptionIdType id,
+    const FeatureAddressType* server_addr,
+    const FeatureAddressType* client_addr
+) {
+    SubscriptionManagementEntryDataType subscription_entry_data_tmp = {
+        .subscription_id = &id,
+        .client_address  = client_addr,
+        .server_address  = server_addr,
+    };
 
-  const EebusDataCfg* const cfg = ModelGetSubscriptionManagementEntryDataCfg();
-  return ModelDataCopy(cfg, &subscription_entry_data_tmp);
+    const EebusDataCfg* const cfg = ModelGetSubscriptionManagementEntryDataCfg();
+    return ModelDataCopy(cfg, &subscription_entry_data_tmp);
 }

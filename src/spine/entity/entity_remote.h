@@ -30,14 +30,14 @@
 extern "C" {
 #endif  // __cplusplus
 
-EntityRemoteObject* EntityRemoteCreate(
-    DeviceRemoteObject* device, EntityTypeType type, const uint32_t* entity_id, size_t entity_id_size);
+EntityRemoteObject*
+EntityRemoteCreate(DeviceRemoteObject* device, EntityTypeType type, const uint32_t* entity_id, size_t entity_id_size);
 
 static inline void EntityRemoteDelete(EntityRemoteObject* entity_remote) {
-  if (entity_remote != NULL) {
-    ENTITY_DESTRUCT(ENTITY_OBJECT(entity_remote));
-    EEBUS_FREE(entity_remote);
-  }
+    if (entity_remote != NULL) {
+        ENTITY_DESTRUCT(ENTITY_OBJECT(entity_remote));
+        EEBUS_FREE(entity_remote);
+    }
 }
 
 #ifdef __cplusplus

@@ -47,20 +47,20 @@ typedef struct PendingReplyObject PendingReplyObject;
  * @brief Pending Reply Interface Structure
  */
 struct PendingReplyInterface {
-  void (*destruct)(PendingReplyObject* self);
-  MsgCounterType (*get_msg_cnt_ref)(const PendingReplyObject* self);
-  const FeatureAddressType* (*get_remote_feature_address)(const PendingReplyObject* self);
-  const char* (*get_ski)(const PendingReplyObject* self);
-  bool (*has_expired)(const PendingReplyObject* self);
-  void (*update_time)(PendingReplyObject* self);
-  void (*fire)(const PendingReplyObject* self, const ReplyMessage* reply_msg, EebusError err);
+    void (*destruct)(PendingReplyObject* self);
+    MsgCounterType (*get_msg_cnt_ref)(const PendingReplyObject* self);
+    const FeatureAddressType* (*get_remote_feature_address)(const PendingReplyObject* self);
+    const char* (*get_ski)(const PendingReplyObject* self);
+    bool (*has_expired)(const PendingReplyObject* self);
+    void (*update_time)(PendingReplyObject* self);
+    void (*fire)(const PendingReplyObject* self, const ReplyMessage* reply_msg, EebusError err);
 };
 
 /**
  * @brief Pending Reply Object Structure
  */
 struct PendingReplyObject {
-  const PendingReplyInterface* interface_;
+    const PendingReplyInterface* interface_;
 };
 
 /**

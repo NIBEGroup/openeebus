@@ -46,22 +46,22 @@ typedef struct MaMpcListenerObject MaMpcListenerObject;
  * @brief MaMpcListener Interface Structure
  */
 struct MaMpcListenerInterface {
-  void (*destruct)(MaMpcListenerObject* self);
-  void (*on_remote_mu_added)(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
-  void (*on_remote_mu_removed)(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
-  void (*on_measurement_receive)(
-      MaMpcListenerObject* self,
-      MuMpcMeasurementNameId name_id,
-      const ScaledValue* measurement_value,
-      const EntityAddressType* remote_entity_addr
-  );
+    void (*destruct)(MaMpcListenerObject* self);
+    void (*on_remote_mu_added)(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
+    void (*on_remote_mu_removed)(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
+    void (*on_measurement_receive)(
+        MaMpcListenerObject* self,
+        MuMpcMeasurementNameId name_id,
+        const ScaledValue* measurement_value,
+        const EntityAddressType* remote_entity_addr
+    );
 };
 
 /**
  * @brief Ma Mpc Listener Object Structure
  */
 struct MaMpcListenerObject {
-  const MaMpcListenerInterface* interface;
+    const MaMpcListenerInterface* interface;
 };
 
 /**
@@ -83,19 +83,19 @@ struct MaMpcListenerObject {
  * @brief Ma Mpc Listener On Remote MU Added caller definition
  */
 #define MA_MPC_LISTENER_ON_REMOTE_MU_ADDED(obj, entity_addr) \
-  (MA_MPC_LISTENER_INTERFACE(obj)->on_remote_mu_added(obj, entity_addr))
+    (MA_MPC_LISTENER_INTERFACE(obj)->on_remote_mu_added(obj, entity_addr))
 
 /**
  * @brief Ma Mpc Listener On Remote MU Removed caller definition
  */
 #define MA_MPC_LISTENER_ON_REMOTE_MU_REMOVED(obj, entity_addr) \
-  (MA_MPC_LISTENER_INTERFACE(obj)->on_remote_mu_removed(obj, entity_addr))
+    (MA_MPC_LISTENER_INTERFACE(obj)->on_remote_mu_removed(obj, entity_addr))
 
 /**
  * @brief Ma Mpc Listener On Measurement Receive caller definition
  */
 #define MA_MPC_LISTENER_ON_MEASUREMENT_RECEIVE(obj, name_id, measurement_value, remote_entity_addr) \
-  (MA_MPC_LISTENER_INTERFACE(obj)->on_measurement_receive(obj, name_id, measurement_value, remote_entity_addr))
+    (MA_MPC_LISTENER_INTERFACE(obj)->on_measurement_receive(obj, name_id, measurement_value, remote_entity_addr))
 
 #ifdef __cplusplus
 }

@@ -54,49 +54,57 @@ typedef struct DeviceRemoteObject DeviceRemoteObject;
  * @brief DeviceRemote Interface Structure
  */
 struct DeviceRemoteInterface {
-  /** Extends DeviceInterface */
-  DeviceInterface device_interface;
+    /** Extends DeviceInterface */
+    DeviceInterface device_interface;
 
-  DeviceLocalObject* (*get_local_device)(const DeviceRemoteObject* self);
-  const char* (*get_ski)(const DeviceRemoteObject* self);
-  DataReaderObject* (*get_data_reader)(const DeviceRemoteObject* self);
-  void (*add_entity)(DeviceRemoteObject* self, EntityRemoteObject* entity);
-  EntityRemoteObject* (*release_entity)(
-      DeviceRemoteObject* self,
-      const uint32_t* const* entity_ids,
-      size_t entity_ids_size
-  );
-  EntityRemoteObject* (*get_entity)(
-      const DeviceRemoteObject* self,
-      const uint32_t* const* entity_ids,
-      size_t entity_ids_size
-  );
-  const Vector* (*get_entities)(const DeviceRemoteObject* self);
-  FeatureRemoteObject* (*get_feature_with_address)(
-      const DeviceRemoteObject* self, const FeatureAddressType* feature_addr);
-  FeatureRemoteObject* (*get_feature_with_type_and_role)(
-      const DeviceRemoteObject* self,
-      const uint32_t* const* entity_ids,
-      size_t entity_ids_size,
-      FeatureTypeType feature_type,
-      RoleType role
-  );
-  EebusError (*handle_spine_messsage)(DeviceRemoteObject* self, MessageBuffer* msg);
-  NodeManagementRemoteObject* (*get_node_management)(const DeviceRemoteObject* self);
-  SenderObject* (*get_sender)(const DeviceRemoteObject* self);
-  NodeManagementUseCaseDataType* (*use_cases_data_copy)(const DeviceRemoteObject* self);
-  void (*update_device)(DeviceRemoteObject* self, const NetworkManagementDeviceDescriptionDataType* description);
-  const Vector* (*add_entity_and_features)(
-      DeviceRemoteObject* self, bool init, const NodeManagementDetailedDiscoveryDataType* data);
-  EebusError (*check_entity_information)(const DeviceRemoteObject* self, bool init,
-      const NodeManagementDetailedDiscoveryEntityInformationType* entity_info);
+    DeviceLocalObject* (*get_local_device)(const DeviceRemoteObject* self);
+    const char* (*get_ski)(const DeviceRemoteObject* self);
+    DataReaderObject* (*get_data_reader)(const DeviceRemoteObject* self);
+    void (*add_entity)(DeviceRemoteObject* self, EntityRemoteObject* entity);
+    EntityRemoteObject* (*release_entity)(
+        DeviceRemoteObject* self,
+        const uint32_t* const* entity_ids,
+        size_t entity_ids_size
+    );
+    EntityRemoteObject* (*get_entity)(
+        const DeviceRemoteObject* self,
+        const uint32_t* const* entity_ids,
+        size_t entity_ids_size
+    );
+    const Vector* (*get_entities)(const DeviceRemoteObject* self);
+    FeatureRemoteObject* (*get_feature_with_address)(
+        const DeviceRemoteObject* self,
+        const FeatureAddressType* feature_addr
+    );
+    FeatureRemoteObject* (*get_feature_with_type_and_role)(
+        const DeviceRemoteObject* self,
+        const uint32_t* const* entity_ids,
+        size_t entity_ids_size,
+        FeatureTypeType feature_type,
+        RoleType role
+    );
+    EebusError (*handle_spine_messsage)(DeviceRemoteObject* self, MessageBuffer* msg);
+    NodeManagementRemoteObject* (*get_node_management)(const DeviceRemoteObject* self);
+    SenderObject* (*get_sender)(const DeviceRemoteObject* self);
+    NodeManagementUseCaseDataType* (*use_cases_data_copy)(const DeviceRemoteObject* self);
+    void (*update_device)(DeviceRemoteObject* self, const NetworkManagementDeviceDescriptionDataType* description);
+    const Vector* (*add_entity_and_features)(
+        DeviceRemoteObject* self,
+        bool init,
+        const NodeManagementDetailedDiscoveryDataType* data
+    );
+    EebusError (*check_entity_information)(
+        const DeviceRemoteObject* self,
+        bool init,
+        const NodeManagementDetailedDiscoveryEntityInformationType* entity_info
+    );
 };
 
 /**
  * @brief Device Remote Object Structure
  */
 struct DeviceRemoteObject {
-  const DeviceRemoteInterface* interface_;
+    const DeviceRemoteInterface* interface_;
 };
 
 /**
@@ -133,13 +141,13 @@ struct DeviceRemoteObject {
  * @brief Device Remote Release Entity caller definition
  */
 #define DEVICE_REMOTE_RELEASE_ENTITY(obj, entity_ids, entity_ids_size) \
-  (DEVICE_REMOTE_INTERFACE(obj)->release_entity(obj, entity_ids, entity_ids_size))
+    (DEVICE_REMOTE_INTERFACE(obj)->release_entity(obj, entity_ids, entity_ids_size))
 
 /**
  * @brief Device Remote Get Entity caller definition
  */
 #define DEVICE_REMOTE_GET_ENTITY(obj, entity_ids, entity_ids_size) \
-  (DEVICE_REMOTE_INTERFACE(obj)->get_entity(obj, entity_ids, entity_ids_size))
+    (DEVICE_REMOTE_INTERFACE(obj)->get_entity(obj, entity_ids, entity_ids_size))
 
 /**
  * @brief Device Remote Get Entities caller definition
@@ -150,13 +158,13 @@ struct DeviceRemoteObject {
  * @brief Device Remote Get Feature With Address caller definition
  */
 #define DEVICE_REMOTE_GET_FEATURE_WITH_ADDRESS(obj, feature_addr) \
-  (DEVICE_REMOTE_INTERFACE(obj)->get_feature_with_address(obj, feature_addr))
+    (DEVICE_REMOTE_INTERFACE(obj)->get_feature_with_address(obj, feature_addr))
 
 /**
  * @brief Device Remote Get Feature With Type And Role caller definition
  */
 #define DEVICE_REMOTE_GET_FEATURE_WITH_TYPE_AND_ROLE(obj, entity_ids, entity_ids_size, feature_type, role) \
-  (DEVICE_REMOTE_INTERFACE(obj)->get_feature_with_type_and_role(obj, entity_ids, entity_ids_size, feature_type, role))
+    (DEVICE_REMOTE_INTERFACE(obj)->get_feature_with_type_and_role(obj, entity_ids, entity_ids_size, feature_type, role))
 
 /**
  * @brief Device Remote Handle Spine Messsage caller definition
@@ -187,13 +195,13 @@ struct DeviceRemoteObject {
  * @brief Device Remote Add Entity And Features caller definition
  */
 #define DEVICE_REMOTE_ADD_ENTITY_AND_FEATURES(obj, init, data) \
-  (DEVICE_REMOTE_INTERFACE(obj)->add_entity_and_features(obj, init, data))
+    (DEVICE_REMOTE_INTERFACE(obj)->add_entity_and_features(obj, init, data))
 
 /**
  * @brief Device Remote Check Entity Information caller definition
  */
 #define DEVICE_REMOTE_CHECK_ENTITY_INFORMATION(obj, init, entity_info) \
-  (DEVICE_REMOTE_INTERFACE(obj)->check_entity_information(obj, init, entity_info))
+    (DEVICE_REMOTE_INTERFACE(obj)->check_entity_information(obj, init, entity_info))
 
 #ifdef __cplusplus
 }

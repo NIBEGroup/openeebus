@@ -37,11 +37,11 @@ void* EebusDataBaseParse(const EebusDataCfg* cfg, const char* s);
 
 char* EebusDataBasePrintUnformatted(const EebusDataCfg* cfg, const void* base_addr);
 
-EebusError EebusDataBaseFromJsonObject(
-    const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj, bool is_root);
+EebusError
+EebusDataBaseFromJsonObject(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj, bool is_root);
 
-EebusError EebusDataBaseToJsonObject(
-    const EebusDataCfg* cfg, const void* base_addr, JsonObject* json_obj, bool is_root);
+EebusError
+EebusDataBaseToJsonObject(const EebusDataCfg* cfg, const void* base_addr, JsonObject* json_obj, bool is_root);
 
 EebusError EebusDataBaseCopy(const EebusDataCfg* cfg, const void* base_addr, void* dst_base_addr);
 
@@ -57,18 +57,34 @@ bool EebusDataBaseHasIdentifiersFlags(const EebusDataCfg* cfg);
 bool EebusDataBaseHasIdentifiers(const EebusDataCfg* cfg, const void* base_addr);
 
 bool EebusDataBaseSelectorsMatch(
-    const EebusDataCfg* cfg, const void* base_addr, const EebusDataCfg* selectors_cfg, const void* selectors_base_addr);
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    const EebusDataCfg* selectors_cfg,
+    const void* selectors_base_addr
+);
 
 bool EebusDataBaseIdentifiersMatch(const EebusDataCfg* cfg, const void* base_addr, const void* src_base_addr);
 
 EebusError EebusDataBaseWriteElements(const EebusDataCfg* cfg, void* base_addr, const void* src_base_addr);
 
-EebusError EebusDataBaseWritePartial(const EebusDataCfg* cfg, void* base_addr, const void* src_base_addr,
-    const EebusDataCfg* selectors_cfg, const void* selectors_base_addr, SelectorsMatcher selectors_matcher);
+EebusError EebusDataBaseWritePartial(
+    const EebusDataCfg* cfg,
+    void* base_addr,
+    const void* src_base_addr,
+    const EebusDataCfg* selectors_cfg,
+    const void* selectors_base_addr,
+    SelectorsMatcher selectors_matcher
+);
 
-void EebusDataBaseDeletePartial(const EebusDataCfg* cfg, void* base_addr, const EebusDataCfg* selectors_cfg,
-    const void* selectors_base_addr, SelectorsMatcher selectors_matcher, const EebusDataCfg* elements_cfg,
-    const void* elements_base_addr);
+void EebusDataBaseDeletePartial(
+    const EebusDataCfg* cfg,
+    void* base_addr,
+    const EebusDataCfg* selectors_cfg,
+    const void* selectors_base_addr,
+    SelectorsMatcher selectors_matcher,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
 
 #ifdef __cplusplus
 }

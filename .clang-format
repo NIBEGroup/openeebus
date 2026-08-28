@@ -23,3 +23,4 @@ StatementMacros:
   - QT_REQUIRE_VERSION
 IncludeBlocks: Preserve
 AllowShortFunctionsOnASingleLine: Empty
+IndentWidth: 4

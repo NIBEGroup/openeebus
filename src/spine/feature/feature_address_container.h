@@ -33,7 +33,7 @@ extern "C" {
 typedef struct FeatureAddressContainer FeatureAddressContainer;
 
 struct FeatureAddressContainer {
-  Vector addresses;
+    Vector addresses;
 };
 
 void FeatureAddressContainerConstruct(FeatureAddressContainer* self);

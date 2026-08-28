@@ -44,15 +44,15 @@ typedef struct WebsocketCreatorObject WebsocketCreatorObject;
  * @brief WebsocketCreator Interface Structure
  */
 struct WebsocketCreatorInterface {
-  void (*destruct)(WebsocketCreatorObject* self);
-  WebsocketObject* (*create_websocket)(WebsocketCreatorObject* self, WebsocketCallback cb, void* ctx);
+    void (*destruct)(WebsocketCreatorObject* self);
+    WebsocketObject* (*create_websocket)(WebsocketCreatorObject* self, WebsocketCallback cb, void* ctx);
 };
 
 /**
  * @brief Websocket Creator Object Structure
  */
 struct WebsocketCreatorObject {
-  const WebsocketCreatorInterface* interface_;
+    const WebsocketCreatorInterface* interface_;
 };
 
 /**
@@ -74,7 +74,7 @@ struct WebsocketCreatorObject {
  * @brief Websocket Creator Create Websocket caller definition
  */
 #define WEBSOCKET_CREATOR_CREATE_WEBSOCKET(obj, cb, ctx) \
-  (WEBSOCKET_CREATOR_INTERFACE(obj)->create_websocket(obj, cb, ctx))
+    (WEBSOCKET_CREATOR_INTERFACE(obj)->create_websocket(obj, cb, ctx))
 
 #ifdef __cplusplus
 }

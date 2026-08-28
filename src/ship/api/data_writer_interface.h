@@ -54,21 +54,21 @@ typedef struct DataWriterObject DataWriterObject;
  * @brief Data Writer Interface Structure
  */
 struct DataWriterInterface {
-  void (*destruct)(DataWriterObject* self);
-  /**
-   * @brief Pass an outgoing SPINE message from a DeviceLocal to the SHIP
-   * connection (the SHIP message includes payload)
-   *
-   * Transformed from WriteShipMessageWithPayload()
-   */
-  void (*write_message)(DataWriterObject* self, const uint8_t* msg, size_t msg_size);
+    void (*destruct)(DataWriterObject* self);
+    /**
+     * @brief Pass an outgoing SPINE message from a DeviceLocal to the SHIP
+     * connection (the SHIP message includes payload)
+     *
+     * Transformed from WriteShipMessageWithPayload()
+     */
+    void (*write_message)(DataWriterObject* self, const uint8_t* msg, size_t msg_size);
 };
 
 /**
  * @brief Data Writer Object structure
  */
 struct DataWriterObject {
-  const DataWriterInterface* interface_;
+    const DataWriterInterface* interface_;
 };
 
 /**

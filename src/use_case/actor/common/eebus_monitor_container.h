@@ -33,8 +33,8 @@ extern "C" {
 #endif  // __cplusplus
 
 typedef struct EebusMonitorContainer {
-  Vector monitors;
-  EebusMutexObject* mutex;
+    Vector monitors;
+    EebusMutexObject* mutex;
 } EebusMonitorContainer;
 
 EebusError EebusMonitorContainerConstruct(EebusMonitorContainer* self);

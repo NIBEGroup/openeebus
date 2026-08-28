@@ -31,8 +31,8 @@ extern "C" {
 typedef struct NodeManagementObject NodeManagementObject;
 
 struct NodeManagementObject {
-  /** Inherits the Feature Local class */
-  FeatureLocalObject obj;
+    /** Inherits the Feature Local class */
+    FeatureLocalObject obj;
 };
 
 #define NODE_MANAGEMENT_OBJECT(obj) ((NodeManagementObject*)(obj))
@@ -40,10 +40,10 @@ struct NodeManagementObject {
 NodeManagementObject* NodeManagementCreate(uint32_t id, EntityLocalObject* entity);
 
 static inline void NodeMnagementDelete(NodeManagementObject* node_management) {
-  if (node_management != NULL) {
-    FEATURE_DESTRUCT(FEATURE_OBJECT(node_management));
-    EEBUS_FREE(node_management);
-  }
+    if (node_management != NULL) {
+        FEATURE_DESTRUCT(FEATURE_OBJECT(node_management));
+        EEBUS_FREE(node_management);
+    }
 }
 
 /**

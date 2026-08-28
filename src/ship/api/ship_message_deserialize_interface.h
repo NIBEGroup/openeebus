@@ -45,16 +45,16 @@ typedef struct ShipMessageDeserializeObject ShipMessageDeserializeObject;
  * @brief ShipMessageDeserialize Interface Structure
  */
 struct ShipMessageDeserializeInterface {
-  void (*destruct)(ShipMessageDeserializeObject* self);
-  MsgValueType (*get_value_type)(const ShipMessageDeserializeObject* self);
-  void* (*get_value)(const ShipMessageDeserializeObject* self);
+    void (*destruct)(ShipMessageDeserializeObject* self);
+    MsgValueType (*get_value_type)(const ShipMessageDeserializeObject* self);
+    void* (*get_value)(const ShipMessageDeserializeObject* self);
 };
 
 /**
  * @brief Ship Message Deserialize Object Structure
  */
 struct ShipMessageDeserializeObject {
-  const ShipMessageDeserializeInterface* interface_;
+    const ShipMessageDeserializeInterface* interface_;
 };
 
 /**

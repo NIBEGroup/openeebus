@@ -33,9 +33,9 @@ extern "C" {
 typedef struct EebusDate EebusDate;
 
 struct EebusDate {
-  int32_t year;  /**< Year (e.g. 1800, 2023 etc.) */
-  int32_t month; /**< Month of the year (1-12) */
-  int32_t day;   /**< Day of the month (1-31) */
+    int32_t year;  /**< Year (e.g. 1800, 2023 etc.) */
+    int32_t month; /**< Month of the year (1-12) */
+    int32_t day;   /**< Day of the month (1-31) */
 };
 
 int32_t EebusDateGetDaysInMonthNum(const EebusDate* self);

@@ -23,40 +23,41 @@
 #include <string.h>
 
 bool DeviceConfigurationKeyValueIsValid(const DeviceConfigurationKeyValueDataType* key_value) {
-  if (key_value == NULL) {
-    return false;
-  }
+    if (key_value == NULL) {
+        return false;
+    }
 
-  return (key_value->key_id != NULL) && (key_value->value != NULL);
+    return (key_value->key_id != NULL) && (key_value->value != NULL);
 }
 
 EebusError
 DeviceConfigurationKeyValueGetDuration(const DeviceConfigurationKeyValueDataType* key_value, DurationType* duration) {
-  if ((key_value == NULL) || (duration == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((key_value == NULL) || (duration == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  if ((key_value->value == NULL) || (key_value->value->duration == NULL)) {
-    return kEebusErrorNoChange;
-  }
+    if ((key_value->value == NULL) || (key_value->value->duration == NULL)) {
+        return kEebusErrorNoChange;
+    }
 
-  memcpy(duration, key_value->value->duration, sizeof(*duration));
-  return kEebusErrorOk;
+    memcpy(duration, key_value->value->duration, sizeof(*duration));
+    return kEebusErrorOk;
 }
 
-const ScaledNumberType* DeviceConfigurationKeyValueGetScaledNumber(const DeviceConfigurationKeyValueDataType* key_value
+const ScaledNumberType* DeviceConfigurationKeyValueGetScaledNumber(
+    const DeviceConfigurationKeyValueDataType* key_value
 ) {
-  if ((key_value == NULL) || (key_value->value == NULL)) {
-    return NULL;
-  }
+    if ((key_value == NULL) || (key_value->value == NULL)) {
+        return NULL;
+    }
 
-  return key_value->value->scaled_number;
+    return key_value->value->scaled_number;
 }
 
 bool DeviceConfigurationKeyValueIsChangeable(const DeviceConfigurationKeyValueDataType* key_value) {
-  if (key_value == NULL) {
-    return false;
-  }
+    if (key_value == NULL) {
+        return false;
+    }
 
-  return (key_value->is_value_changeable != NULL) && (*key_value->is_value_changeable);
+    return (key_value->is_value_changeable != NULL) && (*key_value->is_value_changeable);
 }

@@ -44,15 +44,15 @@ typedef struct EebusCliHandlerObject EebusCliHandlerObject;
  * @brief EebusCliHandler Interface Structure
  */
 struct EebusCliHandlerInterface {
-  void (*destruct)(EebusCliHandlerObject* self);
-  void (*handle_cmd)(const EebusCliHandlerObject* self, const char* const* tokens, size_t num_tokens);
+    void (*destruct)(EebusCliHandlerObject* self);
+    void (*handle_cmd)(const EebusCliHandlerObject* self, const char* const* tokens, size_t num_tokens);
 };
 
 /**
  * @brief EEBUS CLI Handler Object Structure
  */
 struct EebusCliHandlerObject {
-  const EebusCliHandlerInterface* interface_;
+    const EebusCliHandlerInterface* interface_;
 };
 
 /**
@@ -74,7 +74,7 @@ struct EebusCliHandlerObject {
  * @brief EEBUS CLI Handler Handle Cmd caller definition
  */
 #define EEBUS_CLI_HANDLER_HANDLE_CMD(obj, tokens, num_tokens) \
-  (EEBUS_CLI_HANDLER_INTERFACE(obj)->handle_cmd(obj, tokens, num_tokens))
+    (EEBUS_CLI_HANDLER_INTERFACE(obj)->handle_cmd(obj, tokens, num_tokens))
 
 #ifdef __cplusplus
 }

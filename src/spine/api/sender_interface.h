@@ -49,73 +49,73 @@ typedef struct SenderObject SenderObject;
  * @brief Sender Interface Structure
  */
 struct SenderInterface {
-  void (*destruct)(SenderObject* self);
-  EebusError (*read)(
-      SenderObject* self,
-      const FeatureAddressType* sender_addr,
-      const FeatureAddressType* dest_addr,
-      const CmdType* cmd,
-      uint64_t* msg_cnt
-  );
-  EebusError (*reply)(
-      SenderObject* self,
-      const HeaderType* request_header,
-      const FeatureAddressType* sender_addr,
-      const CmdType* cmd
-  );
-  EebusError (*notify)(
-      SenderObject* self,
-      const FeatureAddressType* sender_addr,
-      const FeatureAddressType* dest_addr,
-      const CmdType* cmd
-  );
-  EebusError (*write)(
-      SenderObject* self,
-      const FeatureAddressType* sender_addr,
-      const FeatureAddressType* dest_addr,
-      const CmdType* cmd,
-      uint64_t* msg_cnt
-  );
-  EebusError (*call_subscribe)(
-      SenderObject* self,
-      const FeatureAddressType* sender_addr,
-      const FeatureAddressType* dest_addr,
-      FeatureTypeType server_feature_type
-  );
-  EebusError (*call_unsubscribe)(
-      SenderObject* self,
-      const FeatureAddressType* sender_addr,
-      const FeatureAddressType* dest_addr
-  );
-  EebusError (*call_bind)(
-      SenderObject* self,
-      const FeatureAddressType* sender_addr,
-      const FeatureAddressType* dest_addr,
-      FeatureTypeType server_feature_type
-  );
-  EebusError (*call_unbind)(
-      SenderObject* self,
-      const FeatureAddressType* sender_addr,
-      const FeatureAddressType* dest_addr
-  );
-  EebusError (*result_success)(
-      SenderObject* self,
-      const HeaderType* request_header,
-      const FeatureAddressType* sender_addr
-  );
-  EebusError (*result_error)(
-      SenderObject* self,
-      const HeaderType* request_header,
-      const FeatureAddressType* sender_addr,
-      const ErrorType* err
-  );
+    void (*destruct)(SenderObject* self);
+    EebusError (*read)(
+        SenderObject* self,
+        const FeatureAddressType* sender_addr,
+        const FeatureAddressType* dest_addr,
+        const CmdType* cmd,
+        uint64_t* msg_cnt
+    );
+    EebusError (*reply)(
+        SenderObject* self,
+        const HeaderType* request_header,
+        const FeatureAddressType* sender_addr,
+        const CmdType* cmd
+    );
+    EebusError (*notify)(
+        SenderObject* self,
+        const FeatureAddressType* sender_addr,
+        const FeatureAddressType* dest_addr,
+        const CmdType* cmd
+    );
+    EebusError (*write)(
+        SenderObject* self,
+        const FeatureAddressType* sender_addr,
+        const FeatureAddressType* dest_addr,
+        const CmdType* cmd,
+        uint64_t* msg_cnt
+    );
+    EebusError (*call_subscribe)(
+        SenderObject* self,
+        const FeatureAddressType* sender_addr,
+        const FeatureAddressType* dest_addr,
+        FeatureTypeType server_feature_type
+    );
+    EebusError (*call_unsubscribe)(
+        SenderObject* self,
+        const FeatureAddressType* sender_addr,
+        const FeatureAddressType* dest_addr
+    );
+    EebusError (*call_bind)(
+        SenderObject* self,
+        const FeatureAddressType* sender_addr,
+        const FeatureAddressType* dest_addr,
+        FeatureTypeType server_feature_type
+    );
+    EebusError (*call_unbind)(
+        SenderObject* self,
+        const FeatureAddressType* sender_addr,
+        const FeatureAddressType* dest_addr
+    );
+    EebusError (*result_success)(
+        SenderObject* self,
+        const HeaderType* request_header,
+        const FeatureAddressType* sender_addr
+    );
+    EebusError (*result_error)(
+        SenderObject* self,
+        const HeaderType* request_header,
+        const FeatureAddressType* sender_addr,
+        const ErrorType* err
+    );
 };
 
 /**
  * @brief Sender Object Structure
  */
 struct SenderObject {
-  const SenderInterface* interface_;
+    const SenderInterface* interface_;
 };
 
 /**
@@ -137,13 +137,13 @@ struct SenderObject {
  * @brief Sender Read caller definition
  */
 #define SEND_READ(obj, sender_addr, dest_addr, cmd, msg_cnt) \
-  (SENDER_INTERFACE(obj)->read(obj, sender_addr, dest_addr, cmd, msg_cnt))
+    (SENDER_INTERFACE(obj)->read(obj, sender_addr, dest_addr, cmd, msg_cnt))
 
 /**
  * @brief Sender Reply caller definition
  */
 #define SEND_REPLY(obj, request_header, sender_addr, cmd) \
-  (SENDER_INTERFACE(obj)->reply(obj, request_header, sender_addr, cmd))
+    (SENDER_INTERFACE(obj)->reply(obj, request_header, sender_addr, cmd))
 
 /**
  * @brief Sender Notify caller definition
@@ -154,25 +154,25 @@ struct SenderObject {
  * @brief Sender Write caller definition
  */
 #define SEND_WRITE(obj, sender_addr, dest_addr, cmd, msg_cnt) \
-  (SENDER_INTERFACE(obj)->write(obj, sender_addr, dest_addr, cmd, msg_cnt))
+    (SENDER_INTERFACE(obj)->write(obj, sender_addr, dest_addr, cmd, msg_cnt))
 
 /**
  * @brief Sender Call Subscribe caller definition
  */
 #define SEND_CALL_SUBSCRIBE(obj, sender_addr, dest_addr, server_feature_type) \
-  (SENDER_INTERFACE(obj)->call_subscribe(obj, sender_addr, dest_addr, server_feature_type))
+    (SENDER_INTERFACE(obj)->call_subscribe(obj, sender_addr, dest_addr, server_feature_type))
 
 /**
  * @brief Sender Call Unsubscribe caller definition
  */
 #define SEND_CALL_UNSUBSCRIBE(obj, sender_addr, dest_addr) \
-  (SENDER_INTERFACE(obj)->call_unsubscribe(obj, sender_addr, dest_addr))
+    (SENDER_INTERFACE(obj)->call_unsubscribe(obj, sender_addr, dest_addr))
 
 /**
  * @brief Sender Call Bind caller definition
  */
 #define SEND_CALL_BIND(obj, sender_addr, dest_addr, server_feature_type) \
-  (SENDER_INTERFACE(obj)->call_bind(obj, sender_addr, dest_addr, server_feature_type))
+    (SENDER_INTERFACE(obj)->call_bind(obj, sender_addr, dest_addr, server_feature_type))
 
 /**
  * @brief Sender Call Unbind caller definition
@@ -183,13 +183,13 @@ struct SenderObject {
  * @brief Sender Result Success caller definition
  */
 #define SEND_RESULT_SUCCESS(obj, request_header, sender_addr) \
-  (SENDER_INTERFACE(obj)->result_success(obj, request_header, sender_addr))
+    (SENDER_INTERFACE(obj)->result_success(obj, request_header, sender_addr))
 
 /**
  * @brief Sender Result Error caller definition
  */
 #define SEND_RESULT_ERROR(obj, request_header, sender_addr, err) \
-  (SENDER_INTERFACE(obj)->result_error(obj, request_header, sender_addr, err))
+    (SENDER_INTERFACE(obj)->result_error(obj, request_header, sender_addr, err))
 
 #ifdef __cplusplus
 }

@@ -37,10 +37,10 @@ typedef void* (*EebusThreadRoutine)(void*);
 EebusThreadObject* EebusThreadCreate(EebusThreadRoutine routine, void* parameters, size_t stack_size);
 
 static inline void EebusThreadDelete(EebusThreadObject* eebus_thread) {
-  if (eebus_thread != NULL) {
-    EEBUS_THREAD_DESTRUCT(eebus_thread);
-    EEBUS_FREE(eebus_thread);
-  }
+    if (eebus_thread != NULL) {
+        EEBUS_THREAD_DESTRUCT(eebus_thread);
+        EEBUS_FREE(eebus_thread);
+    }
 }
 
 /**

@@ -23,48 +23,48 @@
 #include "src/spine/node_management/node_management_internal.h"
 
 BindingManagerObject* GetBindingManager(NodeManagement* self) {
-  const FeatureLocalObject* const fl = FEATURE_LOCAL_OBJECT(self);
-  const DeviceLocalObject* const dl  = FEATURE_LOCAL_GET_DEVICE(fl);
-  return DEVICE_LOCAL_GET_BINDING_MANAGER(dl);
+    const FeatureLocalObject* const fl = FEATURE_LOCAL_OBJECT(self);
+    const DeviceLocalObject* const dl  = FEATURE_LOCAL_GET_DEVICE(fl);
+    return DEVICE_LOCAL_GET_BINDING_MANAGER(dl);
 }
 
 EebusError HandleMsgBindingData(NodeManagement* self, const Message* msg) {
-  if (msg->cmd_classifier != kCommandClassifierTypeCall) {
-    return kEebusErrorNotImplemented;
-  }
+    if (msg->cmd_classifier != kCommandClassifierTypeCall) {
+        return kEebusErrorNotImplemented;
+    }
 
-  const BindingManagerObject* const bm = GetBindingManager(self);
+    const BindingManagerObject* const bm = GetBindingManager(self);
 
-  NodeManagementBindingDataType* const binding_data = BINDING_MANAGER_CREATE_BINDING_DATA(bm, msg->device_remote);
-  if (binding_data == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    NodeManagementBindingDataType* const binding_data = BINDING_MANAGER_CREATE_BINDING_DATA(bm, msg->device_remote);
+    if (binding_data == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  const EebusError err = NodeManagementSendReply(self, binding_data, kFunctionTypeNodeManagementBindingData, msg);
-  NodeManagementBindingDataDelete(binding_data);
-  return err;
+    const EebusError err = NodeManagementSendReply(self, binding_data, kFunctionTypeNodeManagementBindingData, msg);
+    NodeManagementBindingDataDelete(binding_data);
+    return err;
 }
 
 EebusError HandleMsgBindingRequestCall(NodeManagement* self, const Message* msg) {
-  if (msg->cmd_classifier != kCommandClassifierTypeCall) {
-    return kEebusErrorNotImplemented;
-  }
+    if (msg->cmd_classifier != kCommandClassifierTypeCall) {
+        return kEebusErrorNotImplemented;
+    }
 
-  const NodeManagementBindingRequestCallType* const data
-      = (const NodeManagementBindingRequestCallType*)msg->cmd->data_choice;
+    const NodeManagementBindingRequestCallType* const data
+        = (const NodeManagementBindingRequestCallType*)msg->cmd->data_choice;
 
-  BindingManagerObject* const bm = GetBindingManager(self);
-  return BINDING_MANAGER_ADD_BINDING(bm, msg->device_remote, data->binding_request);
+    BindingManagerObject* const bm = GetBindingManager(self);
+    return BINDING_MANAGER_ADD_BINDING(bm, msg->device_remote, data->binding_request);
 }
 
 EebusError HandleMsgBindingDeleteCall(NodeManagement* self, const Message* msg) {
-  if (msg->cmd_classifier != kCommandClassifierTypeCall) {
-    return kEebusErrorNotImplemented;
-  }
+    if (msg->cmd_classifier != kCommandClassifierTypeCall) {
+        return kEebusErrorNotImplemented;
+    }
 
-  const NodeManagementBindingDeleteCallType* const data
-      = (const NodeManagementBindingDeleteCallType*)msg->cmd->data_choice;
+    const NodeManagementBindingDeleteCallType* const data
+        = (const NodeManagementBindingDeleteCallType*)msg->cmd->data_choice;
 
-  BindingManagerObject* const bm = GetBindingManager(self);
-  return BINDING_MANAGER_REMOVE_BINDING(bm, data->binding_delete, msg->device_remote);
+    BindingManagerObject* const bm = GetBindingManager(self);
+    return BINDING_MANAGER_REMOVE_BINDING(bm, data->binding_delete, msg->device_remote);
 }

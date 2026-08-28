@@ -23,8 +23,8 @@
 #ifndef SRC_SPINE_FEATURE_FEATURE_REMOTE_H_
 #define SRC_SPINE_FEATURE_FEATURE_REMOTE_H_
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "src/common/eebus_malloc.h"
 #include "src/spine/api/feature_remote_interface.h"
@@ -36,10 +36,10 @@ extern "C" {
 FeatureRemoteObject* FeatureRemoteCreate(uint32_t id, EntityRemoteObject* entity, FeatureTypeType type, RoleType role);
 
 static inline void FeatureRemoteDelete(FeatureRemoteObject* feature_remote) {
-  if (feature_remote != NULL) {
-    FEATURE_DESTRUCT(FEATURE_OBJECT(feature_remote));
-    EEBUS_FREE(feature_remote);
-  }
+    if (feature_remote != NULL) {
+        FEATURE_DESTRUCT(FEATURE_OBJECT(feature_remote));
+        EEBUS_FREE(feature_remote);
+    }
 }
 
 #ifdef __cplusplus

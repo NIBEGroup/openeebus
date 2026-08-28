@@ -34,10 +34,10 @@ extern "C" {
 CsLpListenerObject* CsLppListenerCreate(void);
 
 static inline void CsLppListenerDelete(CsLpListenerObject* cs_lpp_listener) {
-  if (cs_lpp_listener != NULL) {
-    CS_LP_LISTENER_DESTRUCT(cs_lpp_listener);
-    EEBUS_FREE(cs_lpp_listener);
-  }
+    if (cs_lpp_listener != NULL) {
+        CS_LP_LISTENER_DESTRUCT(cs_lpp_listener);
+        EEBUS_FREE(cs_lpp_listener);
+    }
 }
 
 #ifdef __cplusplus

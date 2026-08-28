@@ -46,22 +46,22 @@ typedef struct PendingWriteRequestObject PendingWriteRequestObject;
  * @brief PendingWriteRequest Interface Structure
  */
 struct PendingWriteRequestInterface {
-  void (*destruct)(PendingWriteRequestObject* self);
-  const char* (*get_ski)(PendingWriteRequestObject* self);
-  uint64_t (*get_message_counter)(PendingWriteRequestObject* self);
-  EebusError (*get_message)(PendingWriteRequestObject* self, FeatureLocalObject* fl, Message* msg);
-  uint64_t (*get_number_of_approvals)(PendingWriteRequestObject* self);
-  void (*add_approval)(PendingWriteRequestObject* self);
-  uint32_t (*get_remaining_time)(PendingWriteRequestObject* self);
-  void (*update_remaining_time)(PendingWriteRequestObject* self);
-  bool (*has_expired)(PendingWriteRequestObject* self);
+    void (*destruct)(PendingWriteRequestObject* self);
+    const char* (*get_ski)(PendingWriteRequestObject* self);
+    uint64_t (*get_message_counter)(PendingWriteRequestObject* self);
+    EebusError (*get_message)(PendingWriteRequestObject* self, FeatureLocalObject* fl, Message* msg);
+    uint64_t (*get_number_of_approvals)(PendingWriteRequestObject* self);
+    void (*add_approval)(PendingWriteRequestObject* self);
+    uint32_t (*get_remaining_time)(PendingWriteRequestObject* self);
+    void (*update_remaining_time)(PendingWriteRequestObject* self);
+    bool (*has_expired)(PendingWriteRequestObject* self);
 };
 
 /**
  * @brief Pending Write Request Object Structure
  */
 struct PendingWriteRequestObject {
-  const PendingWriteRequestInterface* interface_;
+    const PendingWriteRequestInterface* interface_;
 };
 
 /**
@@ -93,13 +93,13 @@ struct PendingWriteRequestObject {
  * @brief Pending Write Request Get Message caller definition
  */
 #define PENDING_WRITE_REQUEST_GET_MESSAGE(obj, fl, msg) \
-  (PENDING_WRITE_REQUEST_INTERFACE(obj)->get_message(obj, fl, msg))
+    (PENDING_WRITE_REQUEST_INTERFACE(obj)->get_message(obj, fl, msg))
 
 /**
  * @brief Pending Write Request Get Number Of Approvals caller definition
  */
 #define PENDING_WRITE_REQUEST_GET_NUMBER_OF_APPROVALS(obj) \
-  (PENDING_WRITE_REQUEST_INTERFACE(obj)->get_number_of_approvals(obj))
+    (PENDING_WRITE_REQUEST_INTERFACE(obj)->get_number_of_approvals(obj))
 
 /**
  * @brief Pending Write Request Add Approval caller definition
@@ -115,7 +115,7 @@ struct PendingWriteRequestObject {
  * @brief Pending Write Request Update Remaining Time caller definition
  */
 #define PENDING_WRITE_REQUEST_UPDATE_REMAINING_TIME(obj) \
-  (PENDING_WRITE_REQUEST_INTERFACE(obj)->update_remaining_time(obj))
+    (PENDING_WRITE_REQUEST_INTERFACE(obj)->update_remaining_time(obj))
 
 /**
  * @brief Pending Write Request Has Expired caller definition

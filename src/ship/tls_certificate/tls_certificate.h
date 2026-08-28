@@ -33,10 +33,10 @@ TlsCertificateObject*
 TlsCertificateParseX509KeyPair(const char* cert_buf, size_t cert_buf_size, const char* key_buf, size_t key_buf_size);
 
 static inline void TlsCertificateDelete(TlsCertificateObject* tls_certificate) {
-  if (tls_certificate != NULL) {
-    TLS_CERTIFICATE_DESTRUCT(tls_certificate);
-    EEBUS_FREE(tls_certificate);
-  }
+    if (tls_certificate != NULL) {
+        TLS_CERTIFICATE_DESTRUCT(tls_certificate);
+        EEBUS_FREE(tls_certificate);
+    }
 }
 
 const char* TlsCertificateCalcPublicKeySki(const uint8_t* cert, size_t cert_size);

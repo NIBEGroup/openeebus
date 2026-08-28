@@ -33,35 +33,35 @@ extern "C" {
 typedef int32_t ActuatorSwitchFctType;
 
 enum {
-  kActuatorSwitchFctTypeOn,     /**< "on" */
-  kActuatorSwitchFctTypeOff,    /**< "off" */
-  kActuatorSwitchFctTypeToggle, /**< "toggle" */
+    kActuatorSwitchFctTypeOn,     /**< "on" */
+    kActuatorSwitchFctTypeOff,    /**< "off" */
+    kActuatorSwitchFctTypeToggle, /**< "toggle" */
 };
 
 typedef struct ActuatorSwitchDataType ActuatorSwitchDataType;
 
 struct ActuatorSwitchDataType {
-  const ActuatorSwitchFctType* function; /**< "function" */
+    const ActuatorSwitchFctType* function; /**< "function" */
 };
 
 typedef struct ActuatorSwitchDataElementsType ActuatorSwitchDataElementsType;
 
 struct ActuatorSwitchDataElementsType {
-  ElementTagType function; /**< "function" */
+    ElementTagType function; /**< "function" */
 };
 
 typedef struct ActuatorSwitchDescriptionDataType ActuatorSwitchDescriptionDataType;
 
 struct ActuatorSwitchDescriptionDataType {
-  LabelType label;             /**< "label" */
-  DescriptionType description; /**< "description" */
+    LabelType label;             /**< "label" */
+    DescriptionType description; /**< "description" */
 };
 
 typedef struct ActuatorSwitchDescriptionDataElementsType ActuatorSwitchDescriptionDataElementsType;
 
 struct ActuatorSwitchDescriptionDataElementsType {
-  ElementTagType label;       /**< "label" */
-  ElementTagType description; /**< "description" */
+    ElementTagType label;       /**< "label" */
+    ElementTagType description; /**< "description" */
 };
 
 #ifdef __cplusplus

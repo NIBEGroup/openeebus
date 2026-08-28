@@ -30,19 +30,19 @@
 typedef struct MuMpcUseCase MuMpcUseCase;
 
 struct MuMpcUseCase {
-  /** Inherits the Use Case */
-  UseCase obj;
+    /** Inherits the Use Case */
+    UseCase obj;
 
-  ElectricalConnectionIdType electrical_connection_id;
+    ElectricalConnectionIdType electrical_connection_id;
 
-  EebusMonitorContainer monitor_container;
+    EebusMonitorContainer monitor_container;
 
-  MuMpcListenerObject* mu_mpc_listener;
+    MuMpcListenerObject* mu_mpc_listener;
 
-  UseCaseScenario mu_mpc_scenarios[5];
+    UseCaseScenario mu_mpc_scenarios[5];
 
-  size_t mu_mpc_scenarios_size;
-  UseCaseInfo mu_mpc_use_case_info;
+    size_t mu_mpc_scenarios_size;
+    UseCaseInfo mu_mpc_use_case_info;
 };
 
 #define MU_MPC_USE_CASE(self) ((MuMpcUseCase*)(self))

@@ -37,8 +37,8 @@ typedef TagType SpecificationVersionDataElementsType;
 typedef struct SpecificationVersionListDataType SpecificationVersionListDataType;
 
 struct SpecificationVersionListDataType {
-  const SpecificationVersionDataType* specification_version_data; /**< "specificationVersionData" */
-  size_t specification_version_data_size;
+    const SpecificationVersionDataType* specification_version_data; /**< "specificationVersionData" */
+    size_t specification_version_data_size;
 };
 
 typedef TagType SpecificationVersionListDataSelectorsType;

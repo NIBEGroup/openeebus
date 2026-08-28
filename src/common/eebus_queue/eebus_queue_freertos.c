@@ -35,19 +35,19 @@ typedef bool (*Predicate)(void* ctx);
 typedef struct EebusQueue EebusQueue;
 
 struct EebusQueue {
-  /** Implements the Eebus Queue Interface */
-  EebusQueueObject obj;
+    /** Implements the Eebus Queue Interface */
+    EebusQueueObject obj;
 
-  /** Queue message size */
-  size_t msg_size;
-  /** Queue buffer */
-  uint8_t* queue_buf;
-  /** Static queue buffer */
-  StaticQueue_t static_queue;
-  /** Queue message deallocator (used to clear pending messages when deallocating queue) */
-  QueueMsgDeallocator msg_deallocator;
-  /** FreeRTOS queue handle */
-  QueueHandle_t queue_handle;
+    /** Queue message size */
+    size_t msg_size;
+    /** Queue buffer */
+    uint8_t* queue_buf;
+    /** Static queue buffer */
+    StaticQueue_t static_queue;
+    /** Queue message deallocator (used to clear pending messages when deallocating queue) */
+    QueueMsgDeallocator msg_deallocator;
+    /** FreeRTOS queue handle */
+    QueueHandle_t queue_handle;
 };
 
 #define EEBUS_QUEUE(obj) ((EebusQueue*)(obj))
@@ -72,123 +72,123 @@ static EebusError
 EebusQueueConstruct(EebusQueue* self, size_t max_msg, size_t msg_size, QueueMsgDeallocator msg_deallocator);
 
 EebusError EebusQueueConstruct(EebusQueue* self, size_t max_msg, size_t msg_size, QueueMsgDeallocator msg_deallocator) {
-  // Override "virtual functions table"
-  EEBUS_QUEUE_INTERFACE(self) = &eebus_queue_methods;
+    // Override "virtual functions table"
+    EEBUS_QUEUE_INTERFACE(self) = &eebus_queue_methods;
 
-  self->msg_size        = msg_size;
-  self->msg_deallocator = msg_deallocator;
-  self->queue_buf       = NULL;
-  self->queue_handle    = NULL;
+    self->msg_size        = msg_size;
+    self->msg_deallocator = msg_deallocator;
+    self->queue_buf       = NULL;
+    self->queue_handle    = NULL;
 
-  self->queue_buf = (uint8_t*)EEBUS_MALLOC(max_msg * msg_size);
-  if (self->queue_buf == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    self->queue_buf = (uint8_t*)EEBUS_MALLOC(max_msg * msg_size);
+    if (self->queue_buf == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  self->queue_handle = xQueueCreateStatic(max_msg, msg_size, self->queue_buf, &self->static_queue);
-  if (self->queue_handle == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    self->queue_handle = xQueueCreateStatic(max_msg, msg_size, self->queue_buf, &self->static_queue);
+    if (self->queue_handle == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusQueueObject* EebusQueueCreate(size_t max_msg, size_t msg_size, QueueMsgDeallocator msg_deallocator) {
-  EebusQueue* const eebus_queue = (EebusQueue*)EEBUS_MALLOC(sizeof(EebusQueue));
+    EebusQueue* const eebus_queue = (EebusQueue*)EEBUS_MALLOC(sizeof(EebusQueue));
 
-  const EebusError err = EebusQueueConstruct(eebus_queue, max_msg, msg_size, msg_deallocator);
-  if (err != kEebusErrorOk) {
-    EebusQueueDelete(EEBUS_QUEUE_OBJECT(eebus_queue));
-    return NULL;
-  }
+    const EebusError err = EebusQueueConstruct(eebus_queue, max_msg, msg_size, msg_deallocator);
+    if (err != kEebusErrorOk) {
+        EebusQueueDelete(EEBUS_QUEUE_OBJECT(eebus_queue));
+        return NULL;
+    }
 
-  return EEBUS_QUEUE_OBJECT(eebus_queue);
+    return EEBUS_QUEUE_OBJECT(eebus_queue);
 }
 
 void Destruct(EebusQueueObject* self) {
-  EebusQueue* const queue = EEBUS_QUEUE(self);
+    EebusQueue* const queue = EEBUS_QUEUE(self);
 
-  if (queue->queue_handle != NULL) {
-    Clear(self);
-    vQueueDelete(queue->queue_handle);
-    queue->queue_handle = NULL;
-  }
+    if (queue->queue_handle != NULL) {
+        Clear(self);
+        vQueueDelete(queue->queue_handle);
+        queue->queue_handle = NULL;
+    }
 
-  if (queue->queue_buf != NULL) {
-    EEBUS_FREE(queue->queue_buf);
-    queue->queue_buf = NULL;
-  }
+    if (queue->queue_buf != NULL) {
+        EEBUS_FREE(queue->queue_buf);
+        queue->queue_buf = NULL;
+    }
 }
 
 TickType_t TimeoutTicks(uint32_t timeout_ms) {
-  if (timeout_ms == kTimeoutInfinite) {
-    return portMAX_DELAY;
-  }
+    if (timeout_ms == kTimeoutInfinite) {
+        return portMAX_DELAY;
+    }
 
-  return pdMS_TO_TICKS(timeout_ms);
+    return pdMS_TO_TICKS(timeout_ms);
 }
 
 EebusError Send(EebusQueueObject* self, const void* msg, uint32_t timeout_ms) {
-  EebusQueue* const queue = EEBUS_QUEUE(self);
+    EebusQueue* const queue = EEBUS_QUEUE(self);
 
-  EebusError err = kEebusErrorNoChange;
+    EebusError err = kEebusErrorNoChange;
 
-  if (queue->queue_handle != NULL) {
-    if (xQueueSend(queue->queue_handle, msg, TimeoutTicks(timeout_ms)) == pdTRUE) {
-      err = kEebusErrorOk;
-    } else {
-      err = kEebusErrorTime;
+    if (queue->queue_handle != NULL) {
+        if (xQueueSend(queue->queue_handle, msg, TimeoutTicks(timeout_ms)) == pdTRUE) {
+            err = kEebusErrorOk;
+        } else {
+            err = kEebusErrorTime;
+        }
     }
-  }
 
-  return err;
+    return err;
 }
 
 EebusError Receive(EebusQueueObject* self, void* msg, uint32_t timeout_ms) {
-  EebusQueue* const queue = EEBUS_QUEUE(self);
+    EebusQueue* const queue = EEBUS_QUEUE(self);
 
-  if (queue->queue_handle == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (queue->queue_handle == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  if (xQueueReceive(queue->queue_handle, msg, TimeoutTicks(timeout_ms)) == pdTRUE) {
-    return kEebusErrorOk;
-  } else {
-    return kEebusErrorTime;
-  }
+    if (xQueueReceive(queue->queue_handle, msg, TimeoutTicks(timeout_ms)) == pdTRUE) {
+        return kEebusErrorOk;
+    } else {
+        return kEebusErrorTime;
+    }
 }
 
 bool IsEmpty(const EebusQueueObject* self) {
-  const EebusQueue* const queue = EEBUS_QUEUE(self);
+    const EebusQueue* const queue = EEBUS_QUEUE(self);
 
-  if (queue->queue_handle == NULL) {
-    return true;
-  }
+    if (queue->queue_handle == NULL) {
+        return true;
+    }
 
-  return (uxQueueMessagesWaiting(queue->queue_handle) == 0);
+    return (uxQueueMessagesWaiting(queue->queue_handle) == 0);
 }
 
 bool IsFull(const EebusQueueObject* self) {
-  const EebusQueue* const queue = EEBUS_QUEUE(self);
+    const EebusQueue* const queue = EEBUS_QUEUE(self);
 
-  if (queue->queue_handle == NULL) {
-    return true;
-  }
+    if (queue->queue_handle == NULL) {
+        return true;
+    }
 
-  return (uxQueueSpacesAvailable(queue->queue_handle) == 0);
+    return (uxQueueSpacesAvailable(queue->queue_handle) == 0);
 }
 
 void Clear(EebusQueueObject* self) {
-  EebusQueue* const queue = EEBUS_QUEUE(self);
+    EebusQueue* const queue = EEBUS_QUEUE(self);
 
-  if ((queue->queue_handle == NULL) || (queue->msg_deallocator == NULL)) {
-    return;
-  }
+    if ((queue->queue_handle == NULL) || (queue->msg_deallocator == NULL)) {
+        return;
+    }
 
-  uint8_t msg[queue->msg_size] = {};
+    uint8_t msg[queue->msg_size] = {};
 
-  while (!IsEmpty(self)) {
-    Receive(self, &msg, 0);
-    queue->msg_deallocator(msg);
-  }
+    while (!IsEmpty(self)) {
+        Receive(self, &msg, 0);
+        queue->msg_deallocator(msg);
+    }
 }

@@ -43,8 +43,8 @@ typedef struct StringLut StringLut;
  * @brief String LUT structure
  */
 struct StringLut {
-  /** LUT records container */
-  Vector records;
+    /** LUT records container */
+    Vector records;
 };
 
 /**

@@ -34,30 +34,30 @@ extern "C" {
 #endif  // __cplusplus
 
 static inline void* ArrayCopy(const void* src, size_t src_size, size_t element_size) {
-  if ((src == NULL) || (src_size == 0) || (element_size == 0)) {
-    return NULL;
-  }
+    if ((src == NULL) || (src_size == 0) || (element_size == 0)) {
+        return NULL;
+    }
 
-  if (src_size > SIZE_MAX / element_size) {
-    return NULL;  // overflow
-  }
+    if (src_size > SIZE_MAX / element_size) {
+        return NULL;  // overflow
+    }
 
-  const size_t bytes_num = src_size * element_size;
-  void* const dst        = EEBUS_MALLOC(bytes_num);
-  if (dst == NULL) {
-    return NULL;
-  }
+    const size_t bytes_num = src_size * element_size;
+    void* const dst        = EEBUS_MALLOC(bytes_num);
+    if (dst == NULL) {
+        return NULL;
+    }
 
-  memcpy(dst, src, bytes_num);
-  return dst;
+    memcpy(dst, src, bytes_num);
+    return dst;
 }
 
 static inline void ArrayRelease(void* a) {
-  if (a == NULL) {
-    return;
-  }
+    if (a == NULL) {
+        return;
+    }
 
-  EEBUS_FREE(a);
+    EEBUS_FREE(a);
 }
 
 #ifdef __cplusplus

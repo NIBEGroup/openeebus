@@ -28,20 +28,20 @@
 #endif
 
 void DebugPrintf(const char* format, ...) {
-  // TODO: Add platform independent timestamp printing
-  char timestamp_buf[50] = "";
-  lwsl_timestamp(LLL_NOTICE, timestamp_buf, sizeof(timestamp_buf));
-  printf("%s ", timestamp_buf);
+    // TODO: Add platform independent timestamp printing
+    char timestamp_buf[50] = "";
+    lwsl_timestamp(LLL_NOTICE, timestamp_buf, sizeof(timestamp_buf));
+    printf("%s ", timestamp_buf);
 
-  va_list args;
-  va_start(args, format);
-  vprintf(format, args);
-  va_end(args);
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
 }
 
 void DebugHexdump(void* data, size_t data_size) {
-  // TODO: Add platform independent hexdump
+    // TODO: Add platform independent hexdump
 #ifndef GTEST
-  lwsl_hexdump_notice(data, data_size);
+    lwsl_hexdump_notice(data, data_size);
 #endif  // GTEST
 }

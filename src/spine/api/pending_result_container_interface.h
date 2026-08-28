@@ -46,24 +46,24 @@ typedef struct PendingResultContainerObject PendingResultContainerObject;
  * @brief Pending Result Container Interface Structure
  */
 struct PendingResultContainerInterface {
-  void (*destruct)(PendingResultContainerObject* self);
-  EebusError (*add)(
-      PendingResultContainerObject* self,
-      MsgCounterType msg_cnt_ref,
-      FunctionType function_type,
-      const FeatureAddressType* remote_feature_addr,
-      ResultMessageCallback cb,
-      void* ctx
-  );
-  void (*process)(PendingResultContainerObject* self, const ResultMessage* result_msg);
-  void (*tick)(PendingResultContainerObject* self);
+    void (*destruct)(PendingResultContainerObject* self);
+    EebusError (*add)(
+        PendingResultContainerObject* self,
+        MsgCounterType msg_cnt_ref,
+        FunctionType function_type,
+        const FeatureAddressType* remote_feature_addr,
+        ResultMessageCallback cb,
+        void* ctx
+    );
+    void (*process)(PendingResultContainerObject* self, const ResultMessage* result_msg);
+    void (*tick)(PendingResultContainerObject* self);
 };
 
 /**
  * @brief Pending Result Container Object Structure
  */
 struct PendingResultContainerObject {
-  const PendingResultContainerInterface* interface_;
+    const PendingResultContainerInterface* interface_;
 };
 
 /**
@@ -85,13 +85,13 @@ struct PendingResultContainerObject {
  * @brief Pending Result Container Add caller definition
  */
 #define PENDING_RESULT_CONTAINER_ADD(obj, msg_cnt_ref, function_type, remote_feature_addr, cb, ctx) \
-  (PENDING_RESULT_CONTAINER_INTERFACE(obj)->add(obj, msg_cnt_ref, function_type, remote_feature_addr, cb, ctx))
+    (PENDING_RESULT_CONTAINER_INTERFACE(obj)->add(obj, msg_cnt_ref, function_type, remote_feature_addr, cb, ctx))
 
 /**
  * @brief Pending Result Container Process caller definition
  */
 #define PENDING_RESULT_CONTAINER_PROCESS(obj, result_msg) \
-  (PENDING_RESULT_CONTAINER_INTERFACE(obj)->process(obj, result_msg))
+    (PENDING_RESULT_CONTAINER_INTERFACE(obj)->process(obj, result_msg))
 
 /**
  * @brief Pending Result Container Tick caller definition

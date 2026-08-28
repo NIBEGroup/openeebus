@@ -32,24 +32,24 @@
 
 #define CONVERT_NUM_TO_JSON(interface, buf, buf_size) ((interface)->num_to_json(buf, buf_size))
 
-#define JSON_NUM_CONV_DECL(name, type)                                                 \
-  EebusError JsonToNum##type(const JsonObject* json_obj, void* buf, size_t buf_size) { \
-    if (buf_size != sizeof(type)) {                                                    \
-      return kEebusErrorInputArgument;                                                 \
-    }                                                                                  \
-                                                                                       \
-    *(type*)buf = (type)JsonGetNumber(json_obj);                                       \
-    return kEebusErrorOk;                                                              \
-  }                                                                                    \
-                                                                                       \
-  JsonObject* NumToJson##type(const void* buf, size_t buf_size) {                      \
-    return (buf_size == sizeof(type)) ? JsonCreateNumber((double)*(type*)buf) : NULL;  \
-  }                                                                                    \
-                                                                                       \
-  const JsonNumConvInterface name = {                                                  \
-      .json_to_num = JsonToNum##type,                                                  \
-      .num_to_json = NumToJson##type,                                                  \
-  }
+#define JSON_NUM_CONV_DECL(name, type)                                                    \
+    EebusError JsonToNum##type(const JsonObject* json_obj, void* buf, size_t buf_size) {  \
+        if (buf_size != sizeof(type)) {                                                   \
+            return kEebusErrorInputArgument;                                              \
+        }                                                                                 \
+                                                                                          \
+        *(type*)buf = (type)JsonGetNumber(json_obj);                                      \
+        return kEebusErrorOk;                                                             \
+    }                                                                                     \
+                                                                                          \
+    JsonObject* NumToJson##type(const void* buf, size_t buf_size) {                       \
+        return (buf_size == sizeof(type)) ? JsonCreateNumber((double)*(type*)buf) : NULL; \
+    }                                                                                     \
+                                                                                          \
+    const JsonNumConvInterface name = {                                                   \
+        .json_to_num = JsonToNum##type,                                                   \
+        .num_to_json = NumToJson##type,                                                   \
+    }
 
 JSON_NUM_CONV_DECL(json_num_conv_uint8, uint8_t);
 JSON_NUM_CONV_DECL(json_num_conv_uint16, uint16_t);
@@ -89,35 +89,35 @@ const EebusDataInterface eebus_data_numeric_methods = {
 };
 
 EebusError FromJsonObjectItem(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj) {
-  if (!JsonIsNumber(json_obj)) {
-    return kEebusErrorParse;
-  }
+    if (!JsonIsNumber(json_obj)) {
+        return kEebusErrorParse;
+    }
 
-  void* const buf = EEBUS_DATA_CREATE_EMPTY(cfg, base_addr);
-  if (buf == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    void* const buf = EEBUS_DATA_CREATE_EMPTY(cfg, base_addr);
+    if (buf == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  JsonNumConvInterface* const json_num_conv = (JsonNumConvInterface*)cfg->metadata;
+    JsonNumConvInterface* const json_num_conv = (JsonNumConvInterface*)cfg->metadata;
 
-  const EebusError ret = CONVERT_JSON_TO_NUM(json_num_conv, json_obj, buf, cfg->size);
-  if (ret != kEebusErrorOk) {
-    EEBUS_DATA_DELETE(cfg, base_addr);
-    return ret;
-  }
+    const EebusError ret = CONVERT_JSON_TO_NUM(json_num_conv, json_obj, buf, cfg->size);
+    if (ret != kEebusErrorOk) {
+        EEBUS_DATA_DELETE(cfg, base_addr);
+        return ret;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError ToJsonObjectItem(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_obj) {
-  const void** const buf = (const void**)((const uint8_t*)base_addr + cfg->offset);
-  if (*buf == NULL) {
-    *json_obj = NULL;
-    return kEebusErrorOk;
-  }
+    const void** const buf = (const void**)((const uint8_t*)base_addr + cfg->offset);
+    if (*buf == NULL) {
+        *json_obj = NULL;
+        return kEebusErrorOk;
+    }
 
-  JsonNumConvInterface* const json_num_conv = (JsonNumConvInterface*)cfg->metadata;
+    JsonNumConvInterface* const json_num_conv = (JsonNumConvInterface*)cfg->metadata;
 
-  *json_obj = CONVERT_NUM_TO_JSON(json_num_conv, *buf, cfg->size);
-  return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
+    *json_obj = CONVERT_NUM_TO_JSON(json_num_conv, *buf, cfg->size);
+    return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
 }

@@ -33,7 +33,7 @@ extern "C" {
 EgLpUseCaseObject* EgLppUseCaseCreate(EntityLocalObject* local_entity, EgLpListenerObject* eg_lpp_listener);
 
 static inline void EgLppUseCaseDelete(EgLpUseCaseObject* eg_lpp_use_case) {
-  EgLpUseCaseDelete(eg_lpp_use_case);
+    EgLpUseCaseDelete(eg_lpp_use_case);
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -55,7 +55,7 @@ static inline EebusError EgLppGetActiveProductionPowerLimit(
     const EntityAddressType* remote_entity_addr,
     LoadLimit* limit
 ) {
-  return EgLpGetActivePowerLimit(self, remote_entity_addr, limit);
+    return EgLpGetActivePowerLimit(self, remote_entity_addr, limit);
 }
 
 static inline EebusError EgLppReadActiveProductionPowerLimit(
@@ -64,7 +64,7 @@ static inline EebusError EgLppReadActiveProductionPowerLimit(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  return EgLpReadActivePowerLimit(self, remote_entity_addr, cb, ctx);
+    return EgLpReadActivePowerLimit(self, remote_entity_addr, cb, ctx);
 }
 
 /**
@@ -82,7 +82,7 @@ static inline EebusError EgLppSetActiveProductionPowerLimit(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  return EgLpSetActivePowerLimit(self, remote_entity_addr, limit, cb, ctx);
+    return EgLpSetActivePowerLimit(self, remote_entity_addr, limit, cb, ctx);
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -104,7 +104,7 @@ static inline EebusError EgLppGetFailsafeProductionActivePowerLimit(
     const EntityAddressType* remote_entity_addr,
     ScaledValue* power_limit
 ) {
-  return EgLpGetFailsafeActivePowerLimit(self, remote_entity_addr, power_limit);
+    return EgLpGetFailsafeActivePowerLimit(self, remote_entity_addr, power_limit);
 }
 
 static inline EebusError EgLppReadFailsafeProductionActivePowerLimit(
@@ -113,7 +113,7 @@ static inline EebusError EgLppReadFailsafeProductionActivePowerLimit(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  return EgLpReadFailsafeActivePowerLimit(self, remote_entity_addr, cb, ctx);
+    return EgLpReadFailsafeActivePowerLimit(self, remote_entity_addr, cb, ctx);
 }
 
 /**
@@ -130,7 +130,7 @@ static inline EebusError EgLppSetFailsafeProductionActivePowerLimit(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  return EgLpSetFailsafeActivePowerLimit(self, remote_entity_addr, power_limit, cb, ctx);
+    return EgLpSetFailsafeActivePowerLimit(self, remote_entity_addr, power_limit, cb, ctx);
 }
 
 /**
@@ -146,7 +146,7 @@ static inline EebusError EgLppGetFailsafeDurationMinimum(
     const EntityAddressType* remote_entity_addr,
     DurationType* duration
 ) {
-  return EgLpGetFailsafeDurationMinimum(self, remote_entity_addr, duration);
+    return EgLpGetFailsafeDurationMinimum(self, remote_entity_addr, duration);
 }
 
 /**
@@ -162,7 +162,7 @@ static inline EebusError EgLppReadFailsafeDurationMinimum(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  return EgLpReadFailsafeDurationMinimum(self, remote_entity_addr, cb, ctx);
+    return EgLpReadFailsafeDurationMinimum(self, remote_entity_addr, cb, ctx);
 }
 
 static inline EebusError EgLppSetFailsafeDurationMinimum(
@@ -172,7 +172,7 @@ static inline EebusError EgLppSetFailsafeDurationMinimum(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  return EgLpSetFailsafeDurationMinimum(self, remote_entity_addr, duration, cb, ctx);
+    return EgLpSetFailsafeDurationMinimum(self, remote_entity_addr, duration, cb, ctx);
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -196,7 +196,7 @@ static inline EebusError EgLppGetPowerProductionNominalMax(
     const EntityAddressType* remote_entity_addr,
     ScaledValue* power_limit
 ) {
-  return EgLpGetPowerNominalMax(self, remote_entity_addr, power_limit);
+    return EgLpGetPowerNominalMax(self, remote_entity_addr, power_limit);
 }
 
 static inline EebusError EgLppReadPowerProductionNominalMax(
@@ -205,7 +205,7 @@ static inline EebusError EgLppReadPowerProductionNominalMax(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  return EgLpReadPowerNominalMax(self, remote_entity_addr, cb, ctx);
+    return EgLpReadPowerNominalMax(self, remote_entity_addr, cb, ctx);
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -222,7 +222,7 @@ static inline EebusError EgLppReadPowerProductionNominalMax(
  * @param self EG LPP Use Case instance to start the heartbeat with
  */
 static inline void EgLppStartHeartbeat(EgLpUseCaseObject* self) {
-  EgLpStartHeartbeat(self);
+    EgLpStartHeartbeat(self);
 }
 
 /**
@@ -241,7 +241,7 @@ static inline void EgLppStartHeartbeat(EgLpUseCaseObject* self) {
  *          stop the entire service.
  */
 static inline void EgLppStopHeartbeat(EgLpUseCaseObject* self) {
-  EgLpStopHeartbeat(self);
+    EgLpStopHeartbeat(self);
 }
 
 /**
@@ -253,7 +253,7 @@ static inline void EgLppStopHeartbeat(EgLpUseCaseObject* self) {
  */
 static inline bool
 EgLppIsHeartbeatWithinDuration(EgLpUseCaseObject* self, const EntityAddressType* remote_entity_addr) {
-  return EgLpIsHeartbeatWithinDuration(self, remote_entity_addr);
+    return EgLpIsHeartbeatWithinDuration(self, remote_entity_addr);
 }
 
 #ifdef __cplusplus

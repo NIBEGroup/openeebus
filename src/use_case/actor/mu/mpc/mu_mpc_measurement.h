@@ -82,10 +82,10 @@ MuMpcMeasurementPowerTotalCreate(ElectricalConnectionPhaseNameType phases, const
  * This function will destruct the measurement object and free the memory allocated for it.
  */
 static inline void MuMpcMeasurementDelete(EebusMeasurementObject* measurement) {
-  if (measurement != NULL) {
-    EEBUS_MEASUREMENT_DESTRUCT(measurement);
-    EEBUS_FREE(measurement);
-  }
+    if (measurement != NULL) {
+        EEBUS_MEASUREMENT_DESTRUCT(measurement);
+        EEBUS_FREE(measurement);
+    }
 }
 
 #ifdef __cplusplus

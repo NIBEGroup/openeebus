@@ -30,11 +30,11 @@ extern "C" {
 typedef struct FeatureRemote FeatureRemote;
 
 struct FeatureRemote {
-  /** Inherits the Feature */
-  Feature obj;
+    /** Inherits the Feature */
+    Feature obj;
 
-  EntityRemoteObject* entity;
-  uint32_t max_response_delay;
+    EntityRemoteObject* entity;
+    uint32_t max_response_delay;
 };
 
 #define FEATURE_REMOTE(obj) ((FeatureRemote*)(obj))

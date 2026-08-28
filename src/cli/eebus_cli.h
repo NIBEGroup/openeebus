@@ -166,10 +166,10 @@ EebusCliObject* EebusCliCreate(void);
  * @param eebus_cli Pointer to the EEBUS CLI handler instance to be deallocated
  */
 static inline void EebusCliDelete(EebusCliObject* eebus_cli) {
-  if (eebus_cli != NULL) {
-    EEBUS_CLI_DESTRUCT(eebus_cli);
-    EEBUS_FREE(eebus_cli);
-  }
+    if (eebus_cli != NULL) {
+        EEBUS_CLI_DESTRUCT(eebus_cli);
+        EEBUS_FREE(eebus_cli);
+    }
 }
 
 #ifdef __cplusplus

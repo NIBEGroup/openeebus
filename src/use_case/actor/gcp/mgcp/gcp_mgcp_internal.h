@@ -34,20 +34,20 @@ extern "C" {
 typedef struct GcpMgcpUseCase GcpMgcpUseCase;
 
 struct GcpMgcpUseCase {
-  /** Inherits the Use Case */
-  UseCase obj;
+    /** Inherits the Use Case */
+    UseCase obj;
 
-  ElectricalConnectionIdType electrical_connection_id;
+    ElectricalConnectionIdType electrical_connection_id;
 
-  EebusMonitorContainer monitor_container;
+    EebusMonitorContainer monitor_container;
 
-  /** Dynamically built scenario array (scenarios 1–7, up to 7 entries) */
-  UseCaseScenario gcp_mgcp_scenarios[7];
-  size_t gcp_mgcp_scenarios_size;
+    /** Dynamically built scenario array (scenarios 1–7, up to 7 entries) */
+    UseCaseScenario gcp_mgcp_scenarios[7];
+    size_t gcp_mgcp_scenarios_size;
 
-  bool has_scenario1;
+    bool has_scenario1;
 
-  UseCaseInfo gcp_mgcp_use_case_info;
+    UseCaseInfo gcp_mgcp_use_case_info;
 };
 
 #define GCP_MGCP_USE_CASE(self) ((GcpMgcpUseCase*)(self))

@@ -29,19 +29,19 @@ EebusError DeviceConfigurationClientConstruct(
     EntityLocalObject* local_entity,
     EntityRemoteObject* remote_entity
 ) {
-  const EebusError err = FeatureInfoClientConstruct(
-      &self->feature_info_client,
-      kFeatureTypeTypeDeviceConfiguration,
-      local_entity,
-      remote_entity
-  );
+    const EebusError err = FeatureInfoClientConstruct(
+        &self->feature_info_client,
+        kFeatureTypeTypeDeviceConfiguration,
+        local_entity,
+        remote_entity
+    );
 
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  DeviceConfigurationCommonConstruct(&self->device_cfg_common, NULL, self->feature_info_client.remote_feature);
-  return kEebusErrorOk;
+    DeviceConfigurationCommonConstruct(&self->device_cfg_common, NULL, self->feature_info_client.remote_feature);
+    return kEebusErrorOk;
 }
 
 EebusError DeviceConfigurationClientRequestKeyValueDescription(
@@ -49,15 +49,15 @@ EebusError DeviceConfigurationClientRequestKeyValueDescription(
     const DeviceConfigurationKeyValueDescriptionListDataSelectorsType* selectors,
     const DeviceConfigurationKeyValueDescriptionDataElementsType* elements
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeDeviceConfigurationKeyValueDescriptionListData,
-      selectors,
-      elements,
-      NULL,
-      NULL
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeDeviceConfigurationKeyValueDescriptionListData,
+        selectors,
+        elements,
+        NULL,
+        NULL
+    );
 }
 
 EebusError DeviceConfigurationClientRequestKeyValue(
@@ -67,15 +67,15 @@ EebusError DeviceConfigurationClientRequestKeyValue(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      key_value_fcn,
-      selectors,
-      elements,
-      cb,
-      ctx
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        key_value_fcn,
+        selectors,
+        elements,
+        cb,
+        ctx
+    );
 }
 
 EebusError DeviceConfigurationClientWriteKeyValueList(
@@ -84,23 +84,23 @@ EebusError DeviceConfigurationClientWriteKeyValueList(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  if (key_value_list == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (key_value_list == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  if ((key_value_list->device_configuration_key_value_data == NULL)
-      || (key_value_list->device_configuration_key_value_data_size == 0)) {
-    return kEebusErrorInputArgument;
-  }
+    if ((key_value_list->device_configuration_key_value_data == NULL)
+        || (key_value_list->device_configuration_key_value_data_size == 0)) {
+        return kEebusErrorInputArgument;
+    }
 
-  return FEATURE_LOCAL_WRITE_TO_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      key_value_fcn,
-      key_value_list,
-      NULL,
-      NULL,
-      cb,
-      ctx
-  );
+    return FEATURE_LOCAL_WRITE_TO_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        key_value_fcn,
+        key_value_list,
+        NULL,
+        NULL,
+        cb,
+        ctx
+    );
 }

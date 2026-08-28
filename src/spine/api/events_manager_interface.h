@@ -32,14 +32,14 @@ typedef struct EventsManagerInterface EventsManagerInterface;
 typedef struct EventsManagerObject EventsManagerObject;
 
 struct EventsManagerInterface {
-  void (*destruct)(EventsManagerObject* self);
-  EebusError (*subscribe)(EventsManagerObject* self, EventHandlerLevel level, EventHandler handler, void* ctx);
-  EebusError (*unsubscribe)(EventsManagerObject* self, EventHandlerLevel level, EventHandler handler, void* ctx);
-  void (*publish)(EventsManagerObject* self, const EventPayload* payload);
+    void (*destruct)(EventsManagerObject* self);
+    EebusError (*subscribe)(EventsManagerObject* self, EventHandlerLevel level, EventHandler handler, void* ctx);
+    EebusError (*unsubscribe)(EventsManagerObject* self, EventHandlerLevel level, EventHandler handler, void* ctx);
+    void (*publish)(EventsManagerObject* self, const EventPayload* payload);
 };
 
 struct EventsManagerObject {
-  const EventsManagerInterface* interface_;
+    const EventsManagerInterface* interface_;
 };
 
 #define EVENTS_MANAGER_OBJECT(obj) ((EventsManagerObject*)(obj))
@@ -48,7 +48,7 @@ struct EventsManagerObject {
 #define EVENTS_DESTRUCT(obj) (EVENTS_MANAGER_INTERFACE(obj)->destruct(obj))
 #define EVENTS_SUBSCRIBE(obj, level, handler, ctx) (EVENTS_MANAGER_INTERFACE(obj)->subscribe(obj, level, handler, ctx))
 #define EVENTS_UNSUBSCRIBE(obj, level, handler, ctx) \
-  (EVENTS_MANAGER_INTERFACE(obj)->unsubscribe(obj, level, handler, ctx))
+    (EVENTS_MANAGER_INTERFACE(obj)->unsubscribe(obj, level, handler, ctx))
 #define EVENTS_PUBLISH(obj, payload) (EVENTS_MANAGER_INTERFACE(obj)->publish(obj, payload))
 
 #ifdef __cplusplus

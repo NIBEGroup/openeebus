@@ -23,46 +23,46 @@
 #include "src/common/eebus_mutex/eebus_mutex.h"
 
 static void MonitorDeallocator(void* p) {
-  EebusMonitorDelete((EebusMonitorObject*)p);
+    EebusMonitorDelete((EebusMonitorObject*)p);
 }
 
 EebusError EebusMonitorContainerConstruct(EebusMonitorContainer* self) {
-  VectorConstructWithDeallocator(&self->monitors, MonitorDeallocator);
+    VectorConstructWithDeallocator(&self->monitors, MonitorDeallocator);
 
-  self->mutex = EebusMutexCreate();
-  if (self->mutex == NULL) {
-    VectorDestruct(&self->monitors);
-    return kEebusErrorMemoryAllocate;
-  }
+    self->mutex = EebusMutexCreate();
+    if (self->mutex == NULL) {
+        VectorDestruct(&self->monitors);
+        return kEebusErrorMemoryAllocate;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 void EebusMonitorContainerDestruct(EebusMonitorContainer* self) {
-  EebusMutexDelete(self->mutex);
-  self->mutex = NULL;
+    EebusMutexDelete(self->mutex);
+    self->mutex = NULL;
 
-  VectorFreeElements(&self->monitors);
-  VectorDestruct(&self->monitors);
+    VectorFreeElements(&self->monitors);
+    VectorDestruct(&self->monitors);
 }
 
 void EebusMonitorContainerAdd(EebusMonitorContainer* self, EebusMonitorObject* monitor) {
-  VectorPushBack(&self->monitors, monitor);
+    VectorPushBack(&self->monitors, monitor);
 }
 
 EebusMeasurementObject*
 EebusMonitorContainerGetMeasurement(const EebusMonitorContainer* self, EebusMeasurementNameId name) {
-  const EebusMeasurementMonitorNameId monitor_name
-      = (EebusMeasurementMonitorNameId)((uint8_t)name & (uint8_t)kEebusMeasurementMonitorNameIdMask);
+    const EebusMeasurementMonitorNameId monitor_name
+        = (EebusMeasurementMonitorNameId)((uint8_t)name & (uint8_t)kEebusMeasurementMonitorNameIdMask);
 
-  for (size_t i = 0; i < VectorGetSize(&self->monitors); ++i) {
-    EebusMonitorObject* const monitor = (EebusMonitorObject*)VectorGetElement(&self->monitors, i);
-    if (EEBUS_MONITOR_GET_NAME(monitor) == monitor_name) {
-      return EEBUS_MONITOR_GET_MEASUREMENT(monitor, name);
+    for (size_t i = 0; i < VectorGetSize(&self->monitors); ++i) {
+        EebusMonitorObject* const monitor = (EebusMonitorObject*)VectorGetElement(&self->monitors, i);
+        if (EEBUS_MONITOR_GET_NAME(monitor) == monitor_name) {
+            return EEBUS_MONITOR_GET_MEASUREMENT(monitor, name);
+        }
     }
-  }
 
-  return NULL;
+    return NULL;
 }
 
 static EebusError GetMeasurementDataInternal(
@@ -71,18 +71,18 @@ static EebusError GetMeasurementDataInternal(
     EebusMeasurementNameId name,
     ScaledValue* out
 ) {
-  EebusMeasurementObject* const measurement = EebusMonitorContainerGetMeasurement(self, name);
-  if (measurement == NULL) {
-    return kEebusErrorNotSupported;
-  }
+    EebusMeasurementObject* const measurement = EebusMonitorContainerGetMeasurement(self, name);
+    if (measurement == NULL) {
+        return kEebusErrorNotSupported;
+    }
 
-  MeasurementServer msrv = {0};
-  const EebusError err   = MeasurementServerConstruct(&msrv, local_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    MeasurementServer msrv = {0};
+    const EebusError err   = MeasurementServerConstruct(&msrv, local_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  return EEBUS_MEASUREMENT_GET_DATA_VALUE(measurement, &msrv, out);
+    return EEBUS_MEASUREMENT_GET_DATA_VALUE(measurement, &msrv, out);
 }
 
 EebusError EebusMonitorContainerGetMeasurementData(
@@ -92,11 +92,11 @@ EebusError EebusMonitorContainerGetMeasurementData(
     EebusMeasurementNameId name,
     ScaledValue* out
 ) {
-  DEVICE_LOCAL_LOCK(local_device);
-  const EebusError err = GetMeasurementDataInternal(self, local_entity, name, out);
-  DEVICE_LOCAL_UNLOCK(local_device);
+    DEVICE_LOCAL_LOCK(local_device);
+    const EebusError err = GetMeasurementDataInternal(self, local_entity, name, out);
+    DEVICE_LOCAL_UNLOCK(local_device);
 
-  return err;
+    return err;
 }
 
 EebusError EebusMonitorContainerSetMeasurementDataCacheWithTime(
@@ -108,17 +108,17 @@ EebusError EebusMonitorContainerSetMeasurementDataCacheWithTime(
     const EebusDateTime* start_time,
     const EebusDateTime* end_time
 ) {
-  EebusMeasurementObject* const measurement = EebusMonitorContainerGetMeasurement(self, name);
-  if (measurement == NULL) {
-    return kEebusErrorNotSupported;
-  }
+    EebusMeasurementObject* const measurement = EebusMonitorContainerGetMeasurement(self, name);
+    if (measurement == NULL) {
+        return kEebusErrorNotSupported;
+    }
 
-  EEBUS_MUTEX_LOCK(self->mutex);
-  const EebusError err
-      = EEBUS_MEASUREMENT_SET_DATA_CACHE(measurement, value, timestamp, value_state, start_time, end_time);
-  EEBUS_MUTEX_UNLOCK(self->mutex);
+    EEBUS_MUTEX_LOCK(self->mutex);
+    const EebusError err
+        = EEBUS_MEASUREMENT_SET_DATA_CACHE(measurement, value, timestamp, value_state, start_time, end_time);
+    EEBUS_MUTEX_UNLOCK(self->mutex);
 
-  return err;
+    return err;
 }
 
 EebusError EebusMonitorContainerSetMeasurementDataCache(
@@ -128,7 +128,7 @@ EebusError EebusMonitorContainerSetMeasurementDataCache(
     const EebusDateTime* timestamp,
     const MeasurementValueStateType* value_state
 ) {
-  return EebusMonitorContainerSetMeasurementDataCacheWithTime(self, name, value, timestamp, value_state, NULL, NULL);
+    return EebusMonitorContainerSetMeasurementDataCacheWithTime(self, name, value, timestamp, value_state, NULL, NULL);
 }
 
 EebusError EebusMonitorContainerUpdate(
@@ -136,37 +136,37 @@ EebusError EebusMonitorContainerUpdate(
     EntityLocalObject* local_entity,
     DeviceLocalObject* local_device
 ) {
-  MeasurementServer msrv = {0};
-  EebusError err         = MeasurementServerConstruct(&msrv, local_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
-
-  MeasurementListDataType* const list = MeasurementsCreateEmpty();
-  if (list == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
-
-  EEBUS_MUTEX_LOCK(self->mutex);
-  for (size_t i = 0; i < VectorGetSize(&self->monitors); ++i) {
-    EebusMonitorObject* const monitor = (EebusMonitorObject*)VectorGetElement(&self->monitors, i);
-
-    err = EEBUS_MONITOR_FLUSH_MEASUREMENT_CACHE(monitor, list);
+    MeasurementServer msrv = {0};
+    EebusError err         = MeasurementServerConstruct(&msrv, local_entity);
     if (err != kEebusErrorOk) {
-      EEBUS_MUTEX_UNLOCK(self->mutex);
-      MeasurementsDelete(list);
-      return err;
+        return err;
     }
-  }
 
-  EEBUS_MUTEX_UNLOCK(self->mutex);
+    MeasurementListDataType* const list = MeasurementsCreateEmpty();
+    if (list == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  if (list->measurement_data_size > 0) {
-    DEVICE_LOCAL_LOCK(local_device);
-    err = MeasurementServerUpdateMeasurements(&msrv, list, NULL, NULL);
-    DEVICE_LOCAL_UNLOCK(local_device);
-  }
+    EEBUS_MUTEX_LOCK(self->mutex);
+    for (size_t i = 0; i < VectorGetSize(&self->monitors); ++i) {
+        EebusMonitorObject* const monitor = (EebusMonitorObject*)VectorGetElement(&self->monitors, i);
 
-  MeasurementsDelete(list);
-  return err;
+        err = EEBUS_MONITOR_FLUSH_MEASUREMENT_CACHE(monitor, list);
+        if (err != kEebusErrorOk) {
+            EEBUS_MUTEX_UNLOCK(self->mutex);
+            MeasurementsDelete(list);
+            return err;
+        }
+    }
+
+    EEBUS_MUTEX_UNLOCK(self->mutex);
+
+    if (list->measurement_data_size > 0) {
+        DEVICE_LOCAL_LOCK(local_device);
+        err = MeasurementServerUpdateMeasurements(&msrv, list, NULL, NULL);
+        DEVICE_LOCAL_UNLOCK(local_device);
+    }
+
+    MeasurementsDelete(list);
+    return err;
 }

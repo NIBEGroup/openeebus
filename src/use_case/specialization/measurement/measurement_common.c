@@ -30,16 +30,16 @@ void MeasurementCommonConstruct(
     FeatureLocalObject* feature_local,
     FeatureRemoteObject* feature_remote
 ) {
-  self->feature_local  = feature_local;
-  self->feature_remote = feature_remote;
+    self->feature_local  = feature_local;
+    self->feature_remote = feature_remote;
 }
 
 bool MeasurementIdMatch(const MeasurementIdType* id_a, const MeasurementIdType* id_b) {
-  if ((id_a == NULL) || (id_b == NULL)) {
-    return false;
-  }
+    if ((id_a == NULL) || (id_b == NULL)) {
+        return false;
+    }
 
-  return *id_a == *id_b;
+    return *id_a == *id_b;
 }
 
 bool MeasurementCommonCheckMeasurementWithFilter(
@@ -47,72 +47,72 @@ bool MeasurementCommonCheckMeasurementWithFilter(
     const MeasurementListDataType* measurements_list,
     const MeasurementDescriptionDataType* filter
 ) {
-  if ((measurements_list == NULL) || (filter == NULL)) {
-    return false;
-  }
-
-  const MeasurementDescriptionListDataType* const descriptions_list
-      = HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementListData);
-
-  EebusDataListMatchIterator it = {0};
-  HelperListMatchFirst(kFunctionTypeMeasurementListData, descriptions_list, filter, &it);
-
-  for (; !EebusDataListMatchIteratorIsDone(&it); EebusDataListMatchIteratorNext(&it)) {
-    const MeasurementDescriptionDataType* description = EebusDataListMatchIteratorGet(&it);
-    if (description->measurement_id == NULL) {
-      for (size_t i = 0; i < measurements_list->measurement_data_size; ++i) {
-        const MeasurementDataType* const item = measurements_list->measurement_data[i];
-        if (MeasurementIdMatch(item->measurement_id, description->measurement_id)) {
-          return true;
-        }
-      }
+    if ((measurements_list == NULL) || (filter == NULL)) {
+        return false;
     }
-  }
 
-  return false;
+    const MeasurementDescriptionListDataType* const descriptions_list
+        = HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementListData);
+
+    EebusDataListMatchIterator it = {0};
+    HelperListMatchFirst(kFunctionTypeMeasurementListData, descriptions_list, filter, &it);
+
+    for (; !EebusDataListMatchIteratorIsDone(&it); EebusDataListMatchIteratorNext(&it)) {
+        const MeasurementDescriptionDataType* description = EebusDataListMatchIteratorGet(&it);
+        if (description->measurement_id == NULL) {
+            for (size_t i = 0; i < measurements_list->measurement_data_size; ++i) {
+                const MeasurementDataType* const item = measurements_list->measurement_data[i];
+                if (MeasurementIdMatch(item->measurement_id, description->measurement_id)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
 }
 
 const MeasurementDescriptionDataType*
 MeasurementCommonGetMeasurementDescriptionWithId(const MeasurementCommon* self, MeasurementIdType measurement_id) {
-  const MeasurementDescriptionDataType filter = {.measurement_id = &measurement_id};
-  return MeasurementCommonGetMeasurementDescriptionWithFilter(self, &filter);
+    const MeasurementDescriptionDataType filter = {.measurement_id = &measurement_id};
+    return MeasurementCommonGetMeasurementDescriptionWithFilter(self, &filter);
 }
 
 const MeasurementDescriptionDataType* MeasurementCommonGetMeasurementDescriptionWithFilter(
     const MeasurementCommon* self,
     const MeasurementDescriptionDataType* filter
 ) {
-  const MeasurementDescriptionListDataType* const descriptions_list = MeasurementCommonGetDescriptions(self);
-  return HelperGetListUniqueMatch(kFunctionTypeMeasurementDescriptionListData, descriptions_list, filter);
+    const MeasurementDescriptionListDataType* const descriptions_list = MeasurementCommonGetDescriptions(self);
+    return HelperGetListUniqueMatch(kFunctionTypeMeasurementDescriptionListData, descriptions_list, filter);
 }
 
 const MeasurementConstraintsDataType* MeasurementCommonGetMeasurementConstraintsWithFilter(
     const MeasurementCommon* self,
     const MeasurementConstraintsDataType* filter
 ) {
-  const MeasurementConstraintsListDataType* const constraints_list
-      = HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementConstraintsListData);
+    const MeasurementConstraintsListDataType* const constraints_list
+        = HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementConstraintsListData);
 
-  return HelperGetListUniqueMatch(kFunctionTypeMeasurementConstraintsListData, constraints_list, filter);
+    return HelperGetListUniqueMatch(kFunctionTypeMeasurementConstraintsListData, constraints_list, filter);
 }
 
 const MeasurementDataType*
 MeasurementCommonGetMeasurementWithId(const MeasurementCommon* self, MeasurementIdType measurement_id) {
-  const MeasurementDescriptionDataType filter = {.measurement_id = &measurement_id};
-  return MeasurementCommonGetMeasurementWithFilter(self, &filter);
+    const MeasurementDescriptionDataType filter = {.measurement_id = &measurement_id};
+    return MeasurementCommonGetMeasurementWithFilter(self, &filter);
 }
 
 const MeasurementDataType*
 MeasurementCommonGetMeasurementWithFilter(const MeasurementCommon* self, const MeasurementDescriptionDataType* filter) {
-  const MeasurementDescriptionDataType* const description
-      = MeasurementCommonGetMeasurementDescriptionWithFilter(self, filter);
+    const MeasurementDescriptionDataType* const description
+        = MeasurementCommonGetMeasurementDescriptionWithFilter(self, filter);
 
-  const MeasurementListDataType* const measurements_list
-      = HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementListData);
+    const MeasurementListDataType* const measurements_list
+        = HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementListData);
 
-  const MeasurementDataType measurements_filter = {.measurement_id = description->measurement_id};
+    const MeasurementDataType measurements_filter = {.measurement_id = description->measurement_id};
 
-  return HelperGetListUniqueMatch(kFunctionTypeMeasurementListData, measurements_list, &measurements_filter);
+    return HelperGetListUniqueMatch(kFunctionTypeMeasurementListData, measurements_list, &measurements_filter);
 }
 
 void MeasurementCommonGetMeasurementDescriptionMatchFirst(
@@ -120,8 +120,8 @@ void MeasurementCommonGetMeasurementDescriptionMatchFirst(
     const MeasurementDescriptionDataType* filter,
     EebusDataListMatchIterator* it
 ) {
-  const MeasurementDescriptionListDataType* const descriptions_list
-      = HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementDescriptionListData);
+    const MeasurementDescriptionListDataType* const descriptions_list
+        = HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementDescriptionListData);
 
-  HelperListMatchFirst(kFunctionTypeMeasurementDescriptionListData, descriptions_list, filter, it);
+    HelperListMatchFirst(kFunctionTypeMeasurementDescriptionListData, descriptions_list, filter, it);
 }

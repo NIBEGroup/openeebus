@@ -50,13 +50,13 @@ extern const EebusDataInterface eebus_data_container_methods;
  * to single instance of the EEBUS Data List
  */
 #define EEBUS_DATA_CONTAINER(ed_name, struct_name, struct_field, ce_cfg) \
-  {                                                                      \
-      .interface_ = &eebus_data_container_methods,                       \
-      .name       = ed_name,                                             \
-      .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),     \
-      .size       = sizeof(*STRUCT_MEMBER(struct_name, struct_field)),   \
-      .metadata   = ce_cfg,                                              \
-  }
+    {                                                                    \
+        .interface_ = &eebus_data_container_methods,                     \
+        .name       = ed_name,                                           \
+        .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),   \
+        .size       = sizeof(*STRUCT_MEMBER(struct_name, struct_field)), \
+        .metadata   = ce_cfg,                                            \
+    }
 
 void EbusDataContainerListMatchFirst(
     const EebusDataCfg* cfg,

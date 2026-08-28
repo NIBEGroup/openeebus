@@ -21,13 +21,13 @@
 #include "src/spine/model/common_data_types.h"
 
 EebusDateTime AbsoluteOrRelativeTimeGetTime(const AbsoluteOrRelativeTimeType* self) {
-  if (self->type == kAbsoluteOrRelativeTimeTypeDateTime) {
-    // Absolute time
-    return self->date_time;
-  } else {
-    // Relative time
-    EebusDateTime date_time = EebusDateTimeNow();
-    EebusDateTimeAddDuration(&date_time, &self->duration);
-    return date_time;
-  }
+    if (self->type == kAbsoluteOrRelativeTimeTypeDateTime) {
+        // Absolute time
+        return self->date_time;
+    } else {
+        // Relative time
+        EebusDateTime date_time = EebusDateTimeNow();
+        EebusDateTimeAddDuration(&date_time, &self->duration);
+        return date_time;
+    }
 }

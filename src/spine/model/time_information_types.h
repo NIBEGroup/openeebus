@@ -33,49 +33,49 @@ extern "C" {
 typedef struct TimeInformationDataType TimeInformationDataType;
 
 struct TimeInformationDataType {
-  const DateTimeType* utc;               /**< "utc" */
-  const DurationType* utc_offset;        /**< "utcOffset" */
-  const DayOfWeekType* day_of_week;      /**< "dayOfWeek" */
-  const CalendarWeekType* calendar_week; /**< "calendarWeek" */
+    const DateTimeType* utc;               /**< "utc" */
+    const DurationType* utc_offset;        /**< "utcOffset" */
+    const DayOfWeekType* day_of_week;      /**< "dayOfWeek" */
+    const CalendarWeekType* calendar_week; /**< "calendarWeek" */
 };
 
 typedef struct TimeInformationDataElementsType TimeInformationDataElementsType;
 
 struct TimeInformationDataElementsType {
-  ElementTagType utc;           /**< "utc" */
-  ElementTagType utc_offset;    /**< "utcOffset" */
-  ElementTagType day_of_week;   /**< "dayOfWeek" */
-  ElementTagType calendar_week; /**< "calendarWeek" */
+    ElementTagType utc;           /**< "utc" */
+    ElementTagType utc_offset;    /**< "utcOffset" */
+    ElementTagType day_of_week;   /**< "dayOfWeek" */
+    ElementTagType calendar_week; /**< "calendarWeek" */
 };
 
 typedef struct TimeDistributorDataType TimeDistributorDataType;
 
 struct TimeDistributorDataType {
-  const bool* is_time_distributor;      /**< "isTimeDistributor" */
-  const uint32_t* distributor_priority; /**< "distributorPriority" */
+    const bool* is_time_distributor;      /**< "isTimeDistributor" */
+    const uint32_t* distributor_priority; /**< "distributorPriority" */
 };
 
 typedef struct TimeDistributorDataElementsType TimeDistributorDataElementsType;
 
 struct TimeDistributorDataElementsType {
-  ElementTagType is_time_distributor;  /**< "isTimeDistributor" */
-  ElementTagType distributor_priority; /**< "distributorPriority" */
+    ElementTagType is_time_distributor;  /**< "isTimeDistributor" */
+    ElementTagType distributor_priority; /**< "distributorPriority" */
 };
 
 typedef struct TimePrecisionDataType TimePrecisionDataType;
 
 struct TimePrecisionDataType {
-  const bool* is_synchronised;      /**< "isSynchronised" */
-  const DateTimeType* last_sync_at; /**< "lastSyncAt" */
-  const int32_t* clock_drift;       /**< "clockDrift" */
+    const bool* is_synchronised;      /**< "isSynchronised" */
+    const DateTimeType* last_sync_at; /**< "lastSyncAt" */
+    const int32_t* clock_drift;       /**< "clockDrift" */
 };
 
 typedef struct TimePrecisionDataElementsType TimePrecisionDataElementsType;
 
 struct TimePrecisionDataElementsType {
-  ElementTagType is_synchronised; /**< "isSynchronised" */
-  ElementTagType last_sync_at;    /**< "lastSyncAt" */
-  ElementTagType clock_drift;     /**< "clockDrift" */
+    ElementTagType is_synchronised; /**< "isSynchronised" */
+    ElementTagType last_sync_at;    /**< "lastSyncAt" */
+    ElementTagType clock_drift;     /**< "clockDrift" */
 };
 
 typedef TagType TimeDistributorEnquiryCallType;

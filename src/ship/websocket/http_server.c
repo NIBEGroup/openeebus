@@ -61,23 +61,23 @@
 typedef struct HttpServer HttpServer;
 
 struct HttpServer {
-  /** Implements the Http Server Interface */
-  HttpServerObject obj;
+    /** Implements the Http Server Interface */
+    HttpServerObject obj;
 
-  bool cancel;
-  EebusThreadObject* thread;
-  EebusMutexObject* mutex;
+    bool cancel;
+    EebusThreadObject* thread;
+    EebusMutexObject* mutex;
 
-  struct lws_context* lws_ctx;
-  WebsocketServerCallbackType conn_establish_cb;
-  void* conn_establish_ctx;
-  WebsocketObject* ws;
+    struct lws_context* lws_ctx;
+    WebsocketServerCallbackType conn_establish_cb;
+    void* conn_establish_ctx;
+    WebsocketObject* ws;
 
-  int port;
-  const TlsCertificateObject* tls_cert;
-  struct lws_protocols protocols[2];
-  struct lws_context_creation_info info;
-  lws_sorted_usec_list_t sul_stagger;
+    int port;
+    const TlsCertificateObject* tls_cert;
+    struct lws_protocols protocols[2];
+    struct lws_context_creation_info info;
+    lws_sorted_usec_list_t sul_stagger;
 };
 
 #define HTTP_SERVER(obj) ((HttpServer*)(obj))
@@ -118,29 +118,29 @@ void HttpServerConstruct(
     WebsocketServerCallbackType conn_establish_cb,
     void* conn_establish_ctx
 ) {
-  // Override "virtual functions table"
-  HTTP_SERVER_INTERFACE(self) = &http_server_methods;
+    // Override "virtual functions table"
+    HTTP_SERVER_INTERFACE(self) = &http_server_methods;
 
-  memset(&self->info, 0, sizeof(self->info));
-  memset(&self->sul_stagger, 0, sizeof(self->sul_stagger));
+    memset(&self->info, 0, sizeof(self->info));
+    memset(&self->sul_stagger, 0, sizeof(self->sul_stagger));
 
-  self->protocols[0]
-      = (struct lws_protocols){SHIP_WEBSOCKET_SUB_PROTOCOL, HttpServerServiceCallback, 0, 4096, 0, self, 0};
-  self->protocols[1] = (struct lws_protocols)LWS_PROTOCOL_LIST_TERM;
+    self->protocols[0]
+        = (struct lws_protocols){SHIP_WEBSOCKET_SUB_PROTOCOL, HttpServerServiceCallback, 0, 4096, 0, self, 0};
+    self->protocols[1] = (struct lws_protocols)LWS_PROTOCOL_LIST_TERM;
 
-  self->tls_cert = tls_cert;
-  self->thread   = NULL;
-  self->cancel   = false;
+    self->tls_cert = tls_cert;
+    self->thread   = NULL;
+    self->cancel   = false;
 
-  self->conn_establish_cb  = conn_establish_cb;
-  self->conn_establish_ctx = conn_establish_ctx;
+    self->conn_establish_cb  = conn_establish_cb;
+    self->conn_establish_ctx = conn_establish_ctx;
 
-  self->port         = port;
-  self->ws           = NULL;
+    self->port = port;
+    self->ws   = NULL;
 
-  self->lws_ctx = NULL;
+    self->lws_ctx = NULL;
 
-  self->mutex = EebusMutexCreateRecursive();
+    self->mutex = EebusMutexCreateRecursive();
 }
 
 HttpServerObject* HttpServerCreate(
@@ -149,255 +149,255 @@ HttpServerObject* HttpServerCreate(
     WebsocketServerCallbackType conn_establish_cb,
     void* conn_establish_ctx
 ) {
-  HttpServer* const http_server = (HttpServer*)EEBUS_MALLOC(sizeof(HttpServer));
+    HttpServer* const http_server = (HttpServer*)EEBUS_MALLOC(sizeof(HttpServer));
 
-  HttpServerConstruct(http_server, port, tls_cert, conn_establish_cb, conn_establish_ctx);
+    HttpServerConstruct(http_server, port, tls_cert, conn_establish_cb, conn_establish_ctx);
 
-  return HTTP_SERVER_OBJECT(http_server);
+    return HTTP_SERVER_OBJECT(http_server);
 }
 
 void Destruct(HttpServerObject* self) {
-  HttpServer* const srv = HTTP_SERVER(self);
+    HttpServer* const srv = HTTP_SERVER(self);
 
-  if (srv->lws_ctx != NULL) {
-    lws_context_destroy(srv->lws_ctx);
-    srv->lws_ctx = NULL;
-  }
+    if (srv->lws_ctx != NULL) {
+        lws_context_destroy(srv->lws_ctx);
+        srv->lws_ctx = NULL;
+    }
 
-  if (srv->mutex != NULL) {
-    EebusMutexDelete(srv->mutex);
-    srv->mutex = NULL;
-  }
+    if (srv->mutex != NULL) {
+        EebusMutexDelete(srv->mutex);
+        srv->mutex = NULL;
+    }
 }
 
 void HttpServerStaggerCallback(lws_sorted_usec_list_t* sul) {
-  HttpServer* const srv = lws_container_of(sul, HttpServer, sul_stagger);
+    HttpServer* const srv = lws_container_of(sul, HttpServer, sul_stagger);
 
-  EEBUS_MUTEX_LOCK(srv->mutex);
-  if ((srv->ws != NULL) && !WEBSOCKET_IS_CLOSED(srv->ws)) {
-    WEBSOCKET_SCHEDULE_WRITE(srv->ws);
-  }
-  EEBUS_MUTEX_UNLOCK(srv->mutex);
+    EEBUS_MUTEX_LOCK(srv->mutex);
+    if ((srv->ws != NULL) && !WEBSOCKET_IS_CLOSED(srv->ws)) {
+        WEBSOCKET_SCHEDULE_WRITE(srv->ws);
+    }
+    EEBUS_MUTEX_UNLOCK(srv->mutex);
 
-  lws_sul_schedule(srv->lws_ctx, 0, &srv->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);
+    lws_sul_schedule(srv->lws_ctx, 0, &srv->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);
 }
 
 struct lws_context* HttpServerContextCreate(HttpServer* self) {
-  const struct lws_context_creation_info lws_ctx_creation_info = (struct lws_context_creation_info){
-      .port      = self->port,
-      .protocols = self->protocols,
-      .gid       = (gid_t)-1,
-      .uid       = (uid_t)-1,
+    const struct lws_context_creation_info lws_ctx_creation_info = (struct lws_context_creation_info){
+        .port      = self->port,
+        .protocols = self->protocols,
+        .gid       = (gid_t)-1,
+        .uid       = (uid_t)-1,
 
-      .options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT | LWS_SERVER_OPTION_SSL_ECDH
-                 | LWS_SERVER_OPTION_PEER_CERT_NOT_REQUIRED | LWS_SERVER_OPTION_H2_JUST_FIX_WINDOW_UPDATE_OVERFLOW
-                 | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT
-                 | LWS_SERVER_OPTION_MBEDTLS_VERIFY_CLIENT_CERT_POST_HANDSHAKE,
+        .options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT | LWS_SERVER_OPTION_SSL_ECDH
+                   | LWS_SERVER_OPTION_PEER_CERT_NOT_REQUIRED | LWS_SERVER_OPTION_H2_JUST_FIX_WINDOW_UPDATE_OVERFLOW
+                   | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT
+                   | LWS_SERVER_OPTION_MBEDTLS_VERIFY_CLIENT_CERT_POST_HANDSHAKE,
 
-      .ecdh_curve = "prime256v1",
-      .ssl_cipher_list
-      = "ECDHE-ECDSA-AES128-GCM-SHA256:"
-        "ECDHE-ECDSA-AES128-CCM8:"
-        "ECDHE-ECDSA-AES128-SHA256",
+        .ecdh_curve = "prime256v1",
+        .ssl_cipher_list
+        = "ECDHE-ECDSA-AES128-GCM-SHA256:"
+          "ECDHE-ECDSA-AES128-CCM8:"
+          "ECDHE-ECDSA-AES128-SHA256",
 
-      .server_ssl_cert_mem            = TLS_CERTIFICATE_GET_CERTIFICATE(self->tls_cert),
-      .server_ssl_cert_mem_len        = (unsigned int)TLS_CERTIFICATE_GET_CERTIFICATE_SIZE(self->tls_cert),
-      .server_ssl_private_key_mem     = TLS_CERTIFICATE_GET_PRIVATE_KEY(self->tls_cert),
-      .server_ssl_private_key_mem_len = (unsigned int)TLS_CERTIFICATE_GET_PRIVATE_KEY_SIZE(self->tls_cert),
+        .server_ssl_cert_mem            = TLS_CERTIFICATE_GET_CERTIFICATE(self->tls_cert),
+        .server_ssl_cert_mem_len        = (unsigned int)TLS_CERTIFICATE_GET_CERTIFICATE_SIZE(self->tls_cert),
+        .server_ssl_private_key_mem     = TLS_CERTIFICATE_GET_PRIVATE_KEY(self->tls_cert),
+        .server_ssl_private_key_mem_len = (unsigned int)TLS_CERTIFICATE_GET_PRIVATE_KEY_SIZE(self->tls_cert),
 
-      .user = self,
-  };
+        .user = self,
+    };
 
-  if (WEBSOCKET_DEBUG == 2) {
-    int logs = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_DEBUG;
-    lws_set_log_level(logs, NULL);
-  }
+    if (WEBSOCKET_DEBUG == 2) {
+        int logs = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_DEBUG;
+        lws_set_log_level(logs, NULL);
+    }
 
-  return lws_create_context(&lws_ctx_creation_info);
+    return lws_create_context(&lws_ctx_creation_info);
 }
 
 void* HttpServerConnectionLoop(void* self) {
-  HttpServer* const srv = (HttpServer*)self;
+    HttpServer* const srv = (HttpServer*)self;
 
-  int err = 0;
-  lws_sul_schedule(srv->lws_ctx, 0, &srv->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);
+    int err = 0;
+    lws_sul_schedule(srv->lws_ctx, 0, &srv->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);
 
-  do {
-    err = lws_service(srv->lws_ctx, 100);
-  } while ((err >= 0) && (!srv->cancel));
+    do {
+        err = lws_service(srv->lws_ctx, 100);
+    } while ((err >= 0) && (!srv->cancel));
 
-  return NULL;
+    return NULL;
 }
 
 EebusError HttpServerTryStart(HttpServer* self) {
-  self->lws_ctx = HttpServerContextCreate(self);
-  if (self->lws_ctx == NULL) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), creating libwebsocket context failed\n", __func__);
-    return kEebusErrorInit;
-  }
+    self->lws_ctx = HttpServerContextCreate(self);
+    if (self->lws_ctx == NULL) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), creating libwebsocket context failed\n", __func__);
+        return kEebusErrorInit;
+    }
 
-  self->thread = EebusThreadCreate(HttpServerConnectionLoop, self, 16 * 1024);
-  if (self->thread == NULL) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), start webserver failed\n", __func__);
-    return kEebusErrorThread;
-  }
+    self->thread = EebusThreadCreate(HttpServerConnectionLoop, self, 16 * 1024);
+    if (self->thread == NULL) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), start webserver failed\n", __func__);
+        return kEebusErrorThread;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError Start(HttpServerObject* self) {
-  HttpServer* const srv = HTTP_SERVER(self);
+    HttpServer* const srv = HTTP_SERVER(self);
 
-  EebusError ret = HttpServerTryStart(srv);
+    EebusError ret = HttpServerTryStart(srv);
 
-  return ret;
+    return ret;
 }
 
 void Stop(HttpServerObject* self) {
-  HttpServer* const srv = HTTP_SERVER(self);
-  HTTP_SERVER_DEBUG_PRINTF("Stopping HTTP server\n");
-  srv->cancel = true;
+    HttpServer* const srv = HTTP_SERVER(self);
+    HTTP_SERVER_DEBUG_PRINTF("Stopping HTTP server\n");
+    srv->cancel = true;
 
-  if (srv->thread != NULL) {
-    EEBUS_THREAD_JOIN(srv->thread);
-    EebusThreadDelete(srv->thread);
-    srv->thread = NULL;
-  }
+    if (srv->thread != NULL) {
+        EEBUS_THREAD_JOIN(srv->thread);
+        EebusThreadDelete(srv->thread);
+        srv->thread = NULL;
+    }
 
-  HTTP_SERVER_DEBUG_PRINTF("HTTP server stopped\n");
+    HTTP_SERVER_DEBUG_PRINTF("HTTP server stopped\n");
 }
 
 void HttpServerUnbindWsi(HttpServerObject* self, struct lws* wsi) {
-  HttpServer* const srv = HTTP_SERVER(self);
-  if (wsi == NULL) {
-    return;
-  }
+    HttpServer* const srv = HTTP_SERVER(self);
+    if (wsi == NULL) {
+        return;
+    }
 
-  EEBUS_MUTEX_LOCK(srv->mutex);
-  srv->ws = NULL;
-  lws_set_wsi_user(wsi, NULL);
-  EEBUS_MUTEX_UNLOCK(srv->mutex);
+    EEBUS_MUTEX_LOCK(srv->mutex);
+    srv->ws = NULL;
+    lws_set_wsi_user(wsi, NULL);
+    EEBUS_MUTEX_UNLOCK(srv->mutex);
 }
 
 // LWS Handlers
 int HttpServerOnClientConnect(HttpServer* self, struct lws* wsi) {
-  EEBUS_MUTEX_LOCK(self->mutex);
-  const bool already_active = (self->ws != NULL);
-  EEBUS_MUTEX_UNLOCK(self->mutex);
+    EEBUS_MUTEX_LOCK(self->mutex);
+    const bool already_active = (self->ws != NULL);
+    EEBUS_MUTEX_UNLOCK(self->mutex);
 
-  if (already_active) {
-    // Currently only a single connection is supported
-    HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is already created\n", __func__);
-    return -1;
-  }
+    if (already_active) {
+        // Currently only a single connection is supported
+        HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is already created\n", __func__);
+        return -1;
+    }
 
-  const char* ski = WebsocketGetSkiWithWsi(wsi);
-  if (ski == NULL) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), WebsocketGetSkiWithWsi() failed\n", __func__);
-    return -1;
-  }
+    const char* ski = WebsocketGetSkiWithWsi(wsi);
+    if (ski == NULL) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), WebsocketGetSkiWithWsi() failed\n", __func__);
+        return -1;
+    }
 
-  if (self->conn_establish_cb == NULL) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), conn_establish_cb() is NULL\n", __func__);
+    if (self->conn_establish_cb == NULL) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), conn_establish_cb() is NULL\n", __func__);
+        StringDelete((char*)ski);
+        return -1;
+    }
+
+    WebsocketCreatorObject* websocket_creator = WebsocketServerCreatorCreate(HTTP_SERVER_OBJECT(self), wsi);
+
+    const int ret = self->conn_establish_cb(ski, websocket_creator, self->conn_establish_ctx);
+    WebsocketCreatorDelete(websocket_creator);
     StringDelete((char*)ski);
-    return -1;
-  }
+    if (ret != 0) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), conn_establish_cb() failed: %d\n", __func__, ret);
+        return -1;
+    }
 
-  WebsocketCreatorObject* websocket_creator = WebsocketServerCreatorCreate(HTTP_SERVER_OBJECT(self), wsi);
+    WebsocketObject* const ws = (WebsocketObject*)lws_wsi_user(wsi);
+    if (ws == NULL) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is NULL\n", __func__);
+        return -1;
+    }
 
-  const int ret = self->conn_establish_cb(ski, websocket_creator, self->conn_establish_ctx);
-  WebsocketCreatorDelete(websocket_creator);
-  StringDelete((char*)ski);
-  if (ret != 0) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), conn_establish_cb() failed: %d\n", __func__, ret);
-    return -1;
-  }
+    EEBUS_MUTEX_LOCK(self->mutex);
+    self->ws = ws;
+    EEBUS_MUTEX_UNLOCK(self->mutex);
 
-  WebsocketObject* const ws = (WebsocketObject*)lws_wsi_user(wsi);
-  if (ws == NULL) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is NULL\n", __func__);
-    return -1;
-  }
+    lws_sul_schedule(self->lws_ctx, 0, &self->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);
 
-  EEBUS_MUTEX_LOCK(self->mutex);
-  self->ws = ws;
-  EEBUS_MUTEX_UNLOCK(self->mutex);
-
-  lws_sul_schedule(self->lws_ctx, 0, &self->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);
-
-  return 0;
+    return 0;
 }
 
 int HttpServerOnReceive(HttpServer* self, struct lws* wsi, void* in, size_t len) {
-  UNUSED(self);
+    UNUSED(self);
 
-  WebsocketObject* ws = (WebsocketObject*)lws_wsi_user(wsi);
-  if (ws == NULL) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is NULL\n", __func__);
-    return -1;
-  }
+    WebsocketObject* ws = (WebsocketObject*)lws_wsi_user(wsi);
+    if (ws == NULL) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is NULL\n", __func__);
+        return -1;
+    }
 
-  const int ret = WebsocketOnReceive(ws, in, len);
-  if (ret != 0) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), WebsocketOnReceive() failed: %d\n", __func__, ret);
-  }
+    const int ret = WebsocketOnReceive(ws, in, len);
+    if (ret != 0) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), WebsocketOnReceive() failed: %d\n", __func__, ret);
+    }
 
-  return ret;
+    return ret;
 }
 
 int HttpServerOnWriteable(HttpServer* self, struct lws* wsi) {
-  UNUSED(self);
-  WebsocketObject* ws = (WebsocketObject*)lws_wsi_user(wsi);
-  if (ws == NULL) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is NULL\n", __func__);
-    return -1;
-  }
+    UNUSED(self);
+    WebsocketObject* ws = (WebsocketObject*)lws_wsi_user(wsi);
+    if (ws == NULL) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is NULL\n", __func__);
+        return -1;
+    }
 
-  const int ret = WebsocketOnWritable(ws);
-  if (ret != 0) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), WebsocketOnWritable() failed: %d\n", __func__, ret);
-  }
+    const int ret = WebsocketOnWritable(ws);
+    if (ret != 0) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), WebsocketOnWritable() failed: %d\n", __func__, ret);
+    }
 
-  return ret;
+    return ret;
 }
 
 int HttpServerOnConnectionClose(HttpServer* self, struct lws* wsi) {
-  WebsocketObject* ws = (WebsocketObject*)lws_wsi_user(wsi);
-  if (ws == NULL) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is NULL\n", __func__);
-    return -1;
-  }
+    WebsocketObject* ws = (WebsocketObject*)lws_wsi_user(wsi);
+    if (ws == NULL) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is NULL\n", __func__);
+        return -1;
+    }
 
-  WEBSOCKET_CLOSE(ws, 0, "");
-  WebsocketOnClose(ws);
-  lws_cancel_service(self->lws_ctx);
-  return 0;
+    WEBSOCKET_CLOSE(ws, 0, "");
+    WebsocketOnClose(ws);
+    lws_cancel_service(self->lws_ctx);
+    return 0;
 }
 
 int HttpServerServiceCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len) {
-  UNUSED(user);
+    UNUSED(user);
 
-  HTTP_SERVER_DEBUG_PRINTF("%s(), reason = %s\n", __func__, WebsocketLwsReasonToString(reason));
-  HttpServer* const srv = lws_context_user(lws_get_context(wsi));
-  int ret               = 0;
+    HTTP_SERVER_DEBUG_PRINTF("%s(), reason = %s\n", __func__, WebsocketLwsReasonToString(reason));
+    HttpServer* const srv = lws_context_user(lws_get_context(wsi));
+    int ret               = 0;
 
-  switch (reason) {
-    case LWS_CALLBACK_ESTABLISHED: ret = HttpServerOnClientConnect(srv, wsi); break;
+    switch (reason) {
+        case LWS_CALLBACK_ESTABLISHED: ret = HttpServerOnClientConnect(srv, wsi); break;
 
-    case LWS_CALLBACK_RECEIVE: ret = HttpServerOnReceive(srv, wsi, in, len); break;
+        case LWS_CALLBACK_RECEIVE: ret = HttpServerOnReceive(srv, wsi, in, len); break;
 
-    case LWS_CALLBACK_SERVER_WRITEABLE: ret = HttpServerOnWriteable(srv, wsi); break;
+        case LWS_CALLBACK_SERVER_WRITEABLE: ret = HttpServerOnWriteable(srv, wsi); break;
 
-    case LWS_CALLBACK_CLOSED: ret = HttpServerOnConnectionClose(srv, wsi); break;
+        case LWS_CALLBACK_CLOSED: ret = HttpServerOnConnectionClose(srv, wsi); break;
 
-    case LWS_CALLBACK_EVENT_WAIT_CANCELLED: ret = 0; break;
+        case LWS_CALLBACK_EVENT_WAIT_CANCELLED: ret = 0; break;
 
-    default: break;
-  }
+        default: break;
+    }
 
-  if (ret != 0) {
-    HTTP_SERVER_DEBUG_PRINTF("%s(), ret = %d\n", __func__, ret);
-  }
+    if (ret != 0) {
+        HTTP_SERVER_DEBUG_PRINTF("%s(), ret = %d\n", __func__, ret);
+    }
 
-  return ret;
+    return ret;
 }

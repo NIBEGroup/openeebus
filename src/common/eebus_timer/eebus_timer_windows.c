@@ -31,16 +31,16 @@
 typedef struct EebusTimer EebusTimer;
 
 struct EebusTimer {
-  /** Implements the EEBUS Timer Interface */
-  EebusTimerObject obj;
+    /** Implements the EEBUS Timer Interface */
+    EebusTimerObject obj;
 
-  EebusTimerTimeoutCallback cb;
-  void* ctx;
-  HANDLE timer_handle;
-  DWORD timeout_ms;
-  bool autoreload;
-  EebusTimerState timer_state;
-  ULONGLONG start_tick;  // Windows tick count when timer started
+    EebusTimerTimeoutCallback cb;
+    void* ctx;
+    HANDLE timer_handle;
+    DWORD timeout_ms;
+    bool autoreload;
+    EebusTimerState timer_state;
+    ULONGLONG start_tick;  // Windows tick count when timer started
 };
 
 #define EEBUS_TIMER(obj) ((EebusTimer*)(obj))
@@ -63,117 +63,117 @@ static void EebusTimerExpiredCallback(PVOID lpParameter, BOOLEAN TimerOrWaitFire
 static EebusError EebusTimerConstruct(EebusTimer* self, EebusTimerTimeoutCallback cb, void* ctx);
 
 void EebusTimerExpiredCallback(PVOID lpParameter, BOOLEAN TimerOrWaitFired) {
-  (void)TimerOrWaitFired;  // Unused parameter
-  EebusTimer* const eebus_timer = (EebusTimer*)lpParameter;
-  eebus_timer->timer_state      = kEebusTimerStateExpired;
-  eebus_timer->cb(eebus_timer->ctx);
+    (void)TimerOrWaitFired;  // Unused parameter
+    EebusTimer* const eebus_timer = (EebusTimer*)lpParameter;
+    eebus_timer->timer_state      = kEebusTimerStateExpired;
+    eebus_timer->cb(eebus_timer->ctx);
 }
 
 EebusError EebusTimerConstruct(EebusTimer* self, EebusTimerTimeoutCallback cb, void* ctx) {
-  // Override "virtual functions table"
-  EEBUS_TIMER_INTERFACE(self) = &eebus_timer_methods;
+    // Override "virtual functions table"
+    EEBUS_TIMER_INTERFACE(self) = &eebus_timer_methods;
 
-  self->cb           = cb;
-  self->ctx          = ctx;
-  self->timer_handle = NULL;
-  self->timeout_ms   = 0;
-  self->autoreload   = false;
-  self->timer_state  = kEebusTimerStateIdle;
-  self->start_tick   = 0;
+    self->cb           = cb;
+    self->ctx          = ctx;
+    self->timer_handle = NULL;
+    self->timeout_ms   = 0;
+    self->autoreload   = false;
+    self->timer_state  = kEebusTimerStateIdle;
+    self->start_tick   = 0;
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusTimerObject* EebusTimerCreate(EebusTimerTimeoutCallback cb, void* ctx) {
-  EebusTimer* const eebus_timer = (EebusTimer*)EEBUS_MALLOC(sizeof(EebusTimer));
-  if (eebus_timer == NULL) {
-    return NULL;
-  }
+    EebusTimer* const eebus_timer = (EebusTimer*)EEBUS_MALLOC(sizeof(EebusTimer));
+    if (eebus_timer == NULL) {
+        return NULL;
+    }
 
-  const EebusError err = EebusTimerConstruct(eebus_timer, cb, ctx);
-  if (err != kEebusErrorOk) {
-    EebusTimerDelete(EEBUS_TIMER_OBJECT(eebus_timer));
-    return NULL;
-  }
+    const EebusError err = EebusTimerConstruct(eebus_timer, cb, ctx);
+    if (err != kEebusErrorOk) {
+        EebusTimerDelete(EEBUS_TIMER_OBJECT(eebus_timer));
+        return NULL;
+    }
 
-  return EEBUS_TIMER_OBJECT(eebus_timer);
+    return EEBUS_TIMER_OBJECT(eebus_timer);
 }
 
 void Destruct(EebusTimerObject* self) {
-  EebusTimer* const eebus_timer = EEBUS_TIMER(self);
-  if (eebus_timer->timer_handle != NULL) {
-    DeleteTimerQueueTimer(NULL, eebus_timer->timer_handle, NULL);
-    eebus_timer->timer_handle = NULL;
-  }
+    EebusTimer* const eebus_timer = EEBUS_TIMER(self);
+    if (eebus_timer->timer_handle != NULL) {
+        DeleteTimerQueueTimer(NULL, eebus_timer->timer_handle, NULL);
+        eebus_timer->timer_handle = NULL;
+    }
 }
 
 void Start(EebusTimerObject* self, uint32_t timeout_ms, bool autoreload) {
-  EebusTimer* const eebus_timer = EEBUS_TIMER(self);
+    EebusTimer* const eebus_timer = EEBUS_TIMER(self);
 
-  if (timeout_ms == 0) {
-    return;
-  }
+    if (timeout_ms == 0) {
+        return;
+    }
 
-  // Stop any existing timer
-  if (eebus_timer->timer_handle != NULL) {
-    DeleteTimerQueueTimer(NULL, eebus_timer->timer_handle, NULL);
-    eebus_timer->timer_handle = NULL;
-  }
+    // Stop any existing timer
+    if (eebus_timer->timer_handle != NULL) {
+        DeleteTimerQueueTimer(NULL, eebus_timer->timer_handle, NULL);
+        eebus_timer->timer_handle = NULL;
+    }
 
-  eebus_timer->start_tick = GetTickCount64();
-  eebus_timer->timeout_ms = timeout_ms;
-  eebus_timer->autoreload = autoreload;
+    eebus_timer->start_tick = GetTickCount64();
+    eebus_timer->timeout_ms = timeout_ms;
+    eebus_timer->autoreload = autoreload;
 
-  DWORD period = autoreload ? timeout_ms : 0;  // 0 means single-shot
+    DWORD period = autoreload ? timeout_ms : 0;  // 0 means single-shot
 
-  BOOL success = CreateTimerQueueTimer(
-      &eebus_timer->timer_handle,
-      NULL,  // Use default timer queue
-      EebusTimerExpiredCallback,
-      eebus_timer,
-      timeout_ms,  // Due time
-      period,      // Period (0 for single-shot)
-      0            // Flags
-  );
+    BOOL success = CreateTimerQueueTimer(
+        &eebus_timer->timer_handle,
+        NULL,  // Use default timer queue
+        EebusTimerExpiredCallback,
+        eebus_timer,
+        timeout_ms,  // Due time
+        period,      // Period (0 for single-shot)
+        0            // Flags
+    );
 
-  if (success) {
-    eebus_timer->timer_state = kEebusTimerStateRunning;
-  }
+    if (success) {
+        eebus_timer->timer_state = kEebusTimerStateRunning;
+    }
 }
 
 void Stop(EebusTimerObject* self) {
-  EebusTimer* const eebus_timer = EEBUS_TIMER(self);
+    EebusTimer* const eebus_timer = EEBUS_TIMER(self);
 
-  if (eebus_timer->timer_handle != NULL) {
-    DeleteTimerQueueTimer(NULL, eebus_timer->timer_handle, NULL);
-    eebus_timer->timer_handle = NULL;
-  }
+    if (eebus_timer->timer_handle != NULL) {
+        DeleteTimerQueueTimer(NULL, eebus_timer->timer_handle, NULL);
+        eebus_timer->timer_handle = NULL;
+    }
 
-  if (eebus_timer->timer_state != kEebusTimerStateExpired) {
-    eebus_timer->timer_state = kEebusTimerStateIdle;
-  }
+    if (eebus_timer->timer_state != kEebusTimerStateExpired) {
+        eebus_timer->timer_state = kEebusTimerStateIdle;
+    }
 }
 
 uint32_t GetRemainingTime(const EebusTimerObject* self) {
-  EebusTimer* const eebus_timer = EEBUS_TIMER(self);
+    EebusTimer* const eebus_timer = EEBUS_TIMER(self);
 
-  if ((eebus_timer->timer_state != kEebusTimerStateRunning) || (eebus_timer->timer_handle == NULL)) {
-    return 0;
-  }
+    if ((eebus_timer->timer_state != kEebusTimerStateRunning) || (eebus_timer->timer_handle == NULL)) {
+        return 0;
+    }
 
-  ULONGLONG current_tick = GetTickCount64();
-  ULONGLONG elapsed_ms   = current_tick - eebus_timer->start_tick;
+    ULONGLONG current_tick = GetTickCount64();
+    ULONGLONG elapsed_ms   = current_tick - eebus_timer->start_tick;
 
-  if (elapsed_ms >= eebus_timer->timeout_ms) {
-    return 0;  // Timer should have expired
-  }
+    if (elapsed_ms >= eebus_timer->timeout_ms) {
+        return 0;  // Timer should have expired
+    }
 
-  return (uint32_t)(eebus_timer->timeout_ms - elapsed_ms);
+    return (uint32_t)(eebus_timer->timeout_ms - elapsed_ms);
 }
 
 EebusTimerState GetTimerState(const EebusTimerObject* self) {
-  EebusTimer* const eebus_timer = EEBUS_TIMER(self);
-  return eebus_timer->timer_state;
+    EebusTimer* const eebus_timer = EEBUS_TIMER(self);
+    return eebus_timer->timer_state;
 }
 
 #endif  // _WIN32

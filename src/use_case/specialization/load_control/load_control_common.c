@@ -33,16 +33,16 @@ void LocalLoadControlCommonConstruct(
     FeatureLocalObject* feature_local,
     FeatureRemoteObject* feature_remote
 ) {
-  self->feature_local  = feature_local;
-  self->feature_remote = feature_remote;
+    self->feature_local  = feature_local;
+    self->feature_remote = feature_remote;
 }
 
 bool LimitIdMatch(const LoadControlLimitIdType* id_a, const LoadControlLimitIdType* id_b) {
-  if ((id_a == NULL) || (id_b == NULL)) {
-    return false;
-  }
+    if ((id_a == NULL) || (id_b == NULL)) {
+        return false;
+    }
 
-  return *id_a == *id_b;
+    return *id_a == *id_b;
 }
 
 bool LoadControlCommonCheckLimitWithFilter(
@@ -50,67 +50,70 @@ bool LoadControlCommonCheckLimitWithFilter(
     const LoadControlLimitListDataType* data,
     const LoadControlLimitDescriptionDataType* filter
 ) {
-  if ((data == NULL) || (filter == NULL)) {
-    return false;
-  }
-
-  const LoadControlLimitDescriptionListDataType* const descriptions_list
-      = HelperGetFeatureData(self->feature_local, self->feature_remote, limit_description_fcn);
-
-  EebusDataListMatchIterator it = {0};
-  HelperListMatchFirst(limit_description_fcn, descriptions_list, filter, &it);
-
-  for (; !EebusDataListMatchIteratorIsDone(&it); EebusDataListMatchIteratorNext(&it)) {
-    const LoadControlLimitDescriptionDataType* const description = EebusDataListMatchIteratorGet(&it);
-    for (size_t j = 0; j < data->load_control_limit_data_size; ++j) {
-      const LoadControlLimitDataType* const item = data->load_control_limit_data[j];
-      if (LimitIdMatch(item->limit_id, description->limit_id) && (item->value != NULL)) {
-        return true;
-      }
+    if ((data == NULL) || (filter == NULL)) {
+        return false;
     }
-  }
 
-  return false;
+    const LoadControlLimitDescriptionListDataType* const descriptions_list
+        = HelperGetFeatureData(self->feature_local, self->feature_remote, limit_description_fcn);
+
+    EebusDataListMatchIterator it = {0};
+    HelperListMatchFirst(limit_description_fcn, descriptions_list, filter, &it);
+
+    for (; !EebusDataListMatchIteratorIsDone(&it); EebusDataListMatchIteratorNext(&it)) {
+        const LoadControlLimitDescriptionDataType* const description = EebusDataListMatchIteratorGet(&it);
+        for (size_t j = 0; j < data->load_control_limit_data_size; ++j) {
+            const LoadControlLimitDataType* const item = data->load_control_limit_data[j];
+            if (LimitIdMatch(item->limit_id, description->limit_id) && (item->value != NULL)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 const LoadControlLimitDescriptionDataType*
 LoadControlCommonGetLimitDescriptionWithId(LoadControlCommon* self, LoadControlLimitIdType limit_id) {
-  const LoadControlLimitDescriptionListDataType* const descriptions_list
-      = HelperGetFeatureData(self->feature_local, self->feature_remote, limit_description_fcn);
+    const LoadControlLimitDescriptionListDataType* const descriptions_list
+        = HelperGetFeatureData(self->feature_local, self->feature_remote, limit_description_fcn);
 
-  const LoadControlLimitDescriptionDataType filter = {.limit_id = &limit_id};
+    const LoadControlLimitDescriptionDataType filter = {.limit_id = &limit_id};
 
-  return HelperGetListUniqueMatch(limit_description_fcn, descriptions_list, &filter);
+    return HelperGetListUniqueMatch(limit_description_fcn, descriptions_list, &filter);
 }
 
 const LoadControlLimitDescriptionDataType* LoadControlCommonGetLimitDescriptionWithFilter(
     const LoadControlCommon* self,
     const LoadControlLimitDescriptionDataType* filter
 ) {
-  const LoadControlLimitDescriptionListDataType* const descriptions_list
-      = HelperGetFeatureData(self->feature_local, self->feature_remote, limit_description_fcn);
+    const LoadControlLimitDescriptionListDataType* const descriptions_list
+        = HelperGetFeatureData(self->feature_local, self->feature_remote, limit_description_fcn);
 
-  return HelperGetListUniqueMatch(limit_description_fcn, descriptions_list, filter);
+    return HelperGetListUniqueMatch(limit_description_fcn, descriptions_list, filter);
 }
 
 const LoadControlLimitDataType*
 LoadControlCommonGetLimitWithId(const LoadControlCommon* self, LoadControlLimitIdType limit_id) {
-  return LoadControlCommonGetLimitWithFilter(self, &(const LoadControlLimitDescriptionDataType){.limit_id = &limit_id});
+    return LoadControlCommonGetLimitWithFilter(
+        self,
+        &(const LoadControlLimitDescriptionDataType){.limit_id = &limit_id}
+    );
 }
 
 const LoadControlLimitDataType*
 LoadControlCommonGetLimitWithFilter(const LoadControlCommon* self, const LoadControlLimitDescriptionDataType* filter) {
-  const LoadControlLimitDescriptionDataType* const description
-      = LoadControlCommonGetLimitDescriptionWithFilter(self, filter);
+    const LoadControlLimitDescriptionDataType* const description
+        = LoadControlCommonGetLimitDescriptionWithFilter(self, filter);
 
-  if (description == NULL || description->limit_id == NULL) {
-    return NULL;
-  }
+    if (description == NULL || description->limit_id == NULL) {
+        return NULL;
+    }
 
-  const LoadControlLimitListDataType* const limits_list
-      = HelperGetFeatureData(self->feature_local, self->feature_remote, limit_fcn);
+    const LoadControlLimitListDataType* const limits_list
+        = HelperGetFeatureData(self->feature_local, self->feature_remote, limit_fcn);
 
-  const LoadControlLimitDataType limits_filter = {.limit_id = description->limit_id};
+    const LoadControlLimitDataType limits_filter = {.limit_id = description->limit_id};
 
-  return HelperGetListUniqueMatch(limit_fcn, limits_list, &limits_filter);
+    return HelperGetListUniqueMatch(limit_fcn, limits_list, &limits_filter);
 }

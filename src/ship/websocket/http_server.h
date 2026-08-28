@@ -40,10 +40,10 @@ HttpServerObject* HttpServerCreate(
 );
 
 static inline void HttpServerDelete(HttpServerObject* http_server) {
-  if (http_server != NULL) {
-    HTTP_SERVER_DESTRUCT(http_server);
-    EEBUS_FREE(http_server);
-  }
+    if (http_server != NULL) {
+        HTTP_SERVER_DESTRUCT(http_server);
+        EEBUS_FREE(http_server);
+    }
 }
 
 #ifdef __cplusplus

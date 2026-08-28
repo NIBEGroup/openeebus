@@ -47,28 +47,28 @@ typedef struct EebusServiceObject EebusServiceObject;
  * @brief Service Interface Structure
  */
 struct EebusServiceInterface {
-  /** Extends DeviceInterface */
-  ShipNodeReaderInterface ship_node_reader_interface;
+    /** Extends DeviceInterface */
+    ShipNodeReaderInterface ship_node_reader_interface;
 
-  void (*start)(EebusServiceObject* self);
-  void (*stop)(EebusServiceObject* self);
-  const ServiceDetails* (*get_local_service)(const EebusServiceObject* self);
-  DeviceLocalObject* (*get_local_device)(const EebusServiceObject* self);
-  const ConnectionState* (*get_connection_state_with_ski)(const EebusServiceObject* self, const char* ski);
-  const ServiceDetails* (*get_remote_service_details_with_ski)(const EebusServiceObject* self, const char* ski);
-  void (*register_remote_ski)(EebusServiceObject* self, const char* ski, bool enable);
-  void (*unregister_remote_ski)(EebusServiceObject* self, const char* ski);
-  void (*cancel_pairing_with_ski)(EebusServiceObject* self, const char* ski);
-  void (*set_pairing_possible)(EebusServiceObject* self, bool is_pairing_possible);
-  const char* (*get_local_ski)(EebusServiceObject* self);
-  const char* (*get_qr_code_string)(EebusServiceObject* self);
+    void (*start)(EebusServiceObject* self);
+    void (*stop)(EebusServiceObject* self);
+    const ServiceDetails* (*get_local_service)(const EebusServiceObject* self);
+    DeviceLocalObject* (*get_local_device)(const EebusServiceObject* self);
+    const ConnectionState* (*get_connection_state_with_ski)(const EebusServiceObject* self, const char* ski);
+    const ServiceDetails* (*get_remote_service_details_with_ski)(const EebusServiceObject* self, const char* ski);
+    void (*register_remote_ski)(EebusServiceObject* self, const char* ski, bool enable);
+    void (*unregister_remote_ski)(EebusServiceObject* self, const char* ski);
+    void (*cancel_pairing_with_ski)(EebusServiceObject* self, const char* ski);
+    void (*set_pairing_possible)(EebusServiceObject* self, bool is_pairing_possible);
+    const char* (*get_local_ski)(EebusServiceObject* self);
+    const char* (*get_qr_code_string)(EebusServiceObject* self);
 };
 
 /**
  * @brief EEBUS Service Object Structure
  */
 struct EebusServiceObject {
-  const EebusServiceInterface* interface_;
+    const EebusServiceInterface* interface_;
 };
 
 /**
@@ -105,19 +105,19 @@ struct EebusServiceObject {
  * @brief EEBUS Service Get Connection State With Ski caller definition
  */
 #define EEBUS_SERVICE_GET_CONNECTION_STATE_WITH_SKI(obj, ski) \
-  (EEBUS_SERVICE_INTERFACE(obj)->get_connection_state_with_ski(obj, ski))
+    (EEBUS_SERVICE_INTERFACE(obj)->get_connection_state_with_ski(obj, ski))
 
 /**
  * @brief EEBUS Service Get Remote Service Details With Ski caller definition
  */
 #define EEBUS_SERVICE_GET_REMOTE_SERVICE_DETAILS_WITH_SKI(obj, ski) \
-  (EEBUS_SERVICE_INTERFACE(obj)->get_remote_service_details_with_ski(obj, ski))
+    (EEBUS_SERVICE_INTERFACE(obj)->get_remote_service_details_with_ski(obj, ski))
 
 /**
  * @brief EEBUS Service Register Remote Ski caller definition
  */
 #define EEBUS_SERVICE_REGISTER_REMOTE_SKI(obj, ski, enable) \
-  (EEBUS_SERVICE_INTERFACE(obj)->register_remote_ski(obj, ski, enable))
+    (EEBUS_SERVICE_INTERFACE(obj)->register_remote_ski(obj, ski, enable))
 
 /**
  * @brief EEBUS Service Unregister Remote Ski caller definition
@@ -128,13 +128,13 @@ struct EebusServiceObject {
  * @brief EEBUS Service Cancel Pairing With Ski caller definition
  */
 #define EEBUS_SERVICE_CANCEL_PAIRING_WITH_SKI(obj, ski) \
-  (EEBUS_SERVICE_INTERFACE(obj)->cancel_pairing_with_ski(obj, ski))
+    (EEBUS_SERVICE_INTERFACE(obj)->cancel_pairing_with_ski(obj, ski))
 
 /**
  * @brief EEBUS Service Set Pairing Possible caller definition
  */
 #define EEBUS_SERVICE_SET_PAIRING_POSSIBLE(obj, is_pairing_possible) \
-  (EEBUS_SERVICE_INTERFACE(obj)->set_pairing_possible(obj, is_pairing_possible))
+    (EEBUS_SERVICE_INTERFACE(obj)->set_pairing_possible(obj, is_pairing_possible))
 
 /**
  * @brief EEBUS Service Get Local Ski caller definition

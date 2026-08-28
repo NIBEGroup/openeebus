@@ -31,8 +31,8 @@ extern "C" {
 typedef struct NodeManagementRemoteObject NodeManagementRemoteObject;
 
 struct NodeManagementRemoteObject {
-  /** Inherits the Feature Remote class */
-  FeatureRemoteObject obj;
+    /** Inherits the Feature Remote class */
+    FeatureRemoteObject obj;
 };
 
 #define NODE_MANAGEMENT_REMOTE_OBJECT(obj) ((NodeManagementRemoteObject*)(obj))
@@ -40,10 +40,10 @@ struct NodeManagementRemoteObject {
 NodeManagementRemoteObject* NodeManagementRemoteCreate(uint32_t id, EntityRemoteObject* entity);
 
 static inline void NodeManagementRemoteDelete(NodeManagementRemoteObject* node_management_remote) {
-  if (node_management_remote != NULL) {
-    FEATURE_DESTRUCT(FEATURE_OBJECT(node_management_remote));
-    EEBUS_FREE(node_management_remote);
-  }
+    if (node_management_remote != NULL) {
+        FEATURE_DESTRUCT(FEATURE_OBJECT(node_management_remote));
+        EEBUS_FREE(node_management_remote);
+    }
 }
 
 #ifdef __cplusplus

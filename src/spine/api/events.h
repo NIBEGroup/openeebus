@@ -37,43 +37,43 @@ extern "C" {
 typedef uint32_t EventHandlerLevel;
 
 enum {
-  kEventHandlerLevelCore,         // Shall only be used by the core stack
-  kEventHandlerLevelApplication,  // Shall only be used by applications
+    kEventHandlerLevelCore,         // Shall only be used by the core stack
+    kEventHandlerLevelApplication,  // Shall only be used by applications
 };
 
 typedef uint16_t ElementChangeType;
 
 enum {
-  kElementChangeAdd,
-  kElementChangeUpdate,
-  kElementChangeRemove,
+    kElementChangeAdd,
+    kElementChangeUpdate,
+    kElementChangeRemove,
 };
 
 typedef uint16_t EventType;
 
 enum {
-  kEventTypeDeviceChange,        // Sent after successful response of NodeManagementDetailedDiscovery
-  kEventTypeEntityChange,        // Sent after successful response of NodeManagementDetailedDiscovery
-  kEventTypeSubscriptionChange,  // Sent after successful subscription request from remote
-  kEventTypeBindingChange,       // Sent after successful binding request from remote
-  kEventTypeDataChange,          // Sent after remote provided new data items for a function
-  kEventTypeUseCaseChange,       // Sent after successful response of NodeManagementUseCaseData
+    kEventTypeDeviceChange,        // Sent after successful response of NodeManagementDetailedDiscovery
+    kEventTypeEntityChange,        // Sent after successful response of NodeManagementDetailedDiscovery
+    kEventTypeSubscriptionChange,  // Sent after successful subscription request from remote
+    kEventTypeBindingChange,       // Sent after successful binding request from remote
+    kEventTypeDataChange,          // Sent after remote provided new data items for a function
+    kEventTypeUseCaseChange,       // Sent after successful response of NodeManagementUseCaseData
 };
 
 typedef struct EventPayload EventPayload;
 
 struct EventPayload {
-  const char* ski;                // Required
-  EventType event_type;           // Required
-  ElementChangeType change_type;  // Required
-  DeviceRemoteObject* device;     // Required for DetailedDiscovery Call
-  EntityRemoteObject* entity;     // Required for DetailedDiscovery Call and Notify
-  FeatureRemoteObject* feature;
-  FeatureLocalObject* local_feature;  // Required for write commands
-  FunctionType function_type;         // Required for write commands
-  const void* function_data;
-  const CommandClassifierType* cmd_classifier;  // Optional, used together with EventType EventTypeDataChange
-  const UseCaseFilterType* use_case_filter;     // Optional, used together with EventType EventTypeUseCaseChange
+    const char* ski;                // Required
+    EventType event_type;           // Required
+    ElementChangeType change_type;  // Required
+    DeviceRemoteObject* device;     // Required for DetailedDiscovery Call
+    EntityRemoteObject* entity;     // Required for DetailedDiscovery Call and Notify
+    FeatureRemoteObject* feature;
+    FeatureLocalObject* local_feature;  // Required for write commands
+    FunctionType function_type;         // Required for write commands
+    const void* function_data;
+    const CommandClassifierType* cmd_classifier;  // Optional, used together with EventType EventTypeDataChange
+    const UseCaseFilterType* use_case_filter;     // Optional, used together with EventType EventTypeUseCaseChange
 };
 
 typedef void (*EventHandler)(const EventPayload* payload, void* ctx);

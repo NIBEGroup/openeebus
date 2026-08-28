@@ -28,8 +28,8 @@
 typedef struct MuMpcListener MuMpcListener;
 
 struct MuMpcListener {
-  /** Implements the MU MPC Listener Interface */
-  MuMpcListenerObject obj;
+    /** Implements the MU MPC Listener Interface */
+    MuMpcListenerObject obj;
 };
 
 #define MU_MPC_LISTENER(obj) ((MuMpcListener*)(obj))
@@ -47,38 +47,38 @@ static const MuMpcListenerInterface mu_mpc_listener_methods = {
 static EebusError MuMpcListenerConstruct(MuMpcListener* self);
 
 EebusError MuMpcListenerConstruct(MuMpcListener* self) {
-  MU_MPC_LISTENER_INTERFACE(self) = &mu_mpc_listener_methods;
-  return kEebusErrorOk;
+    MU_MPC_LISTENER_INTERFACE(self) = &mu_mpc_listener_methods;
+    return kEebusErrorOk;
 }
 
 MuMpcListenerObject* MuMpcListenerCreate(void) {
-  MuMpcListener* const mu_mpc_listener = (MuMpcListener*)EEBUS_MALLOC(sizeof(MuMpcListener));
-  if (mu_mpc_listener == NULL) {
-    return NULL;
-  }
+    MuMpcListener* const mu_mpc_listener = (MuMpcListener*)EEBUS_MALLOC(sizeof(MuMpcListener));
+    if (mu_mpc_listener == NULL) {
+        return NULL;
+    }
 
-  if (MuMpcListenerConstruct(mu_mpc_listener) != kEebusErrorOk) {
-    MuMpcListenerDelete(MU_MPC_LISTENER_OBJECT(mu_mpc_listener));
-    return NULL;
-  }
+    if (MuMpcListenerConstruct(mu_mpc_listener) != kEebusErrorOk) {
+        MuMpcListenerDelete(MU_MPC_LISTENER_OBJECT(mu_mpc_listener));
+        return NULL;
+    }
 
-  return MU_MPC_LISTENER_OBJECT(mu_mpc_listener);
+    return MU_MPC_LISTENER_OBJECT(mu_mpc_listener);
 }
 
 void Destruct(MuMpcListenerObject* self) {
-  UNUSED(self);
+    UNUSED(self);
 }
 
 void OnRemoteMaAdded(MuMpcListenerObject* self, const EntityAddressType* entity_addr) {
-  UNUSED(self);
-  UNUSED(entity_addr);
+    UNUSED(self);
+    UNUSED(entity_addr);
 
-  printf("MU MPC Remote MA added\n");
+    printf("MU MPC Remote MA added\n");
 }
 
 void OnRemoteMaRemoved(MuMpcListenerObject* self, const EntityAddressType* entity_addr) {
-  UNUSED(self);
-  UNUSED(entity_addr);
+    UNUSED(self);
+    UNUSED(entity_addr);
 
-  printf("MU MPC Remote MA removed\n");
+    printf("MU MPC Remote MA removed\n");
 }

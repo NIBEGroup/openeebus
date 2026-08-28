@@ -30,26 +30,26 @@ extern "C" {
 #endif  // __cplusplus
 
 typedef struct {
-  SpecificationVersionType spec_version;       /**< "specificationVersion" */
-  const FeatureAddressType* src_addr;          /**< "addressSource" */
-  const FeatureAddressType* dest_addr;         /**< "addressDestination" */
-  const FeatureAddressType* originator_addr;   /**< "addressOriginator" */
-  const uint64_t* msg_cnt;                     /**< "msgCounter" */
-  const uint64_t* msg_cnt_ref;                 /**< "msgCounterReference" */
-  const CommandClassifierType* cmd_classifier; /**< "cmdClassifier" */
-  const bool* ack_request;                     /**< "ackRequest" */
-  const AbsoluteOrRelativeTimeType* timestamp; /**< "timestamp" */
+    SpecificationVersionType spec_version;       /**< "specificationVersion" */
+    const FeatureAddressType* src_addr;          /**< "addressSource" */
+    const FeatureAddressType* dest_addr;         /**< "addressDestination" */
+    const FeatureAddressType* originator_addr;   /**< "addressOriginator" */
+    const uint64_t* msg_cnt;                     /**< "msgCounter" */
+    const uint64_t* msg_cnt_ref;                 /**< "msgCounterReference" */
+    const CommandClassifierType* cmd_classifier; /**< "cmdClassifier" */
+    const bool* ack_request;                     /**< "ackRequest" */
+    const AbsoluteOrRelativeTimeType* timestamp; /**< "timestamp" */
 } HeaderType;
 
 typedef struct {
-  const CmdType* const* cmd; /**< "cmd" */
-  size_t cmd_size;
+    const CmdType* const* cmd; /**< "cmd" */
+    size_t cmd_size;
 } PayloadType;
 
 typedef struct {
-  const HeaderType* header;   /**< "header" */
-  const PayloadType* payload; /**< "payload" */
-} DatagramType;         /**< "datagram" */
+    const HeaderType* header;   /**< "header" */
+    const PayloadType* payload; /**< "payload" */
+} DatagramType;                 /**< "datagram" */
 
 bool DatagramIsValid(const DatagramType* datagram);
 void DatagramDelete(DatagramType* datagram);

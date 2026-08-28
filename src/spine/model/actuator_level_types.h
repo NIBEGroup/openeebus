@@ -33,44 +33,44 @@ extern "C" {
 typedef int32_t ActuatorLevelFctType;
 
 enum {
-  kActuatorLevelFctTypeStart,              /**< "start" */
-  kActuatorLevelFctTypeUp,                 /**< "up" */
-  kActuatorLevelFctTypeDown,               /**< "down" */
-  kActuatorLevelFctTypeStop,               /**< "stop" */
-  kActuatorLevelFctTypePercentageAbsolute, /**< "percentageAbsolute" */
-  kActuatorLevelFctTypePercentageRelative, /**< "percentageRelative" */
-  kActuatorLevelFctTypeAbsolut,            /**< "absolut" */
-  kActuatorLevelFctTypeRelative,           /**< "relative" */
+    kActuatorLevelFctTypeStart,              /**< "start" */
+    kActuatorLevelFctTypeUp,                 /**< "up" */
+    kActuatorLevelFctTypeDown,               /**< "down" */
+    kActuatorLevelFctTypeStop,               /**< "stop" */
+    kActuatorLevelFctTypePercentageAbsolute, /**< "percentageAbsolute" */
+    kActuatorLevelFctTypePercentageRelative, /**< "percentageRelative" */
+    kActuatorLevelFctTypeAbsolut,            /**< "absolut" */
+    kActuatorLevelFctTypeRelative,           /**< "relative" */
 };
 
 typedef struct ActuatorLevelDataType ActuatorLevelDataType;
 
 struct ActuatorLevelDataType {
-  const ActuatorLevelFctType* function; /**< "function" */
-  const ScaledNumberType* value;        /**< "value" */
+    const ActuatorLevelFctType* function; /**< "function" */
+    const ScaledNumberType* value;        /**< "value" */
 };
 
 typedef struct ActuatorLevelDataElementsType ActuatorLevelDataElementsType;
 
 struct ActuatorLevelDataElementsType {
-  ElementTagType function;               /**< "function" */
-  const ScaledNumberElementsType* value; /**< "value" */
+    ElementTagType function;               /**< "function" */
+    const ScaledNumberElementsType* value; /**< "value" */
 };
 
 typedef struct ActuatorLevelDescriptionDataType ActuatorLevelDescriptionDataType;
 
 struct ActuatorLevelDescriptionDataType {
-  LabelType label;                                 /**< "label" */
-  DescriptionType description;                     /**< "description" */
-  const UnitOfMeasurementType* level_default_unit; /**< "levelDefaultUnit" */
+    LabelType label;                                 /**< "label" */
+    DescriptionType description;                     /**< "description" */
+    const UnitOfMeasurementType* level_default_unit; /**< "levelDefaultUnit" */
 };
 
 typedef struct ActuatorLevelDescriptionDataElementsType ActuatorLevelDescriptionDataElementsType;
 
 struct ActuatorLevelDescriptionDataElementsType {
-  ElementTagType label;              /**< "label" */
-  ElementTagType description;        /**< "description" */
-  ElementTagType level_default_unit; /**< "levelDefaultUnit" */
+    ElementTagType label;              /**< "label" */
+    ElementTagType description;        /**< "description" */
+    ElementTagType level_default_unit; /**< "levelDefaultUnit" */
 };
 
 #ifdef __cplusplus

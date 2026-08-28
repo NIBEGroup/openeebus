@@ -31,11 +31,11 @@
 typedef struct EgLpcListener EgLpcListener;
 
 struct EgLpcListener {
-  /** Implements the CS LP Listener Interface */
-  EgLpListenerObject obj;
+    /** Implements the CS LP Listener Interface */
+    EgLpListenerObject obj;
 
-  /* Pointer to the HEMS instance */
-  HemsObject* hems;
+    /* Pointer to the HEMS instance */
+    HemsObject* hems;
 };
 
 #define EG_LP_LISTENER(obj) ((EgLpcListener*)(obj))
@@ -79,42 +79,42 @@ static const EgLpListenerInterface eg_lpc_listener_methods = {
 static void EgLpcListenerConstruct(EgLpcListener* self, HemsObject* hems);
 
 void EgLpcListenerConstruct(EgLpcListener* self, HemsObject* hems) {
-  // Override "virtual functions table"
-  EG_LP_LISTENER_INTERFACE(self) = &eg_lpc_listener_methods;
+    // Override "virtual functions table"
+    EG_LP_LISTENER_INTERFACE(self) = &eg_lpc_listener_methods;
 
-  self->hems = hems;
+    self->hems = hems;
 }
 
 EgLpListenerObject* EgLpcListenerCreate(HemsObject* hems) {
-  EgLpcListener* const eg_lpc_listener = (EgLpcListener*)EEBUS_MALLOC(sizeof(EgLpcListener));
-  if (eg_lpc_listener == NULL) {
-    return NULL;
-  }
+    EgLpcListener* const eg_lpc_listener = (EgLpcListener*)EEBUS_MALLOC(sizeof(EgLpcListener));
+    if (eg_lpc_listener == NULL) {
+        return NULL;
+    }
 
-  EgLpcListenerConstruct(eg_lpc_listener, hems);
+    EgLpcListenerConstruct(eg_lpc_listener, hems);
 
-  return EG_LP_LISTENER_OBJECT(eg_lpc_listener);
+    return EG_LP_LISTENER_OBJECT(eg_lpc_listener);
 }
 
 void Destruct(EgLpListenerObject* self) {
-  UNUSED(self);
-  // Nothing to be deallocated yet
+    UNUSED(self);
+    // Nothing to be deallocated yet
 }
 
 void OnRemoteCsAdded(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
-  EgLpcListener* const lpc_listener = EG_LP_LISTENER(self);
+    EgLpcListener* const lpc_listener = EG_LP_LISTENER(self);
 
-  HemsSetEgLpcRemoteEntity(lpc_listener->hems, entity_addr);
+    HemsSetEgLpcRemoteEntity(lpc_listener->hems, entity_addr);
 }
 
 void OnRemoteCsRemoved(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
-  UNUSED(entity_addr);
+    UNUSED(entity_addr);
 
-  EgLpcListener* const lpc_listener = EG_LP_LISTENER(self);
+    EgLpcListener* const lpc_listener = EG_LP_LISTENER(self);
 
-  // Currently only single remote entity is supported,
-  // so just clear the remote entity address
-  HemsSetEgLpcRemoteEntity(lpc_listener->hems, NULL);
+    // Currently only single remote entity is supported,
+    // so just clear the remote entity address
+    HemsSetEgLpcRemoteEntity(lpc_listener->hems, NULL);
 }
 
 void OnPowerLimitReceive(
@@ -124,12 +124,12 @@ void OnPowerLimitReceive(
     const EebusDuration* duration,
     bool is_active
 ) {
-  UNUSED(self);
-  UNUSED(entity_addr);
+    UNUSED(self);
+    UNUSED(entity_addr);
 
-  ScaledValuePrint("EG LPC Power Limit received %sW, ", power_limit);
-  EebusDurationPrint("duration = %s, ", duration);
-  printf("active = %s\n", is_active ? "true" : "false");
+    ScaledValuePrint("EG LPC Power Limit received %sW, ", power_limit);
+    EebusDurationPrint("duration = %s, ", duration);
+    printf("active = %s\n", is_active ? "true" : "false");
 }
 
 void OnFailsafePowerLimitReceive(
@@ -137,10 +137,10 @@ void OnFailsafePowerLimitReceive(
     const EntityAddressType* entity_addr,
     const ScaledValue* power_limit
 ) {
-  UNUSED(self);
-  UNUSED(entity_addr);
+    UNUSED(self);
+    UNUSED(entity_addr);
 
-  ScaledValuePrint("EG LPC Failsafe Active Power Limit received:  %sW\n", power_limit);
+    ScaledValuePrint("EG LPC Failsafe Active Power Limit received:  %sW\n", power_limit);
 }
 
 void OnFailsafeDurationReceive(
@@ -148,17 +148,17 @@ void OnFailsafeDurationReceive(
     const EntityAddressType* entity_addr,
     const DurationType* duration
 ) {
-  UNUSED(self);
-  UNUSED(entity_addr);
+    UNUSED(self);
+    UNUSED(entity_addr);
 
-  EebusDurationPrint("EG LPC Failsafe Duration Minimum received: %s\n", duration);
+    EebusDurationPrint("EG LPC Failsafe Duration Minimum received: %s\n", duration);
 }
 
 void OnHeartbeatReceive(EgLpListenerObject* self, const EntityAddressType* entity_addr, uint64_t heartbeat_counter) {
-  UNUSED(self);
-  UNUSED(entity_addr);
+    UNUSED(self);
+    UNUSED(entity_addr);
 
-  printf("EG LPC Heartbeat received, counter = %" PRIu64 "\n", heartbeat_counter);
+    printf("EG LPC Heartbeat received, counter = %" PRIu64 "\n", heartbeat_counter);
 }
 
 void OnPowerNominalMaxReceive(
@@ -166,8 +166,8 @@ void OnPowerNominalMaxReceive(
     const EntityAddressType* entity_addr,
     const ScaledValue* power_limit
 ) {
-  UNUSED(self);
-  UNUSED(entity_addr);
+    UNUSED(self);
+    UNUSED(entity_addr);
 
-  ScaledValuePrint("EG LPC Power Nominal Max received: %sW\n", power_limit);
+    ScaledValuePrint("EG LPC Power Nominal Max received: %sW\n", power_limit);
 }

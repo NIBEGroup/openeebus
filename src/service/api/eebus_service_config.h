@@ -45,81 +45,81 @@ typedef struct EebusServiceConfig EebusServiceConfig;
 
 // defines requires meta information about this service
 struct EebusServiceConfig {
-  /**
-   * The vendors IANA PEN, optional but highly recommended.
-   * If not set, brand will be used instead
-   * Used for the Device Address: SPINE - Protocol Specification 7.1.1.2
-   */
-  const char* vendor_code;
+    /**
+     * The vendors IANA PEN, optional but highly recommended.
+     * If not set, brand will be used instead
+     * Used for the Device Address: SPINE - Protocol Specification 7.1.1.2
+     */
+    const char* vendor_code;
 
-  /**
-   * The deviceBrand of the device, required
-   * Used for the Device Address: SPINE - Protocol Specification 7.1.1.2
-   * Used for mDNS txt record: SHIP - Specification 7.3.2
-   */
-  const char* device_brand;
+    /**
+     * The deviceBrand of the device, required
+     * Used for the Device Address: SPINE - Protocol Specification 7.1.1.2
+     * Used for mDNS txt record: SHIP - Specification 7.3.2
+     */
+    const char* device_brand;
 
-  /**
-   * The device model, required
-   * Used for the Device Address: SPINE - Protocol Specification 7.1.1.2
-   * Used for mDNS txt record: SHIP - Specification 7.3.2
-   */
-  const char* device_model;
+    /**
+     * The device model, required
+     * Used for the Device Address: SPINE - Protocol Specification 7.1.1.2
+     * Used for mDNS txt record: SHIP - Specification 7.3.2
+     */
+    const char* device_model;
 
-  /**
-   * Serial number of the device, required
-   * Used for the Device Address: SPINE - Protocol Specification 7.1.1.2
-   */
-  const char* device_serial_num;
+    /**
+     * Serial number of the device, required
+     * Used for the Device Address: SPINE - Protocol Specification 7.1.1.2
+     */
+    const char* device_serial_num;
 
-  /**
-   * An alternate mDNS service identifier
-   * Optional, if not set will be generated using "Brand-Model-SerialNumber"
-   * Used for mDNS service and SHIP identifier: SHIP - Specification 7.2
-   */
-  const char* alternate_ship_id;
+    /**
+     * An alternate mDNS service identifier
+     * Optional, if not set will be generated using "Brand-Model-SerialNumber"
+     * Used for mDNS service and SHIP identifier: SHIP - Specification 7.2
+     */
+    const char* alternate_ship_id;
 
-  /**
-   * An alternate mDNS service name
-   * Optional, if not set will be identical to alternateIdentifier or generated using "Brand-Model-SerialNumber"
-   */
-  const char* alternate_mdns_service_name;
+    /**
+     * An alternate mDNS service name
+     * Optional, if not set will be identical to alternateIdentifier or generated using "Brand-Model-SerialNumber"
+     */
+    const char* alternate_mdns_service_name;
 
-  /**
-   * SPINE device type of the device model, required
-   * Used for SPINE device type
-   * Used for mDNS txt record: SHIP - Specification 7.3.2
-   */
-  const char* device_type;
+    /**
+     * SPINE device type of the device model, required
+     * Used for SPINE device type
+     * Used for mDNS txt record: SHIP - Specification 7.3.2
+     */
+    const char* device_type;
 
-  /**
-   * SPINE device network feature set type, optional
-   * SPINE Protocol Specification 6
-   */
-  NetworkManagementFeatureSetType feature_set;
+    /**
+     * SPINE device network feature set type, optional
+     * SPINE Protocol Specification 6
+     */
+    NetworkManagementFeatureSetType feature_set;
 
-  /**
-   * The port address of the websocket server, required
-   */
-  int32_t port;
+    /**
+     * The port address of the websocket server, required
+     */
+    int32_t port;
 
-  /**
-   * Whether remote devices should be automatically accepted
-   * If enabled will automatically search for other services with
-   * the same setting and automatically connect to them.
-   * Has to be set on configuring the service!
-   * TODO: if disabled, user verification needs to be implemented and supported
-   * the spec defines that this should have a timeout and be activate
-   * e.g via a physical button
-   */
-  bool register_auto_accept;
+    /**
+     * Whether remote devices should be automatically accepted
+     * If enabled will automatically search for other services with
+     * the same setting and automatically connect to them.
+     * Has to be set on configuring the service!
+     * TODO: if disabled, user verification needs to be implemented and supported
+     * the spec defines that this should have a timeout and be activate
+     * e.g via a physical button
+     */
+    bool register_auto_accept;
 
-  /**
-   * Generated identifier. Format: brand-model-serial_number.
-   * Can be used for both SHIP Id and mDNS service name if corresponding alternate
-   * name has not been specified (see alternate_ship_id and alternate_mdns_service_name).
-   */
-  const char* generated_id;
+    /**
+     * Generated identifier. Format: brand-model-serial_number.
+     * Can be used for both SHIP Id and mDNS service name if corresponding alternate
+     * name has not been specified (see alternate_ship_id and alternate_mdns_service_name).
+     */
+    const char* generated_id;
 };
 
 /**
@@ -154,41 +154,41 @@ void EebusServiceConfigDelete(EebusServiceConfig* cfg);
 void ConfigurationRelease(EebusServiceConfig* cfg);
 
 static inline const char* EebusServiceConfigGetVendorCode(const EebusServiceConfig* cfg) {
-  return cfg->vendor_code;
+    return cfg->vendor_code;
 }
 
 static inline const char* EebusServiceConfigGetDeviceBrand(const EebusServiceConfig* cfg) {
-  return cfg->device_brand;
+    return cfg->device_brand;
 }
 
 static inline const char* EebusServiceConfigGetDeviceModel(const EebusServiceConfig* cfg) {
-  return cfg->device_model;
+    return cfg->device_model;
 }
 
 static inline const char* EebusServiceConfigGetDeviceSerialNumber(const EebusServiceConfig* cfg) {
-  return cfg->device_serial_num;
+    return cfg->device_serial_num;
 }
 
 static inline void EebusServiceConfigSetAlternateIdentifier(EebusServiceConfig* cfg, const char* identifier) {
-  StringDelete((char*)cfg->alternate_ship_id);
-  cfg->alternate_ship_id = StringCopy(identifier);
+    StringDelete((char*)cfg->alternate_ship_id);
+    cfg->alternate_ship_id = StringCopy(identifier);
 }
 
 static inline void EebusServiceConfigSetAlternateMdnsServiceName(EebusServiceConfig* cfg, const char* name) {
-  StringDelete((char*)cfg->alternate_mdns_service_name);
-  cfg->alternate_mdns_service_name = StringCopy(name);
+    StringDelete((char*)cfg->alternate_mdns_service_name);
+    cfg->alternate_mdns_service_name = StringCopy(name);
 }
 
 static inline const char* EebusServiceConfigGetDeviceType(const EebusServiceConfig* cfg) {
-  return cfg->device_type;
+    return cfg->device_type;
 }
 
 static inline NetworkManagementFeatureSetType EebusServiceConfigGetFeatureSet(const EebusServiceConfig* cfg) {
-  return cfg->feature_set;
+    return cfg->feature_set;
 }
 
 static inline void EebusServiceConfigSetRegisterAutoAccept(EebusServiceConfig* cfg, bool auto_accept) {
-  cfg->register_auto_accept = auto_accept;
+    cfg->register_auto_accept = auto_accept;
 }
 
 /**
@@ -199,7 +199,7 @@ static inline void EebusServiceConfigSetRegisterAutoAccept(EebusServiceConfig* c
  * @param cfg EebusServiceConfig to get the SHIP Id with
  */
 static inline const char* EebusServiceConfigGetShipId(const EebusServiceConfig* cfg) {
-  return (!StringIsEmpty(cfg->alternate_ship_id)) ? cfg->alternate_ship_id : cfg->generated_id;
+    return (!StringIsEmpty(cfg->alternate_ship_id)) ? cfg->alternate_ship_id : cfg->generated_id;
 }
 
 /**
@@ -210,15 +210,15 @@ static inline const char* EebusServiceConfigGetShipId(const EebusServiceConfig* 
  * @param cfg EebusServiceConfig to get the mDNS service name with
  */
 static inline const char* EebusServiceConfigGetMdnsServiceName(const EebusServiceConfig* cfg) {
-  return (!StringIsEmpty(cfg->alternate_mdns_service_name)) ? cfg->alternate_mdns_service_name : cfg->generated_id;
+    return (!StringIsEmpty(cfg->alternate_mdns_service_name)) ? cfg->alternate_mdns_service_name : cfg->generated_id;
 }
 
 static inline int32_t EebusServiceConfigGetPort(const EebusServiceConfig* cfg) {
-  return cfg->port;
+    return cfg->port;
 }
 
 static inline bool EebusServiceConfigGetRegisterAutoAccept(const EebusServiceConfig* cfg) {
-  return cfg->register_auto_accept;
+    return cfg->register_auto_accept;
 }
 
 #ifdef __cplusplus

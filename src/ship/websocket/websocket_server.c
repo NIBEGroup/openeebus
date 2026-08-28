@@ -27,10 +27,10 @@
 typedef struct WebsocketServer WebsocketServer;
 
 struct WebsocketServer {
-  /** Implements the Websocket Interface */
-  Websocket obj;
+    /** Implements the Websocket Interface */
+    Websocket obj;
 
-  HttpServerObject* server;
+    HttpServerObject* server;
 };
 
 #define WEBSOCKET_SERVER(obj) ((WebsocketServer*)(obj))
@@ -62,54 +62,54 @@ EebusError WebsocketServerConstruct(
     WebsocketCallback cb,
     void* ctx
 ) {
-  EebusError ret = WebsocketConstruct(WEBSOCKET(self), cb, ctx);
-  // Override "virtual functions table"
-  WEBSOCKET_INTERFACE(self) = &websocket_server_methods;
+    EebusError ret = WebsocketConstruct(WEBSOCKET(self), cb, ctx);
+    // Override "virtual functions table"
+    WEBSOCKET_INTERFACE(self) = &websocket_server_methods;
 
-  if (ret != kEebusErrorOk) {
-    return ret;
-  }
+    if (ret != kEebusErrorOk) {
+        return ret;
+    }
 
-  self->server         = srv;
-  WEBSOCKET(self)->wsi = wsi;
+    self->server         = srv;
+    WEBSOCKET(self)->wsi = wsi;
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 void Destruct(WebsocketObject* self) {
-  WebsocketServer* const wss = WEBSOCKET_SERVER(self);
+    WebsocketServer* const wss = WEBSOCKET_SERVER(self);
 
-  Websocket* const ws = WEBSOCKET(self);
+    Websocket* const ws = WEBSOCKET(self);
 
-  ws->wsi = NULL;
+    ws->wsi = NULL;
 
-  wss->server = NULL;
+    wss->server = NULL;
 
-  WebsocketDestruct(WEBSOCKET_OBJECT(ws));
+    WebsocketDestruct(WEBSOCKET_OBJECT(ws));
 }
 
 WebsocketObject* WebsocketServerOpen(HttpServerObject* srv, struct lws* wsi, WebsocketCallback cb, void* ctx) {
-  WebsocketServer* const wss = (WebsocketServer*)EEBUS_MALLOC(sizeof(WebsocketServer));
+    WebsocketServer* const wss = (WebsocketServer*)EEBUS_MALLOC(sizeof(WebsocketServer));
 
-  if (wss == NULL) {
-    return NULL;
-  }
+    if (wss == NULL) {
+        return NULL;
+    }
 
-  const EebusError ret = WebsocketServerConstruct(wss, srv, wsi, cb, ctx);
-  if (ret != kEebusErrorOk) {
-    WEBSOCKET_DEBUG_PRINTF("%s(), constructing websocket failed\n", __func__);
-    WebsocketDelete(WEBSOCKET_OBJECT(wss));
-    return NULL;
-  }
+    const EebusError ret = WebsocketServerConstruct(wss, srv, wsi, cb, ctx);
+    if (ret != kEebusErrorOk) {
+        WEBSOCKET_DEBUG_PRINTF("%s(), constructing websocket failed\n", __func__);
+        WebsocketDelete(WEBSOCKET_OBJECT(wss));
+        return NULL;
+    }
 
-  lws_set_wsi_user(wsi, wss);
+    lws_set_wsi_user(wsi, wss);
 
-  return WEBSOCKET_OBJECT(wss);
+    return WEBSOCKET_OBJECT(wss);
 }
 
 void WebsocketServerClose(WebsocketObject* self, int32_t close_code, const char* reason) {
-  WebsocketServer* const wss = WEBSOCKET_SERVER(self);
+    WebsocketServer* const wss = WEBSOCKET_SERVER(self);
 
-  HttpServerUnbindWsi(wss->server, WEBSOCKET(self)->wsi);
-  WebsocketClose(self, close_code, reason);
+    HttpServerUnbindWsi(wss->server, WEBSOCKET(self)->wsi);
+    WebsocketClose(self, close_code, reason);
 }

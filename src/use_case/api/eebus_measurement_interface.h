@@ -37,33 +37,33 @@ typedef struct EebusMeasurementInterface EebusMeasurementInterface;
 typedef struct EebusMeasurementObject EebusMeasurementObject;
 
 struct EebusMeasurementInterface {
-  void (*destruct)(EebusMeasurementObject* self);
-  EebusMeasurementNameId (*get_name)(const EebusMeasurementObject* self);
-  EebusError (*get_data_value)(
-      const EebusMeasurementObject* self,
-      MeasurementServer* msrv,
-      ScaledValue* measurement_value
-  );
-  const MeasurementConstraintsDataType* (*get_constraints)(const EebusMeasurementObject* self);
-  EebusError (*configure)(
-      EebusMeasurementObject* self,
-      MeasurementServer* msrv,
-      ElectricalConnectionServer* ecsrv,
-      ElectricalConnectionIdType electrical_connection_id
-  );
-  EebusError (*set_data_cache)(
-      EebusMeasurementObject* self,
-      const ScaledValue* measured_value,
-      const EebusDateTime* timestamp,
-      const MeasurementValueStateType* value_state,
-      const EebusDateTime* start_time,
-      const EebusDateTime* end_time
-  );
-  MeasurementDataType* (*release_data_cache)(EebusMeasurementObject* self);
+    void (*destruct)(EebusMeasurementObject* self);
+    EebusMeasurementNameId (*get_name)(const EebusMeasurementObject* self);
+    EebusError (*get_data_value)(
+        const EebusMeasurementObject* self,
+        MeasurementServer* msrv,
+        ScaledValue* measurement_value
+    );
+    const MeasurementConstraintsDataType* (*get_constraints)(const EebusMeasurementObject* self);
+    EebusError (*configure)(
+        EebusMeasurementObject* self,
+        MeasurementServer* msrv,
+        ElectricalConnectionServer* ecsrv,
+        ElectricalConnectionIdType electrical_connection_id
+    );
+    EebusError (*set_data_cache)(
+        EebusMeasurementObject* self,
+        const ScaledValue* measured_value,
+        const EebusDateTime* timestamp,
+        const MeasurementValueStateType* value_state,
+        const EebusDateTime* start_time,
+        const EebusDateTime* end_time
+    );
+    MeasurementDataType* (*release_data_cache)(EebusMeasurementObject* self);
 };
 
 struct EebusMeasurementObject {
-  const EebusMeasurementInterface* interface_;
+    const EebusMeasurementInterface* interface_;
 };
 
 #define EEBUS_MEASUREMENT_OBJECT(obj) ((EebusMeasurementObject*)(obj))
@@ -74,20 +74,26 @@ struct EebusMeasurementObject {
 #define EEBUS_MEASUREMENT_GET_NAME(obj) (EEBUS_MEASUREMENT_INTERFACE(obj)->get_name(EEBUS_MEASUREMENT_OBJECT(obj)))
 
 #define EEBUS_MEASUREMENT_GET_DATA_VALUE(obj, msrv, measurement_value) \
-  (EEBUS_MEASUREMENT_INTERFACE(obj)->get_data_value(EEBUS_MEASUREMENT_OBJECT(obj), msrv, measurement_value))
+    (EEBUS_MEASUREMENT_INTERFACE(obj)->get_data_value(EEBUS_MEASUREMENT_OBJECT(obj), msrv, measurement_value))
 
 #define EEBUS_MEASUREMENT_GET_CONSTRAINTS(obj) \
-  (EEBUS_MEASUREMENT_INTERFACE(obj)->get_constraints(EEBUS_MEASUREMENT_OBJECT(obj)))
+    (EEBUS_MEASUREMENT_INTERFACE(obj)->get_constraints(EEBUS_MEASUREMENT_OBJECT(obj)))
 
 #define EEBUS_MEASUREMENT_CONFIGURE(obj, msrv, ecsrv, electrical_connection_id) \
-  (EEBUS_MEASUREMENT_INTERFACE(obj)->configure(EEBUS_MEASUREMENT_OBJECT(obj), msrv, ecsrv, electrical_connection_id))
+    (EEBUS_MEASUREMENT_INTERFACE(obj)->configure(EEBUS_MEASUREMENT_OBJECT(obj), msrv, ecsrv, electrical_connection_id))
 
 #define EEBUS_MEASUREMENT_SET_DATA_CACHE(obj, measured_value, timestamp, value_state, start_time, end_time) \
-  (EEBUS_MEASUREMENT_INTERFACE(obj)                                                                         \
-       ->set_data_cache(EEBUS_MEASUREMENT_OBJECT(obj), measured_value, timestamp, value_state, start_time, end_time))
+    (EEBUS_MEASUREMENT_INTERFACE(obj)->set_data_cache(                                                      \
+        EEBUS_MEASUREMENT_OBJECT(obj),                                                                      \
+        measured_value,                                                                                     \
+        timestamp,                                                                                          \
+        value_state,                                                                                        \
+        start_time,                                                                                         \
+        end_time                                                                                            \
+    ))
 
 #define EEBUS_MEASUREMENT_RELEASE_DATA_CACHE(obj) \
-  (EEBUS_MEASUREMENT_INTERFACE(obj)->release_data_cache(EEBUS_MEASUREMENT_OBJECT(obj)))
+    (EEBUS_MEASUREMENT_INTERFACE(obj)->release_data_cache(EEBUS_MEASUREMENT_OBJECT(obj)))
 
 #ifdef __cplusplus
 }

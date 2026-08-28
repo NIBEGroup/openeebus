@@ -34,62 +34,62 @@ extern "C" {
 typedef struct EntityAddressType EntityAddressType;
 
 struct EntityAddressType {
-  const char* device;            /**< "device" */
-  const uint32_t* const* entity; /**< "entity" */
-  size_t entity_size;
+    const char* device;            /**< "device" */
+    const uint32_t* const* entity; /**< "entity" */
+    size_t entity_size;
 };
 
 typedef int32_t EntityTypeType;
 
 enum {
-  kEntityTypeTypeBattery,                       /**< "Battery" */
-  kEntityTypeTypeCompressor,                    /**< "Compressor" */
-  kEntityTypeTypeDeviceInformation,             /**< "DeviceInformation" */
-  kEntityTypeTypeDHWCircuit,                    /**< "DHWCircuit" */
-  kEntityTypeTypeDHWStorage,                    /**< "DHWStorage" */
-  kEntityTypeTypeDishwasher,                    /**< "Dishwasher" */
-  kEntityTypeTypeDryer,                         /**< "Dryer" */
-  kEntityTypeTypeElectricalImmersionHeater,     /**< "ElectricalImmersionHeater" */
-  kEntityTypeTypeFan,                           /**< "Fan" */
-  kEntityTypeTypeGasHeatingAppliance,           /**< "GasHeatingAppliance" */
-  kEntityTypeTypeGeneric,                       /**< "Generic" */
-  kEntityTypeTypeHeatingBufferStorage,          /**< "HeatingBufferStorage" */
-  kEntityTypeTypeHeatingCircuit,                /**< "HeatingCircuit" */
-  kEntityTypeTypeHeatingObject,                 /**< "HeatingObject" */
-  kEntityTypeTypeHeatingZone,                   /**< "HeatingZone" */
-  kEntityTypeTypeHeatPumpAppliance,             /**< "HeatPumpAppliance" */
-  kEntityTypeTypeHeatSinkCircuit,               /**< "HeatSinkCircuit" */
-  kEntityTypeTypeHeatSourceCircuit,             /**< "HeatSourceCircuit" */
-  kEntityTypeTypeHeatSourceUnit,                /**< "HeatSourceUnit" */
-  kEntityTypeTypeHvacController,                /**< "HVACController" */
-  kEntityTypeTypeHvacRoom,                      /**< "HVACRoom" */
-  kEntityTypeTypeInstantDHWheater,              /**< "InstantDHWHeater" */
-  kEntityTypeTypeInverter,                      /**< "Inverter" */
-  kEntityTypeTypeOilHeatingAppliance,           /**< "OilHeatingAppliance" */
-  kEntityTypeTypePump,                          /**< "Pump" */
-  kEntityTypeTypeRefrigerantCircuit,            /**< "RefrigerantCircuit" */
-  kEntityTypeTypeSmartEnergyAppliance,          /**< "SmartEnergyAppliance" */
-  kEntityTypeTypeSolarDHWStorage,               /**< "SolarDHWStorage" */
-  kEntityTypeTypeSolarThermalCircuit,           /**< "SolarThermalCircuit" */
-  kEntityTypeTypeSubMeterElectricity,           /**< "SubMeterElectricity" */
-  kEntityTypeTypeTemperatureSensor,             /**< "TemperatureSensor" */
-  kEntityTypeTypeWasher,                        /**< "Washer" */
-  kEntityTypeTypeBatterySystem,                 /**< "BatterySystem" */
-  kEntityTypeTypeElectricityGenerationSystem,   /**< "ElectricityGenerationSystem" */
-  kEntityTypeTypeElectricityStorageSystem,      /**< "ElectricityStorageSystem" */
-  kEntityTypeTypeGridConnectionPointOfPremises, /**< "GridConnectionPointOfPremises" */
-  kEntityTypeTypeHousehold,                     /**< "Household" */
-  kEntityTypeTypePVSystem,                      /**< "PVSystem" */
-  kEntityTypeTypeEV,                            /**< "EV" */
-  kEntityTypeTypeEVSE,                          /**< "EVSE" */
-  kEntityTypeTypeChargingOutlet,                /**< "ChargingOutlet" */
-  kEntityTypeTypeCEM,                           /**< "CEM" */
-  kEntityTypeTypePV,                            /**< "PV" */
-  kEntityTypeTypePVESHybrid,                    /**< "PVESHybrid" */
-  kEntityTypeTypeElectricalStorage,             /**< "ElectricalStorage" */
-  kEntityTypeTypePVString,                      /**< "PVString" */
-  kEntityTypeTypeGridGuard,                     /**< "GridGuard" */
-  kEntityTypeTypeControllableSystem,            /**< "ControllableSystem" */
+    kEntityTypeTypeBattery,                       /**< "Battery" */
+    kEntityTypeTypeCompressor,                    /**< "Compressor" */
+    kEntityTypeTypeDeviceInformation,             /**< "DeviceInformation" */
+    kEntityTypeTypeDHWCircuit,                    /**< "DHWCircuit" */
+    kEntityTypeTypeDHWStorage,                    /**< "DHWStorage" */
+    kEntityTypeTypeDishwasher,                    /**< "Dishwasher" */
+    kEntityTypeTypeDryer,                         /**< "Dryer" */
+    kEntityTypeTypeElectricalImmersionHeater,     /**< "ElectricalImmersionHeater" */
+    kEntityTypeTypeFan,                           /**< "Fan" */
+    kEntityTypeTypeGasHeatingAppliance,           /**< "GasHeatingAppliance" */
+    kEntityTypeTypeGeneric,                       /**< "Generic" */
+    kEntityTypeTypeHeatingBufferStorage,          /**< "HeatingBufferStorage" */
+    kEntityTypeTypeHeatingCircuit,                /**< "HeatingCircuit" */
+    kEntityTypeTypeHeatingObject,                 /**< "HeatingObject" */
+    kEntityTypeTypeHeatingZone,                   /**< "HeatingZone" */
+    kEntityTypeTypeHeatPumpAppliance,             /**< "HeatPumpAppliance" */
+    kEntityTypeTypeHeatSinkCircuit,               /**< "HeatSinkCircuit" */
+    kEntityTypeTypeHeatSourceCircuit,             /**< "HeatSourceCircuit" */
+    kEntityTypeTypeHeatSourceUnit,                /**< "HeatSourceUnit" */
+    kEntityTypeTypeHvacController,                /**< "HVACController" */
+    kEntityTypeTypeHvacRoom,                      /**< "HVACRoom" */
+    kEntityTypeTypeInstantDHWheater,              /**< "InstantDHWHeater" */
+    kEntityTypeTypeInverter,                      /**< "Inverter" */
+    kEntityTypeTypeOilHeatingAppliance,           /**< "OilHeatingAppliance" */
+    kEntityTypeTypePump,                          /**< "Pump" */
+    kEntityTypeTypeRefrigerantCircuit,            /**< "RefrigerantCircuit" */
+    kEntityTypeTypeSmartEnergyAppliance,          /**< "SmartEnergyAppliance" */
+    kEntityTypeTypeSolarDHWStorage,               /**< "SolarDHWStorage" */
+    kEntityTypeTypeSolarThermalCircuit,           /**< "SolarThermalCircuit" */
+    kEntityTypeTypeSubMeterElectricity,           /**< "SubMeterElectricity" */
+    kEntityTypeTypeTemperatureSensor,             /**< "TemperatureSensor" */
+    kEntityTypeTypeWasher,                        /**< "Washer" */
+    kEntityTypeTypeBatterySystem,                 /**< "BatterySystem" */
+    kEntityTypeTypeElectricityGenerationSystem,   /**< "ElectricityGenerationSystem" */
+    kEntityTypeTypeElectricityStorageSystem,      /**< "ElectricityStorageSystem" */
+    kEntityTypeTypeGridConnectionPointOfPremises, /**< "GridConnectionPointOfPremises" */
+    kEntityTypeTypeHousehold,                     /**< "Household" */
+    kEntityTypeTypePVSystem,                      /**< "PVSystem" */
+    kEntityTypeTypeEV,                            /**< "EV" */
+    kEntityTypeTypeEVSE,                          /**< "EVSE" */
+    kEntityTypeTypeChargingOutlet,                /**< "ChargingOutlet" */
+    kEntityTypeTypeCEM,                           /**< "CEM" */
+    kEntityTypeTypePV,                            /**< "PV" */
+    kEntityTypeTypePVESHybrid,                    /**< "PVESHybrid" */
+    kEntityTypeTypeElectricalStorage,             /**< "ElectricalStorage" */
+    kEntityTypeTypePVString,                      /**< "PVString" */
+    kEntityTypeTypeGridGuard,                     /**< "GridGuard" */
+    kEntityTypeTypeControllableSystem,            /**< "ControllableSystem" */
 };
 
 EntityAddressType* EntityAddressCreate(const char* device, const uint32_t* entity_ids, size_t entity_ids_size);

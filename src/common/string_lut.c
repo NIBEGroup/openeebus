@@ -23,124 +23,128 @@
 typedef struct StringLutRecord StringLutRecord;
 
 struct StringLutRecord {
-  char* key;
-  void* value;
-  StringLutValueDeleter deleter;
+    char* key;
+    void* value;
+    StringLutValueDeleter deleter;
 };
 
-static EebusError StringLutRecordInit(
-    StringLutRecord* record, const char* key, void* value, StringLutValueDeleter deleter);
+static EebusError
+StringLutRecordInit(StringLutRecord* record, const char* key, void* value, StringLutValueDeleter deleter);
 static StringLutRecord* StringLutRecordCreate(const char* key, void* value, StringLutValueDeleter deleter);
 static void StringLutRecordRelease(StringLutRecord* record);
 static void StringLutRecordDelete(StringLutRecord* record);
 
 EebusError StringLutRecordInit(StringLutRecord* record, const char* key, void* value, StringLutValueDeleter deleter) {
-  if (record == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (record == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  memset(record, 0, sizeof(*record));
+    memset(record, 0, sizeof(*record));
 
-  if ((key == NULL) || (value == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((key == NULL) || (value == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  record->key = StringCopy(key);
-  if (record->key == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    record->key = StringCopy(key);
+    if (record->key == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  record->value   = value;
-  record->deleter = deleter;
-  return kEebusErrorOk;
+    record->value   = value;
+    record->deleter = deleter;
+    return kEebusErrorOk;
 }
 
 StringLutRecord* StringLutRecordCreate(const char* key, void* value, StringLutValueDeleter deleter) {
-  StringLutRecord* const record = (StringLutRecord*)EEBUS_MALLOC(sizeof(StringLutRecord));
-  if (record == NULL) {
-    return NULL;
-  }
+    StringLutRecord* const record = (StringLutRecord*)EEBUS_MALLOC(sizeof(StringLutRecord));
+    if (record == NULL) {
+        return NULL;
+    }
 
-  if (StringLutRecordInit(record, key, value, deleter) != kEebusErrorOk) {
-    StringLutRecordDelete(record);
-    return NULL;
-  }
+    if (StringLutRecordInit(record, key, value, deleter) != kEebusErrorOk) {
+        StringLutRecordDelete(record);
+        return NULL;
+    }
 
-  return record;
+    return record;
 }
 
 StringLutRecord* StringLutRecordCreate(const char* key, void* value, StringLutValueDeleter deleter);
 
 void StringLutRecordRelease(StringLutRecord* record) {
-  StringDelete(record->key);
-  if (record->deleter != NULL) {
-    record->deleter(record->value);
-  }
+    StringDelete(record->key);
+    if (record->deleter != NULL) {
+        record->deleter(record->value);
+    }
 }
 
 void StringLutRecordDelete(StringLutRecord* record) {
-  StringLutRecordRelease(record);
-  EEBUS_FREE(record);
+    StringLutRecordRelease(record);
+    EEBUS_FREE(record);
 }
 
-void StringLutInit(StringLut* lut) { VectorConstruct(&lut->records); }
+void StringLutInit(StringLut* lut) {
+    VectorConstruct(&lut->records);
+}
 
 void StringLutRelease(StringLut* lut) {
-  for (size_t i = 0; i < VectorGetSize(&lut->records); ++i) {
-    StringLutRecordDelete((StringLutRecord*)VectorGetElement(&lut->records, i));
-  }
+    for (size_t i = 0; i < VectorGetSize(&lut->records); ++i) {
+        StringLutRecordDelete((StringLutRecord*)VectorGetElement(&lut->records, i));
+    }
 
-  VectorDestruct(&lut->records);
+    VectorDestruct(&lut->records);
 }
 
 StringLutRecord* StringLutFindRecord(const StringLut* lut, const char* key) {
-  if (key == NULL) {
-    return NULL;
-  }
-
-  for (size_t i = 0; i < VectorGetSize(&lut->records); ++i) {
-    StringLutRecord* const record = (StringLutRecord*)VectorGetElement(&lut->records, i);
-    if (!strcmp(record->key, key)) {
-      return record;
+    if (key == NULL) {
+        return NULL;
     }
-  }
 
-  return NULL;
+    for (size_t i = 0; i < VectorGetSize(&lut->records); ++i) {
+        StringLutRecord* const record = (StringLutRecord*)VectorGetElement(&lut->records, i);
+        if (!strcmp(record->key, key)) {
+            return record;
+        }
+    }
+
+    return NULL;
 }
 
 void* StringLutFind(const StringLut* lut, const char* key) {
-  StringLutRecord* const record = StringLutFindRecord(lut, key);
-  if (record == NULL) {
-    return NULL;
-  }
+    StringLutRecord* const record = StringLutFindRecord(lut, key);
+    if (record == NULL) {
+        return NULL;
+    }
 
-  return record->value;
+    return record->value;
 }
 
 EebusError StringLutInsert(StringLut* lut, const char* key, void* value, StringLutValueDeleter deleter) {
-  StringLutRecord* const record = StringLutRecordCreate(key, value, deleter);
-  if (record == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    StringLutRecord* const record = StringLutRecordCreate(key, value, deleter);
+    if (record == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  VectorPushBack(&lut->records, record);
-  return kEebusErrorOk;
+    VectorPushBack(&lut->records, record);
+    return kEebusErrorOk;
 }
 
 EebusError StringLutRemove(StringLut* lut, const char* key) {
-  StringLutRecord* const record = StringLutFindRecord(lut, key);
-  if (record == NULL) {
-    return kEebusErrorInputArgument;
-  }
+    StringLutRecord* const record = StringLutFindRecord(lut, key);
+    if (record == NULL) {
+        return kEebusErrorInputArgument;
+    }
 
-  VectorRemove(&lut->records, record);
-  StringLutRecordDelete(record);
-  return kEebusErrorOk;
+    VectorRemove(&lut->records, record);
+    StringLutRecordDelete(record);
+    return kEebusErrorOk;
 }
 
-size_t StringLutGetSize(const StringLut* lut) { return VectorGetSize(&lut->records); }
+size_t StringLutGetSize(const StringLut* lut) {
+    return VectorGetSize(&lut->records);
+}
 
 void* StringLutGetElementValue(const StringLut* lut, size_t idx) {
-  const StringLutRecord* const record = (const StringLutRecord*)VectorGetElement(&lut->records, idx);
-  return record->value;
+    const StringLutRecord* const record = (const StringLutRecord*)VectorGetElement(&lut->records, idx);
+    return record->value;
 }

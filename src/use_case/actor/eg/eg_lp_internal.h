@@ -35,18 +35,18 @@ extern "C" {
 
 typedef struct EgLpUseCase EgLpUseCase;
 struct EgLpUseCase {
-  /** Inherits the Entity */
-  UseCase obj;
+    /** Inherits the Entity */
+    UseCase obj;
 
-  EnergyDirectionType energy_direction;
+    EnergyDirectionType energy_direction;
 
-  DeviceConfigurationKeyNameType failsafe_power_limit_key;
+    DeviceConfigurationKeyNameType failsafe_power_limit_key;
 
-  ElectricalConnectionCharacteristicTypeType nominal_max_characteristic;
+    ElectricalConnectionCharacteristicTypeType nominal_max_characteristic;
 
-  ElectricalConnectionCharacteristicTypeType contractual_nominal_max_characteristic;
+    ElectricalConnectionCharacteristicTypeType contractual_nominal_max_characteristic;
 
-  EgLpListenerObject* eg_lp_listener;
+    EgLpListenerObject* eg_lp_listener;
 };
 
 #define EG_LP_USE_CASE(obj) ((EgLpUseCase*)(obj))

@@ -31,10 +31,10 @@ extern "C" {
 PendingWriteRequestObject* PendingWriteRequestCreate(const Message* msg);
 
 static inline void PendingWriteRequestDelete(PendingWriteRequestObject* pending_write_request) {
-  if (pending_write_request != NULL) {
-    PENDING_WRITE_REQUEST_DESTRUCT(pending_write_request);
-    EEBUS_FREE(pending_write_request);
-  }
+    if (pending_write_request != NULL) {
+        PENDING_WRITE_REQUEST_DESTRUCT(pending_write_request);
+        EEBUS_FREE(pending_write_request);
+    }
 }
 
 #ifdef __cplusplus

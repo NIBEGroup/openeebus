@@ -35,10 +35,10 @@ EebusMutexObject* EebusMutexCreate(void);
 EebusMutexObject* EebusMutexCreateRecursive(void);
 
 static inline void EebusMutexDelete(EebusMutexObject* eebus_mutex) {
-  if (eebus_mutex != NULL) {
-    EEBUS_MUTEX_DESTRUCT(eebus_mutex);
-    EEBUS_FREE(eebus_mutex);
-  }
+    if (eebus_mutex != NULL) {
+        EEBUS_MUTEX_DESTRUCT(eebus_mutex);
+        EEBUS_FREE(eebus_mutex);
+    }
 }
 
 #ifdef __cplusplus

@@ -37,52 +37,56 @@ extern "C" {
 
 typedef struct UseCaseScenario UseCaseScenario;
 struct UseCaseScenario {
-  UseCaseScenarioSupportType scenario;     // The scenario number
-  bool mandatory;                          // If this scenario is mandatory to be supported by the remote entity
-  const FeatureTypeType* server_features;  // The server features required for this scenario on the remote entity
-  size_t server_features_size;
+    UseCaseScenarioSupportType scenario;     // The scenario number
+    bool mandatory;                          // If this scenario is mandatory to be supported by the remote entity
+    const FeatureTypeType* server_features;  // The server features required for this scenario on the remote entity
+    size_t server_features_size;
 };
 
 typedef struct UseCaseInfo UseCaseInfo;
 
 struct UseCaseInfo {
-  const UseCaseActorType* valid_actor_types;
-  size_t valid_actor_types_size;
-  const EntityTypeType* valid_entity_types;
-  size_t valid_entity_types_size;
-  const UseCaseScenario* use_case_scenarios;
-  size_t use_case_scenarios_size;
+    const UseCaseActorType* valid_actor_types;
+    size_t valid_actor_types_size;
+    const EntityTypeType* valid_entity_types;
+    size_t valid_entity_types_size;
+    const UseCaseScenario* use_case_scenarios;
+    size_t use_case_scenarios_size;
 
-  UseCaseActorType actor;
-  UseCaseNameType use_case_name_id;
-  SpecificationVersionType version;
-  const char* sub_revision;
-  bool available;
+    UseCaseActorType actor;
+    UseCaseNameType use_case_name_id;
+    SpecificationVersionType version;
+    const char* sub_revision;
+    bool available;
 };
 
 typedef struct UseCase UseCase;
 
 struct UseCase {
-  /** Implements the Use Case Interface */
-  UseCaseObject obj;
+    /** Implements the Use Case Interface */
+    UseCaseObject obj;
 
-  const UseCaseInfo* info;
-  DeviceLocalObject* local_device;
-  EntityLocalObject* local_entity;
-  EventHandler event_handler;
+    const UseCaseInfo* info;
+    DeviceLocalObject* local_device;
+    EntityLocalObject* local_entity;
+    EventHandler event_handler;
 };
 
 #define USE_CASE(obj) ((UseCase*)(obj))
 
 void UseCaseConstruct(
-    UseCase* self, const UseCaseInfo* info, EntityLocalObject* local_entity, EventHandler event_handler);
+    UseCase* self,
+    const UseCaseInfo* info,
+    EntityLocalObject* local_entity,
+    EventHandler event_handler
+);
 void UseCaseDestruct(UseCaseObject* self);
 
 static inline void UseCaseDelete(UseCaseObject* use_case) {
-  if (use_case != NULL) {
-    USE_CASE_DESTRUCT(USE_CASE_OBJECT(use_case));
-    EEBUS_FREE(use_case);
-  }
+    if (use_case != NULL) {
+        USE_CASE_DESTRUCT(USE_CASE_OBJECT(use_case));
+        EEBUS_FREE(use_case);
+    }
 }
 
 bool UseCaseIsEntityCompatible(const UseCaseObject* self, const EntityRemoteObject* remote_entity);

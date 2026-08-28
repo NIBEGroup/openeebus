@@ -33,9 +33,9 @@ extern "C" {
 typedef struct DeviceConfigurationClient DeviceConfigurationClient;
 
 struct DeviceConfigurationClient {
-  FeatureInfoClient feature_info_client;
+    FeatureInfoClient feature_info_client;
 
-  DeviceConfigurationCommon device_cfg_common;
+    DeviceConfigurationCommon device_cfg_common;
 };
 
 /**

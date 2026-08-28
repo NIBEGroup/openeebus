@@ -56,26 +56,26 @@ const EebusDataInterface eebus_data_bool_methods = {
 };
 
 EebusError FromJsonObjectItem(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj) {
-  if (!JsonIsBool(json_obj)) {
-    return kEebusErrorParse;
-  }
+    if (!JsonIsBool(json_obj)) {
+        return kEebusErrorParse;
+    }
 
-  bool* const buf = (bool*)EEBUS_DATA_CREATE_EMPTY(cfg, base_addr);
-  if (buf == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    bool* const buf = (bool*)EEBUS_DATA_CREATE_EMPTY(cfg, base_addr);
+    if (buf == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  *buf = JsonGetBool(json_obj);
-  return kEebusErrorOk;
+    *buf = JsonGetBool(json_obj);
+    return kEebusErrorOk;
 }
 
 EebusError ToJsonObjectItem(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_obj) {
-  const bool** const buf = (const bool**)((const uint8_t*)base_addr + cfg->offset);
-  if (*buf == NULL) {
-    *json_obj = NULL;
-    return kEebusErrorOk;
-  }
+    const bool** const buf = (const bool**)((const uint8_t*)base_addr + cfg->offset);
+    if (*buf == NULL) {
+        *json_obj = NULL;
+        return kEebusErrorOk;
+    }
 
-  *json_obj = JsonCreateBool(**buf);
-  return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
+    *json_obj = JsonCreateBool(**buf);
+    return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
 }

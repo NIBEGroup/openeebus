@@ -37,10 +37,10 @@ EebusCliHandlerObject*
 EgLpCliCreate(EnergyDirectionType energy_direction, EgLpUseCaseObject* eg_lp, const EntityAddressType* entity_addr);
 
 static inline void EgLpCliDelete(EebusCliHandlerObject* eg_lp_cli) {
-  if (eg_lp_cli != NULL) {
-    EEBUS_CLI_HANDLER_DESTRUCT(eg_lp_cli);
-    EEBUS_FREE(eg_lp_cli);
-  }
+    if (eg_lp_cli != NULL) {
+        EEBUS_CLI_HANDLER_DESTRUCT(eg_lp_cli);
+        EEBUS_FREE(eg_lp_cli);
+    }
 }
 
 #ifdef __cplusplus

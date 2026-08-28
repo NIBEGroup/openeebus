@@ -40,10 +40,10 @@ EebusServiceObject* EebusServiceCreate(
 );
 
 static inline void EebusServiceDelete(EebusServiceObject* eebus_service) {
-  if (eebus_service != NULL) {
-    SHIP_NODE_READER_DESTRUCT(SHIP_NODE_READER_OBJECT(eebus_service));
-    EEBUS_FREE(eebus_service);
-  }
+    if (eebus_service != NULL) {
+        SHIP_NODE_READER_DESTRUCT(SHIP_NODE_READER_OBJECT(eebus_service));
+        EEBUS_FREE(eebus_service);
+    }
 }
 
 #ifdef __cplusplus

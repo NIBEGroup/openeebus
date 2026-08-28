@@ -30,64 +30,64 @@ extern "C" {
 #endif  // __cplusplus
 
 enum SmeState {
-  // Connection Mode Initialisation (CMI) SHIP 13.4.3
-  kCmiStateInitStart = 0,
-  kCmiStateClientSend,
-  kCmiStateClientWait,
-  kCmiStateClientEvaluate,
-  kCmiStateServerWait,
-  kCmiStateServerEvaluate,
-  // Connection Data Preparation SHIP 13.4.4
-  kSmeHelloState,
-  kSmeHelloStateReadyInit,
-  kSmeHelloStateReadyListen,
-  kSmeHelloStateReadyTimeout,
-  kSmeHelloStatePendingInit,
-  kSmeHelloStatePendingListen,
-  kSmeHelloStatePendingTimeout,
-  kSmeHelloStateOk,
-  kSmeHelloStateAbort,            // Sent abort to remote
-  kSmeHelloStateAbortDone,        // Sending abort to remote is done
-  kSmeHelloStateRemoteAbortDone,  // Received abort from remote
-  kSmeHelloStateRejected,         // Connection closed after remote pending: "4452:
-                                  // Node rejected by application"
+    // Connection Mode Initialisation (CMI) SHIP 13.4.3
+    kCmiStateInitStart = 0,
+    kCmiStateClientSend,
+    kCmiStateClientWait,
+    kCmiStateClientEvaluate,
+    kCmiStateServerWait,
+    kCmiStateServerEvaluate,
+    // Connection Data Preparation SHIP 13.4.4
+    kSmeHelloState,
+    kSmeHelloStateReadyInit,
+    kSmeHelloStateReadyListen,
+    kSmeHelloStateReadyTimeout,
+    kSmeHelloStatePendingInit,
+    kSmeHelloStatePendingListen,
+    kSmeHelloStatePendingTimeout,
+    kSmeHelloStateOk,
+    kSmeHelloStateAbort,            // Sent abort to remote
+    kSmeHelloStateAbortDone,        // Sending abort to remote is done
+    kSmeHelloStateRemoteAbortDone,  // Received abort from remote
+    kSmeHelloStateRejected,         // Connection closed after remote pending: "4452:
+                                    // Node rejected by application"
 
-  // Connection State Protocol Handhsake SHIP 13.4.4.2
-  kSmeProtHStateServerInit,
-  kSmeProtHStateClientInit,
-  kSmeProtHStateServerListenProposal,
-  kSmeProtHStateServerListenConfirm,
-  kSmeProtHStateClientListenChoice,
-  kSmeProtHStateTimeout,
-  kSmeProtHStateClientOk,
-  kSmeProtHStateServerOk,
-  // Connection PIN State 13.4.5
-  kSmePinStateCheckInit,
-  kSmePinStateCheckListen,
-  kSmePinStateCheckError,
-  kSmePinStateCheckBusyInit,
-  kSmePinStateCheckBusyWait,
-  kSmePinStateCheckOk,
-  kSmePinStateAskInit,
-  kSmePinStateAskProcess,
-  kSmePinStateAskRestrictedOk,
-  kSmePinStateAskOk,
-  // ConnectionAccess Methods Identification 13.4.6
-  kSmeAccessMethodsRequest,
+    // Connection State Protocol Handhsake SHIP 13.4.4.2
+    kSmeProtHStateServerInit,
+    kSmeProtHStateClientInit,
+    kSmeProtHStateServerListenProposal,
+    kSmeProtHStateServerListenConfirm,
+    kSmeProtHStateClientListenChoice,
+    kSmeProtHStateTimeout,
+    kSmeProtHStateClientOk,
+    kSmeProtHStateServerOk,
+    // Connection PIN State 13.4.5
+    kSmePinStateCheckInit,
+    kSmePinStateCheckListen,
+    kSmePinStateCheckError,
+    kSmePinStateCheckBusyInit,
+    kSmePinStateCheckBusyWait,
+    kSmePinStateCheckOk,
+    kSmePinStateAskInit,
+    kSmePinStateAskProcess,
+    kSmePinStateAskRestrictedOk,
+    kSmePinStateAskOk,
+    // ConnectionAccess Methods Identification 13.4.6
+    kSmeAccessMethodsRequest,
 
-  // Handshake approved on both ends
-  kSmeStateApproved,
+    // Handshake approved on both ends
+    kSmeStateApproved,
 
-  // Handshake process is successfully completed
-  kDataExchange,
+    // Handshake process is successfully completed
+    kDataExchange,
 
-  // Handshake ended with an error
-  kSmeStateError,
+    // Handshake ended with an error
+    kSmeStateError,
 };
 
 typedef enum SmeState SmeState;
 
-static const uint8_t kShipInitMessage[] = { kMsgTypeInit, 0x00 };
+static const uint8_t kShipInitMessage[] = {kMsgTypeInit, 0x00};
 
 #ifdef __cplusplus
 }

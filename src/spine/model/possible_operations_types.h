@@ -29,33 +29,33 @@ extern "C" {
 
 typedef struct PossibleOperationsClassifierType PossibleOperationsClassifierType;
 struct PossibleOperationsClassifierType {
-  ElementTagType partial; /**< "partial" */
+    ElementTagType partial; /**< "partial" */
 };
 
 typedef struct PossibleOperationsReadType PossibleOperationsReadType;
 
 struct PossibleOperationsReadType {
-  ElementTagType partial; /**< "partial" */
+    ElementTagType partial; /**< "partial" */
 };
 
 typedef struct PossibleOperationsWriteType PossibleOperationsWriteType;
 
 struct PossibleOperationsWriteType {
-  ElementTagType partial; /**< "partial" */
+    ElementTagType partial; /**< "partial" */
 };
 
 typedef struct PossibleOperationsType PossibleOperationsType;
 
 struct PossibleOperationsType {
-  const PossibleOperationsReadType* read;   /**< "read" */
-  const PossibleOperationsWriteType* write; /**< "write" */
+    const PossibleOperationsReadType* read;   /**< "read" */
+    const PossibleOperationsWriteType* write; /**< "write" */
 };
 
 typedef struct PossibleOperationsElementsType PossibleOperationsElementsType;
 
 struct PossibleOperationsElementsType {
-  ElementTagType read_enabled;  /**< "read" */
-  ElementTagType write_enabled; /**< "write" */
+    ElementTagType read_enabled;  /**< "read" */
+    ElementTagType write_enabled; /**< "write" */
 };
 
 PossibleOperationsType* PossibleOperationsCreate(bool read, bool read_partial, bool write, bool write_partial);

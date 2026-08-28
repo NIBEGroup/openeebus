@@ -35,8 +35,8 @@ extern "C" {
 
 typedef struct EgLpUseCaseObject EgLpUseCaseObject;
 struct EgLpUseCaseObject {
-  /** Inherits the Entity */
-  UseCaseObject obj;
+    /** Inherits the Entity */
+    UseCaseObject obj;
 };
 
 #define EG_LP_USE_CASE_OBJECT(obj) ((EgLpUseCaseObject*)(obj))
@@ -49,10 +49,10 @@ EgLpUseCaseObject* EgLpUseCaseCreate(
 );
 
 static inline void EgLpUseCaseDelete(EgLpUseCaseObject* eg_lp_use_case) {
-  if (eg_lp_use_case != NULL) {
-    USE_CASE_DESTRUCT(USE_CASE_OBJECT(eg_lp_use_case));
-    EEBUS_FREE(eg_lp_use_case);
-  }
+    if (eg_lp_use_case != NULL) {
+        USE_CASE_DESTRUCT(USE_CASE_OBJECT(eg_lp_use_case));
+        EEBUS_FREE(eg_lp_use_case);
+    }
 }
 
 //-------------------------------------------------------------------------------------------//

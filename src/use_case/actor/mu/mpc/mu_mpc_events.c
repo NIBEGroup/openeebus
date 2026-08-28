@@ -24,27 +24,27 @@
 static void OnRemoteMaChange(MuMpcUseCase* self, const EventPayload* payload);
 
 void OnRemoteMaChange(MuMpcUseCase* self, const EventPayload* payload) {
-  if (!USE_CASE_IS_USE_CASE_COMPATIBLE(USE_CASE_OBJECT(self), payload->use_case_filter)) {
-    return;
-  }
+    if (!USE_CASE_IS_USE_CASE_COMPATIBLE(USE_CASE_OBJECT(self), payload->use_case_filter)) {
+        return;
+    }
 
-  if (self->mu_mpc_listener == NULL) {
-    return;
-  }
+    if (self->mu_mpc_listener == NULL) {
+        return;
+    }
 
-  const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
+    const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
 
-  if (payload->change_type == kElementChangeAdd) {
-    MU_MPC_LISTENER_ON_REMOTE_MA_ADDED(self->mu_mpc_listener, entity_addr);
-  } else if (payload->change_type == kElementChangeRemove) {
-    MU_MPC_LISTENER_ON_REMOTE_MA_REMOVED(self->mu_mpc_listener, entity_addr);
-  }
+    if (payload->change_type == kElementChangeAdd) {
+        MU_MPC_LISTENER_ON_REMOTE_MA_ADDED(self->mu_mpc_listener, entity_addr);
+    } else if (payload->change_type == kElementChangeRemove) {
+        MU_MPC_LISTENER_ON_REMOTE_MA_REMOVED(self->mu_mpc_listener, entity_addr);
+    }
 }
 
 void MuMpcHandleEvent(const EventPayload* payload, void* ctx) {
-  MuMpcUseCase* const mu_mpc_use_case = (MuMpcUseCase*)ctx;
+    MuMpcUseCase* const mu_mpc_use_case = (MuMpcUseCase*)ctx;
 
-  if (payload->event_type == kEventTypeUseCaseChange) {
-    OnRemoteMaChange(mu_mpc_use_case, payload);
-  }
+    if (payload->event_type == kEventTypeUseCaseChange) {
+        OnRemoteMaChange(mu_mpc_use_case, payload);
+    }
 }

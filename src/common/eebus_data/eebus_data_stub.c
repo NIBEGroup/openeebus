@@ -34,25 +34,50 @@ static EebusError FromJsonObjectItem(const EebusDataCfg* cfg, void* base_addr, c
 static EebusError FromJsonObject(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj, bool is_root);
 static EebusError ToJsonObjectItem(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_obj);
 static EebusError ToJsonObject(const EebusDataCfg* cfg, const void* base_addr, JsonObject* json_obj, bool is_root);
-static bool Compare(
-    const EebusDataCfg* a_cfg, const void* a_base_addr, const EebusDataCfg* b_cfg, const void* b_base_addr);
+static bool
+Compare(const EebusDataCfg* a_cfg, const void* a_base_addr, const EebusDataCfg* b_cfg, const void* b_base_addr);
 static bool IsNull(const EebusDataCfg* cfg, const void* base_addr);
 static bool IsEmpty(const EebusDataCfg* cfg, const void* base_addr);
 static bool HasIdentifiers(const EebusDataCfg* cfg, const void* base_addr);
 static bool SelectorsMatch(
-    const EebusDataCfg* cfg, const void* base_addr, const EebusDataCfg* selectors_cfg, const void* selectors_base_addr);
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    const EebusDataCfg* selectors_cfg,
+    const void* selectors_base_addr
+);
 static bool IdentifiersMatch(const EebusDataCfg* cfg, const void* base_addr, const void* src_base_addr);
-static EebusError ReadElements(const EebusDataCfg* cfg, const void* base_addr, void* dst_base_addr,
-    const EebusDataCfg* elements_cfg, const void* elements_base_addr);
+static EebusError ReadElements(
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    void* dst_base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
 static EebusError Write(const EebusDataCfg* cfg, void* base_addr, const void* src_base);
 static EebusError WriteElements(const EebusDataCfg* cfg, void* base_addr, const void* src_base);
-static EebusError WritePartial(const EebusDataCfg* cfg, void* base_addr, const void* src_base_addr,
-    const EebusDataCfg* selectors_cfg, const void* selectors_base_addr, SelectorsMatcher selectors_matcher);
+static EebusError WritePartial(
+    const EebusDataCfg* cfg,
+    void* base_addr,
+    const void* src_base_addr,
+    const EebusDataCfg* selectors_cfg,
+    const void* selectors_base_addr,
+    SelectorsMatcher selectors_matcher
+);
 static void DeleteElements(
-    const EebusDataCfg* cfg, void* base_addr, const EebusDataCfg* elements_cfg, const void* elements_base_addr);
-static void DeletePartial(const EebusDataCfg* cfg, void* base_addr, const EebusDataCfg* selectors_cfg,
-    const void* selectors_base_addr, SelectorsMatcher selectors_matcher, const EebusDataCfg* elements_cfg,
-    const void* elements_base_addr);
+    const EebusDataCfg* cfg,
+    void* base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
+static void DeletePartial(
+    const EebusDataCfg* cfg,
+    void* base_addr,
+    const EebusDataCfg* selectors_cfg,
+    const void* selectors_base_addr,
+    SelectorsMatcher selectors_matcher,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
 static void Delete(const EebusDataCfg* cfg, void* base_addr);
 
 const EebusDataInterface eebus_data_stub_methods = {
@@ -80,145 +105,160 @@ const EebusDataInterface eebus_data_stub_methods = {
 };
 
 void* CreateEmpty(const EebusDataCfg* cfg, void* base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
 
-  return NULL;
+    return NULL;
 }
 
 void* Parse(const EebusDataCfg* cfg, const char* s) {
-  UNUSED(cfg);
-  UNUSED(s);
+    UNUSED(cfg);
+    UNUSED(s);
 
-  return NULL;
+    return NULL;
 }
 
 char* PrintUnformatted(const EebusDataCfg* cfg, const void* base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
 
-  return NULL;
+    return NULL;
 }
 
 EebusError FromJsonObjectItem(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(json_obj);
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(json_obj);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError FromJsonObject(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj, bool is_root) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(json_obj);
-  UNUSED(is_root);
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(json_obj);
+    UNUSED(is_root);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError ToJsonObjectItem(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_obj) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
 
-  *json_obj = NULL;
-  return kEebusErrorOk;
+    *json_obj = NULL;
+    return kEebusErrorOk;
 }
 
 EebusError ToJsonObject(const EebusDataCfg* cfg, const void* base_addr, JsonObject* json_obj, bool is_root) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(json_obj);
-  UNUSED(is_root);
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(json_obj);
+    UNUSED(is_root);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 bool Compare(const EebusDataCfg* a_cfg, const void* a_base_addr, const EebusDataCfg* b_cfg, const void* b_base_addr) {
-  UNUSED(a_cfg);
-  UNUSED(a_base_addr);
-  UNUSED(b_cfg);
-  UNUSED(b_base_addr);
+    UNUSED(a_cfg);
+    UNUSED(a_base_addr);
+    UNUSED(b_cfg);
+    UNUSED(b_base_addr);
 
-  return true;
+    return true;
 }
 
 bool IsNull(const EebusDataCfg* cfg, const void* base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
 
-  return true;
+    return true;
 }
 
 bool IsEmpty(const EebusDataCfg* cfg, const void* base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
 
-  return false;
+    return false;
 }
 
 bool HasIdentifiers(const EebusDataCfg* cfg, const void* base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
 
-  return false;
+    return false;
 }
 
-bool SelectorsMatch(const EebusDataCfg* cfg, const void* base_addr, const EebusDataCfg* selectors_cfg,
-    const void* selectors_base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(selectors_cfg);
-  UNUSED(selectors_base_addr);
+bool SelectorsMatch(
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    const EebusDataCfg* selectors_cfg,
+    const void* selectors_base_addr
+) {
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(selectors_cfg);
+    UNUSED(selectors_base_addr);
 
-  return false;
+    return false;
 }
 
 bool IdentifiersMatch(const EebusDataCfg* cfg, const void* base_addr, const void* src_base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(src_base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(src_base_addr);
 
-  return false;
+    return false;
 }
 
-EebusError ReadElements(const EebusDataCfg* cfg, const void* base_addr, void* dst_base_addr,
-    const EebusDataCfg* elements_cfg, const void* elements_base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(dst_base_addr);
-  UNUSED(elements_cfg);
-  UNUSED(elements_base_addr);
+EebusError ReadElements(
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    void* dst_base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+) {
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(dst_base_addr);
+    UNUSED(elements_cfg);
+    UNUSED(elements_base_addr);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError Write(const EebusDataCfg* cfg, void* base_addr, const void* src_base) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(src_base);
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(src_base);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError WriteElements(const EebusDataCfg* cfg, void* base_addr, const void* src_base) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(src_base);
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(src_base);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
-EebusError WritePartial(const EebusDataCfg* cfg, void* base_addr, const void* src_base_addr,
-    const EebusDataCfg* selectors_cfg, const void* selectors_base_addr, SelectorsMatcher selectors_matcher) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(src_base_addr);
-  UNUSED(selectors_cfg);
-  UNUSED(selectors_base_addr);
-  UNUSED(selectors_matcher);
+EebusError WritePartial(
+    const EebusDataCfg* cfg,
+    void* base_addr,
+    const void* src_base_addr,
+    const EebusDataCfg* selectors_cfg,
+    const void* selectors_base_addr,
+    SelectorsMatcher selectors_matcher
+) {
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(src_base_addr);
+    UNUSED(selectors_cfg);
+    UNUSED(selectors_base_addr);
+    UNUSED(selectors_matcher);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 void DeleteElements(
@@ -227,10 +267,10 @@ void DeleteElements(
     const EebusDataCfg* elements_cfg,
     const void* elements_base_addr
 ) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(elements_cfg);
-  UNUSED(elements_base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(elements_cfg);
+    UNUSED(elements_base_addr);
 }
 
 void DeletePartial(
@@ -242,16 +282,16 @@ void DeletePartial(
     const EebusDataCfg* elements_cfg,
     const void* elements_base_addr
 ) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
-  UNUSED(selectors_cfg);
-  UNUSED(selectors_base_addr);
-  UNUSED(selectors_matcher);
-  UNUSED(elements_cfg);
-  UNUSED(elements_base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
+    UNUSED(selectors_cfg);
+    UNUSED(selectors_base_addr);
+    UNUSED(selectors_matcher);
+    UNUSED(elements_cfg);
+    UNUSED(elements_base_addr);
 }
 
 void Delete(const EebusDataCfg* cfg, void* base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
 }

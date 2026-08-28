@@ -41,10 +41,10 @@ ShipMdnsObject* ShipMdnsCreate(
 );
 
 static inline void MdnsDelete(ShipMdnsObject* mdns) {
-  if (mdns != NULL) {
-    SHIP_MDNS_DESTRUCT(mdns);
-    EEBUS_FREE(mdns);
-  }
+    if (mdns != NULL) {
+        SHIP_MDNS_DESTRUCT(mdns);
+        EEBUS_FREE(mdns);
+    }
 }
 
 #ifdef __cplusplus

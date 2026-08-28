@@ -54,37 +54,37 @@ typedef struct ShipNodeObject ShipNodeObject;
  * @brief Ship Node Interface structure
  */
 struct ShipNodeInterface {
-  /**
-   * @brief "Extends" the InfoProviderInterface
-   */
-  InfoProviderInterface info_provider_interface;
-  /**
-   * @brief Transformed from Start()
-   */
-  void (*start)(ShipNodeObject* self);
-  /**
-   * @brief Transformed from Shutdown()
-   */
-  void (*stop)(ShipNodeObject* self);
-  /**
-   * @brief Transformed from RegisterRemoteSKI()
-   */
-  void (*register_remote_ski)(ShipNodeObject* self, const char* ski, bool is_trusted);
-  /**
-   * @brief Transformed from UnregisterRemoteSKI()
-   */
-  void (*unregister_remote_ski)(ShipNodeObject* self, const char* ski);
-  /**
-   * @brief Transformed from CancelPairingWithSKI()
-   */
-  void (*cancel_pairing_with_ski)(ShipNodeObject* self, const char* ski);
+    /**
+     * @brief "Extends" the InfoProviderInterface
+     */
+    InfoProviderInterface info_provider_interface;
+    /**
+     * @brief Transformed from Start()
+     */
+    void (*start)(ShipNodeObject* self);
+    /**
+     * @brief Transformed from Shutdown()
+     */
+    void (*stop)(ShipNodeObject* self);
+    /**
+     * @brief Transformed from RegisterRemoteSKI()
+     */
+    void (*register_remote_ski)(ShipNodeObject* self, const char* ski, bool is_trusted);
+    /**
+     * @brief Transformed from UnregisterRemoteSKI()
+     */
+    void (*unregister_remote_ski)(ShipNodeObject* self, const char* ski);
+    /**
+     * @brief Transformed from CancelPairingWithSKI()
+     */
+    void (*cancel_pairing_with_ski)(ShipNodeObject* self, const char* ski);
 };
 
 /**
  * @brief Ship Node structure
  */
 struct ShipNodeObject {
-  const ShipNodeInterface* interface_;
+    const ShipNodeInterface* interface_;
 };
 
 /**
@@ -111,7 +111,7 @@ struct ShipNodeObject {
  * @brief Ship Node Register Remote SKI caller definition
  */
 #define SHIP_NODE_REGISTER_REMOTE_SKI(obj, ski, is_trusted) \
-  (SHIP_NODE_INTERFACE(obj)->register_remote_ski(obj, ski, is_trusted))
+    (SHIP_NODE_INTERFACE(obj)->register_remote_ski(obj, ski, is_trusted))
 
 /**
  * @brief Ship Node Unregister Remote Ski caller definition

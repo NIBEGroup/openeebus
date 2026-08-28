@@ -30,46 +30,54 @@
 #include "src/spine/model/node_management_types.h"
 
 void DeviceConstruct(
-    Device* self, const char* addr, const char* type, const NetworkManagementFeatureSetType* feature_set) {
-  self->address = StringCopy(addr);
+    Device* self,
+    const char* addr,
+    const char* type,
+    const NetworkManagementFeatureSetType* feature_set
+) {
+    self->address = StringCopy(addr);
 
-  const DeviceTypeType* device_type = ModelStringToDeviceType(type);
-  if (device_type != NULL) {
-    self->type = Int32Create(*device_type);
-  } else {
-    self->type = NULL;
-  }
+    const DeviceTypeType* device_type = ModelStringToDeviceType(type);
+    if (device_type != NULL) {
+        self->type = Int32Create(*device_type);
+    } else {
+        self->type = NULL;
+    }
 
-  if (feature_set != NULL) {
-    self->feature_set = Int32Create(*feature_set);
-  } else {
-    self->feature_set = NULL;
-  }
+    if (feature_set != NULL) {
+        self->feature_set = Int32Create(*feature_set);
+    } else {
+        self->feature_set = NULL;
+    }
 }
 
 void DeviceDestruct(DeviceObject* self) {
-  Device* const device = DEVICE(self);
+    Device* const device = DEVICE(self);
 
-  Int32Delete((int32_t*)device->feature_set);
-  device->feature_set = NULL;
+    Int32Delete((int32_t*)device->feature_set);
+    device->feature_set = NULL;
 
-  Int32Delete((int32_t*)device->type);
-  device->type = NULL;
+    Int32Delete((int32_t*)device->type);
+    device->type = NULL;
 
-  StringDelete((char*)device->address);
-  device->address = NULL;
+    StringDelete((char*)device->address);
+    device->address = NULL;
 }
 
-const char* DeviceGetAddress(const DeviceObject* self) { return DEVICE(self)->address; }
+const char* DeviceGetAddress(const DeviceObject* self) {
+    return DEVICE(self)->address;
+}
 
-const DeviceTypeType* DeviceGetDeviceType(const DeviceObject* self) { return DEVICE(self)->type; }
+const DeviceTypeType* DeviceGetDeviceType(const DeviceObject* self) {
+    return DEVICE(self)->type;
+}
 
 const NetworkManagementFeatureSetType* DeviceGetFeatureSet(const DeviceObject* self) {
-  return DEVICE(self)->feature_set;
+    return DEVICE(self)->feature_set;
 }
 
 const NodeManagementDestinationDataType* DeviceCreateDestinationData(const DeviceObject* self) {
-  Device* const device = DEVICE(self);
+    Device* const device = DEVICE(self);
 
-  return NodeManagementDestinationDataCreate(device->address, device->type, device->feature_set);
+    return NodeManagementDestinationDataCreate(device->address, device->type, device->feature_set);
 }

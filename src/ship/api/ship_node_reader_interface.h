@@ -59,63 +59,67 @@ typedef struct ShipNodeReaderObject ShipNodeReaderObject;
  * @brief ShipNodeReader Interface Structure
  */
 struct ShipNodeReaderInterface {
-  /**
-   * @brief Ship Node Reader Destructor
-   */
-  void (*destruct)(ShipNodeReaderObject* self);
-  /**
-   * @brief Report a connection to a SKI
-   *
-   * Transformed from RemoteSKIConnected()
-   */
-  void (*on_remote_ski_connected)(ShipNodeReaderObject* self, const char* ski);
-  /**
-   * @brief Report a disconnection to a SKI
-   *
-   * Transformed from RemoteSKIDisconnected()
-   */
-  void (*on_remote_ski_disconnected)(ShipNodeReaderObject* self, const char* ski);
-  // TODO: Find better approach to pair remote device instance with ship
-  // connection
-  /**
-   * @brief Report an approved handshake by a remote device
-   */
-  DataReaderObject* (*setup_remote_device)(ShipNodeReaderObject* self, const char* ski, DataWriterObject* data_writer);
-  /**
-   * @brief Report all currently visible EEBUS services
-   *
-   * Transformed from VisibleRemoteServicesUpdated()
-   */
-  void (*on_remote_services_update)(ShipNodeReaderObject* self, const Vector* entries);
-  /**
-   * @brief Provide the SHIP ID received during SHIP handshake process
-   * the ID needs to be stored and then provided for remote services so it can
-   * be compared and verified
-   *
-   * Trnasformed from ServiceShipIDUpdate()
-   */
-  void (*on_ship_id_update)(ShipNodeReaderObject* self, const char* ski, const char* ship_id);
-  /**
-   * @brief Provides the current handshake state for a given SKI
-   *
-   * Transformed from ServicePairingDetailUpdate()
-   */
-  void (*on_ship_state_update)(ShipNodeReaderObject* self, const char* ski, SmeState state);
+    /**
+     * @brief Ship Node Reader Destructor
+     */
+    void (*destruct)(ShipNodeReaderObject* self);
+    /**
+     * @brief Report a connection to a SKI
+     *
+     * Transformed from RemoteSKIConnected()
+     */
+    void (*on_remote_ski_connected)(ShipNodeReaderObject* self, const char* ski);
+    /**
+     * @brief Report a disconnection to a SKI
+     *
+     * Transformed from RemoteSKIDisconnected()
+     */
+    void (*on_remote_ski_disconnected)(ShipNodeReaderObject* self, const char* ski);
+    // TODO: Find better approach to pair remote device instance with ship
+    // connection
+    /**
+     * @brief Report an approved handshake by a remote device
+     */
+    DataReaderObject* (*setup_remote_device)(
+        ShipNodeReaderObject* self,
+        const char* ski,
+        DataWriterObject* data_writer
+    );
+    /**
+     * @brief Report all currently visible EEBUS services
+     *
+     * Transformed from VisibleRemoteServicesUpdated()
+     */
+    void (*on_remote_services_update)(ShipNodeReaderObject* self, const Vector* entries);
+    /**
+     * @brief Provide the SHIP ID received during SHIP handshake process
+     * the ID needs to be stored and then provided for remote services so it can
+     * be compared and verified
+     *
+     * Trnasformed from ServiceShipIDUpdate()
+     */
+    void (*on_ship_id_update)(ShipNodeReaderObject* self, const char* ski, const char* ship_id);
+    /**
+     * @brief Provides the current handshake state for a given SKI
+     *
+     * Transformed from ServicePairingDetailUpdate()
+     */
+    void (*on_ship_state_update)(ShipNodeReaderObject* self, const char* ski, SmeState state);
 
-  // TODO: Find better approach to check the allow waiting flag
-  /**
-   * @brief Return true if the user is still able to trust the connection
-   *
-   * Transformed from AllowWaitingForTrust()
-   */
-  bool (*is_waiting_for_trust_allowed)(ShipNodeReaderObject* self, const char* ski);
+    // TODO: Find better approach to check the allow waiting flag
+    /**
+     * @brief Return true if the user is still able to trust the connection
+     *
+     * Transformed from AllowWaitingForTrust()
+     */
+    bool (*is_waiting_for_trust_allowed)(ShipNodeReaderObject* self, const char* ski);
 };
 
 /**
  * @brief Ship Node Reader Object Structure
  */
 struct ShipNodeReaderObject {
-  const ShipNodeReaderInterface* interface_;
+    const ShipNodeReaderInterface* interface_;
 };
 
 /**
@@ -137,43 +141,43 @@ struct ShipNodeReaderObject {
  * @brief Ship Node Reader On Remote Ski Connected caller definition
  */
 #define SHIP_NODE_READER_ON_REMOTE_SKI_CONNECTED(obj, ski) \
-  (SHIP_NODE_READER_INTERFACE(obj)->on_remote_ski_connected(obj, ski))
+    (SHIP_NODE_READER_INTERFACE(obj)->on_remote_ski_connected(obj, ski))
 
 /**
  * @brief Ship Node Reader On Remote Ski Disconnected caller definition
  */
 #define SHIP_NODE_READER_ON_REMOTE_SKI_DISCONNECTED(obj, ski) \
-  (SHIP_NODE_READER_INTERFACE(obj)->on_remote_ski_disconnected(obj, ski))
+    (SHIP_NODE_READER_INTERFACE(obj)->on_remote_ski_disconnected(obj, ski))
 
 /**
  * @brief Ship Node Reader Setup Remote Device caller definition
  */
 #define SHIP_NODE_READER_SETUP_REMOTE_DEVICE(obj, ski, data_writer) \
-  (SHIP_NODE_READER_INTERFACE(obj)->setup_remote_device(obj, ski, data_writer))
+    (SHIP_NODE_READER_INTERFACE(obj)->setup_remote_device(obj, ski, data_writer))
 
 /**
  * @brief Ship Node Reader On Remote Services Update caller definition
  */
 #define SHIP_NODE_READER_ON_REMOTE_SERVICES_UPDATE(obj, entries) \
-  (SHIP_NODE_READER_INTERFACE(obj)->on_remote_services_update(obj, entries))
+    (SHIP_NODE_READER_INTERFACE(obj)->on_remote_services_update(obj, entries))
 
 /**
  * @brief Ship Node Reader On Ship Id Update caller definition
  */
 #define SHIP_NODE_READER_ON_SHIP_ID_UPDATE(obj, ski, ship_id) \
-  (SHIP_NODE_READER_INTERFACE(obj)->on_ship_id_update(obj, ski, ship_id))
+    (SHIP_NODE_READER_INTERFACE(obj)->on_ship_id_update(obj, ski, ship_id))
 
 /**
  * @brief Ship Node Reader On Ship State Update caller definition
  */
 #define SHIP_NODE_READER_ON_SHIP_STATE_UPDATE(obj, ski, state) \
-  (SHIP_NODE_READER_INTERFACE(obj)->on_ship_state_update(obj, ski, state))
+    (SHIP_NODE_READER_INTERFACE(obj)->on_ship_state_update(obj, ski, state))
 
 /**
  * @brief Ship Node Reader Is Waiting For Trust Allowed caller definition
  */
 #define SHIP_NODE_READER_IS_WAITING_FOR_TRUST_ALLOWED(obj, ski) \
-  (SHIP_NODE_READER_INTERFACE(obj)->is_waiting_for_trust_allowed(obj, ski))
+    (SHIP_NODE_READER_INTERFACE(obj)->is_waiting_for_trust_allowed(obj, ski))
 
 #ifdef __cplusplus
 }

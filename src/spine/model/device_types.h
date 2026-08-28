@@ -29,26 +29,26 @@ extern "C" {
 
 typedef struct DeviceAddressType DeviceAddressType;
 struct DeviceAddressType {
-  const char* device; /**< "device" */
+    const char* device; /**< "device" */
 };
 
 typedef int32_t DeviceTypeType;
 
 enum {
-  kDeviceTypeTypeDishwasher,               /**< "Dishwasher" */
-  kDeviceTypeTypeDryer,                    /**< "Dryer" */
-  kDeviceTypeTypeEnvironmentSensor,        /**< "EnvironmentSensor" */
-  kDeviceTypeTypeGeneric,                  /**< "Generic" */
-  kDeviceTypeTypeHeatgenerationSystem,     /**< "HeatGenerationSystem" */
-  kDeviceTypeTypeHeatsinkSystem,           /**< "HeatSinkSystem" */
-  kDeviceTypeTypeHeatstorageSystem,        /**< "HeatStorageSystem" */
-  kDeviceTypeTypeHVACController,           /**< "HVACController" */
-  kDeviceTypeTypeSubmeter,                 /**< "SubMeter" */
-  kDeviceTypeTypeWasher,                   /**< "Washer" */
-  kDeviceTypeTypeElectricitySupplySystem,  /**< "ElectricitySupplySystem" */
-  kDeviceTypeTypeEnergyManagementSystem,   /**< "EnergyManagementSystem" */
-  kDeviceTypeTypeInverter,                 /**< "Inverter" */
-  kDeviceTypeTypeChargingStation,          /**< "ChargingStation" */
+    kDeviceTypeTypeDishwasher,              /**< "Dishwasher" */
+    kDeviceTypeTypeDryer,                   /**< "Dryer" */
+    kDeviceTypeTypeEnvironmentSensor,       /**< "EnvironmentSensor" */
+    kDeviceTypeTypeGeneric,                 /**< "Generic" */
+    kDeviceTypeTypeHeatgenerationSystem,    /**< "HeatGenerationSystem" */
+    kDeviceTypeTypeHeatsinkSystem,          /**< "HeatSinkSystem" */
+    kDeviceTypeTypeHeatstorageSystem,       /**< "HeatStorageSystem" */
+    kDeviceTypeTypeHVACController,          /**< "HVACController" */
+    kDeviceTypeTypeSubmeter,                /**< "SubMeter" */
+    kDeviceTypeTypeWasher,                  /**< "Washer" */
+    kDeviceTypeTypeElectricitySupplySystem, /**< "ElectricitySupplySystem" */
+    kDeviceTypeTypeEnergyManagementSystem,  /**< "EnergyManagementSystem" */
+    kDeviceTypeTypeInverter,                /**< "Inverter" */
+    kDeviceTypeTypeChargingStation,         /**< "ChargingStation" */
 };
 
 #ifdef __cplusplus

@@ -33,9 +33,9 @@ extern "C" {
 typedef struct LoadControlClient LoadControlClient;
 
 struct LoadControlClient {
-  FeatureInfoClient feature_info_client;
+    FeatureInfoClient feature_info_client;
 
-  LoadControlCommon load_control_common;
+    LoadControlCommon load_control_common;
 };
 
 /**

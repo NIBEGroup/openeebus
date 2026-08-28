@@ -34,10 +34,10 @@ extern "C" {
 EgLpListenerObject* EgLpcListenerCreate(HemsObject* hems);
 
 static inline void EgLpcListenerDelete(EgLpListenerObject* eg_lpc_listener) {
-  if (eg_lpc_listener != NULL) {
-    EG_LP_LISTENER_DESTRUCT(eg_lpc_listener);
-    EEBUS_FREE(eg_lpc_listener);
-  }
+    if (eg_lpc_listener != NULL) {
+        EG_LP_LISTENER_DESTRUCT(eg_lpc_listener);
+        EEBUS_FREE(eg_lpc_listener);
+    }
 }
 
 #ifdef __cplusplus

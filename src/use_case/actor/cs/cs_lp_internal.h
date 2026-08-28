@@ -36,25 +36,25 @@ extern "C" {
 
 typedef struct CsLpUseCase CsLpUseCase;
 struct CsLpUseCase {
-  /** Inherits the Use Case */
-  UseCase obj;
+    /** Inherits the Use Case */
+    UseCase obj;
 
-  EnergyDirectionType energy_direction;
+    EnergyDirectionType energy_direction;
 
-  DeviceConfigurationKeyNameType failsafe_power_limit_key;
+    DeviceConfigurationKeyNameType failsafe_power_limit_key;
 
-  ElectricalConnectionIdType electrical_connection_id;
-  ElectricalConnectionCharacteristicTypeType nominal_max_characteristic;
+    ElectricalConnectionIdType electrical_connection_id;
+    ElectricalConnectionCharacteristicTypeType nominal_max_characteristic;
 
-  CsLpListenerObject* cs_lp_listener;
+    CsLpListenerObject* cs_lp_listener;
 
-  EntityAddressType* remote_eg_entity_addr;
+    EntityAddressType* remote_eg_entity_addr;
 
-  DeviceDiagnosisClient* heartbeat_diag_client;
+    DeviceDiagnosisClient* heartbeat_diag_client;
 
-  // KEO Stack uses multiple identical entities for the same functionality,
-  // and it is not clear which to use
-  bool heartbeat_keo_workaround;
+    // KEO Stack uses multiple identical entities for the same functionality,
+    // and it is not clear which to use
+    bool heartbeat_keo_workaround;
 };
 
 #define CS_LP_USE_CASE(obj) ((CsLpUseCase*)(obj))
@@ -77,7 +77,8 @@ EebusError CsLpSetFailsafeDurationMinimumInternal(CsLpUseCase* self, const Eebus
 EebusError CsLpGetNominalMaxInternal(const CsLpUseCase* self, ScaledValue* nominal_max);
 EebusError CsLpSetNominalMaxInternal(CsLpUseCase* self, const ScaledValue* nominal_max);
 
-ElectricalConnectionCharacteristicTypeType CsLpGetElectricalConnectionCharacteristicTypeInternal(const CsLpUseCase* self
+ElectricalConnectionCharacteristicTypeType CsLpGetElectricalConnectionCharacteristicTypeInternal(
+    const CsLpUseCase* self
 );
 
 #ifdef __cplusplus

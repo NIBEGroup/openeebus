@@ -44,20 +44,20 @@ typedef struct UseCaseObject UseCaseObject;
  * @brief UseCase Interface Structure
  */
 struct UseCaseInterface {
-  void (*destruct)(UseCaseObject* self);
-  bool (*is_entity_compatible)(const UseCaseObject* self, const EntityRemoteObject* remote_entity);
-  bool (*is_use_case_compatible)(const UseCaseObject* self, const UseCaseFilterType* use_case_filter);
-  EntityRemoteObject* (*get_remote_entity_with_address)(
-      const UseCaseObject* self,
-      const EntityAddressType* remote_entity_addr
-  );
+    void (*destruct)(UseCaseObject* self);
+    bool (*is_entity_compatible)(const UseCaseObject* self, const EntityRemoteObject* remote_entity);
+    bool (*is_use_case_compatible)(const UseCaseObject* self, const UseCaseFilterType* use_case_filter);
+    EntityRemoteObject* (*get_remote_entity_with_address)(
+        const UseCaseObject* self,
+        const EntityAddressType* remote_entity_addr
+    );
 };
 
 /**
  * @brief Use Case Object Structure
  */
 struct UseCaseObject {
-  const UseCaseInterface* interface_;
+    const UseCaseInterface* interface_;
 };
 
 /**
@@ -79,19 +79,19 @@ struct UseCaseObject {
  * @brief Use Case Is Entity Compatible caller definition
  */
 #define USE_CASE_IS_ENTITY_COMPATIBLE(obj, remote_entity) \
-  (USE_CASE_INTERFACE(obj)->is_entity_compatible(obj, remote_entity))
+    (USE_CASE_INTERFACE(obj)->is_entity_compatible(obj, remote_entity))
 
 /**
  * @brief Use Case Is Use Case Compatible caller definition
  */
 #define USE_CASE_IS_USE_CASE_COMPATIBLE(obj, use_case_filter) \
-  (USE_CASE_INTERFACE(obj)->is_use_case_compatible(obj, use_case_filter))
+    (USE_CASE_INTERFACE(obj)->is_use_case_compatible(obj, use_case_filter))
 
 /**
  * @brief Use Case Get Remote Entity With Address caller definition
  */
 #define USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(obj, remote_entity_addr) \
-  (USE_CASE_INTERFACE(obj)->get_remote_entity_with_address(obj, remote_entity_addr))
+    (USE_CASE_INTERFACE(obj)->get_remote_entity_with_address(obj, remote_entity_addr))
 
 #ifdef __cplusplus
 }

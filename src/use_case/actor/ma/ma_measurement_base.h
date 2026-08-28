@@ -39,13 +39,13 @@ typedef EebusError (*MaGetMeasurementDataStrategy)(
 );
 
 struct MaMeasurementBase {
-  MaMeasurementObject obj;
-  EebusMeasurementNameId name;
-  MeasurementTypeType measurement_type;
-  ScopeTypeType scope;
-  const ElectricalConnectionPhaseNameType* phases;
-  const ElectricalConnectionPhaseNameType* in_reference_to;
-  MaGetMeasurementDataStrategy get_measurement_strategy;
+    MaMeasurementObject obj;
+    EebusMeasurementNameId name;
+    MeasurementTypeType measurement_type;
+    ScopeTypeType scope;
+    const ElectricalConnectionPhaseNameType* phases;
+    const ElectricalConnectionPhaseNameType* in_reference_to;
+    MaGetMeasurementDataStrategy get_measurement_strategy;
 };
 
 extern const MaMeasurementInterface ma_measurement_methods;

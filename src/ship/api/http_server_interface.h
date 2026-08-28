@@ -50,16 +50,16 @@ typedef struct HttpServerObject HttpServerObject;
  * @brief HttpServer Interface Structure
  */
 struct HttpServerInterface {
-  void (*destruct)(HttpServerObject* self);
-  EebusError (*start)(HttpServerObject* self);
-  void (*stop)(HttpServerObject* self);
+    void (*destruct)(HttpServerObject* self);
+    EebusError (*start)(HttpServerObject* self);
+    void (*stop)(HttpServerObject* self);
 };
 
 /**
  * @brief Http Server Object Structure
  */
 struct HttpServerObject {
-  const HttpServerInterface* interface_;
+    const HttpServerInterface* interface_;
 };
 
 /**

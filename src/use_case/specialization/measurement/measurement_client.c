@@ -26,19 +26,19 @@ EebusError MeasurementClientConstruct(
     EntityLocalObject* local_entity,
     EntityRemoteObject* remote_entity
 ) {
-  const EebusError err = FeatureInfoClientConstruct(
-      &self->feature_info_client,
-      kFeatureTypeTypeMeasurement,
-      local_entity,
-      remote_entity
-  );
+    const EebusError err = FeatureInfoClientConstruct(
+        &self->feature_info_client,
+        kFeatureTypeTypeMeasurement,
+        local_entity,
+        remote_entity
+    );
 
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  MeasurementCommonConstruct(&self->measurement_common, NULL, self->feature_info_client.remote_feature);
-  return kEebusErrorOk;
+    MeasurementCommonConstruct(&self->measurement_common, NULL, self->feature_info_client.remote_feature);
+    return kEebusErrorOk;
 }
 
 EebusError MeasurementClientRequestDescriptions(
@@ -46,15 +46,15 @@ EebusError MeasurementClientRequestDescriptions(
     const MeasurementDescriptionListDataSelectorsType* selectors,
     const MeasurementDescriptionDataElementsType* elements
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeMeasurementDescriptionListData,
-      selectors,
-      elements,
-      NULL,
-      NULL
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeMeasurementDescriptionListData,
+        selectors,
+        elements,
+        NULL,
+        NULL
+    );
 }
 
 EebusError MeasurementClientRequestConstraints(
@@ -62,15 +62,15 @@ EebusError MeasurementClientRequestConstraints(
     const MeasurementConstraintsListDataSelectorsType* selector,
     const MeasurementConstraintsDataElementsType* elements
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeMeasurementConstraintsListData,
-      selector,
-      elements,
-      NULL,
-      NULL
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeMeasurementConstraintsListData,
+        selector,
+        elements,
+        NULL,
+        NULL
+    );
 }
 
 EebusError MeasurementClientRequestData(
@@ -80,13 +80,13 @@ EebusError MeasurementClientRequestData(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeMeasurementListData,
-      selector,
-      elements,
-      cb,
-      ctx
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeMeasurementListData,
+        selector,
+        elements,
+        cb,
+        ctx
+    );
 }

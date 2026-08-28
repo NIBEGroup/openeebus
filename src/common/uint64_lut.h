@@ -43,8 +43,8 @@ typedef struct Uint64Lut Uint64Lut;
  * @brief Uint64 LUT structure
  */
 struct Uint64Lut {
-  /** LUT records container */
-  Vector records;
+    /** LUT records container */
+    Vector records;
 };
 
 /**

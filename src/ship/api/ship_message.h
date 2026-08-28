@@ -20,8 +20,8 @@
 #ifndef SRC_SHIP_SHIP_CONNECTION_SHIP_MESSAGE_H_
 #define SRC_SHIP_SHIP_CONNECTION_SHIP_MESSAGE_H_
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,8 +30,8 @@ extern "C" {
 typedef struct ShipMessage ShipMessage;
 
 struct ShipMessage {
-  uint8_t type;
-  void* value;
+    uint8_t type;
+    void* value;
 };
 
 /**

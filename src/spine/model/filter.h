@@ -28,9 +28,9 @@ extern "C" {
 #endif  // __cplusplus
 
 enum FilterTypeType {
-  kFilterTypeUndefined = -1,
-  kFilterTypePartial,
-  kFilterTypeDelete,
+    kFilterTypeUndefined = -1,
+    kFilterTypePartial,
+    kFilterTypeDelete,
 };
 
 typedef enum FilterTypeType FilterTypeType;
@@ -38,18 +38,18 @@ typedef enum FilterTypeType FilterTypeType;
 extern const CmdControlType ctrl_partial;
 extern const CmdControlType ctrl_delete;
 
-#define FILTER(function_type, ctrl, id, selectors, elements)                              \
-  (FilterType) {                                                                          \
-    .filter_id = (id), .cmd_ctrl = (ctrl), .data_selectors_choice = (selectors),          \
-    .data_selectors_choice_type_id = (function_type), .data_elements_choice = (elements), \
-    .data_elements_choice_type_id = (function_type),                                      \
-  }
+#define FILTER(function_type, ctrl, id, selectors, elements)                                  \
+    (FilterType) {                                                                            \
+        .filter_id = (id), .cmd_ctrl = (ctrl), .data_selectors_choice = (selectors),          \
+        .data_selectors_choice_type_id = (function_type), .data_elements_choice = (elements), \
+        .data_elements_choice_type_id = (function_type),                                      \
+    }
 
 #define FILTER_PARTIAL(function_type, filter_id, selectors, elements) \
-  FILTER(function_type, &ctrl_partial, filter_id, selectors, elements)
+    FILTER(function_type, &ctrl_partial, filter_id, selectors, elements)
 
 #define FILTER_DELETE(function_type, filter_id, selectors, elements) \
-  FILTER(function_type, &ctrl_delete, filter_id, selectors, elements)
+    FILTER(function_type, &ctrl_delete, filter_id, selectors, elements)
 
 FilterType* FilterPartialCreate(
     FunctionType function_type,

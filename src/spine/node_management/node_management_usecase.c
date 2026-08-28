@@ -35,113 +35,114 @@ EebusError RequestUseCaseData(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  FeatureLocalObject* const fl = FEATURE_LOCAL_OBJECT(self);
+    FeatureLocalObject* const fl = FEATURE_LOCAL_OBJECT(self);
 
-  static const NodeManagementUseCaseDataType usecase_data = {0};
+    static const NodeManagementUseCaseDataType usecase_data = {0};
 
-  const CmdType cmd = {
-      .data_choice         = (NodeManagementUseCaseDataType*)&usecase_data,
-      .data_choice_type_id = kFunctionTypeNodeManagementUseCaseData,
-  };
+    const CmdType cmd = {
+        .data_choice         = (NodeManagementUseCaseDataType*)&usecase_data,
+        .data_choice_type_id = kFunctionTypeNodeManagementUseCaseData,
+    };
 
-  static const uint32_t entity_id        = DEVICE_INFORMATION_ENTITY_ID;
-  static const uint32_t* const entity[1] = {&entity_id};
-  static const uint32_t feature          = NODE_MANAGEMENT_FEATURE_ID;
+    static const uint32_t entity_id        = DEVICE_INFORMATION_ENTITY_ID;
+    static const uint32_t* const entity[1] = {&entity_id};
+    static const uint32_t feature          = NODE_MANAGEMENT_FEATURE_ID;
 
-  const FeatureAddressType addr = {
-      .entity      = entity,
-      .entity_size = ARRAY_SIZE(entity),
-      .feature     = &feature,
-      .device      = remote_device_addr,
-  };
+    const FeatureAddressType addr = {
+        .entity      = entity,
+        .entity_size = ARRAY_SIZE(entity),
+        .feature     = &feature,
+        .device      = remote_device_addr,
+    };
 
-  MsgCounterType msg_cnt = 0;
-  const EebusError err   = SEND_READ(sender, FEATURE_GET_ADDRESS(FEATURE_OBJECT(fl)), &addr, &cmd, &msg_cnt);
+    MsgCounterType msg_cnt = 0;
+    const EebusError err   = SEND_READ(sender, FEATURE_GET_ADDRESS(FEATURE_OBJECT(fl)), &addr, &cmd, &msg_cnt);
 
-  if ((err == kEebusErrorOk) && (cb != NULL)) {
-    PENDING_REPLY_CONTAINER_ADD(
-        FEATURE_LOCAL(fl)->pending_replies,
-        msg_cnt,
-        &addr,
-        kFunctionTypeNodeManagementUseCaseData,
-        ski,
-        cb,
-        ctx
-    );
-  }
+    if ((err == kEebusErrorOk) && (cb != NULL)) {
+        PENDING_REPLY_CONTAINER_ADD(
+            FEATURE_LOCAL(fl)->pending_replies,
+            msg_cnt,
+            &addr,
+            kFunctionTypeNodeManagementUseCaseData,
+            ski,
+            cb,
+            ctx
+        );
+    }
 
-  return err;
+    return err;
 }
 
 EebusError ProcessReadUseCaseData(NodeManagement* self, const Message* msg) {
-  const FunctionObject* const function = FeatureGetFunction(FEATURE(self), kFunctionTypeNodeManagementUseCaseData);
-  if (function == NULL) {
-    return kEebusErrorNoChange;
-  }
+    const FunctionObject* const function = FeatureGetFunction(FEATURE(self), kFunctionTypeNodeManagementUseCaseData);
+    if (function == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  const CmdType* const cmd = FUNCTION_CREATE_REPLY_CMD(function);
-  if (cmd == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    const CmdType* const cmd = FUNCTION_CREATE_REPLY_CMD(function);
+    if (cmd == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
+    const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
 
-  const EebusError err = SEND_REPLY(MessageGetSender(msg), msg->request_header, addr, cmd);
-  CmdDelete((CmdType*)cmd);
-  return err;
+    const EebusError err = SEND_REPLY(MessageGetSender(msg), msg->request_header, addr, cmd);
+    CmdDelete((CmdType*)cmd);
+    return err;
 }
 
 EebusError ProcessReplyUseCaseData(NodeManagement* self, const Message* msg) {
-  const NodeManagementUseCaseDataType* const usecase_data = (const NodeManagementUseCaseDataType*)msg->cmd->data_choice;
+    const NodeManagementUseCaseDataType* const usecase_data
+        = (const NodeManagementUseCaseDataType*)msg->cmd->data_choice;
 
-  FeatureRemoteObject* const fr = msg->feature_remote;
+    FeatureRemoteObject* const fr = msg->feature_remote;
 
-  const EebusError err
-      = FEATURE_REMOTE_UPDATE_DATA(fr, kFunctionTypeNodeManagementUseCaseData, usecase_data, NULL, NULL, true);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err
+        = FEATURE_REMOTE_UPDATE_DATA(fr, kFunctionTypeNodeManagementUseCaseData, usecase_data, NULL, NULL, true);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  DeviceRemoteObject* const dr = FEATURE_REMOTE_GET_DEVICE(fr);
+    DeviceRemoteObject* const dr = FEATURE_REMOTE_GET_DEVICE(fr);
 
-  // The data was updated, so send an event, other event handlers may watch out for this as well
-  const EventPayload payload = {
-      .ski            = DEVICE_REMOTE_GET_SKI(dr),
-      .event_type     = kEventTypeDataChange,
-      .change_type    = kElementChangeUpdate,
-      .feature        = fr,
-      .device         = dr,
-      .entity         = FEATURE_REMOTE_GET_ENTITY(fr),
-      .function_data  = usecase_data,
-      .function_type  = kFunctionTypeNodeManagementUseCaseData,
-      .cmd_classifier = &msg->cmd_classifier,
-  };
-
-  EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self))), &payload);
-
-  if ((msg->request_header != NULL) && (msg->request_header->msg_cnt_ref != NULL)) {
-    const ReplyMessage reply_msg = {
-        .msg_cnt_ref    = *msg->request_header->msg_cnt_ref,
+    // The data was updated, so send an event, other event handlers may watch out for this as well
+    const EventPayload payload = {
+        .ski            = DEVICE_REMOTE_GET_SKI(dr),
+        .event_type     = kEventTypeDataChange,
+        .change_type    = kElementChangeUpdate,
+        .feature        = fr,
+        .device         = dr,
+        .entity         = FEATURE_REMOTE_GET_ENTITY(fr),
         .function_data  = usecase_data,
         .function_type  = kFunctionTypeNodeManagementUseCaseData,
-        .feature_local  = FEATURE_LOCAL_OBJECT(self),
-        .feature_remote = fr,
-        .entity_remote  = FEATURE_REMOTE_GET_ENTITY(fr),
-        .device_remote  = dr,
-        .ski            = DEVICE_REMOTE_GET_SKI(dr),
+        .cmd_classifier = &msg->cmd_classifier,
     };
 
-    PENDING_REPLY_CONTAINER_PROCESS(self->obj.pending_replies, &reply_msg, kEebusErrorOk);
-  }
+    EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self))), &payload);
 
-  return kEebusErrorOk;
+    if ((msg->request_header != NULL) && (msg->request_header->msg_cnt_ref != NULL)) {
+        const ReplyMessage reply_msg = {
+            .msg_cnt_ref    = *msg->request_header->msg_cnt_ref,
+            .function_data  = usecase_data,
+            .function_type  = kFunctionTypeNodeManagementUseCaseData,
+            .feature_local  = FEATURE_LOCAL_OBJECT(self),
+            .feature_remote = fr,
+            .entity_remote  = FEATURE_REMOTE_GET_ENTITY(fr),
+            .device_remote  = dr,
+            .ski            = DEVICE_REMOTE_GET_SKI(dr),
+        };
+
+        PENDING_REPLY_CONTAINER_PROCESS(self->obj.pending_replies, &reply_msg, kEebusErrorOk);
+    }
+
+    return kEebusErrorOk;
 }
 
 EebusError HandleMsgUseCaseData(NodeManagement* self, const Message* msg) {
-  switch (msg->cmd_classifier) {
-    case kCommandClassifierTypeRead: return ProcessReadUseCaseData(self, msg);
-    case kCommandClassifierTypeReply: return ProcessReplyUseCaseData(self, msg);
-    case kCommandClassifierTypeNotify: return ProcessReplyUseCaseData(self, msg);
-    default: return kEebusErrorNotImplemented;
-  }
+    switch (msg->cmd_classifier) {
+        case kCommandClassifierTypeRead: return ProcessReadUseCaseData(self, msg);
+        case kCommandClassifierTypeReply: return ProcessReplyUseCaseData(self, msg);
+        case kCommandClassifierTypeNotify: return ProcessReplyUseCaseData(self, msg);
+        default: return kEebusErrorNotImplemented;
+    }
 }

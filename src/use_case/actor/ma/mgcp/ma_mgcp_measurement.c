@@ -24,60 +24,60 @@
 #include "src/use_case/actor/ma/ma_measurement_base.h"
 #include "src/use_case/model/mgcp_types.h"
 
-#define MA_MGCP_MEASUREMENT_POWER_TOTAL                                    \
-  {                                                                        \
-      .obj                      = {.interface_ = &ma_measurement_methods}, \
-      .name                     = kGcpPowerTotal,                          \
-      .measurement_type         = kMeasurementTypeTypePower,               \
-      .scope                    = kScopeTypeTypeACPowerTotal,              \
-      .phases                   = NULL,                                    \
-      .in_reference_to          = NULL,                                    \
-      .get_measurement_strategy = MaMeasurementGetPowerStrategy,           \
-  }
+#define MA_MGCP_MEASUREMENT_POWER_TOTAL                                      \
+    {                                                                        \
+        .obj                      = {.interface_ = &ma_measurement_methods}, \
+        .name                     = kGcpPowerTotal,                          \
+        .measurement_type         = kMeasurementTypeTypePower,               \
+        .scope                    = kScopeTypeTypeACPowerTotal,              \
+        .phases                   = NULL,                                    \
+        .in_reference_to          = NULL,                                    \
+        .get_measurement_strategy = MaMeasurementGetPowerStrategy,           \
+    }
 
-#define MA_MGCP_MEASUREMENT_ENERGY(name_id, energy_scope)                  \
-  {                                                                        \
-      .obj                      = {.interface_ = &ma_measurement_methods}, \
-      .name                     = name_id,                                 \
-      .measurement_type         = kMeasurementTypeTypeEnergy,              \
-      .scope                    = energy_scope,                            \
-      .phases                   = NULL,                                    \
-      .in_reference_to          = NULL,                                    \
-      .get_measurement_strategy = MaMeasurementGetEnergyStrategy,          \
-  }
+#define MA_MGCP_MEASUREMENT_ENERGY(name_id, energy_scope)                    \
+    {                                                                        \
+        .obj                      = {.interface_ = &ma_measurement_methods}, \
+        .name                     = name_id,                                 \
+        .measurement_type         = kMeasurementTypeTypeEnergy,              \
+        .scope                    = energy_scope,                            \
+        .phases                   = NULL,                                    \
+        .in_reference_to          = NULL,                                    \
+        .get_measurement_strategy = MaMeasurementGetEnergyStrategy,          \
+    }
 
-#define MA_MGCP_MEASUREMENT_CURRENT(name_id, phase)                                                                \
-  {                                                                                                                \
-      .obj                      = {.interface_ = &ma_measurement_methods},                                         \
-      .name                     = name_id,                                                                         \
-      .measurement_type         = kMeasurementTypeTypeCurrent,                                                     \
-      .scope                    = kScopeTypeTypeACCurrent,                                                         \
-      .phases                   = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##phase}, \
-      .in_reference_to          = NULL,                                                                            \
-      .get_measurement_strategy = MaMeasurementGetCurrentStrategy,                                                 \
-  }
+#define MA_MGCP_MEASUREMENT_CURRENT(name_id, phase)                                                                  \
+    {                                                                                                                \
+        .obj                      = {.interface_ = &ma_measurement_methods},                                         \
+        .name                     = name_id,                                                                         \
+        .measurement_type         = kMeasurementTypeTypeCurrent,                                                     \
+        .scope                    = kScopeTypeTypeACCurrent,                                                         \
+        .phases                   = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##phase}, \
+        .in_reference_to          = NULL,                                                                            \
+        .get_measurement_strategy = MaMeasurementGetCurrentStrategy,                                                 \
+    }
 
-#define MA_MGCP_MEASUREMENT_VOLTAGE(name_id, phase, ref_phase)                                                         \
-  {                                                                                                                    \
-      .obj                      = {.interface_ = &ma_measurement_methods},                                             \
-      .name                     = name_id,                                                                             \
-      .measurement_type         = kMeasurementTypeTypeVoltage,                                                         \
-      .scope                    = kScopeTypeTypeACVoltage,                                                             \
-      .phases                   = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##phase},     \
-      .in_reference_to          = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##ref_phase}, \
-      .get_measurement_strategy = MaMeasurementGetVoltageStrategy,                                                     \
-  }
+#define MA_MGCP_MEASUREMENT_VOLTAGE(name_id, phase, ref_phase)                                                           \
+    {                                                                                                                    \
+        .obj                      = {.interface_ = &ma_measurement_methods},                                             \
+        .name                     = name_id,                                                                             \
+        .measurement_type         = kMeasurementTypeTypeVoltage,                                                         \
+        .scope                    = kScopeTypeTypeACVoltage,                                                             \
+        .phases                   = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##phase},     \
+        .in_reference_to          = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##ref_phase}, \
+        .get_measurement_strategy = MaMeasurementGetVoltageStrategy,                                                     \
+    }
 
-#define MA_MGCP_MEASUREMENT_FREQUENCY                                      \
-  {                                                                        \
-      .obj                      = {.interface_ = &ma_measurement_methods}, \
-      .name                     = kGcpFrequency,                           \
-      .measurement_type         = kMeasurementTypeTypeFrequency,           \
-      .scope                    = kScopeTypeTypeACFrequency,               \
-      .phases                   = NULL,                                    \
-      .in_reference_to          = NULL,                                    \
-      .get_measurement_strategy = MaMeasurementGetFrequencyStrategy,       \
-  }
+#define MA_MGCP_MEASUREMENT_FREQUENCY                                        \
+    {                                                                        \
+        .obj                      = {.interface_ = &ma_measurement_methods}, \
+        .name                     = kGcpFrequency,                           \
+        .measurement_type         = kMeasurementTypeTypeFrequency,           \
+        .scope                    = kScopeTypeTypeACFrequency,               \
+        .phases                   = NULL,                                    \
+        .in_reference_to          = NULL,                                    \
+        .get_measurement_strategy = MaMeasurementGetFrequencyStrategy,       \
+    }
 
 static const MaMeasurementBase measurement_table[] = {
     /* Scenario 2 */
@@ -106,9 +106,9 @@ const MaMeasurementObject* MaMgcpMeasurementGetInstance(
     ElectricalConnectionClient* eccl,
     const MeasurementDataType* measurement_data
 ) {
-  return MaMeasurementGetInstance(measurement_table, ARRAY_SIZE(measurement_table), mcl, eccl, measurement_data);
+    return MaMeasurementGetInstance(measurement_table, ARRAY_SIZE(measurement_table), mcl, eccl, measurement_data);
 }
 
 const MaMeasurementObject* MaMgcpMeasurementGetInstanceWithNameId(EebusMeasurementNameId name) {
-  return MaMeasurementGetInstanceWithNameId(measurement_table, ARRAY_SIZE(measurement_table), name);
+    return MaMeasurementGetInstanceWithNameId(measurement_table, ARRAY_SIZE(measurement_table), name);
 }

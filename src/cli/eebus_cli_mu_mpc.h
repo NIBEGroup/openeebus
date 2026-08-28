@@ -34,10 +34,10 @@ extern "C" {
 EebusCliHandlerObject* MuMpcCliCreate(MuMpcUseCaseObject* mu_mpc);
 
 static inline void MuMpcCliDelete(EebusCliHandlerObject* mu_mpc_cli) {
-  if (mu_mpc_cli != NULL) {
-    EEBUS_CLI_HANDLER_DESTRUCT(mu_mpc_cli);
-    EEBUS_FREE(mu_mpc_cli);
-  }
+    if (mu_mpc_cli != NULL) {
+        EEBUS_CLI_HANDLER_DESTRUCT(mu_mpc_cli);
+        EEBUS_FREE(mu_mpc_cli);
+    }
 }
 
 #ifdef __cplusplus

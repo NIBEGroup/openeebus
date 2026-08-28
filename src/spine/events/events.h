@@ -27,10 +27,10 @@ extern "C" {
 EventsManagerObject* EventsManagerCreate(void);
 
 static inline void EventsManagerDelete(EventsManagerObject* events_manager) {
-  if (events_manager != NULL) {
-    EVENTS_DESTRUCT(events_manager);
-    EEBUS_FREE(events_manager);
-  }
+    if (events_manager != NULL) {
+        EVENTS_DESTRUCT(events_manager);
+        EEBUS_FREE(events_manager);
+    }
 }
 
 #ifdef __cplusplus

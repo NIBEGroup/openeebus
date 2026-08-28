@@ -46,27 +46,27 @@ typedef struct PendingReplyContainerObject PendingReplyContainerObject;
  * @brief Pending Reply Container Interface Structure
  */
 struct PendingReplyContainerInterface {
-  void (*destruct)(PendingReplyContainerObject* self);
-  EebusError (*add)(
-      PendingReplyContainerObject* self,
-      MsgCounterType msg_cnt_ref,
-      const FeatureAddressType* remote_feature_address,
-      FunctionType function_type,
-      const char* ski,
-      ReplyMessageCallback cb,
-      void* ctx
-  );
-  void (*process)(PendingReplyContainerObject* self, const ReplyMessage* reply_msg, EebusError err);
-  void (*tick)(PendingReplyContainerObject* self);
-  void (*remove_for_device)(PendingReplyContainerObject* self, const char* device_addr);
-  void (*remove_for_ski)(PendingReplyContainerObject* self, const char* ski);
+    void (*destruct)(PendingReplyContainerObject* self);
+    EebusError (*add)(
+        PendingReplyContainerObject* self,
+        MsgCounterType msg_cnt_ref,
+        const FeatureAddressType* remote_feature_address,
+        FunctionType function_type,
+        const char* ski,
+        ReplyMessageCallback cb,
+        void* ctx
+    );
+    void (*process)(PendingReplyContainerObject* self, const ReplyMessage* reply_msg, EebusError err);
+    void (*tick)(PendingReplyContainerObject* self);
+    void (*remove_for_device)(PendingReplyContainerObject* self, const char* device_addr);
+    void (*remove_for_ski)(PendingReplyContainerObject* self, const char* ski);
 };
 
 /**
  * @brief Pending Reply Container Object Structure
  */
 struct PendingReplyContainerObject {
-  const PendingReplyContainerInterface* interface_;
+    const PendingReplyContainerInterface* interface_;
 };
 
 /**
@@ -88,13 +88,13 @@ struct PendingReplyContainerObject {
  * @brief Pending Reply Container Add caller definition
  */
 #define PENDING_REPLY_CONTAINER_ADD(obj, msg_cnt_ref, remote_feature_address, function_type, ski, cb, ctx) \
-  (PENDING_REPLY_CONTAINER_INTERFACE(obj)->add(obj, msg_cnt_ref, remote_feature_address, function_type, ski, cb, ctx))
+    (PENDING_REPLY_CONTAINER_INTERFACE(obj)->add(obj, msg_cnt_ref, remote_feature_address, function_type, ski, cb, ctx))
 
 /**
  * @brief Pending Reply Container Process caller definition
  */
 #define PENDING_REPLY_CONTAINER_PROCESS(obj, reply_msg, err) \
-  (PENDING_REPLY_CONTAINER_INTERFACE(obj)->process(obj, reply_msg, err))
+    (PENDING_REPLY_CONTAINER_INTERFACE(obj)->process(obj, reply_msg, err))
 
 /**
  * @brief Pending Reply Container Tick caller definition
@@ -105,13 +105,13 @@ struct PendingReplyContainerObject {
  * @brief Pending Reply Container Remove For Device caller definition
  */
 #define PENDING_REPLY_CONTAINER_REMOVE_FOR_DEVICE(obj, device_addr) \
-  (PENDING_REPLY_CONTAINER_INTERFACE(obj)->remove_for_device(obj, device_addr))
+    (PENDING_REPLY_CONTAINER_INTERFACE(obj)->remove_for_device(obj, device_addr))
 
 /**
  * @brief Pending Reply Container Remove For SKI caller definition
  */
 #define PENDING_REPLY_CONTAINER_REMOVE_FOR_SKI(obj, ski) \
-  (PENDING_REPLY_CONTAINER_INTERFACE(obj)->remove_for_ski(obj, ski))
+    (PENDING_REPLY_CONTAINER_INTERFACE(obj)->remove_for_ski(obj, ski))
 
 #ifdef __cplusplus
 }

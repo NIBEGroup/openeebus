@@ -34,10 +34,10 @@ extern "C" {
 MaMpcListenerObject* MaMpcListenerCreate(HemsObject* hems);
 
 static inline void MaMpcListenerDelete(MaMpcListenerObject* ma_mpc_listener) {
-  if (ma_mpc_listener != NULL) {
-    MA_MPC_LISTENER_DESTRUCT(ma_mpc_listener);
-    EEBUS_FREE(ma_mpc_listener);
-  }
+    if (ma_mpc_listener != NULL) {
+        MA_MPC_LISTENER_DESTRUCT(ma_mpc_listener);
+        EEBUS_FREE(ma_mpc_listener);
+    }
 }
 
 #ifdef __cplusplus

@@ -37,31 +37,31 @@ typedef uint32_t ChannelIdType;
 typedef struct DataTunnelingHeaderType DataTunnelingHeaderType;
 
 struct DataTunnelingHeaderType {
-  PurposeIdType purpose_id;        /**< "purposeId" */
-  const ChannelIdType* channel_id; /**< "channelId" */
-  const uint32_t* sequence_id;     /**< "sequenceId" */
+    PurposeIdType purpose_id;        /**< "purposeId" */
+    const ChannelIdType* channel_id; /**< "channelId" */
+    const uint32_t* sequence_id;     /**< "sequenceId" */
 };
 
 typedef struct DataTunnelingHeaderElementsType DataTunnelingHeaderElementsType;
 
 struct DataTunnelingHeaderElementsType {
-  ElementTagType purpose_id;  /**< "purposeId" */
-  ElementTagType channel_id;  /**< "channelId" */
-  ElementTagType sequence_id; /**< "sequenceId" */
+    ElementTagType purpose_id;  /**< "purposeId" */
+    ElementTagType channel_id;  /**< "channelId" */
+    ElementTagType sequence_id; /**< "sequenceId" */
 };
 
 typedef struct DataTunnelingCallType DataTunnelingCallType;
 
 struct DataTunnelingCallType {
-  const DataTunnelingHeaderType* header; /**< "header" */
-  const char* payload;                   /**< "payload" */
+    const DataTunnelingHeaderType* header; /**< "header" */
+    const char* payload;                   /**< "payload" */
 };
 
 typedef struct DataTunnelingCallElementsType DataTunnelingCallElementsType;
 
 struct DataTunnelingCallElementsType {
-  const DataTunnelingHeaderElementsType* header; /**< "header" */
-  ElementTagType payload;                        /**< "payload" */
+    const DataTunnelingHeaderElementsType* header; /**< "header" */
+    ElementTagType payload;                        /**< "payload" */
 };
 
 #ifdef __cplusplus

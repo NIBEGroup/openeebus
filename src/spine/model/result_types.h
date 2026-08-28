@@ -33,23 +33,23 @@ extern "C" {
 typedef uint32_t ErrorNumberType;
 
 enum {
-  kErrorNumberTypeNoError = 0,
-  kErrorNumberTypeGeneralError,
-  kErrorNumberTypeTimeout,
-  kErrorNumberTypeOverload,
-  kErrorNumberTypeDestinationUnknown,
-  kErrorNumberTypeDestinationUnreachable,
-  kErrorNumberTypeCommandNotSupported,
-  kErrorNumberTypeCommandRejected,
-  kErrorNumberTypeRestrictedFunctionExchangeCombinationNotSupported,
-  kErrorNumberTypeBindingIsNecessaryForThisCommand,
+    kErrorNumberTypeNoError = 0,
+    kErrorNumberTypeGeneralError,
+    kErrorNumberTypeTimeout,
+    kErrorNumberTypeOverload,
+    kErrorNumberTypeDestinationUnknown,
+    kErrorNumberTypeDestinationUnreachable,
+    kErrorNumberTypeCommandNotSupported,
+    kErrorNumberTypeCommandRejected,
+    kErrorNumberTypeRestrictedFunctionExchangeCombinationNotSupported,
+    kErrorNumberTypeBindingIsNecessaryForThisCommand,
 };
 
 typedef struct ResultDataType ResultDataType;
 
 struct ResultDataType {
-  const ErrorNumberType* error_number; /**< "errorNumber" */
-  DescriptionType description;         /**< "description" */
+    const ErrorNumberType* error_number; /**< "errorNumber" */
+    DescriptionType description;         /**< "description" */
 };
 
 #ifdef __cplusplus

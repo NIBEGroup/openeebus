@@ -47,7 +47,7 @@ extern const EebusDataInterface eebus_data_bool_methods;
  * Type of structure field shall be bool*
  */
 #define EEBUS_DATA_BOOL(ed_name, struct_name, struct_field) \
-  EEBUS_DATA_SIMPLE(&eebus_data_bool_methods, ed_name, struct_name, struct_field, sizeof(bool))
+    EEBUS_DATA_SIMPLE(&eebus_data_bool_methods, ed_name, struct_name, struct_field, sizeof(bool))
 
 #ifdef __cplusplus
 }

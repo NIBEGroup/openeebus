@@ -31,10 +31,10 @@ extern "C" {
 PendingWriteRequestContainerObject* PendingWriteRequestContainerCreate(void);
 
 static inline void PendingWriteRequestContainerDelete(PendingWriteRequestContainerObject* self) {
-  if (self != NULL) {
-    PENDING_WRITE_REQUEST_CONTAINER_DESTRUCT(self);
-    EEBUS_FREE(self);
-  }
+    if (self != NULL) {
+        PENDING_WRITE_REQUEST_CONTAINER_DESTRUCT(self);
+        EEBUS_FREE(self);
+    }
 }
 
 #ifdef __cplusplus

@@ -54,8 +54,8 @@ typedef EebusMeasurementObject* (*EebusMonitorMeasurementCreator)(
  * A NULL cfg entry is silently skipped (optional measurement).
  */
 typedef struct EebusMonitorMeasurementParam {
-  EebusMeasurementNameId name_id;
-  const EebusMeasurementBaseConfig* cfg;
+    EebusMeasurementNameId name_id;
+    const EebusMeasurementBaseConfig* cfg;
 } EebusMonitorMeasurementParam;
 
 /**
@@ -66,11 +66,11 @@ typedef struct EebusMonitorMeasurementParam {
  * monitor whose first field is EebusMonitorBase is castable to EebusMonitorObject).
  */
 typedef struct EebusMonitorBase {
-  EebusMonitorObject obj;                     /**< Vtable pointer — must be first field */
-  EebusMeasurementMonitorNameId name;         /**< Monitor group id */
-  EebusMeasurementMonitorNameId name_id_mask; /**< Mask to extract the group from a measurement name id */
-  Vector measurements;                        /**< Vector of EebusMeasurementObject* */
-  EebusMonitorMeasurementCreator measurement_creator;
+    EebusMonitorObject obj;                     /**< Vtable pointer — must be first field */
+    EebusMeasurementMonitorNameId name;         /**< Monitor group id */
+    EebusMeasurementMonitorNameId name_id_mask; /**< Mask to extract the group from a measurement name id */
+    Vector measurements;                        /**< Vector of EebusMeasurementObject* */
+    EebusMonitorMeasurementCreator measurement_creator;
 } EebusMonitorBase;
 
 /**
@@ -98,10 +98,10 @@ EebusMonitorBaseAddMeasurements(EebusMonitorBase* self, const EebusMonitorMeasur
  * @brief Destructs and frees an EebusMonitorObject instance.
  */
 static inline void EebusMonitorDelete(EebusMonitorObject* monitor) {
-  if (monitor != NULL) {
-    EEBUS_MONITOR_DESTRUCT(monitor);
-    EEBUS_FREE(monitor);
-  }
+    if (monitor != NULL) {
+        EEBUS_MONITOR_DESTRUCT(monitor);
+        EEBUS_FREE(monitor);
+    }
 }
 
 /**

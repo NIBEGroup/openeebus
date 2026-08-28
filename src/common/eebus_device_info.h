@@ -29,13 +29,13 @@ extern "C" {
 typedef struct EebusDeviceInfo EebusDeviceInfo;
 
 struct EebusDeviceInfo {
-  const char* type;
-  const char* vendor;
-  const char* brand;
-  const char* model;
-  const char* serial_num;
-  const char* ship_id;
-  const char* address;
+    const char* type;
+    const char* vendor;
+    const char* brand;
+    const char* model;
+    const char* serial_num;
+    const char* ship_id;
+    const char* address;
 };
 
 /**

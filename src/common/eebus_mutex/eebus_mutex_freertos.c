@@ -29,12 +29,12 @@
 typedef struct EebusMutex EebusMutex;
 
 struct EebusMutex {
-  /** Implements the Eebus Mutex Interface */
-  EebusMutexObject obj;
+    /** Implements the Eebus Mutex Interface */
+    EebusMutexObject obj;
 
-  bool is_recursive;
-  StaticSemaphore_t mutex_buffer;
-  SemaphoreHandle_t mutex_handle;
+    bool is_recursive;
+    StaticSemaphore_t mutex_buffer;
+    SemaphoreHandle_t mutex_handle;
 };
 
 #define EEBUS_MUTEX(obj) ((EebusMutex*)(obj))
@@ -52,71 +52,71 @@ static const EebusMutexInterface eebus_mutex_methods = {
 static EebusError EebusMutexConstruct(EebusMutex* self, bool is_recursive);
 
 EebusError EebusMutexConstruct(EebusMutex* self, bool is_recursive) {
-  // Override "virtual functions table"
-  EEBUS_MUTEX_INTERFACE(self) = &eebus_mutex_methods;
+    // Override "virtual functions table"
+    EEBUS_MUTEX_INTERFACE(self) = &eebus_mutex_methods;
 
-  self->is_recursive = is_recursive;
-  self->mutex_handle = NULL;
+    self->is_recursive = is_recursive;
+    self->mutex_handle = NULL;
 
-  if (is_recursive) {
-    self->mutex_handle = xSemaphoreCreateRecursiveMutexStatic(&self->mutex_buffer);
-  } else {
-    self->mutex_handle = xSemaphoreCreateMutexStatic(&self->mutex_buffer);
-  }
+    if (is_recursive) {
+        self->mutex_handle = xSemaphoreCreateRecursiveMutexStatic(&self->mutex_buffer);
+    } else {
+        self->mutex_handle = xSemaphoreCreateMutexStatic(&self->mutex_buffer);
+    }
 
-  if (self->mutex_handle == NULL) {
-    return kEebusErrorInit;
-  }
+    if (self->mutex_handle == NULL) {
+        return kEebusErrorInit;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusMutexObject* EebusMutexCreateInternal(bool is_recursive) {
-  EebusMutex* const eebus_mutex = (EebusMutex*)EEBUS_MALLOC(sizeof(EebusMutex));
-  if (eebus_mutex == NULL) {
-    return NULL;
-  }
+    EebusMutex* const eebus_mutex = (EebusMutex*)EEBUS_MALLOC(sizeof(EebusMutex));
+    if (eebus_mutex == NULL) {
+        return NULL;
+    }
 
-  if (EebusMutexConstruct(eebus_mutex, is_recursive) != kEebusErrorOk) {
-    EebusMutexDelete(EEBUS_MUTEX_OBJECT(eebus_mutex));
-    return NULL;
-  }
+    if (EebusMutexConstruct(eebus_mutex, is_recursive) != kEebusErrorOk) {
+        EebusMutexDelete(EEBUS_MUTEX_OBJECT(eebus_mutex));
+        return NULL;
+    }
 
-  return EEBUS_MUTEX_OBJECT(eebus_mutex);
+    return EEBUS_MUTEX_OBJECT(eebus_mutex);
 }
 
 EebusMutexObject* EebusMutexCreate(void) {
-  return EebusMutexCreateInternal(false);
+    return EebusMutexCreateInternal(false);
 }
 
 EebusMutexObject* EebusMutexCreateRecursive(void) {
-  return EebusMutexCreateInternal(true);
+    return EebusMutexCreateInternal(true);
 }
 
 void Destruct(EebusMutexObject* self) {
-  EebusMutex* const mutex = EEBUS_MUTEX(self);
+    EebusMutex* const mutex = EEBUS_MUTEX(self);
 
-  if (mutex->mutex_handle != NULL) {
-    vSemaphoreDelete(mutex->mutex_handle);
-    mutex->mutex_handle = NULL;
-  }
+    if (mutex->mutex_handle != NULL) {
+        vSemaphoreDelete(mutex->mutex_handle);
+        mutex->mutex_handle = NULL;
+    }
 }
 
 void Lock(EebusMutexObject* self) {
-  EebusMutex* const mutex = EEBUS_MUTEX(self);
+    EebusMutex* const mutex = EEBUS_MUTEX(self);
 
-  if (mutex->is_recursive) {
-    xSemaphoreTakeRecursive(mutex->mutex_handle, portMAX_DELAY);
-  } else {
-    xSemaphoreTake(mutex->mutex_handle, portMAX_DELAY);
-  }
+    if (mutex->is_recursive) {
+        xSemaphoreTakeRecursive(mutex->mutex_handle, portMAX_DELAY);
+    } else {
+        xSemaphoreTake(mutex->mutex_handle, portMAX_DELAY);
+    }
 }
 
 void Unlock(EebusMutexObject* self) {
-  EebusMutex* const mutex = EEBUS_MUTEX(self);
-  if (mutex->is_recursive) {
-    xSemaphoreGiveRecursive(mutex->mutex_handle);
-  } else {
-    xSemaphoreGive(mutex->mutex_handle);
-  }
+    EebusMutex* const mutex = EEBUS_MUTEX(self);
+    if (mutex->is_recursive) {
+        xSemaphoreGiveRecursive(mutex->mutex_handle);
+    } else {
+        xSemaphoreGive(mutex->mutex_handle);
+    }
 }

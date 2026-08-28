@@ -33,8 +33,8 @@ extern "C" {
 typedef struct EebusDateTime EebusDateTime;
 
 struct EebusDateTime {
-  EebusDate date; /**< Represents the date component in the EEBUS system */
-  EebusTime time; /**< Represents the time component in the EEBUS system */
+    EebusDate date; /**< Represents the date component in the EEBUS system */
+    EebusTime time; /**< Represents the time component in the EEBUS system */
 };
 
 /**

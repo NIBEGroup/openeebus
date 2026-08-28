@@ -25,30 +25,30 @@
 #include "src/common/eebus_malloc.h"
 
 ShipMessage* ShipMessageCreate(uint8_t type, size_t value_size) {
-  ShipMessage* const ship_msg = (ShipMessage*)EEBUS_MALLOC(sizeof(ShipMessage));
+    ShipMessage* const ship_msg = (ShipMessage*)EEBUS_MALLOC(sizeof(ShipMessage));
 
-  if (ship_msg == NULL) {
+    if (ship_msg == NULL) {
+        return ship_msg;
+    }
+
+    ship_msg->type  = type;
+    ship_msg->value = EEBUS_MALLOC(value_size);
+    if (ship_msg->value != NULL) {
+        memset(ship_msg->value, 0, value_size);
+    }
+
     return ship_msg;
-  }
-
-  ship_msg->type  = type;
-  ship_msg->value = EEBUS_MALLOC(value_size);
-  if (ship_msg->value != NULL) {
-    memset(ship_msg->value, 0, value_size);
-  }
-
-  return ship_msg;
 }
 
 void ShipMessageRelease(ShipMessage* ship_msg) {
-  if (ship_msg == NULL) {
-    return;
-  }
+    if (ship_msg == NULL) {
+        return;
+    }
 
-  if (ship_msg->value != NULL) {
-    EEBUS_FREE(ship_msg->value);
-    ship_msg->value = NULL;
-  }
+    if (ship_msg->value != NULL) {
+        EEBUS_FREE(ship_msg->value);
+        ship_msg->value = NULL;
+    }
 
-  EEBUS_FREE(ship_msg);
+    EEBUS_FREE(ship_msg);
 }

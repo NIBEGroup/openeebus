@@ -24,12 +24,12 @@
 typedef struct RemoteServiceInfo RemoteServiceInfo;
 
 struct RemoteServiceInfo {
-	const char* name       ; // `json:"name"`
-	const char* ski        ; // `json:"ski"`
-	const char* identifier ; // `json:"identifier"`
-	const char* brand      ; // `json:"brand"`
-	const char* type       ; // `json:"type"`
-	const char* model      ; // `json:"model"`
+    const char* name;        // `json:"name"`
+    const char* ski;         // `json:"ski"`
+    const char* identifier;  // `json:"identifier"`
+    const char* brand;       // `json:"brand"`
+    const char* type;        // `json:"type"`
+    const char* model;       // `json:"model"`
 };
 
-#endif // SRC_SHIP_API_REMOTE_SERVICE_H_
+#endif  // SRC_SHIP_API_REMOTE_SERVICE_H_

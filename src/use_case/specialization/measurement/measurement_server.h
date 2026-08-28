@@ -31,8 +31,8 @@ extern "C" {
 typedef struct MeasurementServer MeasurementServer;
 
 struct MeasurementServer {
-  FeatureInfoServer feature_info_server;
-  MeasurementCommon measurement_common;
+    FeatureInfoServer feature_info_server;
+    MeasurementCommon measurement_common;
 };
 
 /**

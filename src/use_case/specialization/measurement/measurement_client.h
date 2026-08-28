@@ -32,8 +32,8 @@ extern "C" {
 typedef struct MeasurementClient MeasurementClient;
 
 struct MeasurementClient {
-  FeatureInfoClient feature_info_client;
-  MeasurementCommon measurement_common;
+    FeatureInfoClient feature_info_client;
+    MeasurementCommon measurement_common;
 };
 
 /**

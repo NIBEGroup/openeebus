@@ -24,40 +24,40 @@
 #include "src/use_case/specialization/measurement/measurement_client.h"
 
 void MaOnEntityAddedHandleElectricalConnection(const UseCase* use_case, EntityRemoteObject* entity) {
-  ElectricalConnectionClient electrical_connection;
-  if (ElectricalConnectionClientConstruct(&electrical_connection, use_case->local_entity, entity) != kEebusErrorOk) {
-    return;
-  }
+    ElectricalConnectionClient electrical_connection;
+    if (ElectricalConnectionClientConstruct(&electrical_connection, use_case->local_entity, entity) != kEebusErrorOk) {
+        return;
+    }
 
-  FeatureInfoClient* const feature_info = &electrical_connection.feature_info_client;
-  if (!HasSubscription(feature_info)) {
-    Subscribe(feature_info);
-  }
+    FeatureInfoClient* const feature_info = &electrical_connection.feature_info_client;
+    if (!HasSubscription(feature_info)) {
+        Subscribe(feature_info);
+    }
 
-  ElectricalConnectionClientRequestDescriptions(&electrical_connection, NULL, NULL);
-  ElectricalConnectionClientRequestParameterDescriptions(&electrical_connection, NULL, NULL);
+    ElectricalConnectionClientRequestDescriptions(&electrical_connection, NULL, NULL);
+    ElectricalConnectionClientRequestParameterDescriptions(&electrical_connection, NULL, NULL);
 }
 
 void MaOnEntityAddedHandleMeasurement(const UseCase* use_case, EntityRemoteObject* entity) {
-  MeasurementClient measurement;
-  if (MeasurementClientConstruct(&measurement, use_case->local_entity, entity) != kEebusErrorOk) {
-    return;
-  }
+    MeasurementClient measurement;
+    if (MeasurementClientConstruct(&measurement, use_case->local_entity, entity) != kEebusErrorOk) {
+        return;
+    }
 
-  FeatureInfoClient* const feature_info = &measurement.feature_info_client;
-  if (!HasSubscription(feature_info)) {
-    Subscribe(feature_info);
-  }
+    FeatureInfoClient* const feature_info = &measurement.feature_info_client;
+    if (!HasSubscription(feature_info)) {
+        Subscribe(feature_info);
+    }
 
-  MeasurementClientRequestDescriptions(&measurement, NULL, NULL);
-  MeasurementClientRequestConstraints(&measurement, NULL, NULL);
+    MeasurementClientRequestDescriptions(&measurement, NULL, NULL);
+    MeasurementClientRequestConstraints(&measurement, NULL, NULL);
 }
 
 void MaOnMeasurementDescriptionDataUpdate(const UseCase* use_case, const EventPayload* payload) {
-  MeasurementClient mcl;
-  if (MeasurementClientConstruct(&mcl, use_case->local_entity, payload->entity) != kEebusErrorOk) {
-    return;
-  }
+    MeasurementClient mcl;
+    if (MeasurementClientConstruct(&mcl, use_case->local_entity, payload->entity) != kEebusErrorOk) {
+        return;
+    }
 
-  MeasurementClientRequestData(&mcl, NULL, NULL, NULL, NULL);
+    MeasurementClientRequestData(&mcl, NULL, NULL, NULL, NULL);
 }

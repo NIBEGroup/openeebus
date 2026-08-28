@@ -33,8 +33,8 @@ extern "C" {
 typedef struct LoadControlServer LoadControlServer;
 
 struct LoadControlServer {
-  FeatureInfoServer feature_info_server;
-  LoadControlCommon load_control_common;
+    FeatureInfoServer feature_info_server;
+    LoadControlCommon load_control_common;
 };
 
 /**

@@ -48,11 +48,11 @@ typedef EebusMonitorCurrentConfig MuMpcMonitorCurrentConfig;
 typedef struct MuMpcMonitorEnergyConfig MuMpcMonitorEnergyConfig;
 
 struct MuMpcMonitorEnergyConfig {
-  /** The source of the production values (if not NULL is set, the use case will support production) */
-  const MuMpcMeasurementConfig* energy_production_cfg;
+    /** The source of the production values (if not NULL is set, the use case will support production) */
+    const MuMpcMeasurementConfig* energy_production_cfg;
 
-  /**< The source of the consumption values (if not NULL use case will support consumption) */
-  const MuMpcMeasurementConfig* energy_consumption_cfg;
+    /**< The source of the consumption values (if not NULL use case will support consumption) */
+    const MuMpcMeasurementConfig* energy_consumption_cfg;
 };
 
 typedef EebusMonitorFrequencyConfig MuMpcMonitorFrequencyConfig;
@@ -64,15 +64,15 @@ typedef EebusMonitorFrequencyConfig MuMpcMonitorFrequencyConfig;
 typedef struct MuMpcMonitorPowerConfig MuMpcMonitorPowerConfig;
 
 struct MuMpcMonitorPowerConfig {
-  /** The source of the values from the ac_power_total (required) */
-  MuMpcMeasurementConfig power_total_cfg;
+    /** The source of the values from the ac_power_total (required) */
+    MuMpcMeasurementConfig power_total_cfg;
 
-  /** Phase A AC Power measurement configuration (required if the phase is supported) */
-  const MuMpcMeasurementConfig* power_phase_a_cfg;
-  /** Phase B AC Power measurement configuration (required if the phase is supported) */
-  const MuMpcMeasurementConfig* power_phase_b_cfg;
-  /** Phase C AC Power measurement configuration (required if the phase is supported) */
-  const MuMpcMeasurementConfig* power_phase_c_cfg;
+    /** Phase A AC Power measurement configuration (required if the phase is supported) */
+    const MuMpcMeasurementConfig* power_phase_a_cfg;
+    /** Phase B AC Power measurement configuration (required if the phase is supported) */
+    const MuMpcMeasurementConfig* power_phase_b_cfg;
+    /** Phase C AC Power measurement configuration (required if the phase is supported) */
+    const MuMpcMeasurementConfig* power_phase_c_cfg;
 };
 
 typedef EebusMonitorVoltageConfig MuMpcMonitorVoltageConfig;

@@ -40,10 +40,10 @@ EntityLocalObject* EntityLocalCreate(
 );
 
 static inline void EntityLocalDelete(EntityLocalObject* entity_local) {
-  if (entity_local != NULL) {
-    ENTITY_DESTRUCT(ENTITY_OBJECT(entity_local));
-    EEBUS_FREE(entity_local);
-  }
+    if (entity_local != NULL) {
+        ENTITY_DESTRUCT(ENTITY_OBJECT(entity_local));
+        EEBUS_FREE(entity_local);
+    }
 }
 
 #ifdef __cplusplus

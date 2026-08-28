@@ -36,68 +36,68 @@ typedef uint32_t BindingIdType;
 typedef struct BindingManagementEntryDataType BindingManagementEntryDataType;
 
 struct BindingManagementEntryDataType {
-  const BindingIdType* binding_id;          /**< "bindingId" */
-  const FeatureAddressType* client_address; /**< "clientAddress" */
-  const FeatureAddressType* server_address; /**< "serverAddress" */
-  LabelType label;                          /**< "label" */
-  DescriptionType description;              /**< "description" */
+    const BindingIdType* binding_id;          /**< "bindingId" */
+    const FeatureAddressType* client_address; /**< "clientAddress" */
+    const FeatureAddressType* server_address; /**< "serverAddress" */
+    LabelType label;                          /**< "label" */
+    DescriptionType description;              /**< "description" */
 };
 
 typedef struct BindingManagementEntryDataElementsType BindingManagementEntryDataElementsType;
 
 struct BindingManagementEntryDataElementsType {
-  ElementTagType binding_id;     /**< "bindingId" */
-  ElementTagType client_address; /**< "clientAddress" */
-  ElementTagType server_address; /**< "serverAddress" */
-  ElementTagType label;          /**< "label" */
-  ElementTagType description;    /**< "description" */
+    ElementTagType binding_id;     /**< "bindingId" */
+    ElementTagType client_address; /**< "clientAddress" */
+    ElementTagType server_address; /**< "serverAddress" */
+    ElementTagType label;          /**< "label" */
+    ElementTagType description;    /**< "description" */
 };
 
 typedef struct BindingManagementEntryListDataType BindingManagementEntryListDataType;
 
 struct BindingManagementEntryListDataType {
-  const BindingManagementEntryDataType* const* binding_management_entry_data; /**< "bindingManagementEntryData" */
-  size_t binding_management_entry_data_size;
+    const BindingManagementEntryDataType* const* binding_management_entry_data; /**< "bindingManagementEntryData" */
+    size_t binding_management_entry_data_size;
 };
 
 typedef struct BindingManagementEntryListDataSelectorsType BindingManagementEntryListDataSelectorsType;
 
 struct BindingManagementEntryListDataSelectorsType {
-  const BindingIdType* binding_id;          /**< "bindingId" */
-  const FeatureAddressType* client_address; /**< "clientAddress" */
-  const FeatureAddressType* server_address; /**< "serverAddress" */
+    const BindingIdType* binding_id;          /**< "bindingId" */
+    const FeatureAddressType* client_address; /**< "clientAddress" */
+    const FeatureAddressType* server_address; /**< "serverAddress" */
 };
 
 typedef struct BindingManagementRequestCallType BindingManagementRequestCallType;
 
 struct BindingManagementRequestCallType {
-  const FeatureAddressType* client_address;   /**< "clientAddress" */
-  const FeatureAddressType* server_address;   /**< "serverAddress" */
-  const FeatureTypeType* server_feature_type; /**< "serverFeatureType" */
+    const FeatureAddressType* client_address;   /**< "clientAddress" */
+    const FeatureAddressType* server_address;   /**< "serverAddress" */
+    const FeatureTypeType* server_feature_type; /**< "serverFeatureType" */
 };
 
 typedef struct BindingManagementRequestCallElementsType BindingManagementRequestCallElementsType;
 
 struct BindingManagementRequestCallElementsType {
-  ElementTagType client_address;      /**< "clientAddress" */
-  ElementTagType server_address;      /**< "serverAddress" */
-  ElementTagType server_feature_type; /**< "serverFeatureType" */
+    ElementTagType client_address;      /**< "clientAddress" */
+    ElementTagType server_address;      /**< "serverAddress" */
+    ElementTagType server_feature_type; /**< "serverFeatureType" */
 };
 
 typedef struct BindingManagementDeleteCallType BindingManagementDeleteCallType;
 
 struct BindingManagementDeleteCallType {
-  const BindingIdType* binding_id;          /**< "bindingId" */
-  const FeatureAddressType* client_address; /**< "clientAddress" */
-  const FeatureAddressType* server_address; /**< "serverAddress" */
+    const BindingIdType* binding_id;          /**< "bindingId" */
+    const FeatureAddressType* client_address; /**< "clientAddress" */
+    const FeatureAddressType* server_address; /**< "serverAddress" */
 };
 
 typedef struct BindingManagementDeleteCallElementsType BindingManagementDeleteCallElementsType;
 
 struct BindingManagementDeleteCallElementsType {
-  ElementTagType binding_id;     /**< "bindingId" */
-  ElementTagType client_address; /**< "clientAddress" */
-  ElementTagType server_address; /**< "serverAddress" */
+    ElementTagType binding_id;     /**< "bindingId" */
+    ElementTagType client_address; /**< "clientAddress" */
+    ElementTagType server_address; /**< "serverAddress" */
 };
 
 BindingManagementEntryDataType* BindingManagementEntryDataCreate(

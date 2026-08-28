@@ -47,7 +47,7 @@ extern const EebusDataInterface eebus_data_tag_methods;
  * @param struct_field Structure field name. Type of structure field shall be bool
  */
 #define EEBUS_DATA_TAG(ed_name, struct_name, struct_field) \
-  EEBUS_DATA_SIMPLE(&eebus_data_tag_methods, ed_name, struct_name, struct_field, 0)
+    EEBUS_DATA_SIMPLE(&eebus_data_tag_methods, ed_name, struct_name, struct_field, 0)
 
 #ifdef __cplusplus
 }

@@ -41,23 +41,36 @@ extern "C" {
  * are used to calcualte the offset of filed within structure
  */
 #define EEBUS_DATA_SIMPLE(ed_interface, ed_name, struct_name, struct_field, ed_size) \
-  {                                                                                  \
-      .interface_ = ed_interface,                                                    \
-      .name       = ed_name,                                                         \
-      .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),                 \
-      .size       = ed_size,                                                         \
-      .metadata   = NULL,                                                            \
-  }
+    {                                                                                \
+        .interface_ = ed_interface,                                                  \
+        .name       = ed_name,                                                       \
+        .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),               \
+        .size       = ed_size,                                                       \
+        .metadata   = NULL,                                                          \
+    }
 
 bool EebusDataSimpleCompare(
-    const EebusDataCfg* a_cfg, const void* a_base_addr, const EebusDataCfg* b_cfg, const void* b_base_addr);
+    const EebusDataCfg* a_cfg,
+    const void* a_base_addr,
+    const EebusDataCfg* b_cfg,
+    const void* b_base_addr
+);
 bool EebusDataSimpleIsNull(const EebusDataCfg* cfg, const void* base_addr);
 bool EebusDataSimpleIsEmpty(const EebusDataCfg* cfg, const void* base_addr);
-EebusError EebusDataSimpleReadElements(const EebusDataCfg* cfg, const void* base_addr, void* dst_base_addr,
-    const EebusDataCfg* elements_cfg, const void* elements_base_addr);
+EebusError EebusDataSimpleReadElements(
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    void* dst_base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
 EebusError EebusDataSimpleWrite(const EebusDataCfg* cfg, void* src_base_addr, const void* dst_base_addr);
 void EebusDataSimpleDeleteElements(
-    const EebusDataCfg* cfg, void* base_addr, const EebusDataCfg* elements_cfg, const void* elements_base_addr);
+    const EebusDataCfg* cfg,
+    void* base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
 void EebusDataSimpleDelete(const EebusDataCfg* cfg, void* base_addr);
 
 #ifdef __cplusplus
