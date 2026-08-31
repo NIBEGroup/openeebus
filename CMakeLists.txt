@@ -243,3 +243,4 @@ target_link_libraries(
 
 add_subdirectory(examples/heat_pump)
 add_subdirectory(examples/hems)
+add_subdirectory(examples/battery)

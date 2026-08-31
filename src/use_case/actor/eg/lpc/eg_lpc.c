@@ -27,6 +27,7 @@
 
 static const UseCaseActorType valid_actor_types[] = {kUseCaseActorTypeControllableSystem};
 static const EntityTypeType valid_entity_types[]  = {
+    kEntityTypeTypeBattery,
     kEntityTypeTypeCEM,
     kEntityTypeTypeCompressor,
     kEntityTypeTypeEVSE,

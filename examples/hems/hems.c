@@ -193,9 +193,10 @@ EebusError HemsStart(Hems* hems, int32_t port, const char* role, TlsCertificateO
         return kEebusErrorInit;
     }
 
-    EebusServiceConfigSetAlternateIdentifier(hems->cfg, "OpenEEBUS-HEMS-123456789");
+  EebusServiceConfigSetAlternateIdentifier(hems->cfg, "OpenEEBUS-HEMS-123456789");
+  EebusServiceConfigSetAlternateMdnsServiceName(hems->cfg, "OpenEEBUS-HEMS-123456789");
 
-    hems->service = EebusServiceCreate(hems->cfg, role, tls_certificate, SERVICE_READER_OBJECT(hems));
+  hems->service = EebusServiceCreate(hems->cfg, role, tls_certificate, SERVICE_READER_OBJECT(hems));
     if (hems->service == NULL) {
         EebusServiceConfigDelete(hems->cfg);
         hems->cfg = NULL;

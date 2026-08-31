@@ -5,3 +5,4 @@ tests/build/
 venv/
 *.egg-info/
 build-macos/
+certs/
