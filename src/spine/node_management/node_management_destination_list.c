@@ -25,40 +25,40 @@
 #include "src/spine/node_management/node_management_internal.h"
 
 EebusError RequestDestinationListData(NodeManagement* self, const char* remote_device_addr, SenderObject* sender) {
-  UNUSED(self);
-  UNUSED(remote_device_addr);
-  UNUSED(sender);
-  return kEebusErrorNotImplemented;
+    UNUSED(self);
+    UNUSED(remote_device_addr);
+    UNUSED(sender);
+    return kEebusErrorNotImplemented;
 }
 
 EebusError ProcessReadDestinationListData(NodeManagement* self, const Message* msg) {
-  const DeviceLocalObject* const dl = FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self));
-  const DeviceObject* const device  = DEVICE_OBJECT(dl);
+    const DeviceLocalObject* const dl = FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self));
+    const DeviceObject* const device  = DEVICE_OBJECT(dl);
 
-  const NodeManagementDestinationDataType* const detination_data[1] = {DEVICE_CREATE_DESTINATION_DATA(device)};
+    const NodeManagementDestinationDataType* const detination_data[1] = {DEVICE_CREATE_DESTINATION_DATA(device)};
 
-  const NodeManagementDestinationListDataType dest_list_data = {
-      .node_management_destination_data      = detination_data,
-      .node_management_destination_data_size = ARRAY_SIZE(detination_data),
-  };
+    const NodeManagementDestinationListDataType dest_list_data = {
+        .node_management_destination_data      = detination_data,
+        .node_management_destination_data_size = ARRAY_SIZE(detination_data),
+    };
 
-  const EebusError err
-      = NodeManagementSendReply(self, &dest_list_data, kFunctionTypeNodeManagementDestinationListData, msg);
-  NodeManagementDestinationDataDelete((NodeManagementDestinationDataType*)detination_data[0]);
-  return err;
+    const EebusError err
+        = NodeManagementSendReply(self, &dest_list_data, kFunctionTypeNodeManagementDestinationListData, msg);
+    NodeManagementDestinationDataDelete((NodeManagementDestinationDataType*)detination_data[0]);
+    return err;
 }
 
 EebusError ProcessReplyDestinationListData(NodeManagement* self, const Message* msg) {
-  UNUSED(self);
-  UNUSED(msg);
-  return kEebusErrorNotImplemented;
+    UNUSED(self);
+    UNUSED(msg);
+    return kEebusErrorNotImplemented;
 }
 
 EebusError HandleMsgDestinationListData(NodeManagement* self, const Message* msg) {
-  switch (msg->cmd_classifier) {
-    case kCommandClassifierTypeRead: return ProcessReadDestinationListData(self, msg);
-    case kCommandClassifierTypeReply: return ProcessReplyDestinationListData(self, msg);
-    case kCommandClassifierTypeNotify: return ProcessReplyDestinationListData(self, msg);
-    default: return kEebusErrorNotImplemented;
-  }
+    switch (msg->cmd_classifier) {
+        case kCommandClassifierTypeRead: return ProcessReadDestinationListData(self, msg);
+        case kCommandClassifierTypeReply: return ProcessReplyDestinationListData(self, msg);
+        case kCommandClassifierTypeNotify: return ProcessReplyDestinationListData(self, msg);
+        default: return kEebusErrorNotImplemented;
+    }
 }

@@ -37,10 +37,10 @@ PendingResultObject* PendingResultCreate(
 );
 
 static inline void PendingResultDelete(PendingResultObject* self) {
-  if (self != NULL) {
-    PENDING_RESULT_DESTRUCT(self);
-    EEBUS_FREE(self);
-  }
+    if (self != NULL) {
+        PENDING_RESULT_DESTRUCT(self);
+        EEBUS_FREE(self);
+    }
 }
 
 #ifdef __cplusplus

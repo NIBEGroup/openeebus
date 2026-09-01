@@ -29,12 +29,12 @@ extern "C" {
  * @brief Measurement monitor group identifiers (high nibble of EebusMeasurementNameId)
  */
 enum EebusMeasurementMonitorNameId {
-  kEebusMeasurementMonitorPower      = 0x10, /**< Active power measurements */
-  kEebusMeasurementMonitorEnergy     = 0x20, /**< Energy measurements */
-  kEebusMeasurementMonitorCurrent    = 0x30, /**< Per-phase AC current measurements */
-  kEebusMeasurementMonitorVoltage    = 0x40, /**< Per-phase AC voltage measurements */
-  kEebusMeasurementMonitorFrequency  = 0x50, /**< AC frequency measurements */
-  kEebusMeasurementMonitorNameIdMask = 0xF0, /**< Mask to extract the monitor group */
+    kEebusMeasurementMonitorPower      = 0x10, /**< Active power measurements */
+    kEebusMeasurementMonitorEnergy     = 0x20, /**< Energy measurements */
+    kEebusMeasurementMonitorCurrent    = 0x30, /**< Per-phase AC current measurements */
+    kEebusMeasurementMonitorVoltage    = 0x40, /**< Per-phase AC voltage measurements */
+    kEebusMeasurementMonitorFrequency  = 0x50, /**< AC frequency measurements */
+    kEebusMeasurementMonitorNameIdMask = 0xF0, /**< Mask to extract the monitor group */
 };
 
 typedef enum EebusMeasurementMonitorNameId EebusMeasurementMonitorNameId;
@@ -61,28 +61,28 @@ typedef enum EebusMeasurementMonitorNameId EebusMeasurementMonitorNameId;
  *   kMuFrequency  (scenario 7 — frequency)
  */
 enum EebusMeasurementNameId {
-  /* Active power */
-  kMuPowerTotal  = kEebusMeasurementMonitorPower | 0x01, /**< Total active power (W) */
-  kMuPowerPhaseA = kEebusMeasurementMonitorPower | 0x02, /**< Phase A active power (W) */
-  kMuPowerPhaseB = kEebusMeasurementMonitorPower | 0x03, /**< Phase B active power (W) */
-  kMuPowerPhaseC = kEebusMeasurementMonitorPower | 0x04, /**< Phase C active power (W) */
-  /* Energy */
-  kMuEnergyConsumed = kEebusMeasurementMonitorEnergy | 0x01, /**< Consumed energy (Wh) */
-  kMuEnergyProduced = kEebusMeasurementMonitorEnergy | 0x02, /**< Produced energy (Wh) — MU MPC only */
-  kMuEnergyFeedIn   = kEebusMeasurementMonitorEnergy | 0x03, /**< Grid feed-in energy (Wh) — GCP MGCP only */
-  /* Per-phase AC current */
-  kMuCurrentPhaseA = kEebusMeasurementMonitorCurrent | 0x01, /**< Phase A RMS current (A) */
-  kMuCurrentPhaseB = kEebusMeasurementMonitorCurrent | 0x02, /**< Phase B RMS current (A) */
-  kMuCurrentPhaseC = kEebusMeasurementMonitorCurrent | 0x03, /**< Phase C RMS current (A) */
-  /* Per-phase AC voltage */
-  kMuVoltagePhaseA  = kEebusMeasurementMonitorVoltage | 0x01, /**< Phase A to neutral RMS voltage (V) */
-  kMuVoltagePhaseB  = kEebusMeasurementMonitorVoltage | 0x02, /**< Phase B to neutral RMS voltage (V) */
-  kMuVoltagePhaseC  = kEebusMeasurementMonitorVoltage | 0x03, /**< Phase C to neutral RMS voltage (V) */
-  kMuVoltagePhaseAb = kEebusMeasurementMonitorVoltage | 0x04, /**< Phase A to B RMS voltage (V) */
-  kMuVoltagePhaseBc = kEebusMeasurementMonitorVoltage | 0x05, /**< Phase B to C RMS voltage (V) */
-  kMuVoltagePhaseAc = kEebusMeasurementMonitorVoltage | 0x06, /**< Phase C to A RMS voltage (V) */
-  /* AC frequency */
-  kMuFrequency = kEebusMeasurementMonitorFrequency | 0x01, /**< Grid frequency (Hz) */
+    /* Active power */
+    kMuPowerTotal  = kEebusMeasurementMonitorPower | 0x01, /**< Total active power (W) */
+    kMuPowerPhaseA = kEebusMeasurementMonitorPower | 0x02, /**< Phase A active power (W) */
+    kMuPowerPhaseB = kEebusMeasurementMonitorPower | 0x03, /**< Phase B active power (W) */
+    kMuPowerPhaseC = kEebusMeasurementMonitorPower | 0x04, /**< Phase C active power (W) */
+    /* Energy */
+    kMuEnergyConsumed = kEebusMeasurementMonitorEnergy | 0x01, /**< Consumed energy (Wh) */
+    kMuEnergyProduced = kEebusMeasurementMonitorEnergy | 0x02, /**< Produced energy (Wh) — MU MPC only */
+    kMuEnergyFeedIn   = kEebusMeasurementMonitorEnergy | 0x03, /**< Grid feed-in energy (Wh) — GCP MGCP only */
+    /* Per-phase AC current */
+    kMuCurrentPhaseA = kEebusMeasurementMonitorCurrent | 0x01, /**< Phase A RMS current (A) */
+    kMuCurrentPhaseB = kEebusMeasurementMonitorCurrent | 0x02, /**< Phase B RMS current (A) */
+    kMuCurrentPhaseC = kEebusMeasurementMonitorCurrent | 0x03, /**< Phase C RMS current (A) */
+    /* Per-phase AC voltage */
+    kMuVoltagePhaseA  = kEebusMeasurementMonitorVoltage | 0x01, /**< Phase A to neutral RMS voltage (V) */
+    kMuVoltagePhaseB  = kEebusMeasurementMonitorVoltage | 0x02, /**< Phase B to neutral RMS voltage (V) */
+    kMuVoltagePhaseC  = kEebusMeasurementMonitorVoltage | 0x03, /**< Phase C to neutral RMS voltage (V) */
+    kMuVoltagePhaseAb = kEebusMeasurementMonitorVoltage | 0x04, /**< Phase A to B RMS voltage (V) */
+    kMuVoltagePhaseBc = kEebusMeasurementMonitorVoltage | 0x05, /**< Phase B to C RMS voltage (V) */
+    kMuVoltagePhaseAc = kEebusMeasurementMonitorVoltage | 0x06, /**< Phase C to A RMS voltage (V) */
+    /* AC frequency */
+    kMuFrequency = kEebusMeasurementMonitorFrequency | 0x01, /**< Grid frequency (Hz) */
 };
 
 typedef enum EebusMeasurementNameId EebusMeasurementNameId;

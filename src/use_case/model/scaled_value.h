@@ -40,8 +40,8 @@ typedef struct ScaledValue ScaledValue;
  * @brief Scaled Value structure
  */
 struct ScaledValue {
-  int64_t value; /**< Value */
-  int8_t scale;  /**< Scale */
+    int64_t value; /**< Value */
+    int8_t scale;  /**< Scale */
 };
 
 /**

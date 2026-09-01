@@ -47,7 +47,7 @@ extern const EebusDataInterface eebus_data_string_methods;
  * Type of structure field shall be char*
  */
 #define EEBUS_DATA_STRING(ed_name, struct_name, struct_field) \
-  EEBUS_DATA_SIMPLE(&eebus_data_string_methods, ed_name, struct_name, struct_field, 0)
+    EEBUS_DATA_SIMPLE(&eebus_data_string_methods, ed_name, struct_name, struct_field, 0)
 
 #ifdef __cplusplus
 }

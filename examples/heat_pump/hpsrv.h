@@ -32,8 +32,8 @@
 typedef struct HpsrvObject HpsrvObject;
 
 struct HpsrvObject {
-  /** Implement service reader interface */
-  ServiceReaderObject service_reader;
+    /** Implement service reader interface */
+    ServiceReaderObject service_reader;
 };
 
 #define HPSRV_OBJECT(obj) ((HpsrvObject*)(obj))
@@ -48,10 +48,10 @@ struct HpsrvObject {
 HpsrvObject* HpsrvOpen(int32_t port, const char* role, TlsCertificateObject* tls_certificate);
 
 static inline void HpsrvClose(HpsrvObject* hpsrv) {
-  if (hpsrv != NULL) {
-    SERVICE_READER_DESTRUCT(SERVICE_READER_OBJECT(hpsrv));
-    EEBUS_FREE(hpsrv);
-  }
+    if (hpsrv != NULL) {
+        SERVICE_READER_DESTRUCT(SERVICE_READER_OBJECT(hpsrv));
+        EEBUS_FREE(hpsrv);
+    }
 }
 
 /**

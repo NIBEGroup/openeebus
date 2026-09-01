@@ -27,19 +27,19 @@ extern "C" {
 typedef uint8_t ShipRole;
 
 enum {
-  kShipRoleServer,  // "server"
-  kShipRoleClient,  // "client"
-  kShipRoleAuto,    // "auto"
+    kShipRoleServer,  // "server"
+    kShipRoleClient,  // "client"
+    kShipRoleAuto,    // "auto"
 };
 
 enum {
-  cmiTimeout              = SECONDS(10),  // SHIP 4.2
-  cmiCloseTimeout         = MILLISECONDS(100),
-  tHelloInit              = SECONDS(60),  // SHIP 13.4.4.1.3
-  tHelloInc               = SECONDS(60),
-  tHelloProlongThrInc     = SECONDS(30),
-  tHelloProlongWaitingGap = SECONDS(15),
-  tHelloProlongMin        = SECONDS(1),
+    cmiTimeout              = SECONDS(10),  // SHIP 4.2
+    cmiCloseTimeout         = MILLISECONDS(100),
+    tHelloInit              = SECONDS(60),  // SHIP 13.4.4.1.3
+    tHelloInc               = SECONDS(60),
+    tHelloProlongThrInc     = SECONDS(30),
+    tHelloProlongWaitingGap = SECONDS(15),
+    tHelloProlongMin        = SECONDS(1),
 };
 
 #ifdef __cplusplus

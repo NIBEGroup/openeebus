@@ -28,17 +28,17 @@ const char* const kTrueString  = "true";
 const char* const kFalseString = "false";
 
 EebusError EebusBoolParse(const char* s, bool* value) {
-  if ((s == NULL) || (value == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((s == NULL) || (value == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  if (strcmp(s, kTrueString) == 0) {
-    *value = true;
-  } else if (strcmp(s, kFalseString) == 0) {
-    *value = false;
-  } else {
-    return kEebusErrorInputArgument;
-  }
+    if (strcmp(s, kTrueString) == 0) {
+        *value = true;
+    } else if (strcmp(s, kFalseString) == 0) {
+        *value = false;
+    } else {
+        return kEebusErrorInputArgument;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }

@@ -63,14 +63,14 @@ extern const EebusDataInterface eebus_data_choice_methods;
  * Type of structure field shall be EebusJsonChoice
  * @param ce_cfg Choice Element configuration entry point
  */
-#define EEBUS_DATA_CHOICE(struct_name, struct_field, ce_cfg)                       \
-  {                                                                                \
-      .interface_     = &eebus_data_choice_methods,                                \
-      .name           = "",                                                        \
-      .offset         = STRUCT_MEMBER_OFFSET(struct_name, struct_field),           \
-      .type_id_offset = STRUCT_MEMBER_OFFSET(struct_name, struct_field##_type_id), \
-      .metadata       = ce_cfg,                                                    \
-  }
+#define EEBUS_DATA_CHOICE(struct_name, struct_field, ce_cfg)                         \
+    {                                                                                \
+        .interface_     = &eebus_data_choice_methods,                                \
+        .name           = "",                                                        \
+        .offset         = STRUCT_MEMBER_OFFSET(struct_name, struct_field),           \
+        .type_id_offset = STRUCT_MEMBER_OFFSET(struct_name, struct_field##_type_id), \
+        .metadata       = ce_cfg,                                                    \
+    }
 
 /**
  * @brief An element of Data Choiceconfiguration
@@ -80,13 +80,13 @@ extern const EebusDataInterface eebus_data_choice_methods;
  * @param ce_cfg Choice Element Data configuration entry point
  */
 #define EEBUS_DATA_CHOICE_ELEMENT(ed_type, ed_name, struct_name, ce_cfg) \
-  {                                                                      \
-      .interface_ = &eebus_data_##ed_type##_methods,                     \
-      .name       = ed_name,                                             \
-      .offset     = 0,                                                   \
-      .size       = sizeof(struct_name),                                 \
-      .metadata   = ce_cfg,                                              \
-  }
+    {                                                                    \
+        .interface_ = &eebus_data_##ed_type##_methods,                   \
+        .name       = ed_name,                                           \
+        .offset     = 0,                                                 \
+        .size       = sizeof(struct_name),                               \
+        .metadata   = ce_cfg,                                            \
+    }
 
 /**
  * @brief An empty element of EEBUS Data Choice

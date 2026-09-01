@@ -28,10 +28,10 @@
 typedef struct PendingResultContainer PendingResultContainer;
 
 struct PendingResultContainer {
-  /** Implements the Pending Result Container Interface */
-  PendingResultContainerObject obj;
+    /** Implements the Pending Result Container Interface */
+    PendingResultContainerObject obj;
 
-  Vector items;
+    Vector items;
 };
 
 #define PENDING_RESULT_CONTAINER(obj) ((PendingResultContainer*)(obj))
@@ -56,32 +56,32 @@ static const PendingResultContainerInterface pending_result_container_methods = 
 };
 
 static void DeletePendingResult(void* pending) {
-  PendingResultDelete((PendingResultObject*)pending);
+    PendingResultDelete((PendingResultObject*)pending);
 }
 
 static void PendingResultContainerConstruct(PendingResultContainer* self);
 
 void PendingResultContainerConstruct(PendingResultContainer* self) {
-  // Override "virtual functions table"
-  PENDING_RESULT_CONTAINER_INTERFACE(self) = &pending_result_container_methods;
+    // Override "virtual functions table"
+    PENDING_RESULT_CONTAINER_INTERFACE(self) = &pending_result_container_methods;
 
-  VectorConstructWithDeallocator(&self->items, DeletePendingResult);
+    VectorConstructWithDeallocator(&self->items, DeletePendingResult);
 }
 
 PendingResultContainerObject* PendingResultContainerCreate(void) {
-  PendingResultContainer* const self = (PendingResultContainer*)EEBUS_MALLOC(sizeof(PendingResultContainer));
-  if (self == NULL) {
-    return NULL;
-  }
+    PendingResultContainer* const self = (PendingResultContainer*)EEBUS_MALLOC(sizeof(PendingResultContainer));
+    if (self == NULL) {
+        return NULL;
+    }
 
-  PendingResultContainerConstruct(self);
-  return PENDING_RESULT_CONTAINER_OBJECT(self);
+    PendingResultContainerConstruct(self);
+    return PENDING_RESULT_CONTAINER_OBJECT(self);
 }
 
 void Destruct(PendingResultContainerObject* self) {
-  PendingResultContainer* const prc = PENDING_RESULT_CONTAINER(self);
-  VectorFreeElements(&prc->items);
-  VectorDestruct(&prc->items);
+    PendingResultContainer* const prc = PENDING_RESULT_CONTAINER(self);
+    VectorFreeElements(&prc->items);
+    VectorDestruct(&prc->items);
 }
 
 EebusError Add(
@@ -92,45 +92,45 @@ EebusError Add(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  PendingResultContainer* const prc  = PENDING_RESULT_CONTAINER(self);
-  PendingResultObject* const pending = PendingResultCreate(msg_cnt_ref, function_type, remote_feature_addr, cb, ctx);
-  if (pending == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    PendingResultContainer* const prc  = PENDING_RESULT_CONTAINER(self);
+    PendingResultObject* const pending = PendingResultCreate(msg_cnt_ref, function_type, remote_feature_addr, cb, ctx);
+    if (pending == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  VectorPushBack(&prc->items, pending);
-  return kEebusErrorOk;
+    VectorPushBack(&prc->items, pending);
+    return kEebusErrorOk;
 }
 
 void Process(PendingResultContainerObject* self, const ResultMessage* result_msg) {
-  PendingResultContainer* const prc = PENDING_RESULT_CONTAINER(self);
+    PendingResultContainer* const prc = PENDING_RESULT_CONTAINER(self);
 
-  for (size_t i = 0; i < VectorGetSize(&prc->items); ++i) {
-    PendingResultObject* const pending = (PendingResultObject*)VectorGetElement(&prc->items, i);
-    if (PENDING_RESULT_GET_MSG_CNT_REF(pending) == result_msg->msg_cnt_ref) {
-      PENDING_RESULT_FIRE(pending, result_msg, kEebusErrorOk);
-      VectorRemove(&prc->items, pending);
-      PendingResultDelete(pending);
-      return;
+    for (size_t i = 0; i < VectorGetSize(&prc->items); ++i) {
+        PendingResultObject* const pending = (PendingResultObject*)VectorGetElement(&prc->items, i);
+        if (PENDING_RESULT_GET_MSG_CNT_REF(pending) == result_msg->msg_cnt_ref) {
+            PENDING_RESULT_FIRE(pending, result_msg, kEebusErrorOk);
+            VectorRemove(&prc->items, pending);
+            PendingResultDelete(pending);
+            return;
+        }
     }
-  }
 }
 
 void Tick(PendingResultContainerObject* self) {
-  PendingResultContainer* const prc = PENDING_RESULT_CONTAINER(self);
+    PendingResultContainer* const prc = PENDING_RESULT_CONTAINER(self);
 
-  size_t i = VectorGetSize(&prc->items);
+    size_t i = VectorGetSize(&prc->items);
 
-  while (i > 0) {
-    --i;
-    PendingResultObject* const pending = (PendingResultObject*)VectorGetElement(&prc->items, i);
+    while (i > 0) {
+        --i;
+        PendingResultObject* const pending = (PendingResultObject*)VectorGetElement(&prc->items, i);
 
-    if (PENDING_RESULT_HAS_EXPIRED(pending)) {
-      PENDING_RESULT_FIRE(pending, NULL, kEebusErrorTime);
-      VectorRemove(&prc->items, pending);
-      PendingResultDelete(pending);
-    } else {
-      PENDING_RESULT_UPDATE_TIME(pending);
+        if (PENDING_RESULT_HAS_EXPIRED(pending)) {
+            PENDING_RESULT_FIRE(pending, NULL, kEebusErrorTime);
+            VectorRemove(&prc->items, pending);
+            PendingResultDelete(pending);
+        } else {
+            PENDING_RESULT_UPDATE_TIME(pending);
+        }
     }
-  }
 }

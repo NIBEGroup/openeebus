@@ -56,21 +56,21 @@ typedef struct DataReaderObject DataReaderObject;
  * @brief Data Reader Interface structure
  */
 struct DataReaderInterface {
-  void (*destruct)(DataReaderObject* self);
-  /**
-   * @brief Pass an incoming SPINE message from a SHIP connection to the proper
-   * DeviceRemote
-   *
-   * Transformed from HandleShipPayloadMessage()
-   */
-  void (*handle_message)(DataReaderObject* self, MessageBuffer* msg);
+    void (*destruct)(DataReaderObject* self);
+    /**
+     * @brief Pass an incoming SPINE message from a SHIP connection to the proper
+     * DeviceRemote
+     *
+     * Transformed from HandleShipPayloadMessage()
+     */
+    void (*handle_message)(DataReaderObject* self, MessageBuffer* msg);
 };
 
 /**
  * @brief Data Reader Object structure
  */
 struct DataReaderObject {
-  const DataReaderInterface* interface_;
+    const DataReaderInterface* interface_;
 };
 
 /**

@@ -33,8 +33,8 @@ extern "C" {
 typedef struct LoadControlCommon LoadControlCommon;
 
 struct LoadControlCommon {
-  FeatureLocalObject* feature_local;
-  FeatureRemoteObject* feature_remote;
+    FeatureLocalObject* feature_local;
+    FeatureRemoteObject* feature_remote;
 };
 
 /**
@@ -68,11 +68,11 @@ void LocalLoadControlCommonConstruct(
 static inline const LoadControlLimitDescriptionListDataType* LoadControlCommonGetLimitDescriptionList(
     const LoadControlCommon* self
 ) {
-  return HelperGetFeatureData(
-      self->feature_local,
-      self->feature_remote,
-      kFunctionTypeLoadControlLimitDescriptionListData
-  );
+    return HelperGetFeatureData(
+        self->feature_local,
+        self->feature_remote,
+        kFunctionTypeLoadControlLimitDescriptionListData
+    );
 }
 
 /**

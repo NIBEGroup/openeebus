@@ -58,45 +58,45 @@ const EebusDataInterface eebus_data_enum_methods = {
 };
 
 EebusError FromJsonObjectItem(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj) {
-  if (!JsonIsString(json_obj)) {
-    return kEebusErrorParse;
-  }
-
-  const char* const s = JsonGetString(json_obj);
-
-  const EnumMapping* const lut = (const EnumMapping*)cfg->metadata;
-  for (size_t i = 0; lut[i].name != NULL; ++i) {
-    if (!strcmp(lut[i].name, s)) {
-      int32_t* const buf = (int32_t*)EEBUS_DATA_CREATE_EMPTY(cfg, base_addr);
-      if (buf == NULL) {
-        return kEebusErrorMemory;
-      }
-
-      *buf = lut[i].value;
-      return kEebusErrorOk;
+    if (!JsonIsString(json_obj)) {
+        return kEebusErrorParse;
     }
-  }
 
-  void** const buf = (void**)((uint8_t*)base_addr + cfg->offset);
-  *buf             = NULL;
-  return kEebusErrorOk;
+    const char* const s = JsonGetString(json_obj);
+
+    const EnumMapping* const lut = (const EnumMapping*)cfg->metadata;
+    for (size_t i = 0; lut[i].name != NULL; ++i) {
+        if (!strcmp(lut[i].name, s)) {
+            int32_t* const buf = (int32_t*)EEBUS_DATA_CREATE_EMPTY(cfg, base_addr);
+            if (buf == NULL) {
+                return kEebusErrorMemory;
+            }
+
+            *buf = lut[i].value;
+            return kEebusErrorOk;
+        }
+    }
+
+    void** const buf = (void**)((uint8_t*)base_addr + cfg->offset);
+    *buf             = NULL;
+    return kEebusErrorOk;
 }
 
 EebusError ToJsonObjectItem(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_obj) {
-  const int32_t** const buf = (const int32_t**)((const uint8_t*)base_addr + cfg->offset);
-  if (*buf == NULL) {
-    *json_obj = NULL;
-    return kEebusErrorOk;
-  }
-
-  const EnumMapping* const lut = (const EnumMapping*)cfg->metadata;
-  for (size_t i = 0; lut[i].name != NULL; ++i) {
-    if (lut[i].value == **buf) {
-      *json_obj = JsonCreateString(lut[i].name);
-      return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
+    const int32_t** const buf = (const int32_t**)((const uint8_t*)base_addr + cfg->offset);
+    if (*buf == NULL) {
+        *json_obj = NULL;
+        return kEebusErrorOk;
     }
-  }
 
-  *json_obj = NULL;
-  return kEebusErrorInputArgumentOutOfRange;
+    const EnumMapping* const lut = (const EnumMapping*)cfg->metadata;
+    for (size_t i = 0; lut[i].name != NULL; ++i) {
+        if (lut[i].value == **buf) {
+            *json_obj = JsonCreateString(lut[i].name);
+            return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
+        }
+    }
+
+    *json_obj = NULL;
+    return kEebusErrorInputArgumentOutOfRange;
 }

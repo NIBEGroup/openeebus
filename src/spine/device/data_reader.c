@@ -27,10 +27,10 @@
 typedef struct DataReader DataReader;
 
 struct DataReader {
-  /** Implements the Data Reader Interface */
-  DataReaderObject obj;
+    /** Implements the Data Reader Interface */
+    DataReaderObject obj;
 
-  DeviceRemoteObject* device_remote;
+    DeviceRemoteObject* device_remote;
 };
 
 #define DATA_READER(obj) ((DataReader*)(obj))
@@ -46,26 +46,26 @@ static const DataReaderInterface data_reader_methods = {
 static void DataReaderConstruct(DataReader* self, DeviceRemoteObject* device_remote);
 
 void DataReaderConstruct(DataReader* self, DeviceRemoteObject* device_remote) {
-  // Override "virtual functions table"
-  DATA_READER_INTERFACE(self) = &data_reader_methods;
+    // Override "virtual functions table"
+    DATA_READER_INTERFACE(self) = &data_reader_methods;
 
-  self->device_remote = device_remote;
+    self->device_remote = device_remote;
 }
 
 DataReaderObject* DataReaderCreate(DeviceRemoteObject* device_remote) {
-  DataReader* const data_reader = (DataReader*)EEBUS_MALLOC(sizeof(DataReader));
+    DataReader* const data_reader = (DataReader*)EEBUS_MALLOC(sizeof(DataReader));
 
-  DataReaderConstruct(data_reader, device_remote);
+    DataReaderConstruct(data_reader, device_remote);
 
-  return DATA_READER_OBJECT(data_reader);
+    return DATA_READER_OBJECT(data_reader);
 }
 
 void Destruct(DataReaderObject* self) {
-  UNUSED(self);
-  // Nothing to be deallocated here
+    UNUSED(self);
+    // Nothing to be deallocated here
 }
 
 void HandleMessage(DataReaderObject* self, MessageBuffer* msg) {
-  const DataReader* const data_reader = DATA_READER(self);
-  DEVICE_REMOTE_HANDLE_SPINE_MESSSAGE(data_reader->device_remote, msg);
+    const DataReader* const data_reader = DATA_READER(self);
+    DEVICE_REMOTE_HANDLE_SPINE_MESSSAGE(data_reader->device_remote, msg);
 }

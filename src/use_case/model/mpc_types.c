@@ -26,8 +26,8 @@
 typedef struct MpcNameMapping MpcNameMapping;
 
 struct MpcNameMapping {
-  const char* name;
-  MuMpcMeasurementNameId id;
+    const char* name;
+    MuMpcMeasurementNameId id;
 };
 
 static const MpcNameMapping mpc_name_lut[] = {
@@ -50,25 +50,25 @@ static const MpcNameMapping mpc_name_lut[] = {
 };
 
 const MuMpcMeasurementNameId* MuMpcMeasurementGetNameId(const char* name) {
-  if (name == NULL) {
-    return NULL;
-  }
-
-  for (size_t i = 0; i < ARRAY_SIZE(mpc_name_lut); ++i) {
-    if (strcmp(mpc_name_lut[i].name, name) == 0) {
-      return &mpc_name_lut[i].id;
+    if (name == NULL) {
+        return NULL;
     }
-  }
 
-  return NULL;
+    for (size_t i = 0; i < ARRAY_SIZE(mpc_name_lut); ++i) {
+        if (strcmp(mpc_name_lut[i].name, name) == 0) {
+            return &mpc_name_lut[i].id;
+        }
+    }
+
+    return NULL;
 }
 
 const char* MuMpcMeasurementGetName(MuMpcMeasurementNameId state) {
-  for (size_t i = 0; i < ARRAY_SIZE(mpc_name_lut); ++i) {
-    if (mpc_name_lut[i].id == state) {
-      return mpc_name_lut[i].name;
+    for (size_t i = 0; i < ARRAY_SIZE(mpc_name_lut); ++i) {
+        if (mpc_name_lut[i].id == state) {
+            return mpc_name_lut[i].name;
+        }
     }
-  }
 
-  return NULL;
+    return NULL;
 }

@@ -52,53 +52,57 @@ typedef struct EntityLocalObject EntityLocalObject;
  * @brief EntityLocal Interface Structure
  */
 struct EntityLocalInterface {
-  /** Extends EntityInterface */
-  EntityInterface entity_interface;
+    /** Extends EntityInterface */
+    EntityInterface entity_interface;
 
-  DeviceLocalObject* (*get_device)(const EntityLocalObject* self);
-  HeartbeatManagerObject* (*get_heartbeat_manager)(const EntityLocalObject* self);
-  void (*add_feature)(EntityLocalObject* self, FeatureLocalObject* feature);
-  FeatureLocalObject* (*get_feature_with_type_and_role)(
-      const EntityLocalObject* self,
-      FeatureTypeType feature_type,
-      RoleType role
-  );
-  FeatureLocalObject* (*add_feature_with_type_and_role)(
-      EntityLocalObject* self,
-      FeatureTypeType feature_type,
-      RoleType role
-  );
-  FeatureLocalObject* (*get_feature_with_id)(const EntityLocalObject* self, const uint32_t* feature_id);
-  const Vector* (*get_features)(const EntityLocalObject* self);
-  void (*add_use_case_support)(
-      EntityLocalObject* self,
-      UseCaseActorType actor,
-      UseCaseNameType use_case_name_id,
-      SpecificationVersionType version,
-      const char* sub_revision,
-      bool available,
-      const UseCaseScenarioSupportType* scenarios,
-      size_t scenarios_size
-  );
-  bool (*has_use_case_support)(const EntityLocalObject* self, const UseCaseFilterType* use_case_filter);
-  void (*set_use_case_availability)(EntityLocalObject* self, const UseCaseFilterType* use_case_filter, bool available);
-  void (*remove_use_case_supports)(
-      EntityLocalObject* self,
-      const UseCaseFilterType* use_case_filters,
-      size_t use_case_filters_size
-  );
-  void (*remove_all_use_case_supports)(EntityLocalObject* self);
-  void (*remove_all_subscriptions)(EntityLocalObject* self);
-  void (*remove_all_bindings)(EntityLocalObject* self);
-  NodeManagementDetailedDiscoveryEntityInformationType* (*create_information)(const EntityLocalObject* self);
-  void (*tick)(EntityLocalObject* self);
+    DeviceLocalObject* (*get_device)(const EntityLocalObject* self);
+    HeartbeatManagerObject* (*get_heartbeat_manager)(const EntityLocalObject* self);
+    void (*add_feature)(EntityLocalObject* self, FeatureLocalObject* feature);
+    FeatureLocalObject* (*get_feature_with_type_and_role)(
+        const EntityLocalObject* self,
+        FeatureTypeType feature_type,
+        RoleType role
+    );
+    FeatureLocalObject* (*add_feature_with_type_and_role)(
+        EntityLocalObject* self,
+        FeatureTypeType feature_type,
+        RoleType role
+    );
+    FeatureLocalObject* (*get_feature_with_id)(const EntityLocalObject* self, const uint32_t* feature_id);
+    const Vector* (*get_features)(const EntityLocalObject* self);
+    void (*add_use_case_support)(
+        EntityLocalObject* self,
+        UseCaseActorType actor,
+        UseCaseNameType use_case_name_id,
+        SpecificationVersionType version,
+        const char* sub_revision,
+        bool available,
+        const UseCaseScenarioSupportType* scenarios,
+        size_t scenarios_size
+    );
+    bool (*has_use_case_support)(const EntityLocalObject* self, const UseCaseFilterType* use_case_filter);
+    void (*set_use_case_availability)(
+        EntityLocalObject* self,
+        const UseCaseFilterType* use_case_filter,
+        bool available
+    );
+    void (*remove_use_case_supports)(
+        EntityLocalObject* self,
+        const UseCaseFilterType* use_case_filters,
+        size_t use_case_filters_size
+    );
+    void (*remove_all_use_case_supports)(EntityLocalObject* self);
+    void (*remove_all_subscriptions)(EntityLocalObject* self);
+    void (*remove_all_bindings)(EntityLocalObject* self);
+    NodeManagementDetailedDiscoveryEntityInformationType* (*create_information)(const EntityLocalObject* self);
+    void (*tick)(EntityLocalObject* self);
 };
 
 /**
  * @brief Entity Local Object Structure
  */
 struct EntityLocalObject {
-  const EntityLocalInterface* interface_;
+    const EntityLocalInterface* interface_;
 };
 
 /**
@@ -130,19 +134,19 @@ struct EntityLocalObject {
  * @brief Entity Local Get Feature With Type And Role caller definition
  */
 #define ENTITY_LOCAL_GET_FEATURE_WITH_TYPE_AND_ROLE(obj, feature_type, role) \
-  (ENTITY_LOCAL_INTERFACE(obj)->get_feature_with_type_and_role(obj, feature_type, role))
+    (ENTITY_LOCAL_INTERFACE(obj)->get_feature_with_type_and_role(obj, feature_type, role))
 
 /**
  * @brief Entity Local Add Feature With Type And Role caller definition
  */
 #define ENTITY_LOCAL_ADD_FEATURE_WITH_TYPE_AND_ROLE(obj, feature_type, role) \
-  (ENTITY_LOCAL_INTERFACE(obj)->add_feature_with_type_and_role(obj, feature_type, role))
+    (ENTITY_LOCAL_INTERFACE(obj)->add_feature_with_type_and_role(obj, feature_type, role))
 
 /**
  * @brief Entity Local Get Feature With Id caller definition
  */
 #define ENTITY_LOCAL_GET_FEATURE_WITH_ID(obj, feature_id) \
-  (ENTITY_LOCAL_INTERFACE(obj)->get_feature_with_id(obj, feature_id))
+    (ENTITY_LOCAL_INTERFACE(obj)->get_feature_with_id(obj, feature_id))
 
 /**
  * @brief Entity Local Get Features caller definition
@@ -152,44 +156,44 @@ struct EntityLocalObject {
 /**
  * @brief Entity Local Add Use Case Support caller definition
  */
-#define ENTITY_LOCAL_ADD_USE_CASE_SUPPORT(            \
-    obj,                                              \
-    actor,                                            \
-    use_case_name_id,                                 \
-    version,                                          \
-    sub_revision,                                     \
-    available,                                        \
-    scenarios,                                        \
-    scenarios_size                                    \
-)                                                     \
-  (ENTITY_LOCAL_INTERFACE(obj)->add_use_case_support( \
-      obj,                                            \
-      actor,                                          \
-      use_case_name_id,                               \
-      version,                                        \
-      sub_revision,                                   \
-      available,                                      \
-      scenarios,                                      \
-      scenarios_size                                  \
-  ))
+#define ENTITY_LOCAL_ADD_USE_CASE_SUPPORT(              \
+    obj,                                                \
+    actor,                                              \
+    use_case_name_id,                                   \
+    version,                                            \
+    sub_revision,                                       \
+    available,                                          \
+    scenarios,                                          \
+    scenarios_size                                      \
+)                                                       \
+    (ENTITY_LOCAL_INTERFACE(obj)->add_use_case_support( \
+        obj,                                            \
+        actor,                                          \
+        use_case_name_id,                               \
+        version,                                        \
+        sub_revision,                                   \
+        available,                                      \
+        scenarios,                                      \
+        scenarios_size                                  \
+    ))
 
 /**
  * @brief Entity Local Has Use Case Support caller definition
  */
 #define ENTITY_LOCAL_HAS_USE_CASE_SUPPORT(obj, use_case_filter) \
-  (ENTITY_LOCAL_INTERFACE(obj)->has_use_case_support(obj, use_case_filter))
+    (ENTITY_LOCAL_INTERFACE(obj)->has_use_case_support(obj, use_case_filter))
 
 /**
  * @brief Entity Local Set Use Case Availability caller definition
  */
 #define ENTITY_LOCAL_SET_USE_CASE_AVAILABILITY(obj, use_case_filter, available) \
-  (ENTITY_LOCAL_INTERFACE(obj)->set_use_case_availability(obj, use_case_filter, available))
+    (ENTITY_LOCAL_INTERFACE(obj)->set_use_case_availability(obj, use_case_filter, available))
 
 /**
  * @brief Entity Local Remove Use Case Supports caller definition
  */
 #define ENTITY_LOCAL_REMOVE_USE_CASE_SUPPORTS(obj, use_case_filters, use_case_filters_size) \
-  (ENTITY_LOCAL_INTERFACE(obj)->remove_use_case_supports(obj, use_case_filters, use_case_filters_size))
+    (ENTITY_LOCAL_INTERFACE(obj)->remove_use_case_supports(obj, use_case_filters, use_case_filters_size))
 
 /**
  * @brief Entity Local Remove All Use Case Supports caller definition

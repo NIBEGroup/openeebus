@@ -46,20 +46,20 @@ typedef struct OperationsObject OperationsObject;
  * @brief Operations Interface Structure
  */
 struct OperationsInterface {
-  void (*destruct)(OperationsObject* self);
-  bool (*get_read)(const OperationsObject* self);
-  bool (*get_read_partial)(const OperationsObject* self);
-  bool (*get_write)(const OperationsObject* self);
-  bool (*get_write_partial)(const OperationsObject* self);
-  const char* (*to_string)(const OperationsObject* self);
-  const PossibleOperationsType* (*get_information)(const OperationsObject* self);
+    void (*destruct)(OperationsObject* self);
+    bool (*get_read)(const OperationsObject* self);
+    bool (*get_read_partial)(const OperationsObject* self);
+    bool (*get_write)(const OperationsObject* self);
+    bool (*get_write_partial)(const OperationsObject* self);
+    const char* (*to_string)(const OperationsObject* self);
+    const PossibleOperationsType* (*get_information)(const OperationsObject* self);
 };
 
 /**
  * @brief Operations Object Structure
  */
 struct OperationsObject {
-  const OperationsInterface* interface_;
+    const OperationsInterface* interface_;
 };
 
 /**

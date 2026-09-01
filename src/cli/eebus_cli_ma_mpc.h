@@ -36,10 +36,10 @@ extern "C" {
 EebusCliHandlerObject* MaMpcCliCreate(MaMpcUseCaseObject* ma_mpc, const EntityAddressType* entity_addr);
 
 static inline void MaMpcCliDelete(EebusCliHandlerObject* ma_mpc_cli) {
-  if (ma_mpc_cli != NULL) {
-    EEBUS_CLI_HANDLER_DESTRUCT(ma_mpc_cli);
-    EEBUS_FREE(ma_mpc_cli);
-  }
+    if (ma_mpc_cli != NULL) {
+        EEBUS_CLI_HANDLER_DESTRUCT(ma_mpc_cli);
+        EEBUS_FREE(ma_mpc_cli);
+    }
 }
 
 #ifdef __cplusplus

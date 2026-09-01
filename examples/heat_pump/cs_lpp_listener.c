@@ -32,8 +32,8 @@
 typedef struct CsLppListener CsLppListener;
 
 struct CsLppListener {
-  /** Implements the CS LPP Listener Interface */
-  CsLpListenerObject obj;
+    /** Implements the CS LPP Listener Interface */
+    CsLpListenerObject obj;
 };
 
 #define CS_LPP_LISTENER(obj) ((CsLppListener*)(obj))
@@ -64,30 +64,30 @@ static const CsLpListenerInterface cs_lpp_listener_methods = {
 static EebusError CsLppListenerConstruct(CsLppListener* self);
 
 EebusError CsLppListenerConstruct(CsLppListener* self) {
-  // Override "virtual functions table"
-  CS_LP_LISTENER_INTERFACE(self) = &cs_lpp_listener_methods;
+    // Override "virtual functions table"
+    CS_LP_LISTENER_INTERFACE(self) = &cs_lpp_listener_methods;
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 CsLpListenerObject* CsLppListenerCreate(void) {
-  CsLppListener* const cs_lpp_listener = (CsLppListener*)EEBUS_MALLOC(sizeof(CsLppListener));
-  if (cs_lpp_listener == NULL) {
-    return NULL;
-  }
+    CsLppListener* const cs_lpp_listener = (CsLppListener*)EEBUS_MALLOC(sizeof(CsLppListener));
+    if (cs_lpp_listener == NULL) {
+        return NULL;
+    }
 
-  if (CsLppListenerConstruct(cs_lpp_listener) != kEebusErrorOk) {
-    CsLppListenerDelete(CS_LP_LISTENER_OBJECT(cs_lpp_listener));
-    return NULL;
-  }
+    if (CsLppListenerConstruct(cs_lpp_listener) != kEebusErrorOk) {
+        CsLppListenerDelete(CS_LP_LISTENER_OBJECT(cs_lpp_listener));
+        return NULL;
+    }
 
-  return CS_LP_LISTENER_OBJECT(cs_lpp_listener);
+    return CS_LP_LISTENER_OBJECT(cs_lpp_listener);
 }
 
 void Destruct(CsLpListenerObject* self) {
-  UNUSED(self);
+    UNUSED(self);
 
-  // Nothing to be deallocated yet
+    // Nothing to be deallocated yet
 }
 
 void OnPowerLimitReceive(
@@ -96,41 +96,41 @@ void OnPowerLimitReceive(
     const EebusDuration* duration,
     bool is_active
 ) {
-  UNUSED(self);
+    UNUSED(self);
 
-  ScaledValuePrint("CS LPP Power Limit received %sW, ", power_limit);
-  EebusDurationPrint("duration = %s, ", duration);
-  printf("active = %s\n", is_active ? "true" : "false");
+    ScaledValuePrint("CS LPP Power Limit received %sW, ", power_limit);
+    EebusDurationPrint("duration = %s, ", duration);
+    printf("active = %s\n", is_active ? "true" : "false");
 }
 
 void OnFailsafePowerLimitReceive(CsLpListenerObject* self, const ScaledValue* power_limit) {
-  UNUSED(self);
+    UNUSED(self);
 
-  ScaledValuePrint("CS LPP Failsafe Active Power Limit received:  %sW\n", power_limit);
+    ScaledValuePrint("CS LPP Failsafe Active Power Limit received:  %sW\n", power_limit);
 }
 
 void OnFailsafeDurationReceive(CsLpListenerObject* self, const DurationType* duration) {
-  UNUSED(self);
+    UNUSED(self);
 
-  EebusDurationPrint("CS LPP Failsafe Duration Minimum received: %s\n", duration);
+    EebusDurationPrint("CS LPP Failsafe Duration Minimum received: %s\n", duration);
 }
 
 void OnRemoteEgAdded(CsLpListenerObject* self, const EntityAddressType* entity_addr) {
-  UNUSED(self);
-  UNUSED(entity_addr);
+    UNUSED(self);
+    UNUSED(entity_addr);
 
-  printf("CS LPP Remote EG added\n");
+    printf("CS LPP Remote EG added\n");
 }
 
 void OnRemoteEgRemoved(CsLpListenerObject* self, const EntityAddressType* entity_addr) {
-  UNUSED(self);
-  UNUSED(entity_addr);
+    UNUSED(self);
+    UNUSED(entity_addr);
 
-  printf("CS LPP Remote EG removed\n");
+    printf("CS LPP Remote EG removed\n");
 }
 
 void OnHeartbeatReceive(CsLpListenerObject* self, uint64_t heartbeat_counter) {
-  UNUSED(self);
+    UNUSED(self);
 
-  printf("CS LPP Heartbeat received, counter = %" PRIu64 "\n", heartbeat_counter);
+    printf("CS LPP Heartbeat received, counter = %" PRIu64 "\n", heartbeat_counter);
 }

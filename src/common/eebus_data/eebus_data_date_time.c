@@ -38,27 +38,27 @@
 
 #define DATE_TIME_TO_STRING(interface, buf, buf_size) ((interface)->to_string(buf, buf_size))
 
-#define DATE_TIME_PARSE_DECL(name, type)                                     \
-  static EebusError Parse##type(const char* s, void* buf, size_t buf_size) { \
-    if (buf_size != sizeof(type)) {                                          \
-      return kEebusErrorInputArgument;                                       \
-    }                                                                        \
-                                                                             \
-    return type##Parse(s, (type*)buf);                                       \
-  }                                                                          \
-                                                                             \
-  static char* ToString##type(const void* buf, size_t buf_size) {            \
-    if (buf_size != sizeof(type)) {                                          \
-      return NULL;                                                           \
-    }                                                                        \
-                                                                             \
-    return type##ToString((const type*)buf);                                 \
-  }                                                                          \
-                                                                             \
-  const DateTimeParseInterface name = {                                      \
-      .parse     = Parse##type,                                              \
-      .to_string = ToString##type,                                           \
-  };
+#define DATE_TIME_PARSE_DECL(name, type)                                       \
+    static EebusError Parse##type(const char* s, void* buf, size_t buf_size) { \
+        if (buf_size != sizeof(type)) {                                        \
+            return kEebusErrorInputArgument;                                   \
+        }                                                                      \
+                                                                               \
+        return type##Parse(s, (type*)buf);                                     \
+    }                                                                          \
+                                                                               \
+    static char* ToString##type(const void* buf, size_t buf_size) {            \
+        if (buf_size != sizeof(type)) {                                        \
+            return NULL;                                                       \
+        }                                                                      \
+                                                                               \
+        return type##ToString((const type*)buf);                               \
+    }                                                                          \
+                                                                               \
+    const DateTimeParseInterface name = {                                      \
+        .parse     = Parse##type,                                              \
+        .to_string = ToString##type,                                           \
+    };
 
 DATE_TIME_PARSE_DECL(duration_parser, EebusDuration);
 DATE_TIME_PARSE_DECL(date_parser, EebusDate);
@@ -66,35 +66,35 @@ DATE_TIME_PARSE_DECL(time_parser, EebusTime);
 DATE_TIME_PARSE_DECL(date_time_parser, EebusDateTime);
 
 static EebusError ParseAbsoluteOrRelativeTime(const char* s, void* buf, size_t buf_size) {
-  if (buf_size != sizeof(AbsoluteOrRelativeTimeType)) {
-    return kEebusErrorInputArgument;
-  }
+    if (buf_size != sizeof(AbsoluteOrRelativeTimeType)) {
+        return kEebusErrorInputArgument;
+    }
 
-  AbsoluteOrRelativeTimeType* const time_buf = (AbsoluteOrRelativeTimeType*)buf;
-  if (EebusDurationParse(s, &time_buf->duration) == kEebusErrorOk) {
-    time_buf->type = kAbsoluteOrRelativeTimeTypeDuration;
-    return kEebusErrorOk;
-  } else if (EebusDateTimeParse(s, &time_buf->date_time) == kEebusErrorOk) {
-    time_buf->type = kAbsoluteOrRelativeTimeTypeDateTime;
-    return kEebusErrorOk;
-  } else {
-    return kEebusErrorParse;
-  }
+    AbsoluteOrRelativeTimeType* const time_buf = (AbsoluteOrRelativeTimeType*)buf;
+    if (EebusDurationParse(s, &time_buf->duration) == kEebusErrorOk) {
+        time_buf->type = kAbsoluteOrRelativeTimeTypeDuration;
+        return kEebusErrorOk;
+    } else if (EebusDateTimeParse(s, &time_buf->date_time) == kEebusErrorOk) {
+        time_buf->type = kAbsoluteOrRelativeTimeTypeDateTime;
+        return kEebusErrorOk;
+    } else {
+        return kEebusErrorParse;
+    }
 }
 
 static char* ToStringAbsoluteOrRelativeTime(const void* buf, size_t buf_size) {
-  if (buf_size != sizeof(AbsoluteOrRelativeTimeType)) {
-    return NULL;
-  }
+    if (buf_size != sizeof(AbsoluteOrRelativeTimeType)) {
+        return NULL;
+    }
 
-  const AbsoluteOrRelativeTimeType* const time_buf = (AbsoluteOrRelativeTimeType*)buf;
-  if (time_buf->type == kAbsoluteOrRelativeTimeTypeDuration) {
-    return EebusDurationToString(&time_buf->duration);
-  } else if ((time_buf->type == kAbsoluteOrRelativeTimeTypeDateTime)) {
-    return EebusDateTimeToString(&time_buf->date_time);
-  } else {
-    return NULL;  // Invalid type
-  }
+    const AbsoluteOrRelativeTimeType* const time_buf = (AbsoluteOrRelativeTimeType*)buf;
+    if (time_buf->type == kAbsoluteOrRelativeTimeTypeDuration) {
+        return EebusDurationToString(&time_buf->duration);
+    } else if ((time_buf->type == kAbsoluteOrRelativeTimeTypeDateTime)) {
+        return EebusDateTimeToString(&time_buf->date_time);
+    } else {
+        return NULL;  // Invalid type
+    }
 }
 
 const DateTimeParseInterface absolute_or_relative_time_parser = {
@@ -130,38 +130,38 @@ const EebusDataInterface eebus_data_absolute_or_relative_time_methods = {
 };
 
 EebusError FromJsonObjectItem(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj) {
-  if (!JsonIsString(json_obj)) {
-    return kEebusErrorParse;
-  }
+    if (!JsonIsString(json_obj)) {
+        return kEebusErrorParse;
+    }
 
-  void* const buf = EEBUS_DATA_CREATE_EMPTY(cfg, base_addr);
-  if (buf == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    void* const buf = EEBUS_DATA_CREATE_EMPTY(cfg, base_addr);
+    if (buf == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  const DateTimeParseInterface* const parser = (const DateTimeParseInterface*)cfg->metadata;
+    const DateTimeParseInterface* const parser = (const DateTimeParseInterface*)cfg->metadata;
 
-  const char* s = JsonGetString(json_obj);
-  if (DATE_TIME_PARSE(parser, s, buf, cfg->size) != kEebusErrorOk) {
-    EEBUS_DATA_DELETE(cfg, base_addr);
-    return kEebusErrorParse;
-  }
+    const char* s = JsonGetString(json_obj);
+    if (DATE_TIME_PARSE(parser, s, buf, cfg->size) != kEebusErrorOk) {
+        EEBUS_DATA_DELETE(cfg, base_addr);
+        return kEebusErrorParse;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError ToJsonObjectItem(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_obj) {
-  const void** const buf = (const void**)((const uint8_t*)base_addr + cfg->offset);
-  if (*buf == NULL) {
-    *json_obj = NULL;
-    return kEebusErrorOk;
-  }
+    const void** const buf = (const void**)((const uint8_t*)base_addr + cfg->offset);
+    if (*buf == NULL) {
+        *json_obj = NULL;
+        return kEebusErrorOk;
+    }
 
-  const DateTimeParseInterface* const parser = (const DateTimeParseInterface*)cfg->metadata;
+    const DateTimeParseInterface* const parser = (const DateTimeParseInterface*)cfg->metadata;
 
-  const char* const s = DATE_TIME_TO_STRING(parser, *buf, cfg->size);
+    const char* const s = DATE_TIME_TO_STRING(parser, *buf, cfg->size);
 
-  *json_obj = JsonCreateString(s);
-  StringDelete((char*)s);
-  return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
+    *json_obj = JsonCreateString(s);
+    StringDelete((char*)s);
+    return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
 }

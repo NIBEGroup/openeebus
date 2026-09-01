@@ -20,51 +20,51 @@
 #include "src/common/eebus_data/eebus_data_enum.h"
 
 size_t EebusDataGetCfgSize(const EebusDataCfg* cfg_first) {
-  if (cfg_first == NULL) {
-    return 0;
-  }
+    if (cfg_first == NULL) {
+        return 0;
+    }
 
-  size_t n = 0;
-  while (cfg_first[n].name != NULL) {
-    ++n;
-  }
+    size_t n = 0;
+    while (cfg_first[n].name != NULL) {
+        ++n;
+    }
 
-  return n;
+    return n;
 }
 
 size_t EebusDataGetEnumMappingSize(const EnumMapping* enum_mapping_first) {
-  if (enum_mapping_first == NULL) {
-    return 0;
-  }
+    if (enum_mapping_first == NULL) {
+        return 0;
+    }
 
-  size_t n = 0;
-  while (enum_mapping_first[n].name != NULL) {
-    ++n;
-  }
+    size_t n = 0;
+    while (enum_mapping_first[n].name != NULL) {
+        ++n;
+    }
 
-  return n;
+    return n;
 }
 
 const EnumMapping* EebusDataGetEnumMappingWithValue(const EnumMapping* enum_mapping_first, int32_t value) {
-  for (const EnumMapping* mapping_it = enum_mapping_first; mapping_it->name != NULL; ++mapping_it) {
-    if (mapping_it->value == value) {
-      return mapping_it;
+    for (const EnumMapping* mapping_it = enum_mapping_first; mapping_it->name != NULL; ++mapping_it) {
+        if (mapping_it->value == value) {
+            return mapping_it;
+        }
     }
-  }
 
-  return NULL;
+    return NULL;
 }
 
 const EnumMapping* EebusDataGetEnumMappingWithName(const EnumMapping* enum_mapping_first, const char* name) {
-  if (name == NULL) {
-    return NULL;
-  }
-
-  for (const EnumMapping* mapping_it = enum_mapping_first; mapping_it->name != NULL; ++mapping_it) {
-    if (strcmp(mapping_it->name, name) == 0) {
-      return mapping_it;
+    if (name == NULL) {
+        return NULL;
     }
-  }
 
-  return NULL;
+    for (const EnumMapping* mapping_it = enum_mapping_first; mapping_it->name != NULL; ++mapping_it) {
+        if (strcmp(mapping_it->name, name) == 0) {
+            return mapping_it;
+        }
+    }
+
+    return NULL;
 }

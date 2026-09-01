@@ -56,46 +56,54 @@ typedef struct DeviceLocalObject DeviceLocalObject;
  * @brief DeviceLocal Interface Structure
  */
 struct DeviceLocalInterface {
-  /** Extends DeviceInterface */
-  DeviceInterface device_interface;
+    /** Extends DeviceInterface */
+    DeviceInterface device_interface;
 
-  EebusError (*start)(DeviceLocalObject* self);
-  void (*stop)(DeviceLocalObject* self);
-  DataReaderObject* (*setup_remote_device)(DeviceLocalObject* self, const char* ski, DataWriterObject* writer);
-  void (*add_remote_device_for_ski)(DeviceLocalObject* self, const char* ski, DeviceRemoteObject* remote_device);
-  EebusError (*request_remote_detailed_discovery_data)(
-      DeviceLocalObject* self, const DeviceRemoteObject* remote_device);
-  void (*remove_remote_device_connection)(DeviceLocalObject* self, const char* ski);
-  void (*remove_remote_device)(DeviceLocalObject* self, const char* ski);
-  DeviceRemoteObject* (*get_remote_device_with_address)(const DeviceLocalObject* self, const char* device_addr);
-  DeviceRemoteObject* (*get_remote_device_with_ski)(const DeviceLocalObject* self, const char* ski);
-  void (*add_entity)(DeviceLocalObject* self, EntityLocalObject* entity);
-  void (*remove_entity)(DeviceLocalObject* self, EntityLocalObject* entity);
-  EntityLocalObject* (*get_entity)(
-      const DeviceLocalObject* self,
-      const uint32_t* const* entity_ids,
-      size_t entity_ids_size
-  );
-  EntityLocalObject* (*get_entity_with_type)(const DeviceLocalObject* self, EntityTypeType entity_type);
-  const Vector* (*get_entities)(const DeviceLocalObject* self);
-  FeatureLocalObject* (*get_feature_with_address)(
-      const DeviceLocalObject* self, const FeatureAddressType* feature_addr);
-  EebusError (*handle_message)(DeviceLocalObject* self, MessageBuffer* msg, DeviceRemoteObject* remote_device);
-  NodeManagementObject* (*get_node_management)(const DeviceLocalObject* self);
-  BindingManagerObject* (*get_binding_manager)(const DeviceLocalObject* self);
-  SubscriptionManagerObject* (*get_subscription_manager)(const DeviceLocalObject* self);
-  EventsManagerObject* (*get_events_manager)(const DeviceLocalObject* self);
-  void (*notify_subscribers)(const DeviceLocalObject* self, const FeatureAddressType* feature_addr, const CmdType* cmd);
-  NodeManagementDetailedDiscoveryDeviceInformationType* (*create_information)(const DeviceLocalObject* self);
-  void (*lock)(DeviceLocalObject* self);
-  void (*unlock)(DeviceLocalObject* self);
+    EebusError (*start)(DeviceLocalObject* self);
+    void (*stop)(DeviceLocalObject* self);
+    DataReaderObject* (*setup_remote_device)(DeviceLocalObject* self, const char* ski, DataWriterObject* writer);
+    void (*add_remote_device_for_ski)(DeviceLocalObject* self, const char* ski, DeviceRemoteObject* remote_device);
+    EebusError (*request_remote_detailed_discovery_data)(
+        DeviceLocalObject* self,
+        const DeviceRemoteObject* remote_device
+    );
+    void (*remove_remote_device_connection)(DeviceLocalObject* self, const char* ski);
+    void (*remove_remote_device)(DeviceLocalObject* self, const char* ski);
+    DeviceRemoteObject* (*get_remote_device_with_address)(const DeviceLocalObject* self, const char* device_addr);
+    DeviceRemoteObject* (*get_remote_device_with_ski)(const DeviceLocalObject* self, const char* ski);
+    void (*add_entity)(DeviceLocalObject* self, EntityLocalObject* entity);
+    void (*remove_entity)(DeviceLocalObject* self, EntityLocalObject* entity);
+    EntityLocalObject* (*get_entity)(
+        const DeviceLocalObject* self,
+        const uint32_t* const* entity_ids,
+        size_t entity_ids_size
+    );
+    EntityLocalObject* (*get_entity_with_type)(const DeviceLocalObject* self, EntityTypeType entity_type);
+    const Vector* (*get_entities)(const DeviceLocalObject* self);
+    FeatureLocalObject* (*get_feature_with_address)(
+        const DeviceLocalObject* self,
+        const FeatureAddressType* feature_addr
+    );
+    EebusError (*handle_message)(DeviceLocalObject* self, MessageBuffer* msg, DeviceRemoteObject* remote_device);
+    NodeManagementObject* (*get_node_management)(const DeviceLocalObject* self);
+    BindingManagerObject* (*get_binding_manager)(const DeviceLocalObject* self);
+    SubscriptionManagerObject* (*get_subscription_manager)(const DeviceLocalObject* self);
+    EventsManagerObject* (*get_events_manager)(const DeviceLocalObject* self);
+    void (*notify_subscribers)(
+        const DeviceLocalObject* self,
+        const FeatureAddressType* feature_addr,
+        const CmdType* cmd
+    );
+    NodeManagementDetailedDiscoveryDeviceInformationType* (*create_information)(const DeviceLocalObject* self);
+    void (*lock)(DeviceLocalObject* self);
+    void (*unlock)(DeviceLocalObject* self);
 };
 
 /**
  * @brief Device Local Object Structure
  */
 struct DeviceLocalObject {
-  const DeviceLocalInterface* interface_;
+    const DeviceLocalInterface* interface_;
 };
 
 /**
@@ -122,25 +130,25 @@ struct DeviceLocalObject {
  * @brief Device Local Setup Remote Device caller definition
  */
 #define DEVICE_LOCAL_SETUP_REMOTE_DEVICE(obj, ski, writer) \
-  (DEVICE_LOCAL_INTERFACE(obj)->setup_remote_device(obj, ski, writer))
+    (DEVICE_LOCAL_INTERFACE(obj)->setup_remote_device(obj, ski, writer))
 
 /**
  * @brief Device Local Add Remote Device For Ski caller definition
  */
 #define DEVICE_LOCAL_ADD_REMOTE_DEVICE_FOR_SKI(obj, ski, remote_device) \
-  (DEVICE_LOCAL_INTERFACE(obj)->add_remote_device_for_ski(obj, ski, remote_device))
+    (DEVICE_LOCAL_INTERFACE(obj)->add_remote_device_for_ski(obj, ski, remote_device))
 
 /**
  * @brief Device Local Request Remote Detailed Discovery Data caller definition
  */
 #define DEVICE_LOCAL_REQUEST_REMOTE_DETAILED_DISCOVERY_DATA(obj, remote_device) \
-  (DEVICE_LOCAL_INTERFACE(obj)->request_remote_detailed_discovery_data(obj, remote_device))
+    (DEVICE_LOCAL_INTERFACE(obj)->request_remote_detailed_discovery_data(obj, remote_device))
 
 /**
  * @brief Device Local Remove Remote Device Connection caller definition
  */
 #define DEVICE_LOCAL_REMOVE_REMOTE_DEVICE_CONNECTION(obj, ski) \
-  (DEVICE_LOCAL_INTERFACE(obj)->remove_remote_device_connection(obj, ski))
+    (DEVICE_LOCAL_INTERFACE(obj)->remove_remote_device_connection(obj, ski))
 
 /**
  * @brief Device Local Remove Remote Device caller definition
@@ -151,13 +159,13 @@ struct DeviceLocalObject {
  * @brief Device Local Get Remote Device With Address caller definition
  */
 #define DEVICE_LOCAL_GET_REMOTE_DEVICE_WITH_ADDRESS(obj, device_addr) \
-  (DEVICE_LOCAL_INTERFACE(obj)->get_remote_device_with_address(obj, device_addr))
+    (DEVICE_LOCAL_INTERFACE(obj)->get_remote_device_with_address(obj, device_addr))
 
 /**
  * @brief Device Local Get Remote Device With Ski caller definition
  */
 #define DEVICE_LOCAL_GET_REMOTE_DEVICE_WITH_SKI(obj, ski) \
-  (DEVICE_LOCAL_INTERFACE(obj)->get_remote_device_with_ski(obj, ski))
+    (DEVICE_LOCAL_INTERFACE(obj)->get_remote_device_with_ski(obj, ski))
 
 /**
  * @brief Device Local Add Entity caller definition
@@ -173,13 +181,13 @@ struct DeviceLocalObject {
  * @brief Device Local Get Entity caller definition
  */
 #define DEVICE_LOCAL_GET_ENTITY(obj, entity_ids, entity_ids_size) \
-  (DEVICE_LOCAL_INTERFACE(obj)->get_entity(obj, entity_ids, entity_ids_size))
+    (DEVICE_LOCAL_INTERFACE(obj)->get_entity(obj, entity_ids, entity_ids_size))
 
 /**
  * @brief Device Local Get Entity With Type caller definition
  */
 #define DEVICE_LOCAL_GET_ENTITY_WITH_TYPE(obj, entity_type) \
-  (DEVICE_LOCAL_INTERFACE(obj)->get_entity_with_type(obj, entity_type))
+    (DEVICE_LOCAL_INTERFACE(obj)->get_entity_with_type(obj, entity_type))
 
 /**
  * @brief Device Local Get Entities caller definition
@@ -190,13 +198,13 @@ struct DeviceLocalObject {
  * @brief Device Local Get Feature With Address caller definition
  */
 #define DEVICE_LOCAL_GET_FEATURE_WITH_ADDRESS(obj, feature_addr) \
-  (DEVICE_LOCAL_INTERFACE(obj)->get_feature_with_address(obj, feature_addr))
+    (DEVICE_LOCAL_INTERFACE(obj)->get_feature_with_address(obj, feature_addr))
 
 /**
  * @brief Device Local Handle Message caller definition
  */
 #define DEVICE_LOCAL_HANDLE_MESSAGE(obj, msg, remote_device) \
-  (DEVICE_LOCAL_INTERFACE(obj)->handle_message(obj, msg, remote_device))
+    (DEVICE_LOCAL_INTERFACE(obj)->handle_message(obj, msg, remote_device))
 
 /**
  * @brief Device Local Get Node Management caller definition
@@ -222,7 +230,7 @@ struct DeviceLocalObject {
  * @brief Device Local Notify Subscribers caller definition
  */
 #define DEVICE_LOCAL_NOTIFY_SUBSCRIBERS(obj, feature_addr, cmd) \
-  (DEVICE_LOCAL_INTERFACE(obj)->notify_subscribers(obj, feature_addr, cmd))
+    (DEVICE_LOCAL_INTERFACE(obj)->notify_subscribers(obj, feature_addr, cmd))
 
 /**
  * @brief Device Local Create Information caller definition

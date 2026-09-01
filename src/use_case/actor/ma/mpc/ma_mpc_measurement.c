@@ -24,71 +24,71 @@
 #include "src/use_case/actor/ma/ma_measurement_base.h"
 #include "src/use_case/model/mpc_types.h"
 
-#define MA_MPC_MEASUREMENT_POWER_TOTAL                                     \
-  {                                                                        \
-      .obj                      = {.interface_ = &ma_measurement_methods}, \
-      .name                     = kMpcPowerTotal,                          \
-      .measurement_type         = kMeasurementTypeTypePower,               \
-      .scope                    = kScopeTypeTypeACPowerTotal,              \
-      .phases                   = NULL,                                    \
-      .in_reference_to          = NULL,                                    \
-      .get_measurement_strategy = MaMeasurementGetPowerStrategy,           \
-  }
+#define MA_MPC_MEASUREMENT_POWER_TOTAL                                       \
+    {                                                                        \
+        .obj                      = {.interface_ = &ma_measurement_methods}, \
+        .name                     = kMpcPowerTotal,                          \
+        .measurement_type         = kMeasurementTypeTypePower,               \
+        .scope                    = kScopeTypeTypeACPowerTotal,              \
+        .phases                   = NULL,                                    \
+        .in_reference_to          = NULL,                                    \
+        .get_measurement_strategy = MaMeasurementGetPowerStrategy,           \
+    }
 
-#define MA_MPC_MEASUREMENT_POWER(name_id, phase)                                                                   \
-  {                                                                                                                \
-      .obj                      = {.interface_ = &ma_measurement_methods},                                         \
-      .name                     = name_id,                                                                         \
-      .measurement_type         = kMeasurementTypeTypePower,                                                       \
-      .scope                    = kScopeTypeTypeACPower,                                                           \
-      .phases                   = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##phase}, \
-      .in_reference_to          = NULL,                                                                            \
-      .get_measurement_strategy = MaMeasurementGetPowerStrategy,                                                   \
-  }
+#define MA_MPC_MEASUREMENT_POWER(name_id, phase)                                                                     \
+    {                                                                                                                \
+        .obj                      = {.interface_ = &ma_measurement_methods},                                         \
+        .name                     = name_id,                                                                         \
+        .measurement_type         = kMeasurementTypeTypePower,                                                       \
+        .scope                    = kScopeTypeTypeACPower,                                                           \
+        .phases                   = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##phase}, \
+        .in_reference_to          = NULL,                                                                            \
+        .get_measurement_strategy = MaMeasurementGetPowerStrategy,                                                   \
+    }
 
-#define MA_MPC_MEASUREMENT_ENERGY(name_id, energy_scope)                   \
-  {                                                                        \
-      .obj                      = {.interface_ = &ma_measurement_methods}, \
-      .name                     = name_id,                                 \
-      .measurement_type         = kMeasurementTypeTypeEnergy,              \
-      .scope                    = energy_scope,                            \
-      .phases                   = NULL,                                    \
-      .in_reference_to          = NULL,                                    \
-      .get_measurement_strategy = MaMeasurementGetEnergyStrategy,          \
-  }
+#define MA_MPC_MEASUREMENT_ENERGY(name_id, energy_scope)                     \
+    {                                                                        \
+        .obj                      = {.interface_ = &ma_measurement_methods}, \
+        .name                     = name_id,                                 \
+        .measurement_type         = kMeasurementTypeTypeEnergy,              \
+        .scope                    = energy_scope,                            \
+        .phases                   = NULL,                                    \
+        .in_reference_to          = NULL,                                    \
+        .get_measurement_strategy = MaMeasurementGetEnergyStrategy,          \
+    }
 
-#define MA_MPC_MEASUREMENT_CURRENT(name_id, phase)                                                                 \
-  {                                                                                                                \
-      .obj                      = {.interface_ = &ma_measurement_methods},                                         \
-      .name                     = name_id,                                                                         \
-      .measurement_type         = kMeasurementTypeTypeCurrent,                                                     \
-      .scope                    = kScopeTypeTypeACCurrent,                                                         \
-      .phases                   = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##phase}, \
-      .in_reference_to          = NULL,                                                                            \
-      .get_measurement_strategy = MaMeasurementGetCurrentStrategy,                                                 \
-  }
+#define MA_MPC_MEASUREMENT_CURRENT(name_id, phase)                                                                   \
+    {                                                                                                                \
+        .obj                      = {.interface_ = &ma_measurement_methods},                                         \
+        .name                     = name_id,                                                                         \
+        .measurement_type         = kMeasurementTypeTypeCurrent,                                                     \
+        .scope                    = kScopeTypeTypeACCurrent,                                                         \
+        .phases                   = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##phase}, \
+        .in_reference_to          = NULL,                                                                            \
+        .get_measurement_strategy = MaMeasurementGetCurrentStrategy,                                                 \
+    }
 
-#define MA_MPC_MEASUREMENT_VOLTAGE(name_id, phase, ref_phase)                                                          \
-  {                                                                                                                    \
-      .obj                      = {.interface_ = &ma_measurement_methods},                                             \
-      .name                     = name_id,                                                                             \
-      .measurement_type         = kMeasurementTypeTypeVoltage,                                                         \
-      .scope                    = kScopeTypeTypeACVoltage,                                                             \
-      .phases                   = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##phase},     \
-      .in_reference_to          = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##ref_phase}, \
-      .get_measurement_strategy = MaMeasurementGetVoltageStrategy,                                                     \
-  }
+#define MA_MPC_MEASUREMENT_VOLTAGE(name_id, phase, ref_phase)                                                            \
+    {                                                                                                                    \
+        .obj                      = {.interface_ = &ma_measurement_methods},                                             \
+        .name                     = name_id,                                                                             \
+        .measurement_type         = kMeasurementTypeTypeVoltage,                                                         \
+        .scope                    = kScopeTypeTypeACVoltage,                                                             \
+        .phases                   = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##phase},     \
+        .in_reference_to          = &(ElectricalConnectionPhaseNameType){kElectricalConnectionPhaseNameType##ref_phase}, \
+        .get_measurement_strategy = MaMeasurementGetVoltageStrategy,                                                     \
+    }
 
-#define MA_MPC_MEASUREMENT_FREQUENCY                                       \
-  {                                                                        \
-      .obj                      = {.interface_ = &ma_measurement_methods}, \
-      .name                     = kMpcFrequency,                           \
-      .measurement_type         = kMeasurementTypeTypeFrequency,           \
-      .scope                    = kScopeTypeTypeACFrequency,               \
-      .phases                   = NULL,                                    \
-      .in_reference_to          = NULL,                                    \
-      .get_measurement_strategy = MaMeasurementGetFrequencyStrategy,       \
-  }
+#define MA_MPC_MEASUREMENT_FREQUENCY                                         \
+    {                                                                        \
+        .obj                      = {.interface_ = &ma_measurement_methods}, \
+        .name                     = kMpcFrequency,                           \
+        .measurement_type         = kMeasurementTypeTypeFrequency,           \
+        .scope                    = kScopeTypeTypeACFrequency,               \
+        .phases                   = NULL,                                    \
+        .in_reference_to          = NULL,                                    \
+        .get_measurement_strategy = MaMeasurementGetFrequencyStrategy,       \
+    }
 
 static const MaMeasurementBase measurement_table[] = {
     MA_MPC_MEASUREMENT_POWER_TOTAL,
@@ -114,9 +114,9 @@ const MaMeasurementObject* MaMpcMeasurementGetInstance(
     ElectricalConnectionClient* eccl,
     const MeasurementDataType* measurement_data
 ) {
-  return MaMeasurementGetInstance(measurement_table, ARRAY_SIZE(measurement_table), mcl, eccl, measurement_data);
+    return MaMeasurementGetInstance(measurement_table, ARRAY_SIZE(measurement_table), mcl, eccl, measurement_data);
 }
 
 const MaMeasurementObject* MaMpcMeasurementGetInstanceWithNameId(EebusMeasurementNameId name) {
-  return MaMeasurementGetInstanceWithNameId(measurement_table, ARRAY_SIZE(measurement_table), name);
+    return MaMeasurementGetInstanceWithNameId(measurement_table, ARRAY_SIZE(measurement_table), name);
 }

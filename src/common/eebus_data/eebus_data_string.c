@@ -30,10 +30,15 @@
 static void* CreateEmpty(const EebusDataCfg* cfg, void* base_addr);
 static EebusError FromJsonObjectItems(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj);
 static EebusError ToJsonObjectItems(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_obj);
-static bool Compare(
-    const EebusDataCfg* cfg, const void* a_base_addr, const EebusDataCfg* b_cfg, const void* b_base_addr);
-static EebusError ReadElements(const EebusDataCfg* cfg, const void* base_addr, void* dst_base_addr,
-    const EebusDataCfg* elements_cfg, const void* elements_base_addr);
+static bool
+Compare(const EebusDataCfg* cfg, const void* a_base_addr, const EebusDataCfg* b_cfg, const void* b_base_addr);
+static EebusError ReadElements(
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    void* dst_base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
 static EebusError Write(const EebusDataCfg* cfg, void* base_addr, const void* src_base_addr);
 
 const EebusDataInterface eebus_data_string_methods = {
@@ -61,88 +66,93 @@ const EebusDataInterface eebus_data_string_methods = {
 };
 
 void* CreateEmpty(const EebusDataCfg* cfg, void* base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
 
-  EEBUS_ASSERT_ALWAYS();
-  return NULL;
+    EEBUS_ASSERT_ALWAYS();
+    return NULL;
 }
 
 EebusError FromJsonObjectItems(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj) {
-  if (!JsonIsString(json_obj)) {
-    return kEebusErrorParse;
-  }
+    if (!JsonIsString(json_obj)) {
+        return kEebusErrorParse;
+    }
 
-  char** const ps = (char**)((uint8_t*)base_addr + cfg->offset);
+    char** const ps = (char**)((uint8_t*)base_addr + cfg->offset);
 
-  *ps = StringCopy(JsonGetString(json_obj));
+    *ps = StringCopy(JsonGetString(json_obj));
 
-  return (*ps != NULL) ? kEebusErrorOk : kEebusErrorParse;
+    return (*ps != NULL) ? kEebusErrorOk : kEebusErrorParse;
 }
 
 EebusError ToJsonObjectItems(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_obj) {
-  const char** const ps = (const char**)((const uint8_t*)base_addr + cfg->offset);
-  if (*ps == NULL) {
-    *json_obj = NULL;
-    return kEebusErrorOk;
-  }
+    const char** const ps = (const char**)((const uint8_t*)base_addr + cfg->offset);
+    if (*ps == NULL) {
+        *json_obj = NULL;
+        return kEebusErrorOk;
+    }
 
-  *json_obj = JsonCreateString(*ps);
-  return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
+    *json_obj = JsonCreateString(*ps);
+    return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
 }
 
 bool Compare(const EebusDataCfg* a_cfg, const void* a_base_addr, const EebusDataCfg* b_cfg, const void* b_base_addr) {
-  if (!EEBUS_DATA_TYPE_EQ(a_cfg, b_cfg)) {
-    return false;
-  }
+    if (!EEBUS_DATA_TYPE_EQ(a_cfg, b_cfg)) {
+        return false;
+    }
 
-  const char** const a_buf = (const char**)((const uint8_t*)a_base_addr + a_cfg->offset);
-  const char** const b_buf = (const char**)((const uint8_t*)b_base_addr + b_cfg->offset);
+    const char** const a_buf = (const char**)((const uint8_t*)a_base_addr + a_cfg->offset);
+    const char** const b_buf = (const char**)((const uint8_t*)b_base_addr + b_cfg->offset);
 
-  if ((*a_buf == NULL) || (*b_buf == NULL)) {
-    return *a_buf == *b_buf;
-  }
+    if ((*a_buf == NULL) || (*b_buf == NULL)) {
+        return *a_buf == *b_buf;
+    }
 
-  return strcmp(*a_buf, *b_buf) == 0;
+    return strcmp(*a_buf, *b_buf) == 0;
 }
 
-EebusError ReadElements(const EebusDataCfg* cfg, const void* base_addr, void* dst_base_addr,
-    const EebusDataCfg* elements_cfg, const void* elements_base_addr) {
-  if (EEBUS_DATA_IS_NULL(elements_cfg, elements_base_addr)) {
-    // Should not be written - ok
-    return kEebusErrorOk;
-  };
+EebusError ReadElements(
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    void* dst_base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+) {
+    if (EEBUS_DATA_IS_NULL(elements_cfg, elements_base_addr)) {
+        // Should not be written - ok
+        return kEebusErrorOk;
+    };
 
-  EEBUS_DATA_DELETE(cfg, dst_base_addr);
-  return EEBUS_DATA_COPY(cfg, base_addr, dst_base_addr);
+    EEBUS_DATA_DELETE(cfg, dst_base_addr);
+    return EEBUS_DATA_COPY(cfg, base_addr, dst_base_addr);
 }
 
 EebusError Write(const EebusDataCfg* cfg, void* base_addr, const void* src_base_addr) {
-  const char** const src_buf = (const char**)((const uint8_t*)src_base_addr + cfg->offset);
-  if (*src_buf == NULL) {
-    EEBUS_DATA_DELETE(cfg, base_addr);
-    return kEebusErrorOk;
-  }
-
-  const size_t src_buf_size = strlen((char*)*src_buf) + 1;
-
-  char** buf      = (char**)((uint8_t*)base_addr + cfg->offset);
-  size_t buf_size = 0;
-  if (*buf != NULL) {
-    buf_size = strlen((char*)*buf) + 1;
-    if (buf_size != src_buf_size) {
-      EEBUS_DATA_DELETE(cfg, base_addr);
-      *buf = NULL;
+    const char** const src_buf = (const char**)((const uint8_t*)src_base_addr + cfg->offset);
+    if (*src_buf == NULL) {
+        EEBUS_DATA_DELETE(cfg, base_addr);
+        return kEebusErrorOk;
     }
-  }
 
-  if (*buf == NULL) {
-    *buf = EEBUS_MALLOC(src_buf_size);
+    const size_t src_buf_size = strlen((char*)*src_buf) + 1;
+
+    char** buf      = (char**)((uint8_t*)base_addr + cfg->offset);
+    size_t buf_size = 0;
+    if (*buf != NULL) {
+        buf_size = strlen((char*)*buf) + 1;
+        if (buf_size != src_buf_size) {
+            EEBUS_DATA_DELETE(cfg, base_addr);
+            *buf = NULL;
+        }
+    }
+
     if (*buf == NULL) {
-      return kEebusErrorMemoryAllocate;
+        *buf = EEBUS_MALLOC(src_buf_size);
+        if (*buf == NULL) {
+            return kEebusErrorMemoryAllocate;
+        }
     }
-  }
 
-  strcpy(*buf, *src_buf);
-  return kEebusErrorOk;
+    strcpy(*buf, *src_buf);
+    return kEebusErrorOk;
 }

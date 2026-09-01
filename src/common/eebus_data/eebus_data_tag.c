@@ -34,11 +34,20 @@ static EebusError ToJsonObjectItem(const EebusDataCfg* cfg, const void* base_add
 bool Compare(const EebusDataCfg* a_cfg, const void* a_base_addr, const EebusDataCfg* b_cfg, const void* b_base_addr);
 static bool IsNull(const EebusDataCfg* cfg, const void* base_addr);
 static bool IsEmpty(const EebusDataCfg* cfg, const void* base_addr);
-static EebusError ReadElements(const EebusDataCfg* cfg, const void* base_addr, void* dst_base_addr,
-    const EebusDataCfg* elements_cfg, const void* elements_base_addr);
+static EebusError ReadElements(
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    void* dst_base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
 static EebusError Write(const EebusDataCfg* cfg, void* base_addr, const void* src_base_addr);
 void DeleteElements(
-    const EebusDataCfg* cfg, void* base_addr, const EebusDataCfg* elements_cfg, const void* elements_base_addr);
+    const EebusDataCfg* cfg,
+    void* base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
 void Delete(const EebusDataCfg* cfg, void* base_addr);
 
 const EebusDataInterface eebus_data_tag_methods = {
@@ -66,95 +75,104 @@ const EebusDataInterface eebus_data_tag_methods = {
 };
 
 void* CreateEmpty(const EebusDataCfg* cfg, void* base_addr) {
-  TagType* const buf = (TagType*)((uint8_t*)base_addr + cfg->offset);
+    TagType* const buf = (TagType*)((uint8_t*)base_addr + cfg->offset);
 
-  return *buf = EEBUS_TAG_RESET;
+    return *buf = EEBUS_TAG_RESET;
 }
 
 EebusError FromJsonObjectItem(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_obj) {
-  TagType* const buf = (TagType*)((uint8_t*)base_addr + cfg->offset);
+    TagType* const buf = (TagType*)((uint8_t*)base_addr + cfg->offset);
 
-  if (json_obj == NULL) {
-    *buf = EEBUS_TAG_RESET;
-    return kEebusErrorOk;
-  }
+    if (json_obj == NULL) {
+        *buf = EEBUS_TAG_RESET;
+        return kEebusErrorOk;
+    }
 
-  if (JsonIsArray(json_obj) && (JsonGetArraySize(json_obj) == 0)) {
-    *buf = EEBUS_TAG_SET;
-    return kEebusErrorOk;
-  }
+    if (JsonIsArray(json_obj) && (JsonGetArraySize(json_obj) == 0)) {
+        *buf = EEBUS_TAG_SET;
+        return kEebusErrorOk;
+    }
 
-  return kEebusErrorParse;
+    return kEebusErrorParse;
 }
 
 EebusError ToJsonObjectItem(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_obj) {
-  const TagType* const buf = (const TagType*)((const uint8_t*)base_addr + cfg->offset);
+    const TagType* const buf = (const TagType*)((const uint8_t*)base_addr + cfg->offset);
 
-  if (*buf == EEBUS_TAG_RESET) {
-    *json_obj = NULL;
-    return kEebusErrorOk;
-  }
+    if (*buf == EEBUS_TAG_RESET) {
+        *json_obj = NULL;
+        return kEebusErrorOk;
+    }
 
-  *json_obj = JsonCreateArray();
-  return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
+    *json_obj = JsonCreateArray();
+    return (*json_obj != NULL) ? kEebusErrorOk : kEebusErrorMemoryAllocate;
 }
 
 bool Compare(const EebusDataCfg* a_cfg, const void* a_base_addr, const EebusDataCfg* b_cfg, const void* b_base_addr) {
-  if (!EEBUS_DATA_TYPE_EQ(a_cfg, b_cfg)) {
-    return false;
-  }
+    if (!EEBUS_DATA_TYPE_EQ(a_cfg, b_cfg)) {
+        return false;
+    }
 
-  return EEBUS_DATA_IS_NULL(a_cfg, a_base_addr) == EEBUS_DATA_IS_NULL(b_cfg, b_base_addr);
+    return EEBUS_DATA_IS_NULL(a_cfg, a_base_addr) == EEBUS_DATA_IS_NULL(b_cfg, b_base_addr);
 }
 
 bool IsNull(const EebusDataCfg* cfg, const void* base_addr) {
-  const TagType* const buf = (const TagType*)((const uint8_t*)base_addr + cfg->offset);
-  // Consider tag set to false is an equivalent to NULL
-  return *buf == EEBUS_TAG_RESET;
+    const TagType* const buf = (const TagType*)((const uint8_t*)base_addr + cfg->offset);
+    // Consider tag set to false is an equivalent to NULL
+    return *buf == EEBUS_TAG_RESET;
 }
 
 bool IsEmpty(const EebusDataCfg* cfg, const void* base_addr) {
-  UNUSED(cfg);
-  UNUSED(base_addr);
+    UNUSED(cfg);
+    UNUSED(base_addr);
 
-  return false;
+    return false;
 }
 
-EebusError ReadElements(const EebusDataCfg* cfg, const void* base_addr, void* dst_base_addr,
-    const EebusDataCfg* elements_cfg, const void* elements_base_addr) {
-  if (EEBUS_DATA_IS_NULL(elements_cfg, elements_base_addr)) {
-    // Should not be written - ok
-    return kEebusErrorOk;
-  };
+EebusError ReadElements(
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    void* dst_base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+) {
+    if (EEBUS_DATA_IS_NULL(elements_cfg, elements_base_addr)) {
+        // Should not be written - ok
+        return kEebusErrorOk;
+    };
 
-  return EEBUS_DATA_COPY(cfg, base_addr, dst_base_addr);
+    return EEBUS_DATA_COPY(cfg, base_addr, dst_base_addr);
 }
 
 EebusError Write(const EebusDataCfg* cfg, void* base_addr, const void* src_base_addr) {
-  const TagType* const src_buf = (const TagType*)((const uint8_t*)src_base_addr + cfg->offset);
-  if (*src_buf == NULL) {
-    EEBUS_DATA_DELETE(cfg, base_addr);
+    const TagType* const src_buf = (const TagType*)((const uint8_t*)src_base_addr + cfg->offset);
+    if (*src_buf == NULL) {
+        EEBUS_DATA_DELETE(cfg, base_addr);
+        return kEebusErrorOk;
+    }
+
+    TagType* const buf = (TagType*)((uint8_t*)base_addr + cfg->offset);
+
+    *buf = *src_buf;
     return kEebusErrorOk;
-  }
-
-  TagType* const buf = (TagType*)((uint8_t*)base_addr + cfg->offset);
-
-  *buf = *src_buf;
-  return kEebusErrorOk;
 }
 
 void DeleteElements(
-    const EebusDataCfg* cfg, void* base_addr, const EebusDataCfg* elements_cfg, const void* elements_base_addr) {
-  if (EEBUS_DATA_IS_NULL(elements_cfg, elements_base_addr)) {
-    // Should not be deleted - ok
-    return;
-  }
+    const EebusDataCfg* cfg,
+    void* base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+) {
+    if (EEBUS_DATA_IS_NULL(elements_cfg, elements_base_addr)) {
+        // Should not be deleted - ok
+        return;
+    }
 
-  EEBUS_DATA_DELETE(cfg, base_addr);
+    EEBUS_DATA_DELETE(cfg, base_addr);
 }
 
 void Delete(const EebusDataCfg* cfg, void* base_addr) {
-  TagType* const buf = (TagType*)((uint8_t*)base_addr + cfg->offset);
+    TagType* const buf = (TagType*)((uint8_t*)base_addr + cfg->offset);
 
-  *buf = EEBUS_TAG_RESET;
+    *buf = EEBUS_TAG_RESET;
 }

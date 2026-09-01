@@ -43,8 +43,8 @@ extern "C" {
 typedef struct MaMgcpUseCaseObject MaMgcpUseCaseObject;
 
 struct MaMgcpUseCaseObject {
-  /** Inherits the Use Case */
-  UseCaseObject obj;
+    /** Inherits the Use Case */
+    UseCaseObject obj;
 };
 
 #define MA_MGCP_USE_CASE_OBJECT(obj) ((MaMgcpUseCaseObject*)(obj))
@@ -62,7 +62,7 @@ MaMgcpUseCaseObject* MaMgcpUseCaseCreate(EntityLocalObject* local_entity, MaMgcp
  * @param ma_mgcp_use_case Pointer to the MA MGCP use case instance to delete
  */
 static inline void MaMgcpUseCaseDelete(MaMgcpUseCaseObject* ma_mgcp_use_case) {
-  UseCaseDelete(USE_CASE_OBJECT(ma_mgcp_use_case));
+    UseCaseDelete(USE_CASE_OBJECT(ma_mgcp_use_case));
 }
 
 /**

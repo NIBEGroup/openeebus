@@ -50,13 +50,13 @@ void EebusDurationInvertSign(EebusDuration* duration);
  * Each field represents a specific component of the duration.
  */
 struct EebusDuration {
-  int32_t years;   /**< Number of years in the duration. */
-  int32_t months;  /**< Number of months in the duration. */
-  int32_t days;    /**< Number of days in the duration. */
-  int32_t hours;   /**< Number of hours in the duration. */
-  int32_t minutes; /**< Number of minutes in the duration. */
-  int32_t seconds; /**< Number of seconds in the duration. */
-  int32_t milliseconds; /**< Number of milliseconds in the duration. */
+    int32_t years;        /**< Number of years in the duration. */
+    int32_t months;       /**< Number of months in the duration. */
+    int32_t days;         /**< Number of days in the duration. */
+    int32_t hours;        /**< Number of hours in the duration. */
+    int32_t minutes;      /**< Number of minutes in the duration. */
+    int32_t seconds;      /**< Number of seconds in the duration. */
+    int32_t milliseconds; /**< Number of milliseconds in the duration. */
 };
 
 /**

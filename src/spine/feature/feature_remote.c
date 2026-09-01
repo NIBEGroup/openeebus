@@ -56,65 +56,65 @@ EebusError FeatureRemoteConstruct(
     FeatureTypeType type,
     RoleType role
 ) {
-  FeatureConstruct(FEATURE(self), type, ENTITY_GET_ADDRESS(ENTITY_OBJECT(entity)), id, role);
+    FeatureConstruct(FEATURE(self), type, ENTITY_GET_ADDRESS(ENTITY_OBJECT(entity)), id, role);
 
-  // Override "virtual functions table"
-  FEATURE_REMOTE_INTERFACE(self) = &feature_remote_methods;
+    // Override "virtual functions table"
+    FEATURE_REMOTE_INTERFACE(self) = &feature_remote_methods;
 
-  self->entity             = entity;
-  self->max_response_delay = kDefaultMaxResponseDelayMs;
+    self->entity             = entity;
+    self->max_response_delay = kDefaultMaxResponseDelayMs;
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 FeatureRemoteObject* FeatureRemoteCreate(uint32_t id, EntityRemoteObject* entity, FeatureTypeType type, RoleType role) {
-  FeatureRemote* const feature_remote = (FeatureRemote*)EEBUS_MALLOC(sizeof(FeatureRemote));
-  if (feature_remote == NULL) {
-    return NULL;
-  }
+    FeatureRemote* const feature_remote = (FeatureRemote*)EEBUS_MALLOC(sizeof(FeatureRemote));
+    if (feature_remote == NULL) {
+        return NULL;
+    }
 
-  EebusError err = FeatureRemoteConstruct(feature_remote, id, entity, type, role);
-  if (err != kEebusErrorOk) {
-    FeatureRemoteDelete(FEATURE_REMOTE_OBJECT(feature_remote));
-    return NULL;
-  }
+    EebusError err = FeatureRemoteConstruct(feature_remote, id, entity, type, role);
+    if (err != kEebusErrorOk) {
+        FeatureRemoteDelete(FEATURE_REMOTE_OBJECT(feature_remote));
+        return NULL;
+    }
 
-  return FEATURE_REMOTE_OBJECT(feature_remote);
+    return FEATURE_REMOTE_OBJECT(feature_remote);
 }
 
 void FeatureRemoteDestruct(FeatureObject* self) {
-  FeatureDestruct(self);
+    FeatureDestruct(self);
 }
 
 DeviceRemoteObject* FeatureRemoteGetDevice(const FeatureRemoteObject* self) {
-  const FeatureRemote* const fr = FEATURE_REMOTE(self);
-  return ENTITY_REMOTE_GET_DEVICE(fr->entity);
+    const FeatureRemote* const fr = FEATURE_REMOTE(self);
+    return ENTITY_REMOTE_GET_DEVICE(fr->entity);
 }
 
 EntityRemoteObject* FeatureRemoteGetEntity(const FeatureRemoteObject* self) {
-  return FEATURE_REMOTE(self)->entity;
+    return FEATURE_REMOTE(self)->entity;
 }
 
 const void* FeatureRemoteGetData(const FeatureRemoteObject* self, FunctionType function_type) {
-  const FeatureRemote* const fr = FEATURE_REMOTE(self);
+    const FeatureRemote* const fr = FEATURE_REMOTE(self);
 
-  FunctionObject* const fcn = FeatureGetFunction(FEATURE(fr), function_type);
-  if (fcn == NULL) {
-    return NULL;
-  }
+    FunctionObject* const fcn = FeatureGetFunction(FEATURE(fr), function_type);
+    if (fcn == NULL) {
+        return NULL;
+    }
 
-  return FUNCTION_GET_DATA(fcn);
+    return FUNCTION_GET_DATA(fcn);
 }
 
 void* FeatureRemoteDataCopy(const FeatureRemoteObject* self, FunctionType fcn_type) {
-  const FeatureRemote* const fr = FEATURE_REMOTE(self);
+    const FeatureRemote* const fr = FEATURE_REMOTE(self);
 
-  FunctionObject* const fcn = FeatureGetFunction(FEATURE(fr), fcn_type);
-  if (fcn == NULL) {
-    return NULL;
-  }
+    FunctionObject* const fcn = FeatureGetFunction(FEATURE(fr), fcn_type);
+    if (fcn == NULL) {
+        return NULL;
+    }
 
-  return FUNCTION_DATA_COPY(fcn);
+    return FUNCTION_DATA_COPY(fcn);
 }
 
 EebusError FeatureRemoteUpdateData(
@@ -125,26 +125,26 @@ EebusError FeatureRemoteUpdateData(
     const FilterType* filter_delete,
     bool persist
 ) {
-  FunctionObject* const function = FeatureGetFunction(FEATURE(self), function_type);
-  if (function == NULL) {
-    return kEebusErrorInputArgument;
-  }
+    FunctionObject* const function = FeatureGetFunction(FEATURE(self), function_type);
+    if (function == NULL) {
+        return kEebusErrorInputArgument;
+    }
 
-  return FUNCTION_UPDATE_DATA(function, new_data, filter_partial, filter_delete, false, persist);
+    return FUNCTION_UPDATE_DATA(function, new_data, filter_partial, filter_delete, false, persist);
 }
 
 void SetOperations(FeatureRemoteObject* self, FunctionType function_type, const PossibleOperationsType* ops) {
-  FunctionObject* const function = FeatureGetFunction(FEATURE(self), function_type);
-  if (function == NULL) {
-    return;
-  }
+    FunctionObject* const function = FeatureGetFunction(FEATURE(self), function_type);
+    if (function == NULL) {
+        return;
+    }
 
-  const bool read          = (ops->read != NULL);
-  const bool read_partial  = (ops->read != NULL) && (ops->read->partial != EEBUS_TAG_RESET);
-  const bool write         = (ops->write != NULL);
-  const bool write_partial = (ops->write != NULL) && (ops->write->partial != EEBUS_TAG_RESET);
+    const bool read          = (ops->read != NULL);
+    const bool read_partial  = (ops->read != NULL) && (ops->read->partial != EEBUS_TAG_RESET);
+    const bool write         = (ops->write != NULL);
+    const bool write_partial = (ops->write != NULL) && (ops->write->partial != EEBUS_TAG_RESET);
 
-  FUNCTION_SET_OPERATIONS(function, read, read_partial, write, write_partial);
+    FUNCTION_SET_OPERATIONS(function, read, read_partial, write, write_partial);
 }
 
 void FeatureRemoteSetFunctionOperations(
@@ -152,17 +152,17 @@ void FeatureRemoteSetFunctionOperations(
     const FunctionPropertyType* const* supported_functions,
     size_t supported_functions_size
 ) {
-  for (size_t i = 0; i < supported_functions_size; ++i) {
-    if ((supported_functions[i]->possible_operations != NULL) && (supported_functions[i]->function != NULL)) {
-      SetOperations(self, *supported_functions[i]->function, supported_functions[i]->possible_operations);
+    for (size_t i = 0; i < supported_functions_size; ++i) {
+        if ((supported_functions[i]->possible_operations != NULL) && (supported_functions[i]->function != NULL)) {
+            SetOperations(self, *supported_functions[i]->function, supported_functions[i]->possible_operations);
+        }
     }
-  }
 }
 
 void FeatureRemoteSetMaxResponseDelay(FeatureRemoteObject* self, uint32_t max_delay) {
-  FEATURE_REMOTE(self)->max_response_delay = max_delay;
+    FEATURE_REMOTE(self)->max_response_delay = max_delay;
 }
 
 uint32_t FeatureRemoteGetMaxResponseDelay(const FeatureRemoteObject* self) {
-  return FEATURE_REMOTE(self)->max_response_delay;
+    return FEATURE_REMOTE(self)->max_response_delay;
 }

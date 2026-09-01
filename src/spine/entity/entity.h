@@ -33,19 +33,24 @@ extern "C" {
 typedef struct Entity Entity;
 
 struct Entity {
-  /** Implements the Entity Interface */
-  EntityObject obj;
+    /** Implements the Entity Interface */
+    EntityObject obj;
 
-  EntityTypeType type;
-  EntityAddressType* address;
-  char* description;
-  uint32_t next_feature_id;
+    EntityTypeType type;
+    EntityAddressType* address;
+    char* description;
+    uint32_t next_feature_id;
 };
 
 #define ENTITY(obj) ((Entity*)(obj))
 
 void EntityConstruct(
-    Entity* self, EntityTypeType type, const char* device_addr, const uint32_t* entity_id, size_t entity_id_size);
+    Entity* self,
+    EntityTypeType type,
+    const char* device_addr,
+    const uint32_t* entity_id,
+    size_t entity_id_size
+);
 void EntityDestruct(EntityObject* self);
 const EntityAddressType* EntityGetAddress(const EntityObject* self);
 EntityTypeType EntityGetType(const EntityObject* self);

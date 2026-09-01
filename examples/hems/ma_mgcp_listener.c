@@ -31,11 +31,11 @@
 typedef struct MaMgcpListener MaMgcpListener;
 
 struct MaMgcpListener {
-  /** Implements the Ma Mgcp Listener Interface */
-  MaMgcpListenerObject obj;
+    /** Implements the Ma Mgcp Listener Interface */
+    MaMgcpListenerObject obj;
 
-  /* Pointer to the HEMS instance */
-  HemsObject* hems;
+    /* Pointer to the HEMS instance */
+    HemsObject* hems;
 };
 
 #define MA_MGCP_LISTENER(obj) ((MaMgcpListener*)(obj))
@@ -66,45 +66,45 @@ static const MaMgcpListenerInterface ma_mgcp_listener_methods = {
 static EebusError MaMgcpListenerConstruct(MaMgcpListener* self, HemsObject* hems);
 
 EebusError MaMgcpListenerConstruct(MaMgcpListener* self, HemsObject* hems) {
-  // Override "virtual functions table"
-  MA_MGCP_LISTENER_INTERFACE(self) = &ma_mgcp_listener_methods;
+    // Override "virtual functions table"
+    MA_MGCP_LISTENER_INTERFACE(self) = &ma_mgcp_listener_methods;
 
-  self->hems = hems;
+    self->hems = hems;
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 MaMgcpListenerObject* MaMgcpListenerCreate(HemsObject* hems) {
-  MaMgcpListener* const ma_mgcp_listener = (MaMgcpListener*)EEBUS_MALLOC(sizeof(MaMgcpListener));
-  if (ma_mgcp_listener == NULL) {
-    return NULL;
-  }
+    MaMgcpListener* const ma_mgcp_listener = (MaMgcpListener*)EEBUS_MALLOC(sizeof(MaMgcpListener));
+    if (ma_mgcp_listener == NULL) {
+        return NULL;
+    }
 
-  if (MaMgcpListenerConstruct(ma_mgcp_listener, hems) != kEebusErrorOk) {
-    MaMgcpListenerDelete(MA_MGCP_LISTENER_OBJECT(ma_mgcp_listener));
-    return NULL;
-  }
+    if (MaMgcpListenerConstruct(ma_mgcp_listener, hems) != kEebusErrorOk) {
+        MaMgcpListenerDelete(MA_MGCP_LISTENER_OBJECT(ma_mgcp_listener));
+        return NULL;
+    }
 
-  return MA_MGCP_LISTENER_OBJECT(ma_mgcp_listener);
+    return MA_MGCP_LISTENER_OBJECT(ma_mgcp_listener);
 }
 
 void Destruct(MaMgcpListenerObject* self) {
-  UNUSED(self);
+    UNUSED(self);
 
-  // Nothing to be deallocated yet
+    // Nothing to be deallocated yet
 }
 
 void OnRemoteEntityConnect(MaMgcpListenerObject* self, const EntityAddressType* entity_addr) {
-  MaMgcpListener* const ma_mgcp_listener = MA_MGCP_LISTENER(self);
+    MaMgcpListener* const ma_mgcp_listener = MA_MGCP_LISTENER(self);
 
-  HemsSetMaMgcpRemoteEntity(ma_mgcp_listener->hems, entity_addr);
+    HemsSetMaMgcpRemoteEntity(ma_mgcp_listener->hems, entity_addr);
 }
 
 void OnRemoteEntityDisconnect(MaMgcpListenerObject* self, const EntityAddressType* entity_addr) {
-  MaMgcpListener* const ma_mgcp_listener = MA_MGCP_LISTENER(self);
+    MaMgcpListener* const ma_mgcp_listener = MA_MGCP_LISTENER(self);
 
-  HemsSetMaMgcpRemoteEntity(ma_mgcp_listener->hems, NULL);
-  UNUSED(entity_addr);
+    HemsSetMaMgcpRemoteEntity(ma_mgcp_listener->hems, NULL);
+    UNUSED(entity_addr);
 }
 
 void OnMeasurementReceive(
@@ -113,17 +113,17 @@ void OnMeasurementReceive(
     const ScaledValue* measurement_value,
     const EntityAddressType* remote_entity_addr
 ) {
-  UNUSED(self);
+    UNUSED(self);
 
-  const char* name = GcpMgcpMeasurementGetName(name_id);
-  if (name == NULL) {
-    printf("MA MGCP Measurement received: Unknown Measurement ID %d\n", (int)name_id);
-    return;
-  }
+    const char* name = GcpMgcpMeasurementGetName(name_id);
+    if (name == NULL) {
+        printf("MA MGCP Measurement received: Unknown Measurement ID %d\n", (int)name_id);
+        return;
+    }
 
-  printf("MA MGCP Measurement received: %s = ", name);
-  ScaledValuePrint("%s,", measurement_value);
-  EntityAddressPrint(" from entity: %s\n", remote_entity_addr);
+    printf("MA MGCP Measurement received: %s = ", name);
+    ScaledValuePrint("%s,", measurement_value);
+    EntityAddressPrint(" from entity: %s\n", remote_entity_addr);
 }
 
 void OnPvCurtailmentLimitFactorReceive(
@@ -131,9 +131,9 @@ void OnPvCurtailmentLimitFactorReceive(
     const ScaledValue* value,
     const EntityAddressType* remote_entity_addr
 ) {
-  UNUSED(self);
+    UNUSED(self);
 
-  printf("MA MGCP PV curtailment limit factor received: ");
-  ScaledValuePrint("%s,", value);
-  EntityAddressPrint(" from entity: %s\n", remote_entity_addr);
+    printf("MA MGCP PV curtailment limit factor received: ");
+    ScaledValuePrint("%s,", value);
+    EntityAddressPrint(" from entity: %s\n", remote_entity_addr);
 }

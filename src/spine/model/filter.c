@@ -28,30 +28,40 @@
 const CmdControlType ctrl_partial = {.partial = EEBUS_TAG_SET, .delete_ = EEBUS_TAG_RESET};
 const CmdControlType ctrl_delete  = {.partial = EEBUS_TAG_RESET, .delete_ = EEBUS_TAG_SET};
 
-static FilterType* FilterCreate(FunctionType function_type, const FilterIdType* filter_id,
-    const CmdControlType* cmd_control, const void* selectors, const void* elements);
+static FilterType* FilterCreate(
+    FunctionType function_type,
+    const FilterIdType* filter_id,
+    const CmdControlType* cmd_control,
+    const void* selectors,
+    const void* elements
+);
 
-FilterType* FilterCreate(FunctionType function_type, const FilterIdType* filter_id, const CmdControlType* cmd_control,
-    const void* selectors, const void* elements) {
-  FilterType filter_tmp = {
-      .filter_id                     = filter_id,
-      .cmd_ctrl                      = cmd_control,
-      .data_selectors_choice         = selectors,
-      .data_selectors_choice_type_id = function_type,
-      .data_elements_choice          = elements,
-      .data_elements_choice_type_id  = function_type,
-  };
+FilterType* FilterCreate(
+    FunctionType function_type,
+    const FilterIdType* filter_id,
+    const CmdControlType* cmd_control,
+    const void* selectors,
+    const void* elements
+) {
+    FilterType filter_tmp = {
+        .filter_id                     = filter_id,
+        .cmd_ctrl                      = cmd_control,
+        .data_selectors_choice         = selectors,
+        .data_selectors_choice_type_id = function_type,
+        .data_elements_choice          = elements,
+        .data_elements_choice_type_id  = function_type,
+    };
 
-  const EebusDataCfg* const cfg  = GetFilterCfg();
-  const FilterType* p_filter_tmp = &filter_tmp;
+    const EebusDataCfg* const cfg  = GetFilterCfg();
+    const FilterType* p_filter_tmp = &filter_tmp;
 
-  FilterType* filter = NULL;
-  if (EEBUS_DATA_COPY(cfg, &p_filter_tmp, &filter) != kEebusErrorOk) {
-    EEBUS_DATA_DELETE(cfg, &filter);
-    return NULL;
-  }
+    FilterType* filter = NULL;
+    if (EEBUS_DATA_COPY(cfg, &p_filter_tmp, &filter) != kEebusErrorOk) {
+        EEBUS_DATA_DELETE(cfg, &filter);
+        return NULL;
+    }
 
-  return filter;
+    return filter;
 }
 
 FilterType* FilterPartialCreate(
@@ -60,7 +70,7 @@ FilterType* FilterPartialCreate(
     const void* selectors,
     const void* elements
 ) {
-  return FilterCreate(function_type, filter_id, &ctrl_partial, selectors, elements);
+    return FilterCreate(function_type, filter_id, &ctrl_partial, selectors, elements);
 }
 
 FilterType* FilterDeleteCreate(
@@ -69,29 +79,29 @@ FilterType* FilterDeleteCreate(
     const void* selectors,
     const void* elements
 ) {
-  return FilterCreate(function_type, filter_id, &ctrl_delete, selectors, elements);
+    return FilterCreate(function_type, filter_id, &ctrl_delete, selectors, elements);
 }
 
 void FilterDelete(FilterType* filter) {
-  const EebusDataCfg* const cfg = GetFilterCfg();
-  EEBUS_DATA_DELETE(cfg, &filter);
+    const EebusDataCfg* const cfg = GetFilterCfg();
+    EEBUS_DATA_DELETE(cfg, &filter);
 }
 
 FilterTypeType FilterGetType(const FilterType* filter) {
-  if ((filter == NULL) || (filter->cmd_ctrl == NULL)) {
-    return kFilterTypeUndefined;
-  }
+    if ((filter == NULL) || (filter->cmd_ctrl == NULL)) {
+        return kFilterTypeUndefined;
+    }
 
-  const bool is_partial = EEBUS_TAG_TO_BOOL(filter->cmd_ctrl->partial);
-  const bool is_delete  = EEBUS_TAG_TO_BOOL(filter->cmd_ctrl->delete_);
+    const bool is_partial = EEBUS_TAG_TO_BOOL(filter->cmd_ctrl->partial);
+    const bool is_delete  = EEBUS_TAG_TO_BOOL(filter->cmd_ctrl->delete_);
 
-  if (is_partial && is_delete) {
-    return kFilterTypeUndefined;
-  } else if (is_partial) {
-    return kFilterTypePartial;
-  } else if (is_delete) {
-    return kFilterTypeDelete;
-  } else {
-    return kFilterTypeUndefined;
-  }
+    if (is_partial && is_delete) {
+        return kFilterTypeUndefined;
+    } else if (is_partial) {
+        return kFilterTypePartial;
+    } else if (is_delete) {
+        return kFilterTypeDelete;
+    } else {
+        return kFilterTypeUndefined;
+    }
 }

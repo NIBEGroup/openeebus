@@ -36,10 +36,10 @@ extern "C" {
 EebusCliHandlerObject* MaMgcpCliCreate(MaMgcpUseCaseObject* ma_mgcp, const EntityAddressType* entity_addr);
 
 static inline void MaMgcpCliDelete(EebusCliHandlerObject* ma_mgcp_cli) {
-  if (ma_mgcp_cli != NULL) {
-    EEBUS_CLI_HANDLER_DESTRUCT(ma_mgcp_cli);
-    EEBUS_FREE(ma_mgcp_cli);
-  }
+    if (ma_mgcp_cli != NULL) {
+        EEBUS_CLI_HANDLER_DESTRUCT(ma_mgcp_cli);
+        EEBUS_FREE(ma_mgcp_cli);
+    }
 }
 
 #ifdef __cplusplus

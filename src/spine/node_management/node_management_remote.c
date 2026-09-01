@@ -30,9 +30,9 @@
 typedef struct NodeManagementRemote NodeManagementRemote;
 
 struct NodeManagementRemote {
-  FeatureRemote feature_remote;
+    FeatureRemote feature_remote;
 
-  const UseCaseInformationListDataType* use_case_data_prev;
+    const UseCaseInformationListDataType* use_case_data_prev;
 };
 
 #define NODE_MANAGEMENT_REMOTE(obj) ((NodeManagementRemote*)(obj))
@@ -72,29 +72,29 @@ static const FeatureRemoteInterface feature_remote_methods = {
 static EebusError NodeManagementRemoteConstruct(NodeManagementRemote* self, uint32_t id, EntityRemoteObject* entity);
 
 static EebusError NodeManagementRemoteConstruct(NodeManagementRemote* self, uint32_t id, EntityRemoteObject* entity) {
-  const EebusError err
-      = FeatureRemoteConstruct(FEATURE_REMOTE(self), id, entity, kFeatureTypeTypeNodeManagement, kRoleTypeSpecial);
+    const EebusError err
+        = FeatureRemoteConstruct(FEATURE_REMOTE(self), id, entity, kFeatureTypeTypeNodeManagement, kRoleTypeSpecial);
 
-  // Override "virtual functions table"
-  FEATURE_REMOTE_INTERFACE(self) = &feature_remote_methods;
+    // Override "virtual functions table"
+    FEATURE_REMOTE_INTERFACE(self) = &feature_remote_methods;
 
-  self->use_case_data_prev = NULL;
+    self->use_case_data_prev = NULL;
 
-  return err;
+    return err;
 }
 
 NodeManagementRemoteObject* NodeManagementRemoteCreate(uint32_t id, EntityRemoteObject* entity) {
-  NodeManagementRemote* const nmr = (NodeManagementRemote*)EEBUS_MALLOC(sizeof(NodeManagementRemote));
-  if (nmr == NULL) {
-    return NULL;
-  }
+    NodeManagementRemote* const nmr = (NodeManagementRemote*)EEBUS_MALLOC(sizeof(NodeManagementRemote));
+    if (nmr == NULL) {
+        return NULL;
+    }
 
-  if (NodeManagementRemoteConstruct(nmr, id, entity) != kEebusErrorOk) {
-    NodeManagementRemoteDelete(NODE_MANAGEMENT_REMOTE_OBJECT(nmr));
-    return NULL;
-  }
+    if (NodeManagementRemoteConstruct(nmr, id, entity) != kEebusErrorOk) {
+        NodeManagementRemoteDelete(NODE_MANAGEMENT_REMOTE_OBJECT(nmr));
+        return NULL;
+    }
 
-  return NODE_MANAGEMENT_REMOTE_OBJECT(nmr);
+    return NODE_MANAGEMENT_REMOTE_OBJECT(nmr);
 }
 
 const UseCaseInformationDataType* UseCaseInformationListFind(
@@ -103,19 +103,19 @@ const UseCaseInformationDataType* UseCaseInformationListFind(
     const UseCaseActorType* actor,
     const UseCaseNameType* use_case_name_id
 ) {
-  if ((use_case_list == NULL) || (addr == NULL) || (actor == NULL) || (use_case_name_id == NULL)) {
-    return NULL;
-  }
-
-  for (size_t i = 0; i < use_case_list->use_case_information_data_size; i++) {
-    const UseCaseInformationDataType* const use_case_info = use_case_list->use_case_information_data[i];
-
-    if (UseCaseInformationMatch(use_case_info, addr, actor, use_case_name_id)) {
-      return use_case_info;
+    if ((use_case_list == NULL) || (addr == NULL) || (actor == NULL) || (use_case_name_id == NULL)) {
+        return NULL;
     }
-  }
 
-  return NULL;
+    for (size_t i = 0; i < use_case_list->use_case_information_data_size; i++) {
+        const UseCaseInformationDataType* const use_case_info = use_case_list->use_case_information_data[i];
+
+        if (UseCaseInformationMatch(use_case_info, addr, actor, use_case_name_id)) {
+            return use_case_info;
+        }
+    }
+
+    return NULL;
 }
 
 void PublishUseCaseSupportedEvent(
@@ -125,45 +125,45 @@ void PublishUseCaseSupportedEvent(
     UseCaseNameType use_case_name_id,
     ElementChangeType change_type
 ) {
-  DeviceRemoteObject* dr = FEATURE_REMOTE_GET_DEVICE(FEATURE_REMOTE_OBJECT(self));
-  if (dr == NULL) {
-    return;
-  }
-  EventsManagerObject* const events_manager = DEVICE_LOCAL_GET_EVENTS_MANAGER(DEVICE_REMOTE_GET_LOCAL_DEVICE(dr));
-
-  const UseCaseFilterType use_case_filter = {
-      .actor            = actor,
-      .use_case_name_id = use_case_name_id,
-  };
-
-  EventPayload payload = {
-      .ski             = DEVICE_REMOTE_GET_SKI(dr),
-      .event_type      = kEventTypeUseCaseChange,
-      .change_type     = change_type,
-      .device          = dr,
-      .entity          = NULL,
-      .feature         = NULL,
-      .local_feature   = NULL,
-      .function_type   = 0,
-      .function_data   = NULL,
-      .cmd_classifier  = NULL,
-      .use_case_filter = &use_case_filter,
-  };
-
-  if (addr->entity == NULL) {
-    const Vector* const entities = DEVICE_REMOTE_GET_ENTITIES(DEVICE_REMOTE_OBJECT(dr));
-    if (entities == NULL) {
-      return;
+    DeviceRemoteObject* dr = FEATURE_REMOTE_GET_DEVICE(FEATURE_REMOTE_OBJECT(self));
+    if (dr == NULL) {
+        return;
     }
+    EventsManagerObject* const events_manager = DEVICE_LOCAL_GET_EVENTS_MANAGER(DEVICE_REMOTE_GET_LOCAL_DEVICE(dr));
 
-    for (size_t i = 0; i < VectorGetSize(entities); i++) {
-      payload.entity = (EntityRemoteObject*)VectorGetElement(entities, i);
-      EVENTS_PUBLISH(events_manager, &payload);
+    const UseCaseFilterType use_case_filter = {
+        .actor            = actor,
+        .use_case_name_id = use_case_name_id,
+    };
+
+    EventPayload payload = {
+        .ski             = DEVICE_REMOTE_GET_SKI(dr),
+        .event_type      = kEventTypeUseCaseChange,
+        .change_type     = change_type,
+        .device          = dr,
+        .entity          = NULL,
+        .feature         = NULL,
+        .local_feature   = NULL,
+        .function_type   = 0,
+        .function_data   = NULL,
+        .cmd_classifier  = NULL,
+        .use_case_filter = &use_case_filter,
+    };
+
+    if (addr->entity == NULL) {
+        const Vector* const entities = DEVICE_REMOTE_GET_ENTITIES(DEVICE_REMOTE_OBJECT(dr));
+        if (entities == NULL) {
+            return;
+        }
+
+        for (size_t i = 0; i < VectorGetSize(entities); i++) {
+            payload.entity = (EntityRemoteObject*)VectorGetElement(entities, i);
+            EVENTS_PUBLISH(events_manager, &payload);
+        }
+    } else {
+        payload.entity = DEVICE_REMOTE_GET_ENTITY(DEVICE_REMOTE_OBJECT(dr), addr->entity, addr->entity_size);
+        EVENTS_PUBLISH(events_manager, &payload);
     }
-  } else {
-    payload.entity = DEVICE_REMOTE_GET_ENTITY(DEVICE_REMOTE_OBJECT(dr), addr->entity, addr->entity_size);
-    EVENTS_PUBLISH(events_manager, &payload);
-  }
 }
 
 void ProcessUseCaseSupport(
@@ -172,48 +172,48 @@ void ProcessUseCaseSupport(
     const UseCaseInformationListDataType* const use_case_data_b,
     ElementChangeType change_type
 ) {
-  for (size_t i = 0; i < use_case_data_b->use_case_information_data_size; i++) {
-    const UseCaseInformationDataType* const use_case_info_b = use_case_data_b->use_case_information_data[i];
+    for (size_t i = 0; i < use_case_data_b->use_case_information_data_size; i++) {
+        const UseCaseInformationDataType* const use_case_info_b = use_case_data_b->use_case_information_data[i];
 
-    if ((use_case_info_b == NULL) || (use_case_info_b->address == NULL) || (use_case_info_b->actor == NULL)) {
-      continue;
+        if ((use_case_info_b == NULL) || (use_case_info_b->address == NULL) || (use_case_info_b->actor == NULL)) {
+            continue;
+        }
+
+        const FeatureAddressType* const addr = use_case_info_b->address;
+        const UseCaseActorType* const actor  = use_case_info_b->actor;
+
+        for (size_t j = 0; j < use_case_info_b->use_case_support_size; j++) {
+            const UseCaseSupportType* const use_case_support_b = use_case_info_b->use_case_support[j];
+
+            if ((use_case_support_b == NULL) || (use_case_support_b->use_case_name == NULL)) {
+                continue;
+            }
+
+            const UseCaseNameType* const use_case_name = use_case_support_b->use_case_name;
+            if (UseCaseInformationListFind(use_case_data_a, addr, actor, use_case_name) == NULL) {
+                PublishUseCaseSupportedEvent(self, addr, *actor, *use_case_name, change_type);
+            }
+        }
     }
-
-    const FeatureAddressType* const addr = use_case_info_b->address;
-    const UseCaseActorType* const actor  = use_case_info_b->actor;
-
-    for (size_t j = 0; j < use_case_info_b->use_case_support_size; j++) {
-      const UseCaseSupportType* const use_case_support_b = use_case_info_b->use_case_support[j];
-
-      if ((use_case_support_b == NULL) || (use_case_support_b->use_case_name == NULL)) {
-        continue;
-      }
-
-      const UseCaseNameType* const use_case_name = use_case_support_b->use_case_name;
-      if (UseCaseInformationListFind(use_case_data_a, addr, actor, use_case_name) == NULL) {
-        PublishUseCaseSupportedEvent(self, addr, *actor, *use_case_name, change_type);
-      }
-    }
-  }
 }
 
 EebusError UpdateUseCaseData(NodeManagementRemote* self, const UseCaseInformationListDataType* use_case_data_new) {
-  if (use_case_data_new != NULL) {
-    ProcessUseCaseSupport(self, self->use_case_data_prev, use_case_data_new, kElementChangeAdd);
-  }
+    if (use_case_data_new != NULL) {
+        ProcessUseCaseSupport(self, self->use_case_data_prev, use_case_data_new, kElementChangeAdd);
+    }
 
-  if (self->use_case_data_prev != NULL) {
-    ProcessUseCaseSupport(self, use_case_data_new, self->use_case_data_prev, kElementChangeRemove);
-  }
+    if (self->use_case_data_prev != NULL) {
+        ProcessUseCaseSupport(self, use_case_data_new, self->use_case_data_prev, kElementChangeRemove);
+    }
 
-  ModelFunctionDataDelete(kFunctionTypeNodeManagementUseCaseData, (void*)self->use_case_data_prev);
-  if (use_case_data_new == NULL) {
-    self->use_case_data_prev = NULL;
-    return kEebusErrorOk;
-  }
+    ModelFunctionDataDelete(kFunctionTypeNodeManagementUseCaseData, (void*)self->use_case_data_prev);
+    if (use_case_data_new == NULL) {
+        self->use_case_data_prev = NULL;
+        return kEebusErrorOk;
+    }
 
-  self->use_case_data_prev = ModelFunctionDataCopy(kFunctionTypeNodeManagementUseCaseData, use_case_data_new);
-  return (self->use_case_data_prev == NULL) ? kEebusErrorMemoryAllocate : kEebusErrorOk;
+    self->use_case_data_prev = ModelFunctionDataCopy(kFunctionTypeNodeManagementUseCaseData, use_case_data_new);
+    return (self->use_case_data_prev == NULL) ? kEebusErrorMemoryAllocate : kEebusErrorOk;
 }
 
 EebusError UpdateData(
@@ -224,45 +224,46 @@ EebusError UpdateData(
     const FilterType* filter_delete,
     bool persist
 ) {
-  NodeManagementRemote* const nmr = NODE_MANAGEMENT_REMOTE(self);
+    NodeManagementRemote* const nmr = NODE_MANAGEMENT_REMOTE(self);
 
-  const EebusError err = FeatureRemoteUpdateData(self, function_type, new_data, filter_partial, filter_delete, persist);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err
+        = FeatureRemoteUpdateData(self, function_type, new_data, filter_partial, filter_delete, persist);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  if (function_type != kFunctionTypeNodeManagementUseCaseData) {
-    return kEebusErrorOk;
-  }
+    if (function_type != kFunctionTypeNodeManagementUseCaseData) {
+        return kEebusErrorOk;
+    }
 
-  // Publish event for remote device being updated with the use case data
-  DeviceRemoteObject* const dr = FEATURE_REMOTE_GET_DEVICE(FEATURE_REMOTE_OBJECT(self));
+    // Publish event for remote device being updated with the use case data
+    DeviceRemoteObject* const dr = FEATURE_REMOTE_GET_DEVICE(FEATURE_REMOTE_OBJECT(self));
 
-  const EventPayload payload = {
-      .ski           = DEVICE_REMOTE_GET_SKI(dr),
-      .event_type    = kEventTypeDeviceChange,
-      .change_type   = kElementChangeUpdate,
-      .device        = dr,
-      .feature       = self,
-      .function_data = new_data,
-      .function_type = kFunctionTypeNodeManagementUseCaseData,
-  };
+    const EventPayload payload = {
+        .ski           = DEVICE_REMOTE_GET_SKI(dr),
+        .event_type    = kEventTypeDeviceChange,
+        .change_type   = kElementChangeUpdate,
+        .device        = dr,
+        .feature       = self,
+        .function_data = new_data,
+        .function_type = kFunctionTypeNodeManagementUseCaseData,
+    };
 
-  EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(DEVICE_REMOTE_GET_LOCAL_DEVICE(dr)), &payload);
+    EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(DEVICE_REMOTE_GET_LOCAL_DEVICE(dr)), &payload);
 
-  const UseCaseInformationListDataType* const use_case_data_new = (const UseCaseInformationListDataType*)
-      FeatureRemoteGetData(FEATURE_REMOTE_OBJECT(self), kFunctionTypeNodeManagementUseCaseData);
-  return UpdateUseCaseData(nmr, use_case_data_new);
+    const UseCaseInformationListDataType* const use_case_data_new = (const UseCaseInformationListDataType*)
+        FeatureRemoteGetData(FEATURE_REMOTE_OBJECT(self), kFunctionTypeNodeManagementUseCaseData);
+    return UpdateUseCaseData(nmr, use_case_data_new);
 }
 
 void Destruct(FeatureObject* self) {
-  NodeManagementRemote* const nmr = NODE_MANAGEMENT_REMOTE(self);
+    NodeManagementRemote* const nmr = NODE_MANAGEMENT_REMOTE(self);
 
-  // Force to update use case data with NULL to trigger removal events
-  UpdateUseCaseData(nmr, NULL);
+    // Force to update use case data with NULL to trigger removal events
+    UpdateUseCaseData(nmr, NULL);
 
-  ModelFunctionDataDelete(kFunctionTypeNodeManagementUseCaseData, (void*)nmr->use_case_data_prev);
-  nmr->use_case_data_prev = NULL;
+    ModelFunctionDataDelete(kFunctionTypeNodeManagementUseCaseData, (void*)nmr->use_case_data_prev);
+    nmr->use_case_data_prev = NULL;
 
-  FeatureRemoteDestruct(self);
+    FeatureRemoteDestruct(self);
 }

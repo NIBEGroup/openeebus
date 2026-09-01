@@ -33,63 +33,63 @@ static bool should_terminate = false;
 static HpsrvObject* hpsrv = NULL;
 
 void PrintUsage() {
-  printf("General Usage:\n");
-  printf("heat_pump <server_port> <remote_ski> <certificate_file> <private_key_file>\n");
+    printf("General Usage:\n");
+    printf("heat_pump <server_port> <remote_ski> <certificate_file> <private_key_file>\n");
 }
 
 void GracefulTerminate(int signal) {
-  should_terminate = ((signal == SIGTERM) || (signal == SIGINT));
+    should_terminate = ((signal == SIGTERM) || (signal == SIGINT));
 }
 
 void MainLoop() {
-  char cmd[200] = "";
+    char cmd[200] = "";
 
-  // Ctrl + C from the consle
-  signal(SIGINT, &GracefulTerminate);
-  // Default signal for kill utility
-  signal(SIGTERM, &GracefulTerminate);
+    // Ctrl + C from the consle
+    signal(SIGINT, &GracefulTerminate);
+    // Default signal for kill utility
+    signal(SIGTERM, &GracefulTerminate);
 
-  while (!should_terminate) {
-    if (fgets(cmd, sizeof(cmd), stdin)) {
-      if (strncmp(cmd, "exit", 4) == 0 && (cmd[4] == '\n' || cmd[4] == '\r' || cmd[4] == '\0')) {
-        should_terminate = true;
-      } else {
-        HpsrvHandleCmd(hpsrv, cmd);
-      }
+    while (!should_terminate) {
+        if (fgets(cmd, sizeof(cmd), stdin)) {
+            if (strncmp(cmd, "exit", 4) == 0 && (cmd[4] == '\n' || cmd[4] == '\r' || cmd[4] == '\0')) {
+                should_terminate = true;
+            } else {
+                HpsrvHandleCmd(hpsrv, cmd);
+            }
+        }
     }
-  }
 }
 
 int main(int argc, char** argv) {
-  if (argc < 5 || argc > 6) {
-    PrintUsage();
-    return -1;
-  }
+    if (argc < 5 || argc > 6) {
+        PrintUsage();
+        return -1;
+    }
 
-  const int32_t port = atoi(argv[1]);
+    const int32_t port = atoi(argv[1]);
 
-  const char* const remote_ski = argv[2];
-  const char* const cert       = argv[3];
-  const char* const pkey       = argv[4];
-  const char* const role       = (argc == 6) ? argv[5] : "auto";
+    const char* const remote_ski = argv[2];
+    const char* const cert       = argv[3];
+    const char* const pkey       = argv[4];
+    const char* const role       = (argc == 6) ? argv[5] : "auto";
 
-  TlsCertificateObject* const tls_cert = TlsCertificateLoadX509KeyPair(cert, pkey);
-  if (tls_cert == NULL) {
-    printf("Failed to load TLS certificate and private key!\n");
-    return -1;
-  }
+    TlsCertificateObject* const tls_cert = TlsCertificateLoadX509KeyPair(cert, pkey);
+    if (tls_cert == NULL) {
+        printf("Failed to load TLS certificate and private key!\n");
+        return -1;
+    }
 
-  hpsrv = HpsrvOpen(port, role, tls_cert);
-  if (hpsrv == NULL) {
-    printf("Failed to open heat pump EEBUS service!\n");
-    return -1;
-  }
+    hpsrv = HpsrvOpen(port, role, tls_cert);
+    if (hpsrv == NULL) {
+        printf("Failed to open heat pump EEBUS service!\n");
+        return -1;
+    }
 
-  HpsrvRegisterRemoteSki(hpsrv, remote_ski);
+    HpsrvRegisterRemoteSki(hpsrv, remote_ski);
 
-  MainLoop();
+    MainLoop();
 
-  HpsrvClose(hpsrv);
+    HpsrvClose(hpsrv);
 
-  return 0;
+    return 0;
 }

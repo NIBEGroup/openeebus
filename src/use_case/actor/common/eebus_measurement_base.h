@@ -42,8 +42,8 @@ typedef EebusError (*EebusMeasurementConfigureStrategy)(
 );
 
 typedef struct EebusMeasurementBaseConfig {
-  MeasurementValueSourceType value_source;
-  MeasurementConstraintsDataType* constraints; /**< May be NULL */
+    MeasurementValueSourceType value_source;
+    MeasurementConstraintsDataType* constraints; /**< May be NULL */
 } EebusMeasurementBaseConfig;
 
 /**

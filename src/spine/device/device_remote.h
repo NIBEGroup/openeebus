@@ -35,10 +35,10 @@ extern "C" {
 DeviceRemoteObject* DeviceRemoteCreate(DeviceLocalObject* local_device, const char* ski, SenderObject* sender);
 
 static inline void DeviceRemoteDelete(DeviceRemoteObject* device_remote) {
-  if (device_remote != NULL) {
-    DEVICE_DESTRUCT(DEVICE_OBJECT(device_remote));
-    EEBUS_FREE(device_remote);
-  }
+    if (device_remote != NULL) {
+        DEVICE_DESTRUCT(DEVICE_OBJECT(device_remote));
+        EEBUS_FREE(device_remote);
+    }
 }
 
 #ifdef __cplusplus

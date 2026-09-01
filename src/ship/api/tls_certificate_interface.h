@@ -44,19 +44,19 @@ typedef struct TlsCertificateObject TlsCertificateObject;
  * @brief TlsCertificate Interface Structure
  */
 struct TlsCertificateInterface {
-  void (*destruct)(TlsCertificateObject* self);
-  const char* (*get_ski)(const TlsCertificateObject* self);
-  const void* (*get_certificate)(const TlsCertificateObject* self);
-  size_t (*get_certificate_size)(const TlsCertificateObject* self);
-  const void* (*get_private_key)(const TlsCertificateObject* self);
-  size_t (*get_private_key_size)(const TlsCertificateObject* self);
+    void (*destruct)(TlsCertificateObject* self);
+    const char* (*get_ski)(const TlsCertificateObject* self);
+    const void* (*get_certificate)(const TlsCertificateObject* self);
+    size_t (*get_certificate_size)(const TlsCertificateObject* self);
+    const void* (*get_private_key)(const TlsCertificateObject* self);
+    size_t (*get_private_key_size)(const TlsCertificateObject* self);
 };
 
 /**
  * @brief Tls Certificate Object Structure
  */
 struct TlsCertificateObject {
-  const TlsCertificateInterface* interface_;
+    const TlsCertificateInterface* interface_;
 };
 
 /**

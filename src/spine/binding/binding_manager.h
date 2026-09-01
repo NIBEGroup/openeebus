@@ -33,10 +33,10 @@ extern "C" {
 BindingManagerObject* BindingManagerCreate(const DeviceLocalObject* local_device);
 
 static inline void BindingManagerDelete(BindingManagerObject* binding_manager) {
-  if (binding_manager != NULL) {
-    BINDING_MANAGER_DESTRUCT(binding_manager);
-    EEBUS_FREE(binding_manager);
-  }
+    if (binding_manager != NULL) {
+        BINDING_MANAGER_DESTRUCT(binding_manager);
+        EEBUS_FREE(binding_manager);
+    }
 }
 
 #ifdef __cplusplus

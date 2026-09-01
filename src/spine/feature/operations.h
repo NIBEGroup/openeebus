@@ -35,10 +35,10 @@ extern "C" {
 OperationsObject* OperationsCreate(bool read, bool read_partial, bool write, bool write_partial);
 
 static inline void OperationsDelete(OperationsObject* operations) {
-  if (operations != NULL) {
-    OPERATIONS_DESTRUCT(operations);
-    EEBUS_FREE(operations);
-  }
+    if (operations != NULL) {
+        OPERATIONS_DESTRUCT(operations);
+        EEBUS_FREE(operations);
+    }
 }
 
 #ifdef __cplusplus

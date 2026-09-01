@@ -31,14 +31,14 @@ extern "C" {
 typedef struct NodeManagement NodeManagement;
 
 struct NodeManagement {
-  /** Inherits the Feature Local class */
-  FeatureLocal obj;
+    /** Inherits the Feature Local class */
+    FeatureLocal obj;
 };
 
 #define NODE_MANAGEMENT(obj) ((NodeManagement*)(obj))
 
-EebusError NodeManagementSendReply(
-    const NodeManagement* self, const void* data, FunctionType data_type, const Message* msg);
+EebusError
+NodeManagementSendReply(const NodeManagement* self, const void* data, FunctionType data_type, const Message* msg);
 
 /**
  * @brief Handle detailed discovery data message received from a remote device

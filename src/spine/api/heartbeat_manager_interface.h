@@ -42,19 +42,19 @@ typedef struct HeartbeatManagerObject HeartbeatManagerObject;
  * @brief HeartbeatManager Interface Structure
  */
 struct HeartbeatManagerInterface {
-  void (*destruct)(HeartbeatManagerObject* self);
-  bool (*is_heartbeat_running)(const HeartbeatManagerObject* self);
-  void (*set_local_feature)(HeartbeatManagerObject* self, EntityLocalObject* entity, FeatureLocalObject* feature);
-  void (*tick)(HeartbeatManagerObject* self);
-  EebusError (*start)(HeartbeatManagerObject* self);
-  void (*stop)(HeartbeatManagerObject* self);
+    void (*destruct)(HeartbeatManagerObject* self);
+    bool (*is_heartbeat_running)(const HeartbeatManagerObject* self);
+    void (*set_local_feature)(HeartbeatManagerObject* self, EntityLocalObject* entity, FeatureLocalObject* feature);
+    void (*tick)(HeartbeatManagerObject* self);
+    EebusError (*start)(HeartbeatManagerObject* self);
+    void (*stop)(HeartbeatManagerObject* self);
 };
 
 /**
  * @brief Heartbeat Manager Object Structure
  */
 struct HeartbeatManagerObject {
-  const HeartbeatManagerInterface* interface_;
+    const HeartbeatManagerInterface* interface_;
 };
 
 /**
@@ -81,7 +81,7 @@ struct HeartbeatManagerObject {
  * @brief Heartbeat Manager Set Local Feature caller definition
  */
 #define HEARTBEAT_MANAGER_SET_LOCAL_FEATURE(obj, entity, feature) \
-  (HEARTBEAT_MANAGER_INTERFACE(obj)->set_local_feature(obj, entity, feature))
+    (HEARTBEAT_MANAGER_INTERFACE(obj)->set_local_feature(obj, entity, feature))
 
 /**
  * @brief Heartbeat Manager Tick caller definition

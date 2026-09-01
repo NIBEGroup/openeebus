@@ -30,8 +30,8 @@ extern "C" {
 typedef struct ErrorType ErrorType;
 
 struct ErrorType {
-  uint32_t error_number;
-  const char* description;
+    uint32_t error_number;
+    const char* description;
 };
 
 #ifdef __cplusplus

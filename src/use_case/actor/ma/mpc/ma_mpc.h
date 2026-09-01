@@ -32,8 +32,8 @@ extern "C" {
 
 typedef struct MaMpcUseCaseObject MaMpcUseCaseObject;
 struct MaMpcUseCaseObject {
-  /** Inherits the Entity */
-  UseCaseObject obj;
+    /** Inherits the Entity */
+    UseCaseObject obj;
 };
 
 #define MA_MPC_USE_CASE_OBJECT(obj) ((MaMpcUseCaseObject*)(obj))
@@ -51,7 +51,7 @@ MaMpcUseCaseObject* MaMpcUseCaseCreate(EntityLocalObject* local_entity, MaMpcLis
  * @param ma_mpc_use_case Pointer to the MA MPC use case instance to delete
  */
 static inline void MaMpcUseCaseDelete(MaMpcUseCaseObject* ma_mpc_use_case) {
-  UseCaseDelete(USE_CASE_OBJECT(ma_mpc_use_case));
+    UseCaseDelete(USE_CASE_OBJECT(ma_mpc_use_case));
 }
 
 /**

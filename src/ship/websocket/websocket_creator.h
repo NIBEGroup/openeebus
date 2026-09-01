@@ -21,8 +21,8 @@
 #ifndef SRC_SHIP_WEBSOCKET_WEBSOCKET_CREATOR_H_
 #define SRC_SHIP_WEBSOCKET_WEBSOCKET_CREATOR_H_
 
-#include "src/common/eebus_malloc.h"
 #include <stddef.h>
+#include "src/common/eebus_malloc.h"
 
 #include "src/ship/api/websocket_creator_interface.h"
 
@@ -33,10 +33,10 @@ extern "C" {
 WebsocketCreatorObject* WebsocketCreatorCreate(void);
 
 static inline void WebsocketCreatorDelete(WebsocketCreatorObject* websocket_creator) {
-  if (websocket_creator != NULL) {
-    WEBSOCKET_CREATOR_DESTRUCT(websocket_creator);
-    EEBUS_FREE(websocket_creator);
-  }
+    if (websocket_creator != NULL) {
+        WEBSOCKET_CREATOR_DESTRUCT(websocket_creator);
+        EEBUS_FREE(websocket_creator);
+    }
 }
 
 #ifdef __cplusplus

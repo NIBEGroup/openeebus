@@ -23,8 +23,8 @@
 
 #include "src/common/api/eebus_data_interface.h"
 #include "src/spine/model/device_types.h"
-#include "src/spine/model/function_types.h"
 #include "src/spine/model/feature_types.h"
+#include "src/spine/model/function_types.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -34,7 +34,7 @@ static const int32_t kDefaultPort = 4711;
 static const char* GenerateIdentifier(const EebusServiceConfig* cfg);
 
 const char* GenerateIdentifier(const EebusServiceConfig* cfg) {
-  return StringFmtSprintf("%s-%s", cfg->device_brand, cfg->device_serial_num);
+    return StringFmtSprintf("%s-%s", cfg->device_brand, cfg->device_serial_num);
 }
 
 EebusError EebusServiceConfigConstruct(
@@ -46,53 +46,53 @@ EebusError EebusServiceConfigConstruct(
     const char* device_type,
     int32_t port
 ) {
-  memset(cfg, 0, sizeof(*cfg));
+    memset(cfg, 0, sizeof(*cfg));
 
-  if (StringIsEmpty(vendor_code) || StringIsEmpty(device_brand) || StringIsEmpty(device_model)
-      || StringIsEmpty(serial_number) || StringIsEmpty(device_type)) {
-    return kEebusErrorInputArgument;
-  }
+    if (StringIsEmpty(vendor_code) || StringIsEmpty(device_brand) || StringIsEmpty(device_model)
+        || StringIsEmpty(serial_number) || StringIsEmpty(device_type)) {
+        return kEebusErrorInputArgument;
+    }
 
-  cfg->vendor_code = StringCopy(vendor_code);
-  if (cfg->vendor_code == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    cfg->vendor_code = StringCopy(vendor_code);
+    if (cfg->vendor_code == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  cfg->device_brand = StringCopy(device_brand);
-  if (cfg->device_brand == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    cfg->device_brand = StringCopy(device_brand);
+    if (cfg->device_brand == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  cfg->device_model = StringCopy(device_model);
-  if (cfg->device_model == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    cfg->device_model = StringCopy(device_model);
+    if (cfg->device_model == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  cfg->device_serial_num = StringCopy(serial_number);
-  if (cfg->device_serial_num == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    cfg->device_serial_num = StringCopy(serial_number);
+    if (cfg->device_serial_num == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  cfg->alternate_ship_id           = NULL;
-  cfg->alternate_mdns_service_name = NULL;
+    cfg->alternate_ship_id           = NULL;
+    cfg->alternate_mdns_service_name = NULL;
 
-  cfg->device_type = StringCopy(device_type);
-  if (cfg->device_type == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    cfg->device_type = StringCopy(device_type);
+    if (cfg->device_type == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  // Assign default feature set
-  cfg->feature_set = kNetworkManagementFeatureSetTypeSmart;
+    // Assign default feature set
+    cfg->feature_set = kNetworkManagementFeatureSetTypeSmart;
 
-  cfg->port = (port != 0) ? port : kDefaultPort;
+    cfg->port = (port != 0) ? port : kDefaultPort;
 
-  cfg->register_auto_accept = false;
-  cfg->generated_id         = GenerateIdentifier(cfg);
-  if (cfg->generated_id == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    cfg->register_auto_accept = false;
+    cfg->generated_id         = GenerateIdentifier(cfg);
+    if (cfg->generated_id == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusServiceConfig* EebusServiceConfigCreate(
@@ -103,51 +103,51 @@ EebusServiceConfig* EebusServiceConfigCreate(
     const char* device_type,
     int32_t port
 ) {
-  EebusServiceConfig* const cfg = (EebusServiceConfig*)EEBUS_MALLOC(sizeof(EebusServiceConfig));
-  if (cfg == NULL) {
-    return NULL;
-  }
+    EebusServiceConfig* const cfg = (EebusServiceConfig*)EEBUS_MALLOC(sizeof(EebusServiceConfig));
+    if (cfg == NULL) {
+        return NULL;
+    }
 
-  const EebusError status
-      = EebusServiceConfigConstruct(cfg, vendor_code, device_brand, device_model, serial_number, device_type, port);
+    const EebusError status
+        = EebusServiceConfigConstruct(cfg, vendor_code, device_brand, device_model, serial_number, device_type, port);
 
-  if (status != kEebusErrorOk) {
-    EebusServiceConfigDelete(cfg);
-    return NULL;
-  }
+    if (status != kEebusErrorOk) {
+        EebusServiceConfigDelete(cfg);
+        return NULL;
+    }
 
-  return cfg;
+    return cfg;
 }
 
 void EebusServiceConfigDestruct(EebusServiceConfig* cfg) {
-  StringDelete((char*)cfg->vendor_code);
-  cfg->vendor_code = NULL;
+    StringDelete((char*)cfg->vendor_code);
+    cfg->vendor_code = NULL;
 
-  StringDelete((char*)cfg->device_brand);
-  cfg->device_brand = NULL;
+    StringDelete((char*)cfg->device_brand);
+    cfg->device_brand = NULL;
 
-  StringDelete((char*)cfg->device_model);
-  cfg->device_model = NULL;
+    StringDelete((char*)cfg->device_model);
+    cfg->device_model = NULL;
 
-  StringDelete((char*)cfg->device_serial_num);
-  cfg->device_serial_num = NULL;
+    StringDelete((char*)cfg->device_serial_num);
+    cfg->device_serial_num = NULL;
 
-  StringDelete((char*)cfg->alternate_ship_id);
-  cfg->alternate_ship_id = NULL;
+    StringDelete((char*)cfg->alternate_ship_id);
+    cfg->alternate_ship_id = NULL;
 
-  StringDelete((char*)cfg->alternate_mdns_service_name);
-  cfg->alternate_mdns_service_name = NULL;
+    StringDelete((char*)cfg->alternate_mdns_service_name);
+    cfg->alternate_mdns_service_name = NULL;
 
-  StringDelete((char*)cfg->device_type);
-  cfg->device_type = NULL;
+    StringDelete((char*)cfg->device_type);
+    cfg->device_type = NULL;
 
-  StringDelete((char*)cfg->generated_id);
-  cfg->generated_id = NULL;
+    StringDelete((char*)cfg->generated_id);
+    cfg->generated_id = NULL;
 }
 
 void EebusServiceConfigDelete(EebusServiceConfig* cfg) {
-  if (cfg != NULL) {
-    EebusServiceConfigDestruct(cfg);
-    EEBUS_FREE(cfg);
-  }
+    if (cfg != NULL) {
+        EebusServiceConfigDestruct(cfg);
+        EEBUS_FREE(cfg);
+    }
 }

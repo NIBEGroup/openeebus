@@ -25,19 +25,19 @@ EebusError ElectricalConnectionClientConstruct(
     EntityLocalObject* local_entity,
     EntityRemoteObject* remote_entity
 ) {
-  EebusError err = FeatureInfoClientConstruct(
-      &self->feature_info_client,
-      kFeatureTypeTypeElectricalConnection,
-      local_entity,
-      remote_entity
-  );
+    EebusError err = FeatureInfoClientConstruct(
+        &self->feature_info_client,
+        kFeatureTypeTypeElectricalConnection,
+        local_entity,
+        remote_entity
+    );
 
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  ElectricalConnectionCommonConstruct(&self->el_connection_common, NULL, self->feature_info_client.remote_feature);
-  return kEebusErrorOk;
+    ElectricalConnectionCommonConstruct(&self->el_connection_common, NULL, self->feature_info_client.remote_feature);
+    return kEebusErrorOk;
 }
 
 EebusError ElectricalConnectionClientRequestDescriptions(
@@ -45,15 +45,15 @@ EebusError ElectricalConnectionClientRequestDescriptions(
     const ElectricalConnectionDescriptionListDataSelectorsType* selectors,
     const ElectricalConnectionDescriptionDataElementsType* elements
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeElectricalConnectionDescriptionListData,
-      selectors,
-      elements,
-      NULL,
-      NULL
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeElectricalConnectionDescriptionListData,
+        selectors,
+        elements,
+        NULL,
+        NULL
+    );
 }
 
 EebusError ElectricalConnectionClientRequestParameterDescriptions(
@@ -61,15 +61,15 @@ EebusError ElectricalConnectionClientRequestParameterDescriptions(
     const ElectricalConnectionDescriptionListDataSelectorsType* selectors,
     const ElectricalConnectionDescriptionDataElementsType* elements
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeElectricalConnectionParameterDescriptionListData,
-      selectors,
-      elements,
-      NULL,
-      NULL
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeElectricalConnectionParameterDescriptionListData,
+        selectors,
+        elements,
+        NULL,
+        NULL
+    );
 }
 
 EebusError ElectricalConnectionClientRequestPermittedValueSets(
@@ -77,15 +77,15 @@ EebusError ElectricalConnectionClientRequestPermittedValueSets(
     const ElectricalConnectionPermittedValueSetListDataSelectorsType* selectors,
     const ElectricalConnectionPermittedValueSetDataElementsType* elements
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeElectricalConnectionPermittedValueSetListData,
-      selectors,
-      elements,
-      NULL,
-      NULL
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeElectricalConnectionPermittedValueSetListData,
+        selectors,
+        elements,
+        NULL,
+        NULL
+    );
 }
 
 EebusError ElectricalConnectionClientRequestCharacteristics(
@@ -95,13 +95,13 @@ EebusError ElectricalConnectionClientRequestCharacteristics(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeElectricalConnectionCharacteristicListData,
-      selectors,
-      elements,
-      cb,
-      ctx
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeElectricalConnectionCharacteristicListData,
+        selectors,
+        elements,
+        cb,
+        ctx
+    );
 }

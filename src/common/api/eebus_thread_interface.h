@@ -42,15 +42,15 @@ typedef struct EebusThreadObject EebusThreadObject;
  * @brief EebusThread Interface Structure
  */
 struct EebusThreadInterface {
-  void (*destruct)(EebusThreadObject* self);
-  void (*join)(EebusThreadObject* self);
+    void (*destruct)(EebusThreadObject* self);
+    void (*join)(EebusThreadObject* self);
 };
 
 /**
  * @brief Eebus Thread Object Structure
  */
 struct EebusThreadObject {
-  const EebusThreadInterface* interface_;
+    const EebusThreadInterface* interface_;
 };
 
 /**

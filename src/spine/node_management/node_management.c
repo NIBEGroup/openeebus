@@ -71,69 +71,69 @@ static const FeatureLocalInterface node_management_methods = {
 static void NodeManagementConstruct(NodeManagement* self, uint32_t id, EntityLocalObject* entity);
 
 void NodeManagementConstruct(NodeManagement* self, uint32_t id, EntityLocalObject* entity) {
-  FeatureLocalConstruct(FEATURE_LOCAL(self), id, entity, kFeatureTypeTypeNodeManagement, kRoleTypeSpecial);
+    FeatureLocalConstruct(FEATURE_LOCAL(self), id, entity, kFeatureTypeTypeNodeManagement, kRoleTypeSpecial);
 
-  //  Override "virtual functions table"
-  FEATURE_LOCAL_INTERFACE(self) = &node_management_methods;
+    //  Override "virtual functions table"
+    FEATURE_LOCAL_INTERFACE(self) = &node_management_methods;
 
-  FeatureLocalObject* const fl = FEATURE_LOCAL_OBJECT(self);
-  FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementDetailedDiscoveryData, true, false);
-  FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementUseCaseData, true, false);
-  FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementSubscriptionData, true, false);
-  FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementSubscriptionRequestCall, false, false);
-  FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementSubscriptionDeleteCall, false, false);
-  FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementBindingData, true, false);
-  FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementBindingRequestCall, false, false);
-  FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementBindingDeleteCall, false, false);
+    FeatureLocalObject* const fl = FEATURE_LOCAL_OBJECT(self);
+    FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementDetailedDiscoveryData, true, false);
+    FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementUseCaseData, true, false);
+    FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementSubscriptionData, true, false);
+    FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementSubscriptionRequestCall, false, false);
+    FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementSubscriptionDeleteCall, false, false);
+    FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementBindingData, true, false);
+    FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementBindingRequestCall, false, false);
+    FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementBindingDeleteCall, false, false);
 
-  DeviceObject* const device = DEVICE_OBJECT(FEATURE_LOCAL_GET_DEVICE(fl));
+    DeviceObject* const device = DEVICE_OBJECT(FEATURE_LOCAL_GET_DEVICE(fl));
 
-  const NetworkManagementFeatureSetType* const feature_set = DEVICE_GET_FEATURE_SET(device);
-  if ((feature_set != NULL) && (*feature_set != kNetworkManagementFeatureSetTypeSimple)) {
-    FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementDestinationListData, true, false);
-  }
+    const NetworkManagementFeatureSetType* const feature_set = DEVICE_GET_FEATURE_SET(device);
+    if ((feature_set != NULL) && (*feature_set != kNetworkManagementFeatureSetTypeSimple)) {
+        FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeNodeManagementDestinationListData, true, false);
+    }
 }
 
 NodeManagementObject* NodeManagementCreate(uint32_t id, EntityLocalObject* entity) {
-  NodeManagement* const node_management = (NodeManagement*)EEBUS_MALLOC(sizeof(NodeManagement));
+    NodeManagement* const node_management = (NodeManagement*)EEBUS_MALLOC(sizeof(NodeManagement));
 
-  NodeManagementConstruct(node_management, id, entity);
+    NodeManagementConstruct(node_management, id, entity);
 
-  return NODE_MANAGEMENT_OBJECT(node_management);
+    return NODE_MANAGEMENT_OBJECT(node_management);
 }
 
 EebusError
 NodeManagementSendReply(const NodeManagement* self, const void* data, FunctionType data_type, const Message* msg) {
-  CmdType cmd = {
-      .data_choice         = (void*)data,
-      .data_choice_type_id = data_type,
-  };
+    CmdType cmd = {
+        .data_choice         = (void*)data,
+        .data_choice_type_id = data_type,
+    };
 
-  const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
+    const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
 
-  return SEND_REPLY(MessageGetSender(msg), msg->request_header, addr, &cmd);
+    return SEND_REPLY(MessageGetSender(msg), msg->request_header, addr, &cmd);
 }
 
 EebusError HandleMessage(FeatureLocalObject* self, const Message* msg) {
-  if ((msg == NULL) || (msg->cmd == NULL) || (msg->cmd->data_choice == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((msg == NULL) || (msg->cmd == NULL) || (msg->cmd->data_choice == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  NodeManagement* const nm = NODE_MANAGEMENT(self);
+    NodeManagement* const nm = NODE_MANAGEMENT(self);
 
-  switch (msg->cmd->data_choice_type_id) {
-    case kFunctionTypeResultData: return FeatureLocalProcessResult(FEATURE_LOCAL(self), msg);
-    case kFunctionTypeNodeManagementDetailedDiscoveryData: return HandleMsgDetailedDiscoveryData(nm, msg);
-    case kFunctionTypeNodeManagementSubscriptionRequestCall: return HandleMsgSubscriptionRequestCall(nm, msg);
-    case kFunctionTypeNodeManagementSubscriptionDeleteCall: return HandleMsgSubscriptionDeleteCall(nm, msg);
-    case kFunctionTypeNodeManagementSubscriptionData: return HandleMsgSubscriptionData(nm, msg);
-    case kFunctionTypeNodeManagementBindingRequestCall: return HandleMsgBindingRequestCall(nm, msg);
-    case kFunctionTypeNodeManagementBindingDeleteCall: return HandleMsgBindingDeleteCall(nm, msg);
-    case kFunctionTypeNodeManagementBindingData: return HandleMsgBindingData(nm, msg);
-    case kFunctionTypeNodeManagementUseCaseData: return HandleMsgUseCaseData(nm, msg);
-    case kFunctionTypeNodeManagementDestinationListData: return HandleMsgDestinationListData(nm, msg);
-    default: return kEebusErrorNotImplemented;
-  }
+    switch (msg->cmd->data_choice_type_id) {
+        case kFunctionTypeResultData: return FeatureLocalProcessResult(FEATURE_LOCAL(self), msg);
+        case kFunctionTypeNodeManagementDetailedDiscoveryData: return HandleMsgDetailedDiscoveryData(nm, msg);
+        case kFunctionTypeNodeManagementSubscriptionRequestCall: return HandleMsgSubscriptionRequestCall(nm, msg);
+        case kFunctionTypeNodeManagementSubscriptionDeleteCall: return HandleMsgSubscriptionDeleteCall(nm, msg);
+        case kFunctionTypeNodeManagementSubscriptionData: return HandleMsgSubscriptionData(nm, msg);
+        case kFunctionTypeNodeManagementBindingRequestCall: return HandleMsgBindingRequestCall(nm, msg);
+        case kFunctionTypeNodeManagementBindingDeleteCall: return HandleMsgBindingDeleteCall(nm, msg);
+        case kFunctionTypeNodeManagementBindingData: return HandleMsgBindingData(nm, msg);
+        case kFunctionTypeNodeManagementUseCaseData: return HandleMsgUseCaseData(nm, msg);
+        case kFunctionTypeNodeManagementDestinationListData: return HandleMsgDestinationListData(nm, msg);
+        default: return kEebusErrorNotImplemented;
+    }
 }
 
 void NodeManagementCleanRemoteDeviceCaches(
@@ -141,6 +141,6 @@ void NodeManagementCleanRemoteDeviceCaches(
     const DeviceAddressType* remote_addr,
     const char* ski
 ) {
-  FeatureLocalCleanRemoteDeviceCaches(self, remote_addr, ski);
-  PENDING_REPLY_CONTAINER_REMOVE_FOR_SKI(FEATURE_LOCAL(self)->pending_replies, ski);
+    FeatureLocalCleanRemoteDeviceCaches(self, remote_addr, ski);
+    PENDING_REPLY_CONTAINER_REMOVE_FOR_SKI(FEATURE_LOCAL(self)->pending_replies, ski);
 }

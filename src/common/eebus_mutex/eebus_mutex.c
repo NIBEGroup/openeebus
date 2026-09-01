@@ -29,11 +29,11 @@
 typedef struct EebusMutex EebusMutex;
 
 struct EebusMutex {
-  /** Implements the Eebus Mutex Interface */
-  EebusMutexObject obj;
+    /** Implements the Eebus Mutex Interface */
+    EebusMutexObject obj;
 
-  pthread_mutex_t mutex;
-  int mutex_init_ret;
+    pthread_mutex_t mutex;
+    int mutex_init_ret;
 };
 
 #define EEBUS_MUTEX(obj) ((EebusMutex*)(obj))
@@ -52,88 +52,88 @@ static EebusError EebusMutexConstruct(EebusMutex* self);
 static EebusError EebusMutexConstructRecursive(EebusMutex* self);
 
 EebusError EebusMutexConstruct(EebusMutex* self) {
-  // Override "virtual functions table"
-  EEBUS_MUTEX_INTERFACE(self) = &eebus_mutex_methods;
+    // Override "virtual functions table"
+    EEBUS_MUTEX_INTERFACE(self) = &eebus_mutex_methods;
 
-  self->mutex_init_ret = pthread_mutex_init(&self->mutex, NULL);
-  if (self->mutex_init_ret != 0) {
-    return kEebusErrorInit;
-  }
+    self->mutex_init_ret = pthread_mutex_init(&self->mutex, NULL);
+    if (self->mutex_init_ret != 0) {
+        return kEebusErrorInit;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError EebusMutexConstructRecursive(EebusMutex* self) {
-  // Override "virtual functions table"
-  EEBUS_MUTEX_INTERFACE(self) = &eebus_mutex_methods;
+    // Override "virtual functions table"
+    EEBUS_MUTEX_INTERFACE(self) = &eebus_mutex_methods;
 
-  self->mutex_init_ret = -1;
+    self->mutex_init_ret = -1;
 
-  pthread_mutexattr_t attr;
-  if (pthread_mutexattr_init(&attr) != 0) {
-    return kEebusErrorInit;
-  }
+    pthread_mutexattr_t attr;
+    if (pthread_mutexattr_init(&attr) != 0) {
+        return kEebusErrorInit;
+    }
 
-  if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE) != 0) {
+    if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE) != 0) {
+        pthread_mutexattr_destroy(&attr);
+        return kEebusErrorInit;
+    }
+
+    self->mutex_init_ret = pthread_mutex_init(&self->mutex, &attr);
     pthread_mutexattr_destroy(&attr);
-    return kEebusErrorInit;
-  }
 
-  self->mutex_init_ret = pthread_mutex_init(&self->mutex, &attr);
-  pthread_mutexattr_destroy(&attr);
+    if (self->mutex_init_ret != 0) {
+        return kEebusErrorInit;
+    }
 
-  if (self->mutex_init_ret != 0) {
-    return kEebusErrorInit;
-  }
-
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusMutexObject* EebusMutexCreateInternal(bool is_recursive) {
-  EebusMutex* const eebus_mutex = (EebusMutex*)EEBUS_MALLOC(sizeof(EebusMutex));
-  if (eebus_mutex == NULL) {
-    return NULL;
-  }
+    EebusMutex* const eebus_mutex = (EebusMutex*)EEBUS_MALLOC(sizeof(EebusMutex));
+    if (eebus_mutex == NULL) {
+        return NULL;
+    }
 
-  EebusError err = kEebusErrorInit;
-  if (is_recursive) {
-    err = EebusMutexConstructRecursive(eebus_mutex);
-  } else {
-    err = EebusMutexConstruct(eebus_mutex);
-  }
+    EebusError err = kEebusErrorInit;
+    if (is_recursive) {
+        err = EebusMutexConstructRecursive(eebus_mutex);
+    } else {
+        err = EebusMutexConstruct(eebus_mutex);
+    }
 
-  if (err != kEebusErrorOk) {
-    EebusMutexDelete(EEBUS_MUTEX_OBJECT(eebus_mutex));
-    return NULL;
-  }
+    if (err != kEebusErrorOk) {
+        EebusMutexDelete(EEBUS_MUTEX_OBJECT(eebus_mutex));
+        return NULL;
+    }
 
-  return EEBUS_MUTEX_OBJECT(eebus_mutex);
+    return EEBUS_MUTEX_OBJECT(eebus_mutex);
 }
 
 EebusMutexObject* EebusMutexCreate(void) {
-  return EebusMutexCreateInternal(false);
+    return EebusMutexCreateInternal(false);
 }
 
 EebusMutexObject* EebusMutexCreateRecursive(void) {
-  return EebusMutexCreateInternal(true);
+    return EebusMutexCreateInternal(true);
 }
 
 void Destruct(EebusMutexObject* self) {
-  EebusMutex* const mutex = EEBUS_MUTEX(self);
+    EebusMutex* const mutex = EEBUS_MUTEX(self);
 
-  if (mutex->mutex_init_ret == 0) {
-    pthread_mutex_destroy(&mutex->mutex);
-  }
+    if (mutex->mutex_init_ret == 0) {
+        pthread_mutex_destroy(&mutex->mutex);
+    }
 }
 
 void Lock(EebusMutexObject* self) {
-  EebusMutex* const mutex = EEBUS_MUTEX(self);
+    EebusMutex* const mutex = EEBUS_MUTEX(self);
 
-  pthread_mutex_lock(&mutex->mutex);
+    pthread_mutex_lock(&mutex->mutex);
 }
 
 void Unlock(EebusMutexObject* self) {
-  EebusMutex* const mutex = EEBUS_MUTEX(self);
+    EebusMutex* const mutex = EEBUS_MUTEX(self);
 
-  pthread_mutex_unlock(&mutex->mutex);
+    pthread_mutex_unlock(&mutex->mutex);
 }

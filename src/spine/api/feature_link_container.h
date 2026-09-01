@@ -27,27 +27,34 @@
 typedef struct FeatureLinkContainer FeatureLinkContainer;
 
 struct FeatureLinkContainer {
-  Vector links;
+    Vector links;
 };
 
 void FeatureLinkContainerConstruct(FeatureLinkContainer* self);
 void FeatureLinkContainerDestruct(FeatureLinkContainer* self);
 
 static inline size_t FeatureLinkContainerGetSize(const FeatureLinkContainer* self) {
-  return VectorGetSize(&self->links);
+    return VectorGetSize(&self->links);
 }
 
 static inline FeatureLink* FeatureLinkContainerGetElement(const FeatureLinkContainer* self, size_t idx) {
-  return (FeatureLink*)VectorGetElement(&self->links, idx);
+    return (FeatureLink*)VectorGetElement(&self->links, idx);
 };
 
 void FeatureLinkContainerAdd(
-    FeatureLinkContainer* self, uint64_t id, FeatureLocalObject* server_feature, FeatureRemoteObject* client_feature);
-FeatureLink* FeatureLinkContainerFind(const FeatureLinkContainer* self, const FeatureAddressType* server_address,
-    const FeatureAddressType* client_address);
+    FeatureLinkContainer* self,
+    uint64_t id,
+    FeatureLocalObject* server_feature,
+    FeatureRemoteObject* client_feature
+);
+FeatureLink* FeatureLinkContainerFind(
+    const FeatureLinkContainer* self,
+    const FeatureAddressType* server_address,
+    const FeatureAddressType* client_address
+);
 void FeatureLinkContainerRemove(FeatureLinkContainer* self, FeatureLink* link);
 bool FeatureLinkContainerHasServer(FeatureLinkContainer* self, const FeatureAddressType* server_address);
-size_t FeatureLinkContainerGetRemoteDeviceMatchNum(
-    const FeatureLinkContainer* self, const DeviceRemoteObject* remote_device);
+size_t
+FeatureLinkContainerGetRemoteDeviceMatchNum(const FeatureLinkContainer* self, const DeviceRemoteObject* remote_device);
 
 #endif  // SRC_EEBUS_SRC_SPINE_API_FEATURE_LINK_CONTAINER_H_

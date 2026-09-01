@@ -46,19 +46,19 @@ typedef struct EntityObject EntityObject;
  * @brief Entity Interface Structure
  */
 struct EntityInterface {
-  void (*destruct)(EntityObject* self);
-  const EntityAddressType* (*get_address)(const EntityObject* self);
-  EntityTypeType (*get_type)(const EntityObject* self);
-  const char* (*get_description)(const EntityObject* self);
-  void (*set_description)(EntityObject* self, const char* description);
-  uint32_t (*get_next_feature_id)(EntityObject* self);
+    void (*destruct)(EntityObject* self);
+    const EntityAddressType* (*get_address)(const EntityObject* self);
+    EntityTypeType (*get_type)(const EntityObject* self);
+    const char* (*get_description)(const EntityObject* self);
+    void (*set_description)(EntityObject* self, const char* description);
+    uint32_t (*get_next_feature_id)(EntityObject* self);
 };
 
 /**
  * @brief Entity Object Structure
  */
 struct EntityObject {
-  const EntityInterface* interface_;
+    const EntityInterface* interface_;
 };
 
 /**

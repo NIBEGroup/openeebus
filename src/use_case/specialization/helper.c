@@ -29,13 +29,13 @@ const void* HelperGetFeatureData(
     const FeatureRemoteObject* feature_remote,
     FunctionType function_type
 ) {
-  if (feature_local != NULL) {
-    return FEATURE_LOCAL_GET_DATA(feature_local, function_type);
-  } else if (feature_remote != NULL) {
-    return FEATURE_REMOTE_GET_DATA(feature_remote, function_type);
-  } else {
-    return NULL;
-  }
+    if (feature_local != NULL) {
+        return FEATURE_LOCAL_GET_DATA(feature_local, function_type);
+    } else if (feature_remote != NULL) {
+        return FEATURE_REMOTE_GET_DATA(feature_remote, function_type);
+    } else {
+        return NULL;
+    }
 }
 
 void HelperListMatchFirst(
@@ -44,23 +44,23 @@ void HelperListMatchFirst(
     const void* filter,
     EebusDataListMatchIterator* it
 ) {
-  EbusDataContainerListMatchFirst(ModelGetDataCfg(function_type), &data_container, it, filter);
+    EbusDataContainerListMatchFirst(ModelGetDataCfg(function_type), &data_container, it, filter);
 }
 
 const void* HelperGetListUniqueMatch(FunctionType function_type, const void* data_container, const void* filter) {
-  EebusDataListMatchIterator it;
+    EebusDataListMatchIterator it;
 
-  EbusDataContainerListMatchFirst(ModelGetDataCfg(function_type), &data_container, &it, filter);
-  if (EebusDataListMatchIteratorIsDone(&it)) {
-    return NULL;
-  }
+    EbusDataContainerListMatchFirst(ModelGetDataCfg(function_type), &data_container, &it, filter);
+    if (EebusDataListMatchIteratorIsDone(&it)) {
+        return NULL;
+    }
 
-  const void* const ret = EebusDataListMatchIteratorGet(&it);
-  EebusDataListMatchIteratorNext(&it);
-  if (!EebusDataListMatchIteratorIsDone(&it)) {
-    // More that one match found - match is not unique
-    return NULL;
-  }
+    const void* const ret = EebusDataListMatchIteratorGet(&it);
+    EebusDataListMatchIteratorNext(&it);
+    if (!EebusDataListMatchIteratorIsDone(&it)) {
+        // More that one match found - match is not unique
+        return NULL;
+    }
 
-  return ret;
+    return ret;
 }

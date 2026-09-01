@@ -35,17 +35,17 @@ extern "C" {
 typedef struct FeatureInfoClient FeatureInfoClient;
 
 struct FeatureInfoClient {
-  FeatureTypeType feature_type;
+    FeatureTypeType feature_type;
 
-  RoleType local_role;
-  DeviceLocalObject* local_device;
-  EntityLocalObject* local_entity;
-  FeatureLocalObject* local_feature;
+    RoleType local_role;
+    DeviceLocalObject* local_device;
+    EntityLocalObject* local_entity;
+    FeatureLocalObject* local_feature;
 
-  RoleType remote_role;
-  FeatureRemoteObject* remote_feature;
-  DeviceRemoteObject* remote_device;
-  EntityRemoteObject* remote_entity;
+    RoleType remote_role;
+    FeatureRemoteObject* remote_feature;
+    DeviceRemoteObject* remote_device;
+    EntityRemoteObject* remote_entity;
 };
 
 EebusError FeatureInfoClientConstruct(

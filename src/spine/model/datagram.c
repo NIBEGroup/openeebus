@@ -26,56 +26,58 @@
 #include "src/spine/model/model.h"
 
 bool DatagramHeaderIsValid(const HeaderType* header) {
-  if (header == NULL) {
-    return false;
-  }
+    if (header == NULL) {
+        return false;
+    }
 
-  bool ok = (header->spec_version != NULL);
+    bool ok = (header->spec_version != NULL);
 
-  ok = ok && FeatureAddressIsValid(header->src_addr);
-  ok = ok && FeatureAddressIsValid(header->dest_addr);
-  if (ok && (header->originator_addr != NULL)) {
-    ok = ok && FeatureAddressIsValid(header->originator_addr);
-    ok = ok && (header->originator_addr->device != NULL);
-  }
+    ok = ok && FeatureAddressIsValid(header->src_addr);
+    ok = ok && FeatureAddressIsValid(header->dest_addr);
+    if (ok && (header->originator_addr != NULL)) {
+        ok = ok && FeatureAddressIsValid(header->originator_addr);
+        ok = ok && (header->originator_addr->device != NULL);
+    }
 
-  ok = ok && (header->msg_cnt != NULL);
-  ok = ok && (header->cmd_classifier != NULL);
+    ok = ok && (header->msg_cnt != NULL);
+    ok = ok && (header->cmd_classifier != NULL);
 
-  return ok;
+    return ok;
 }
 
 bool DatagramPayloadIsValid(const PayloadType* payload) {
-  UNUSED(payload);
-  // TODO: Implement function
-  return true;
+    UNUSED(payload);
+    // TODO: Implement function
+    return true;
 }
 
 bool DatagramIsValid(const DatagramType* datagram) {
-  if (datagram == NULL) {
-    return false;
-  }
+    if (datagram == NULL) {
+        return false;
+    }
 
-  return DatagramHeaderIsValid(datagram->header) && DatagramPayloadIsValid(datagram->payload);
+    return DatagramHeaderIsValid(datagram->header) && DatagramPayloadIsValid(datagram->payload);
 }
 
-void DatagramDelete(DatagramType* datagram) { EEBUS_DATA_DELETE(ModelGetDatagramCfg(), &datagram); }
+void DatagramDelete(DatagramType* datagram) {
+    EEBUS_DATA_DELETE(ModelGetDatagramCfg(), &datagram);
+}
 
 DatagramType* DatagramParse(const char* s) {
-  return (DatagramType*)EEBUS_DATA_PARSE(ModelGetDatagramCfg(), s);
+    return (DatagramType*)EEBUS_DATA_PARSE(ModelGetDatagramCfg(), s);
 }
 
 char* DatagramPrintUnformatted(const DatagramType* datagram) {
-  return EEBUS_DATA_PRINT_UNFORMATTED(ModelGetDatagramCfg(), &datagram);
+    return EEBUS_DATA_PRINT_UNFORMATTED(ModelGetDatagramCfg(), &datagram);
 }
 
 DatagramType* DatagramCopy(const DatagramType* datagram) {
-  DatagramType* datagram_copy = NULL;
-  EEBUS_DATA_COPY(ModelGetDatagramCfg(), &datagram, &datagram_copy);
-  return datagram_copy;
+    DatagramType* datagram_copy = NULL;
+    EEBUS_DATA_COPY(ModelGetDatagramCfg(), &datagram, &datagram_copy);
+    return datagram_copy;
 }
 
 bool DatagramHeaderCompare(const HeaderType* header_a, const HeaderType* header_b) {
-  const EebusDataCfg cfg = EEBUS_DATA_SEQUENCE_TMP(HeaderType, ModelGetDatagramHeaderCfg());
-  return EEBUS_DATA_COMPARE(&cfg, &header_a, &cfg, &header_b);
+    const EebusDataCfg cfg = EEBUS_DATA_SEQUENCE_TMP(HeaderType, ModelGetDatagramHeaderCfg());
+    return EEBUS_DATA_COMPARE(&cfg, &header_a, &cfg, &header_b);
 }

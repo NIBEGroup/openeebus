@@ -53,106 +53,106 @@ typedef DurationType NetworkManagementProcessTimeoutType;
 typedef int32_t NetworkManagementFeatureSetType;
 
 enum {
-  kNetworkManagementFeatureSetTypeGateway, /**< "gateway" */
-  kNetworkManagementFeatureSetTypeRouter,  /**< "router" */
-  kNetworkManagementFeatureSetTypeSmart,   /**< "smart" */
-  kNetworkManagementFeatureSetTypeSimple,  /**< "simple" */
+    kNetworkManagementFeatureSetTypeGateway, /**< "gateway" */
+    kNetworkManagementFeatureSetTypeRouter,  /**< "router" */
+    kNetworkManagementFeatureSetTypeSmart,   /**< "smart" */
+    kNetworkManagementFeatureSetTypeSimple,  /**< "simple" */
 };
 
 typedef int32_t NetworkManagementProcessStateStateType;
 
 enum {
-  kNetworkManagementProcessStateStateTypeSucceeded, /**< "succeeded" */
-  kNetworkManagementProcessStateStateTypeFailed,    /**< "failed" */
-  kNetworkManagementProcessStateStateTypeAborted,   /**< "aborted" */
+    kNetworkManagementProcessStateStateTypeSucceeded, /**< "succeeded" */
+    kNetworkManagementProcessStateStateTypeFailed,    /**< "failed" */
+    kNetworkManagementProcessStateStateTypeAborted,   /**< "aborted" */
 };
 
 typedef int32_t NetworkManagementStateChangeType;
 
 enum {
-  kNetworkManagementStateChangeTypeAdded,    /**< "added" */
-  kNetworkManagementStateChangeTypeRemoved,  /**< "removed" */
-  kNetworkManagementStateChangeTypeModified, /**< "modified" */
+    kNetworkManagementStateChangeTypeAdded,    /**< "added" */
+    kNetworkManagementStateChangeTypeRemoved,  /**< "removed" */
+    kNetworkManagementStateChangeTypeModified, /**< "modified" */
 };
 
 typedef struct NetworkManagementAddNodeCallType NetworkManagementAddNodeCallType;
 
 struct NetworkManagementAddNodeCallType {
-  const FeatureAddressType* node_address;             /**< "nodeAddress" */
-  NetworkManagementNativeSetupType native_setup;      /**< "nativeSetup" */
-  const NetworkManagementProcessTimeoutType* timeout; /**< "timeout" */
-  LabelType label;                                    /**< "label" */
-  DescriptionType description;                        /**< "description" */
+    const FeatureAddressType* node_address;             /**< "nodeAddress" */
+    NetworkManagementNativeSetupType native_setup;      /**< "nativeSetup" */
+    const NetworkManagementProcessTimeoutType* timeout; /**< "timeout" */
+    LabelType label;                                    /**< "label" */
+    DescriptionType description;                        /**< "description" */
 };
 
 typedef struct NetworkManagementAddNodeCallElementsType NetworkManagementAddNodeCallElementsType;
 
 struct NetworkManagementAddNodeCallElementsType {
-  const FeatureAddressElementsType* node_address; /**< "nodeAddress" */
-  ElementTagType native_setup;                    /**< "nativeSetup" */
-  ElementTagType timeout;                         /**< "timeout" */
-  ElementTagType label;                           /**< "label" */
-  ElementTagType description;                     /**< "description" */
+    const FeatureAddressElementsType* node_address; /**< "nodeAddress" */
+    ElementTagType native_setup;                    /**< "nativeSetup" */
+    ElementTagType timeout;                         /**< "timeout" */
+    ElementTagType label;                           /**< "label" */
+    ElementTagType description;                     /**< "description" */
 };
 
 typedef struct NetworkManagementRemoveNodeCallType NetworkManagementRemoveNodeCallType;
 
 struct NetworkManagementRemoveNodeCallType {
-  const FeatureAddressType* node_address;             /**< "nodeAddress" */
-  const NetworkManagementProcessTimeoutType* timeout; /**< "timeout" */
+    const FeatureAddressType* node_address;             /**< "nodeAddress" */
+    const NetworkManagementProcessTimeoutType* timeout; /**< "timeout" */
 };
 
 typedef struct NetworkManagementRemoveNodeCallElementsType NetworkManagementRemoveNodeCallElementsType;
 
 struct NetworkManagementRemoveNodeCallElementsType {
-  const FeatureAddressElementsType* node_address; /**< "nodeAddress" */
-  ElementTagType timeout;                         /**< "timeout" */
+    const FeatureAddressElementsType* node_address; /**< "nodeAddress" */
+    ElementTagType timeout;                         /**< "timeout" */
 };
 
 typedef struct NetworkManagementModifyNodeCallType NetworkManagementModifyNodeCallType;
 
 struct NetworkManagementModifyNodeCallType {
-  const FeatureAddressType* node_address;             /**< "nodeAddress" */
-  NetworkManagementNativeSetupType native_setup;      /**< "nativeSetup" */
-  const NetworkManagementProcessTimeoutType* timeout; /**< "timeout" */
-  LabelType label;                                    /**< "label" */
-  DescriptionType description;                        /**< "description" */
+    const FeatureAddressType* node_address;             /**< "nodeAddress" */
+    NetworkManagementNativeSetupType native_setup;      /**< "nativeSetup" */
+    const NetworkManagementProcessTimeoutType* timeout; /**< "timeout" */
+    LabelType label;                                    /**< "label" */
+    DescriptionType description;                        /**< "description" */
 };
 
 typedef struct NetworkManagementModifyNodeCallElementsType NetworkManagementModifyNodeCallElementsType;
 
 struct NetworkManagementModifyNodeCallElementsType {
-  const FeatureAddressElementsType* node_address; /**< "nodeAddress" */
-  ElementTagType native_setup;                    /**< "nativeSetup" */
-  ElementTagType timeout;                         /**< "timeout" */
-  ElementTagType label;                           /**< "label" */
-  ElementTagType description;                     /**< "description" */
+    const FeatureAddressElementsType* node_address; /**< "nodeAddress" */
+    ElementTagType native_setup;                    /**< "nativeSetup" */
+    ElementTagType timeout;                         /**< "timeout" */
+    ElementTagType label;                           /**< "label" */
+    ElementTagType description;                     /**< "description" */
 };
 
 typedef struct NetworkManagementScanNetworkCallType NetworkManagementScanNetworkCallType;
 
 struct NetworkManagementScanNetworkCallType {
-  NetworkManagementScanSetupType scan_setup;          /**< "scanSetup" */
-  const NetworkManagementProcessTimeoutType* timeout; /**< "timeout" */
+    NetworkManagementScanSetupType scan_setup;          /**< "scanSetup" */
+    const NetworkManagementProcessTimeoutType* timeout; /**< "timeout" */
 };
 
 typedef struct NetworkManagementScanNetworkCallElementsType NetworkManagementScanNetworkCallElementsType;
 
 struct NetworkManagementScanNetworkCallElementsType {
-  ElementTagType scan_setup; /**< "scanSetup" */
-  ElementTagType timeout;    /**< "timeout" */
+    ElementTagType scan_setup; /**< "scanSetup" */
+    ElementTagType timeout;    /**< "timeout" */
 };
 
 typedef struct NetworkManagementDiscoverCallType NetworkManagementDiscoverCallType;
 
 struct NetworkManagementDiscoverCallType {
-  const FeatureAddressType* discover_address; /**< "discoverAddress" */
+    const FeatureAddressType* discover_address; /**< "discoverAddress" */
 };
 
 typedef struct NetworkManagementDiscoverCallElementsType NetworkManagementDiscoverCallElementsType;
 
 struct NetworkManagementDiscoverCallElementsType {
-  const FeatureAddressElementsType* discover_address; /**< "discoverAddress" */
+    const FeatureAddressElementsType* discover_address; /**< "discoverAddress" */
 };
 
 typedef TagType NetworkManagementAbortCallType;
@@ -162,182 +162,182 @@ typedef TagType NetworkManagementAbortCallElementsType;
 typedef struct NetworkManagementProcessStateDataType NetworkManagementProcessStateDataType;
 
 struct NetworkManagementProcessStateDataType {
-  const NetworkManagementProcessStateStateType* state; /**< "state" */
-  DescriptionType description;                         /**< "description" */
+    const NetworkManagementProcessStateStateType* state; /**< "state" */
+    DescriptionType description;                         /**< "description" */
 };
 
 typedef struct NetworkManagementProcessStateDataElementsType NetworkManagementProcessStateDataElementsType;
 
 struct NetworkManagementProcessStateDataElementsType {
-  ElementTagType state;       /**< "state" */
-  ElementTagType description; /**< "description" */
+    ElementTagType state;       /**< "state" */
+    ElementTagType description; /**< "description" */
 };
 
 typedef struct NetworkManagementJoiningModeDataType NetworkManagementJoiningModeDataType;
 
 struct NetworkManagementJoiningModeDataType {
-  NetworkManagementSetupType setup; /**< "setup" */
+    NetworkManagementSetupType setup; /**< "setup" */
 };
 
 typedef struct NetworkManagementJoiningModeDataElementsType NetworkManagementJoiningModeDataElementsType;
 
 struct NetworkManagementJoiningModeDataElementsType {
-  ElementTagType setup; /**< "setup" */
+    ElementTagType setup; /**< "setup" */
 };
 
 typedef struct NetworkManagementReportCandidateDataType NetworkManagementReportCandidateDataType;
 
 struct NetworkManagementReportCandidateDataType {
-  NetworkManagementCandidateSetupType candidate_setup; /**< "candidateSetup" */
-  const bool* setup_usable_for_add;                    /**< "setupUsableForAdd" */
-  LabelType label;                                     /**< "label" */
-  DescriptionType description;                         /**< "description" */
+    NetworkManagementCandidateSetupType candidate_setup; /**< "candidateSetup" */
+    const bool* setup_usable_for_add;                    /**< "setupUsableForAdd" */
+    LabelType label;                                     /**< "label" */
+    DescriptionType description;                         /**< "description" */
 };
 
 typedef struct NetworkManagementReportCandidateDataElementsType NetworkManagementReportCandidateDataElementsType;
 
 struct NetworkManagementReportCandidateDataElementsType {
-  ElementTagType candidate_setup;      /**< "candidateSetup" */
-  ElementTagType setup_usable_for_add; /**< "setupUsableForAdd" */
-  ElementTagType label;                /**< "label" */
-  ElementTagType description;          /**< "description" */
+    ElementTagType candidate_setup;      /**< "candidateSetup" */
+    ElementTagType setup_usable_for_add; /**< "setupUsableForAdd" */
+    ElementTagType label;                /**< "label" */
+    ElementTagType description;          /**< "description" */
 };
 
 typedef struct NetworkManagementDeviceDescriptionDataType NetworkManagementDeviceDescriptionDataType;
 
 struct NetworkManagementDeviceDescriptionDataType {
-  const DeviceAddressType* device_address;                          /**< "deviceAddress" */
-  const DeviceTypeType* device_type;                                /**< "deviceType" */
-  const FeatureAddressType* network_management_responsible_address; /**< "networkManagementResponsibleAddress" */
-  NetworkManagementNativeSetupType native_setup;                    /**< "nativeSetup" */
-  NetworkManagementTechnologyAddressType technology_address;        /**< "technologyAddress" */
-  NetworkManagementCommunicationsTechnologyInformationType
-      communications_technology_information;                  /**< "communicationsTechnologyInformation" */
-  const NetworkManagementFeatureSetType* network_feature_set; /**< "networkFeatureSet" */
-  const NetworkManagementStateChangeType* last_state_change;  /**< "lastStateChange" */
-  NetworkManagementMinimumTrustLevelType minimum_trust_level; /**< "minimumTrustLevel" */
-  LabelType label;                                            /**< "label" */
-  DescriptionType description;                                /**< "description" */
+    const DeviceAddressType* device_address;                          /**< "deviceAddress" */
+    const DeviceTypeType* device_type;                                /**< "deviceType" */
+    const FeatureAddressType* network_management_responsible_address; /**< "networkManagementResponsibleAddress" */
+    NetworkManagementNativeSetupType native_setup;                    /**< "nativeSetup" */
+    NetworkManagementTechnologyAddressType technology_address;        /**< "technologyAddress" */
+    NetworkManagementCommunicationsTechnologyInformationType
+        communications_technology_information;                  /**< "communicationsTechnologyInformation" */
+    const NetworkManagementFeatureSetType* network_feature_set; /**< "networkFeatureSet" */
+    const NetworkManagementStateChangeType* last_state_change;  /**< "lastStateChange" */
+    NetworkManagementMinimumTrustLevelType minimum_trust_level; /**< "minimumTrustLevel" */
+    LabelType label;                                            /**< "label" */
+    DescriptionType description;                                /**< "description" */
 };
 
 typedef struct NetworkManagementDeviceDescriptionDataElementsType NetworkManagementDeviceDescriptionDataElementsType;
 
 struct NetworkManagementDeviceDescriptionDataElementsType {
-  ElementTagType device_address;                         /**< "deviceAddress" */
-  ElementTagType device_type;                            /**< "deviceType" */
-  ElementTagType network_management_responsible_address; /**< "networkManagementResponsibleAddress" */
-  ElementTagType native_setup;                           /**< "nativeSetup" */
-  ElementTagType technology_address;                     /**< "technologyAddress" */
-  ElementTagType communications_technology_information;  /**< "communicationsTechnologyInformation" */
-  ElementTagType network_feature_set;                    /**< "networkFeatureSet" */
-  ElementTagType last_state_change;                      /**< "lastStateChange" */
-  ElementTagType minimum_trust_level;                    /**< "minimumTrustLevel" */
-  ElementTagType label;                                  /**< "label" */
-  ElementTagType description;                            /**< "description" */
+    ElementTagType device_address;                         /**< "deviceAddress" */
+    ElementTagType device_type;                            /**< "deviceType" */
+    ElementTagType network_management_responsible_address; /**< "networkManagementResponsibleAddress" */
+    ElementTagType native_setup;                           /**< "nativeSetup" */
+    ElementTagType technology_address;                     /**< "technologyAddress" */
+    ElementTagType communications_technology_information;  /**< "communicationsTechnologyInformation" */
+    ElementTagType network_feature_set;                    /**< "networkFeatureSet" */
+    ElementTagType last_state_change;                      /**< "lastStateChange" */
+    ElementTagType minimum_trust_level;                    /**< "minimumTrustLevel" */
+    ElementTagType label;                                  /**< "label" */
+    ElementTagType description;                            /**< "description" */
 };
 
 typedef struct NetworkManagementDeviceDescriptionListDataType NetworkManagementDeviceDescriptionListDataType;
 
 struct NetworkManagementDeviceDescriptionListDataType {
-  const NetworkManagementDeviceDescriptionDataType* const*
-      network_management_device_description_data; /**< "networkManagementDeviceDescriptionData" */
-  size_t network_management_device_description_data_size;
+    const NetworkManagementDeviceDescriptionDataType* const*
+        network_management_device_description_data; /**< "networkManagementDeviceDescriptionData" */
+    size_t network_management_device_description_data_size;
 };
 
 typedef struct NetworkManagementDeviceDescriptionListDataSelectorsType
     NetworkManagementDeviceDescriptionListDataSelectorsType;
 
 struct NetworkManagementDeviceDescriptionListDataSelectorsType {
-  const DeviceAddressType* device_address; /**< "deviceAddress" */
-  const DeviceTypeType* device_type;       /**< "deviceType" */
+    const DeviceAddressType* device_address; /**< "deviceAddress" */
+    const DeviceTypeType* device_type;       /**< "deviceType" */
 };
 
 typedef struct NetworkManagementEntityDescriptionDataType NetworkManagementEntityDescriptionDataType;
 
 struct NetworkManagementEntityDescriptionDataType {
-  const EntityAddressType* entity_address;                    /**< "entityAddress" */
-  const EntityTypeType* entity_type;                          /**< "entityType" */
-  const NetworkManagementStateChangeType* last_state_change;  /**< "lastStateChange" */
-  NetworkManagementMinimumTrustLevelType minimum_trust_level; /**< "minimumTrustLevel" */
-  LabelType label;                                            /**< "label" */
-  DescriptionType description;                                /**< "description" */
+    const EntityAddressType* entity_address;                    /**< "entityAddress" */
+    const EntityTypeType* entity_type;                          /**< "entityType" */
+    const NetworkManagementStateChangeType* last_state_change;  /**< "lastStateChange" */
+    NetworkManagementMinimumTrustLevelType minimum_trust_level; /**< "minimumTrustLevel" */
+    LabelType label;                                            /**< "label" */
+    DescriptionType description;                                /**< "description" */
 };
 
 typedef struct NetworkManagementEntityDescriptionDataElementsType NetworkManagementEntityDescriptionDataElementsType;
 
 struct NetworkManagementEntityDescriptionDataElementsType {
-  ElementTagType entity_address;      /**< "entityAddress" */
-  ElementTagType entity_type;         /**< "entityType" */
-  ElementTagType last_state_change;   /**< "lastStateChange" */
-  ElementTagType minimum_trust_level; /**< "minimumTrustLevel" */
-  ElementTagType label;               /**< "label" */
-  ElementTagType description;         /**< "description" */
+    ElementTagType entity_address;      /**< "entityAddress" */
+    ElementTagType entity_type;         /**< "entityType" */
+    ElementTagType last_state_change;   /**< "lastStateChange" */
+    ElementTagType minimum_trust_level; /**< "minimumTrustLevel" */
+    ElementTagType label;               /**< "label" */
+    ElementTagType description;         /**< "description" */
 };
 
 typedef struct NetworkManagementEntityDescriptionListDataType NetworkManagementEntityDescriptionListDataType;
 
 struct NetworkManagementEntityDescriptionListDataType {
-  const NetworkManagementEntityDescriptionDataType* const*
-      network_management_entity_description_data; /**< "networkManagementEntityDescriptionData" */
-  size_t network_management_entity_description_data_size;
+    const NetworkManagementEntityDescriptionDataType* const*
+        network_management_entity_description_data; /**< "networkManagementEntityDescriptionData" */
+    size_t network_management_entity_description_data_size;
 };
 
 typedef struct NetworkManagementEntityDescriptionListDataSelectorsType
     NetworkManagementEntityDescriptionListDataSelectorsType;
 
 struct NetworkManagementEntityDescriptionListDataSelectorsType {
-  const EntityAddressType* entity_address; /**< "entityAddress" */
-  const EntityTypeType* entity_type;       /**< "entityType" */
+    const EntityAddressType* entity_address; /**< "entityAddress" */
+    const EntityTypeType* entity_type;       /**< "entityType" */
 };
 
 typedef struct NetworkManagementFeatureDescriptionDataType NetworkManagementFeatureDescriptionDataType;
 
 struct NetworkManagementFeatureDescriptionDataType {
-  const FeatureAddressType* feature_address;             /**< "featureAddress" */
-  const FeatureTypeType* feature_type;                   /**< "featureType" */
-  const FeatureSpecificUsageType* const* specific_usage; /**< "specificUsage" */
-  size_t specific_usage_size;
-  FeatureGroupType feature_group;                        /**< "featureGroup" */
-  const RoleType* role;                                  /**< "role" */
-  const FunctionPropertyType* const* supported_function; /**< "supportedFunction" */
-  size_t supported_function_size;
-  const NetworkManagementStateChangeType* last_state_change;  /**< "lastStateChange" */
-  NetworkManagementMinimumTrustLevelType minimum_trust_level; /**< "minimumTrustLevel" */
-  LabelType label;                                            /**< "label" */
-  DescriptionType description;                                /**< "description" */
-  const MaxResponseDelayType* max_response_delay;             /**< "maxResponseDelay" */
+    const FeatureAddressType* feature_address;             /**< "featureAddress" */
+    const FeatureTypeType* feature_type;                   /**< "featureType" */
+    const FeatureSpecificUsageType* const* specific_usage; /**< "specificUsage" */
+    size_t specific_usage_size;
+    FeatureGroupType feature_group;                        /**< "featureGroup" */
+    const RoleType* role;                                  /**< "role" */
+    const FunctionPropertyType* const* supported_function; /**< "supportedFunction" */
+    size_t supported_function_size;
+    const NetworkManagementStateChangeType* last_state_change;  /**< "lastStateChange" */
+    NetworkManagementMinimumTrustLevelType minimum_trust_level; /**< "minimumTrustLevel" */
+    LabelType label;                                            /**< "label" */
+    DescriptionType description;                                /**< "description" */
+    const MaxResponseDelayType* max_response_delay;             /**< "maxResponseDelay" */
 };
 
 typedef struct NetworkManagementFeatureDescriptionDataElementsType NetworkManagementFeatureDescriptionDataElementsType;
 
 struct NetworkManagementFeatureDescriptionDataElementsType {
-  const FeatureAddressElementsType* feature_address;      /**< "featureAddress" */
-  ElementTagType feature_type;                            /**< "featureType" */
-  ElementTagType specific_usage;                          /**< "specificUsage" */
-  ElementTagType feature_group;                           /**< "featureGroup" */
-  ElementTagType role;                                    /**< "role" */
-  const FunctionPropertyElementsType* supported_function; /**< "supportedFunction" */
-  ElementTagType last_state_change;                       /**< "lastStateChange" */
-  ElementTagType minimum_trust_level;                     /**< "minimumTrustLevel" */
-  ElementTagType label;                                   /**< "label" */
-  ElementTagType description;                             /**< "description" */
-  ElementTagType max_response_delay;                      /**< "maxResponseDelay" */
+    const FeatureAddressElementsType* feature_address;      /**< "featureAddress" */
+    ElementTagType feature_type;                            /**< "featureType" */
+    ElementTagType specific_usage;                          /**< "specificUsage" */
+    ElementTagType feature_group;                           /**< "featureGroup" */
+    ElementTagType role;                                    /**< "role" */
+    const FunctionPropertyElementsType* supported_function; /**< "supportedFunction" */
+    ElementTagType last_state_change;                       /**< "lastStateChange" */
+    ElementTagType minimum_trust_level;                     /**< "minimumTrustLevel" */
+    ElementTagType label;                                   /**< "label" */
+    ElementTagType description;                             /**< "description" */
+    ElementTagType max_response_delay;                      /**< "maxResponseDelay" */
 };
 
 typedef struct NetworkManagementFeatureDescriptionListDataType NetworkManagementFeatureDescriptionListDataType;
 
 struct NetworkManagementFeatureDescriptionListDataType {
-  const NetworkManagementFeatureDescriptionDataType* const*
-      network_management_feature_description_data; /**< "networkManagementFeatureDescriptionData" */
-  size_t network_management_feature_description_data_size;
+    const NetworkManagementFeatureDescriptionDataType* const*
+        network_management_feature_description_data; /**< "networkManagementFeatureDescriptionData" */
+    size_t network_management_feature_description_data_size;
 };
 
 typedef struct NetworkManagementFeatureDescriptionListDataSelectorsType
     NetworkManagementFeatureDescriptionListDataSelectorsType;
 
 struct NetworkManagementFeatureDescriptionListDataSelectorsType {
-  const FeatureAddressType* feature_address; /**< "featureAddress" */
-  const FeatureTypeType* feature_type;       /**< "featureType" */
+    const FeatureAddressType* feature_address; /**< "featureAddress" */
+    const FeatureTypeType* feature_type;       /**< "featureType" */
 };
 
 #ifdef __cplusplus

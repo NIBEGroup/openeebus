@@ -28,10 +28,10 @@ extern "C" {
 #endif  // __cplusplus
 
 static inline void WebsocketDelete(WebsocketObject* self) {
-  if (self != NULL) {
-    WEBSOCKET_DESTRUCT(self);
-    EEBUS_FREE(self);
-  }
+    if (self != NULL) {
+        WEBSOCKET_DESTRUCT(self);
+        EEBUS_FREE(self);
+    }
 }
 
 #ifdef __cplusplus

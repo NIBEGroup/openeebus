@@ -32,20 +32,20 @@ extern "C" {
 typedef int8_t ConnectionState;
 
 enum {
-  kConnectionStateNone,                   /**< The initial state, when no pairing exists */
-  kConnectionStateQueued,                 /** The connection request has been started and is
-                                           pending connection initialization */
-  kConnectionStateInitiated,              /** This service initiated the connection process
-                                           */
-  kConnectionStateReceivedPairingRequest, /** A remote service initiated the
-                                           connection process */
-  kConnectionStateInProgress,             /** The connection handshake is in progress */
-  kConnectionStateTrusted,                /** The connection is trusted on both ends */
-  kConnectionStatePin,                    /** PIN processing, not supported right now! */
-  kConnectionStateCompleted,              /** The connection handshake is completed from
-                                           both ends */
-  kConnectionStateRemoteDeniedTrust,      /** The remote service denied trust */
-  kConnectionStateError,                  /** The connection handshake resulted in an error */
+    kConnectionStateNone,                   /**< The initial state, when no pairing exists */
+    kConnectionStateQueued,                 /** The connection request has been started and is
+                                             pending connection initialization */
+    kConnectionStateInitiated,              /** This service initiated the connection process
+                                             */
+    kConnectionStateReceivedPairingRequest, /** A remote service initiated the
+                                             connection process */
+    kConnectionStateInProgress,             /** The connection handshake is in progress */
+    kConnectionStateTrusted,                /** The connection is trusted on both ends */
+    kConnectionStatePin,                    /** PIN processing, not supported right now! */
+    kConnectionStateCompleted,              /** The connection handshake is completed from
+                                             both ends */
+    kConnectionStateRemoteDeniedTrust,      /** The remote service denied trust */
+    kConnectionStateError,                  /** The connection handshake resulted in an error */
 };
 
 #ifdef __cplusplus

@@ -48,7 +48,7 @@ EebusError EebusBoolParse(const char* s, bool* value);
  * @return A string representation of the boolean value ("true" or "false").
  */
 static inline const char* EebusBoolToString(bool value) {
-  return value ? kTrueString : kFalseString;
+    return value ? kTrueString : kFalseString;
 }
 
 #ifdef __cplusplus

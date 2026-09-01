@@ -31,8 +31,8 @@ extern "C" {
 #endif  // __cplusplus
 
 enum MdnsBrowseInterval {
-  kMdnsBrowseIntervalMinSeconds = 10,
-  kMdnsBrowseIntervalMaxSeconds = 20,
+    kMdnsBrowseIntervalMinSeconds = 10,
+    kMdnsBrowseIntervalMaxSeconds = 20,
 };
 
 typedef enum MdnsBrowseInterval MdnsBrowseInterval;
@@ -62,19 +62,19 @@ typedef struct ShipMdnsObject ShipMdnsObject;
  * @brief ShipMdns Interface Structure
  */
 struct ShipMdnsInterface {
-  void (*destruct)(ShipMdnsObject* self);
-  EebusError (*start)(ShipMdnsObject* self);
-  void (*stop)(ShipMdnsObject* self);
-  EebusError (*register_service)(ShipMdnsObject* self);
-  void (*deregister_service)(ShipMdnsObject* self);
-  void (*set_autoaccept)(ShipMdnsObject* self, bool autoaccept);
+    void (*destruct)(ShipMdnsObject* self);
+    EebusError (*start)(ShipMdnsObject* self);
+    void (*stop)(ShipMdnsObject* self);
+    EebusError (*register_service)(ShipMdnsObject* self);
+    void (*deregister_service)(ShipMdnsObject* self);
+    void (*set_autoaccept)(ShipMdnsObject* self, bool autoaccept);
 };
 
 /**
  * @brief SHIP mDNS Object Structure
  */
 struct ShipMdnsObject {
-  const ShipMdnsInterface* interface_;
+    const ShipMdnsInterface* interface_;
 };
 
 /**

@@ -31,34 +31,34 @@ static const FunctionType limit_description_fcn = kFunctionTypeLoadControlLimitD
 static const FunctionType limit_fcn             = kFunctionTypeLoadControlLimitListData;
 
 EebusError LoadControlServerConstruct(LoadControlServer* self, EntityLocalObject* local_entity) {
-  const EebusError err
-      = FeatureInfoServerConstruct(&self->feature_info_server, kFeatureTypeTypeLoadControl, local_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err
+        = FeatureInfoServerConstruct(&self->feature_info_server, kFeatureTypeTypeLoadControl, local_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  LocalLoadControlCommonConstruct(&self->load_control_common, self->feature_info_server.local_feature, NULL);
-  return kEebusErrorOk;
+    LocalLoadControlCommonConstruct(&self->load_control_common, self->feature_info_server.local_feature, NULL);
+    return kEebusErrorOk;
 }
 
 LoadControlLimitIdType LoadControlServerGetNextLimitId(const LoadControlServer* self) {
-  const LoadControlLimitDescriptionListDataType* const descriptions_list
-      = LoadControlCommonGetLimitDescriptionList(&self->load_control_common);
+    const LoadControlLimitDescriptionListDataType* const descriptions_list
+        = LoadControlCommonGetLimitDescriptionList(&self->load_control_common);
 
-  if ((descriptions_list == NULL) || (descriptions_list->load_control_limit_description_data == NULL)) {
-    return 0;
-  }
-
-  LoadControlLimitIdType next_id = (LoadControlLimitIdType)0;
-  for (size_t i = 0; i < descriptions_list->load_control_limit_description_data_size; ++i) {
-    const LoadControlLimitDescriptionDataType* const limit_description
-        = descriptions_list->load_control_limit_description_data[i];
-    if ((limit_description->limit_id != NULL) && (*limit_description->limit_id >= next_id)) {
-      next_id = *limit_description->limit_id + 1;
+    if ((descriptions_list == NULL) || (descriptions_list->load_control_limit_description_data == NULL)) {
+        return 0;
     }
-  }
 
-  return next_id;
+    LoadControlLimitIdType next_id = (LoadControlLimitIdType)0;
+    for (size_t i = 0; i < descriptions_list->load_control_limit_description_data_size; ++i) {
+        const LoadControlLimitDescriptionDataType* const limit_description
+            = descriptions_list->load_control_limit_description_data[i];
+        if ((limit_description->limit_id != NULL) && (*limit_description->limit_id >= next_id)) {
+            next_id = *limit_description->limit_id + 1;
+        }
+    }
+
+    return next_id;
 }
 
 EebusError LoadControlServerAddLimitDescription(
@@ -66,27 +66,27 @@ EebusError LoadControlServerAddLimitDescription(
     LoadControlLimitDescriptionDataType* description,
     LoadControlLimitIdType* limit_id
 ) {
-  if (description == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (description == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  if (description->limit_id != NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (description->limit_id != NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  *limit_id = LoadControlServerGetNextLimitId(self);
+    *limit_id = LoadControlServerGetNextLimitId(self);
 
-  description->limit_id = limit_id;
+    description->limit_id = limit_id;
 
-  const FilterType filter_partial = FILTER_PARTIAL(limit_description_fcn, NULL, NULL, NULL);
+    const FilterType filter_partial = FILTER_PARTIAL(limit_description_fcn, NULL, NULL, NULL);
 
-  const LoadControlLimitDescriptionDataType* const description_data[] = {description};
+    const LoadControlLimitDescriptionDataType* const description_data[] = {description};
 
-  LoadControlLimitDescriptionListDataType limits_description = {description_data, ARRAY_SIZE(description_data)};
+    LoadControlLimitDescriptionListDataType limits_description = {description_data, ARRAY_SIZE(description_data)};
 
-  FeatureLocalObject* const fl = self->feature_info_server.local_feature;
+    FeatureLocalObject* const fl = self->feature_info_server.local_feature;
 
-  return FEATURE_LOCAL_UPDATE_DATA(fl, limit_description_fcn, &limits_description, &filter_partial, NULL);
+    return FEATURE_LOCAL_UPDATE_DATA(fl, limit_description_fcn, &limits_description, &filter_partial, NULL);
 }
 
 EebusError UpdateLimitData(
@@ -95,15 +95,15 @@ EebusError UpdateLimitData(
     const LoadControlLimitListDataSelectorsType* delete_selectors,
     const LoadControlLimitDataElementsType* delete_elements
 ) {
-  const FilterType filter_partial = FILTER_PARTIAL(limit_fcn, NULL, NULL, NULL);
-  const FilterType* filter_delete = &FILTER_DELETE(limit_fcn, NULL, delete_selectors, delete_elements);
-  if ((delete_selectors == NULL) && (delete_elements == NULL)) {
-    filter_delete = NULL;
-  }
+    const FilterType filter_partial = FILTER_PARTIAL(limit_fcn, NULL, NULL, NULL);
+    const FilterType* filter_delete = &FILTER_DELETE(limit_fcn, NULL, delete_selectors, delete_elements);
+    if ((delete_selectors == NULL) && (delete_elements == NULL)) {
+        filter_delete = NULL;
+    }
 
-  FeatureLocalObject* const fl = self->feature_info_server.local_feature;
+    FeatureLocalObject* const fl = self->feature_info_server.local_feature;
 
-  return FEATURE_LOCAL_UPDATE_DATA(fl, limit_fcn, limits, &filter_partial, filter_delete);
+    return FEATURE_LOCAL_UPDATE_DATA(fl, limit_fcn, limits, &filter_partial, filter_delete);
 }
 
 EebusError LoadControlServerUpdateLimitWithId(
@@ -111,28 +111,28 @@ EebusError LoadControlServerUpdateLimitWithId(
     LoadControlLimitDataType* limt_data,
     LoadControlLimitIdType limit_id
 ) {
-  if (limt_data == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (limt_data == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  const LoadControlLimitDescriptionDataType filter = {.limit_id = &limit_id};
+    const LoadControlLimitDescriptionDataType filter = {.limit_id = &limit_id};
 
-  const LoadControlLimitDescriptionDataType* const description
-      = LoadControlCommonGetLimitDescriptionWithFilter(&self->load_control_common, &filter);
+    const LoadControlLimitDescriptionDataType* const description
+        = LoadControlCommonGetLimitDescriptionWithFilter(&self->load_control_common, &filter);
 
-  if (description == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (description == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  LoadControlLimitDataType limit_data_tmp = *limt_data;
+    LoadControlLimitDataType limit_data_tmp = *limt_data;
 
-  limit_data_tmp.limit_id = description->limit_id;
+    limit_data_tmp.limit_id = description->limit_id;
 
-  const LoadControlLimitDataType* const limit_data[] = {&limit_data_tmp};
+    const LoadControlLimitDataType* const limit_data[] = {&limit_data_tmp};
 
-  const LoadControlLimitListDataType limits = {limit_data, ARRAY_SIZE(limit_data)};
+    const LoadControlLimitListDataType limits = {limit_data, ARRAY_SIZE(limit_data)};
 
-  return UpdateLimitData(self, &limits, NULL, NULL);
+    return UpdateLimitData(self, &limits, NULL, NULL);
 }
 
 EebusError LoadControlServerUpdateLimitWithFilter(
@@ -142,24 +142,24 @@ EebusError LoadControlServerUpdateLimitWithFilter(
     const LoadControlLimitListDataSelectorsType* delete_selectors,
     const LoadControlLimitDataElementsType* delete_elements
 ) {
-  if ((limit_data == NULL) || (filter == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((limit_data == NULL) || (filter == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  const LoadControlLimitDescriptionDataType* const description
-      = LoadControlCommonGetLimitDescriptionWithFilter(&self->load_control_common, filter);
+    const LoadControlLimitDescriptionDataType* const description
+        = LoadControlCommonGetLimitDescriptionWithFilter(&self->load_control_common, filter);
 
-  if ((description == NULL) || (description->limit_id == NULL)) {
-    return kEebusErrorNoChange;
-  }
+    if ((description == NULL) || (description->limit_id == NULL)) {
+        return kEebusErrorNoChange;
+    }
 
-  LoadControlLimitDataType limit_data_tmp = *limit_data;
+    LoadControlLimitDataType limit_data_tmp = *limit_data;
 
-  limit_data_tmp.limit_id = description->limit_id;
+    limit_data_tmp.limit_id = description->limit_id;
 
-  const LoadControlLimitDataType* const limits_data[] = {&limit_data_tmp};
+    const LoadControlLimitDataType* const limits_data[] = {&limit_data_tmp};
 
-  const LoadControlLimitListDataType limits = {limits_data, ARRAY_SIZE(limits_data)};
+    const LoadControlLimitListDataType limits = {limits_data, ARRAY_SIZE(limits_data)};
 
-  return UpdateLimitData(self, &limits, delete_selectors, delete_elements);
+    return UpdateLimitData(self, &limits, delete_selectors, delete_elements);
 }

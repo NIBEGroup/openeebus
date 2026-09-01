@@ -34,8 +34,8 @@ extern "C" {
 typedef struct DeviceConfigurationCommon DeviceConfigurationCommon;
 
 struct DeviceConfigurationCommon {
-  FeatureLocalObject* feature_local;
-  FeatureRemoteObject* feature_remote;
+    FeatureLocalObject* feature_local;
+    FeatureRemoteObject* feature_remote;
 };
 
 /**
@@ -68,11 +68,11 @@ void DeviceConfigurationCommonConstruct(
  */
 static inline const DeviceConfigurationKeyValueDescriptionListDataType*
 DeviceConfigurationCommonGetKeyValueDescriptionList(const DeviceConfigurationCommon* self) {
-  return HelperGetFeatureData(
-      self->feature_local,
-      self->feature_remote,
-      kFunctionTypeDeviceConfigurationKeyValueDescriptionListData
-  );
+    return HelperGetFeatureData(
+        self->feature_local,
+        self->feature_remote,
+        kFunctionTypeDeviceConfigurationKeyValueDescriptionListData
+    );
 }
 
 /**

@@ -24,20 +24,20 @@
 
 EebusError
 FeatureInfoServerConstruct(FeatureInfoServer* self, FeatureTypeType feature_type, EntityLocalObject* local_entity) {
-  if (local_entity == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (local_entity == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  self->feature_type = feature_type;
-  self->local_role   = kRoleTypeServer;
-  self->local_device = ENTITY_LOCAL_GET_DEVICE(local_entity);
-  self->local_entity = local_entity;
+    self->feature_type = feature_type;
+    self->local_role   = kRoleTypeServer;
+    self->local_device = ENTITY_LOCAL_GET_DEVICE(local_entity);
+    self->local_entity = local_entity;
 
-  self->local_feature
-      = ENTITY_LOCAL_GET_FEATURE_WITH_TYPE_AND_ROLE(self->local_entity, self->feature_type, self->local_role);
-  if (self->local_feature == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    self->local_feature
+        = ENTITY_LOCAL_GET_FEATURE_WITH_TYPE_AND_ROLE(self->local_entity, self->feature_type, self->local_role);
+    if (self->local_feature == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }

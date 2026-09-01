@@ -39,9 +39,9 @@ extern "C" {
 #endif  // __cplusplus
 
 enum WebsocketCallbackType {
-  kWebsocketCallbackTypeError,
-  kWebsocketCallbackTypeRead,
-  kWebsocketCallbackTypeClose,
+    kWebsocketCallbackTypeError,
+    kWebsocketCallbackTypeRead,
+    kWebsocketCallbackTypeClose,
 };
 
 typedef enum WebsocketCallbackType WebsocketCallbackType;
@@ -71,19 +71,19 @@ typedef struct WebsocketObject WebsocketObject;
  * @brief Websocket Interface Structure
  */
 struct WebsocketInterface {
-  void (*destruct)(WebsocketObject* self);
-  int32_t (*write)(WebsocketObject* self, const uint8_t* msg, size_t msg_size);
-  void (*close)(WebsocketObject* self, int32_t close_code, const char* reason);
-  bool (*is_closed)(const WebsocketObject* self);
-  int32_t (*get_close_error)(const WebsocketObject* self);
-  void (*schedule_write)(WebsocketObject* self);
+    void (*destruct)(WebsocketObject* self);
+    int32_t (*write)(WebsocketObject* self, const uint8_t* msg, size_t msg_size);
+    void (*close)(WebsocketObject* self, int32_t close_code, const char* reason);
+    bool (*is_closed)(const WebsocketObject* self);
+    int32_t (*get_close_error)(const WebsocketObject* self);
+    void (*schedule_write)(WebsocketObject* self);
 };
 
 /**
  * @brief Websocket Object Structure
  */
 struct WebsocketObject {
-  const WebsocketInterface* interface_;
+    const WebsocketInterface* interface_;
 };
 
 /**

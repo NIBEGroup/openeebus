@@ -27,8 +27,8 @@
 typedef struct MgcpNameMapping MgcpNameMapping;
 
 struct MgcpNameMapping {
-  const char* name;
-  GcpMeasurementNameId id;
+    const char* name;
+    GcpMeasurementNameId id;
 };
 
 static const MgcpNameMapping mgcp_name_lut[] = {
@@ -48,25 +48,25 @@ static const MgcpNameMapping mgcp_name_lut[] = {
 };
 
 const GcpMeasurementNameId* GcpMgcpMeasurementGetNameId(const char* name) {
-  if (name == NULL) {
-    return NULL;
-  }
-
-  for (size_t i = 0; i < ARRAY_SIZE(mgcp_name_lut); ++i) {
-    if (strcmp(mgcp_name_lut[i].name, name) == 0) {
-      return &mgcp_name_lut[i].id;
+    if (name == NULL) {
+        return NULL;
     }
-  }
 
-  return NULL;
+    for (size_t i = 0; i < ARRAY_SIZE(mgcp_name_lut); ++i) {
+        if (strcmp(mgcp_name_lut[i].name, name) == 0) {
+            return &mgcp_name_lut[i].id;
+        }
+    }
+
+    return NULL;
 }
 
 const char* GcpMgcpMeasurementGetName(GcpMeasurementNameId id) {
-  for (size_t i = 0; i < ARRAY_SIZE(mgcp_name_lut); ++i) {
-    if (mgcp_name_lut[i].id == id) {
-      return mgcp_name_lut[i].name;
+    for (size_t i = 0; i < ARRAY_SIZE(mgcp_name_lut); ++i) {
+        if (mgcp_name_lut[i].id == id) {
+            return mgcp_name_lut[i].name;
+        }
     }
-  }
 
-  return NULL;
+    return NULL;
 }

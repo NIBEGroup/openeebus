@@ -31,10 +31,10 @@ extern "C" {
 MuMpcListenerObject* MuMpcListenerCreate(void);
 
 static inline void MuMpcListenerDelete(MuMpcListenerObject* mu_mpc_listener) {
-  if (mu_mpc_listener != NULL) {
-    MU_MPC_LISTENER_DESTRUCT(mu_mpc_listener);
-    EEBUS_FREE(mu_mpc_listener);
-  }
+    if (mu_mpc_listener != NULL) {
+        MU_MPC_LISTENER_DESTRUCT(mu_mpc_listener);
+        EEBUS_FREE(mu_mpc_listener);
+    }
 }
 
 #ifdef __cplusplus

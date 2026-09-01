@@ -35,24 +35,25 @@ typedef struct MaMeasurementInterface MaMeasurementInterface;
 typedef struct MaMeasurementObject MaMeasurementObject;
 
 struct MaMeasurementInterface {
-  EebusMeasurementNameId (*get_name)(const MaMeasurementObject* self);
-  EebusError (*get_data)(
-      const MaMeasurementObject* self,
-      EntityLocalObject* local_entity,
-      EntityRemoteObject* remote_entity,
-      ScaledValue* measurement_value
-  );
+    EebusMeasurementNameId (*get_name)(const MaMeasurementObject* self);
+    EebusError (*get_data)(
+        const MaMeasurementObject* self,
+        EntityLocalObject* local_entity,
+        EntityRemoteObject* remote_entity,
+        ScaledValue* measurement_value
+    );
 };
 
 struct MaMeasurementObject {
-  const MaMeasurementInterface* interface_;
+    const MaMeasurementInterface* interface_;
 };
 
 #define MA_MEASUREMENT_OBJECT(obj) ((MaMeasurementObject*)(obj))
 #define MA_MEASUREMENT_INTERFACE(obj) (MA_MEASUREMENT_OBJECT(obj)->interface_)
 #define MA_MEASUREMENT_GET_NAME(obj) (MA_MEASUREMENT_INTERFACE(obj)->get_name(MA_MEASUREMENT_OBJECT(obj)))
 #define MA_MEASUREMENT_GET_DATA(obj, local_entity, remote_entity, measurement_value) \
-  (MA_MEASUREMENT_INTERFACE(obj)->get_data(MA_MEASUREMENT_OBJECT(obj), local_entity, remote_entity, measurement_value))
+    (MA_MEASUREMENT_INTERFACE(obj)                                                   \
+         ->get_data(MA_MEASUREMENT_OBJECT(obj), local_entity, remote_entity, measurement_value))
 
 #ifdef __cplusplus
 }

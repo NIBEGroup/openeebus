@@ -35,77 +35,80 @@ extern "C" {
 typedef int32_t UseCaseActorType;
 
 enum {
-  kUseCaseActorTypeBattery,                  /**< "Battery" */
-  kUseCaseActorTypeBatterySystem,            /**< "BatterySystem" */
-  kUseCaseActorTypeCEM,                      /**< "CEM" */
-  kUseCaseActorTypeConfigurationAppliance,   /**< "ConfigurationAppliance" */
-  kUseCaseActorTypeCompressor,               /**< "Compressor" */
-  kUseCaseActorTypeControllableSystem,       /**< "ControllableSystem" */
-  kUseCaseActorTypeDHWCircuit,               /**< "DHWCircuit" */
-  kUseCaseActorTypeEnergyBroker,             /**< "EnergyBroker" */
-  kUseCaseActorTypeEnergyConsumer,           /**< "EnergyConsumer" */
-  kUseCaseActorTypeEnergyGuard,              /**< "EnergyGuard" */
-  kUseCaseActorTypeEVSE,                     /**< "EVSE" */
-  kUseCaseActorTypeEV,                       /**< "EV" */
-  kUseCaseActorTypeGridConnectionPoint,      /**< "GridConnectionPoint" */
-  kUseCaseActorTypeHeatPump,                 /**< "HeatPump" */
-  kUseCaseActorTypeHeatingCircuit,           /**< "HeatingCircuit" */
-  kUseCaseActorTypeHeatingZone,              /**< "HeatingZone" */
-  kUseCaseActorTypeHVACRoom,                 /**< "HVACRoom" */
-  kUseCaseActorTypeInverter,                 /**< "Inverter" */
-  kUseCaseActorTypeMonitoredUnit,            /**< "MonitoredUnit" */
-  kUseCaseActorTypeMonitoringAppliance,      /**< "MonitoringAppliance" */
-  kUseCaseActorTypeOutdoorTemperatureSensor, /**< "OutdoorTemperatureSensor" */
-  kUseCaseActorTypePVString,                 /**< "PVString" */
-  kUseCaseActorTypePVSystem,                 /**< "PVSystem" */
-  kUseCaseActorTypeSmartAppliance,           /**< "SmartAppliance" */
-  kUseCaseActorTypeVisualizationAppliance,   /**< "VisualizationAppliance" */
+    kUseCaseActorTypeBattery,                  /**< "Battery" */
+    kUseCaseActorTypeBatterySystem,            /**< "BatterySystem" */
+    kUseCaseActorTypeCEM,                      /**< "CEM" */
+    kUseCaseActorTypeConfigurationAppliance,   /**< "ConfigurationAppliance" */
+    kUseCaseActorTypeCompressor,               /**< "Compressor" */
+    kUseCaseActorTypeControllableSystem,       /**< "ControllableSystem" */
+    kUseCaseActorTypeDHWCircuit,               /**< "DHWCircuit" */
+    kUseCaseActorTypeEnergyBroker,             /**< "EnergyBroker" */
+    kUseCaseActorTypeEnergyConsumer,           /**< "EnergyConsumer" */
+    kUseCaseActorTypeEnergyGuard,              /**< "EnergyGuard" */
+    kUseCaseActorTypeEVSE,                     /**< "EVSE" */
+    kUseCaseActorTypeEV,                       /**< "EV" */
+    kUseCaseActorTypeGridConnectionPoint,      /**< "GridConnectionPoint" */
+    kUseCaseActorTypeHeatPump,                 /**< "HeatPump" */
+    kUseCaseActorTypeHeatingCircuit,           /**< "HeatingCircuit" */
+    kUseCaseActorTypeHeatingZone,              /**< "HeatingZone" */
+    kUseCaseActorTypeHVACRoom,                 /**< "HVACRoom" */
+    kUseCaseActorTypeInverter,                 /**< "Inverter" */
+    kUseCaseActorTypeMonitoredUnit,            /**< "MonitoredUnit" */
+    kUseCaseActorTypeMonitoringAppliance,      /**< "MonitoringAppliance" */
+    kUseCaseActorTypeOutdoorTemperatureSensor, /**< "OutdoorTemperatureSensor" */
+    kUseCaseActorTypePVString,                 /**< "PVString" */
+    kUseCaseActorTypePVSystem,                 /**< "PVSystem" */
+    kUseCaseActorTypeSmartAppliance,           /**< "SmartAppliance" */
+    kUseCaseActorTypeVisualizationAppliance,   /**< "VisualizationAppliance" */
 };
 
 typedef int32_t UseCaseNameType;
 
 enum {
-  kUseCaseNameTypeConfigurationOfDhwSystemFunction,              /**< "configurationOfDhwSystemFunction" */
-  kUseCaseNameTypeConfigurationOfDhwTemperature,                 /**< "configurationOfDhwTemperature" */
-  kUseCaseNameTypeConfigurationOfRoomCoolingSystemFunction,      /**< "configurationOfRoomCoolingSystemFunction" */
-  kUseCaseNameTypeConfigurationOfRoomCoolingTemperature,         /**< "configurationOfRoomCoolingTemperature" */
-  kUseCaseNameTypeConfigurationOfRoomHeatingSystemFunction,      /**< "configurationOfRoomHeatingSystemFunction" */
-  kUseCaseNameTypeConfigurationOfRoomHeatingTemperature,         /**< "configurationOfRoomHeatingTemperature" */
-  kUseCaseNameTypeControlOfBattery,                              /**< "controlOfBattery" */
-  kUseCaseNameTypeCoordinatedEVCharging,                         /**< "coordinatedEvCharging" */
-  kUseCaseNameTypeEVChargingSummary,                             /**< "evChargingSummary" */
-  kUseCaseNameTypeEVCommissioningAndConfiguration,               /**< "evCommissioningAndConfiguration" */
-  kUseCaseNameTypeEVSECommissioningAndConfiguration,             /**< "evseCommissioningAndConfiguration" */
-  kUseCaseNameTypeEVStateOfCharge,                               /**< "evStateOfCharge" */
-  kUseCaseNameTypeFlexibleLoad,                                  /**< "flexibleLoad" */
-  kUseCaseNameTypeFlexibleStartForWhiteGoods,                    /**< "flexibleStartForWhiteGoods" */
-  kUseCaseNameTypeLimitationOfPowerConsumption,                  /**< "limitationOfPowerConsumption" */
-  kUseCaseNameTypeLimitationOfPowerProduction,                   /**< "limitationOfPowerProduction" */
-  kUseCaseNameTypeIncentiveTableBasedPowerConsumptionManagement, /**< "incentiveTableBasedPowerConsumptionManagement" */
-  kUseCaseNameTypeMeasurementOfElectricityDuringEVCharging,      /**< "measurementOfElectricityDuringEvCharging" */
-  kUseCaseNameTypeMonitoringAndControlOfSmartGridReadyConditions, /**< "monitoringAndControlOfSmartGridReadyConditions"
-                                                                   */
-  kUseCaseNameTypeMonitoringOfBattery,                            /**< "monitoringOfBattery" */
-  kUseCaseNameTypeMonitoringOfDhwSystemFunction,                  /**< "monitoringOfDhwSystemFunction" */
-  kUseCaseNameTypeMonitoringOfDhwTemperature,                     /**< "monitoringOfDhwTemperature" */
-  kUseCaseNameTypeMonitoringOfGridConnectionPoint,                /**< "monitoringOfGridConnectionPoint" */
-  kUseCaseNameTypeMonitoringOfInverter,                           /**< "monitoringOfInverter" */
-  kUseCaseNameTypeMonitoringOfOutdoorTemperature,                 /**< "monitoringOfOutdoorTemperature" */
-  kUseCaseNameTypeMonitoringOfPowerConsumption,                   /**< "monitoringOfPowerConsumption" */
-  kUseCaseNameTypeMonitoringOfPvString,                           /**< "monitoringOfPvString" */
-  kUseCaseNameTypeMonitoringOfRoomCoolingSystemFunction,          /**< "monitoringOfRoomCoolingSystemFunction" */
-  kUseCaseNameTypeMonitoringOfRoomHeatingSystemFunction,          /**< "monitoringOfRoomHeatingSystemFunction" */
-  kUseCaseNameTypeMonitoringOfRoomTemperature,                    /**< "monitoringOfRoomTemperature" */
-  kUseCaseNameTypeOptimizationOfSelfConsumptionByHeatPumpCompressorFlexibility, /**<
-                                                                                   "optimizationOfSelfConsumptionByHeatPumpCompressorFlexibility"
-                                                                                 */
-  kUseCaseNameTypeOptimizationOfSelfConsumptionDuringEVCharging, /**< "optimizationOfSelfConsumptionDuringEvCharging" */
-  kUseCaseNameTypeOverloadProtectionByEVChargingCurrentCurtailment, /**<
-                                                                       "overloadProtectionByEvChargingCurrentCurtailment"
+    kUseCaseNameTypeConfigurationOfDhwSystemFunction,               /**< "configurationOfDhwSystemFunction" */
+    kUseCaseNameTypeConfigurationOfDhwTemperature,                  /**< "configurationOfDhwTemperature" */
+    kUseCaseNameTypeConfigurationOfRoomCoolingSystemFunction,       /**< "configurationOfRoomCoolingSystemFunction" */
+    kUseCaseNameTypeConfigurationOfRoomCoolingTemperature,          /**< "configurationOfRoomCoolingTemperature" */
+    kUseCaseNameTypeConfigurationOfRoomHeatingSystemFunction,       /**< "configurationOfRoomHeatingSystemFunction" */
+    kUseCaseNameTypeConfigurationOfRoomHeatingTemperature,          /**< "configurationOfRoomHeatingTemperature" */
+    kUseCaseNameTypeControlOfBattery,                               /**< "controlOfBattery" */
+    kUseCaseNameTypeCoordinatedEVCharging,                          /**< "coordinatedEvCharging" */
+    kUseCaseNameTypeEVChargingSummary,                              /**< "evChargingSummary" */
+    kUseCaseNameTypeEVCommissioningAndConfiguration,                /**< "evCommissioningAndConfiguration" */
+    kUseCaseNameTypeEVSECommissioningAndConfiguration,              /**< "evseCommissioningAndConfiguration" */
+    kUseCaseNameTypeEVStateOfCharge,                                /**< "evStateOfCharge" */
+    kUseCaseNameTypeFlexibleLoad,                                   /**< "flexibleLoad" */
+    kUseCaseNameTypeFlexibleStartForWhiteGoods,                     /**< "flexibleStartForWhiteGoods" */
+    kUseCaseNameTypeLimitationOfPowerConsumption,                   /**< "limitationOfPowerConsumption" */
+    kUseCaseNameTypeLimitationOfPowerProduction,                    /**< "limitationOfPowerProduction" */
+    kUseCaseNameTypeIncentiveTableBasedPowerConsumptionManagement,  /**< "incentiveTableBasedPowerConsumptionManagement"
                                                                      */
-  kUseCaseNameTypeVisualizationOfAggregatedBatteryData,             /**< "visualizationOfAggregatedBatteryData" */
-  kUseCaseNameTypeVisualizationOfAggregatedPhotovoltaicData,        /**< "visualizationOfAggregatedPhotovoltaicData" */
-  kUseCaseNameTypeVisualizationOfHeatingAreaName,                   /**< "visualizationOfHeatingAreaName" */
+    kUseCaseNameTypeMeasurementOfElectricityDuringEVCharging,       /**< "measurementOfElectricityDuringEvCharging" */
+    kUseCaseNameTypeMonitoringAndControlOfSmartGridReadyConditions, /**<
+                                                                     * "monitoringAndControlOfSmartGridReadyConditions"
+                                                                     */
+    kUseCaseNameTypeMonitoringOfBattery,                            /**< "monitoringOfBattery" */
+    kUseCaseNameTypeMonitoringOfDhwSystemFunction,                  /**< "monitoringOfDhwSystemFunction" */
+    kUseCaseNameTypeMonitoringOfDhwTemperature,                     /**< "monitoringOfDhwTemperature" */
+    kUseCaseNameTypeMonitoringOfGridConnectionPoint,                /**< "monitoringOfGridConnectionPoint" */
+    kUseCaseNameTypeMonitoringOfInverter,                           /**< "monitoringOfInverter" */
+    kUseCaseNameTypeMonitoringOfOutdoorTemperature,                 /**< "monitoringOfOutdoorTemperature" */
+    kUseCaseNameTypeMonitoringOfPowerConsumption,                   /**< "monitoringOfPowerConsumption" */
+    kUseCaseNameTypeMonitoringOfPvString,                           /**< "monitoringOfPvString" */
+    kUseCaseNameTypeMonitoringOfRoomCoolingSystemFunction,          /**< "monitoringOfRoomCoolingSystemFunction" */
+    kUseCaseNameTypeMonitoringOfRoomHeatingSystemFunction,          /**< "monitoringOfRoomHeatingSystemFunction" */
+    kUseCaseNameTypeMonitoringOfRoomTemperature,                    /**< "monitoringOfRoomTemperature" */
+    kUseCaseNameTypeOptimizationOfSelfConsumptionByHeatPumpCompressorFlexibility, /**<
+                                                                                     "optimizationOfSelfConsumptionByHeatPumpCompressorFlexibility"
+                                                                                   */
+    kUseCaseNameTypeOptimizationOfSelfConsumptionDuringEVCharging, /**< "optimizationOfSelfConsumptionDuringEvCharging"
+                                                                    */
+    kUseCaseNameTypeOverloadProtectionByEVChargingCurrentCurtailment, /**<
+                                                                         "overloadProtectionByEvChargingCurrentCurtailment"
+                                                                       */
+    kUseCaseNameTypeVisualizationOfAggregatedBatteryData,             /**< "visualizationOfAggregatedBatteryData" */
+    kUseCaseNameTypeVisualizationOfAggregatedPhotovoltaicData, /**< "visualizationOfAggregatedPhotovoltaicData" */
+    kUseCaseNameTypeVisualizationOfHeatingAreaName,            /**< "visualizationOfHeatingAreaName" */
 };
 
 typedef uint32_t UseCaseScenarioSupportType;
@@ -113,62 +116,62 @@ typedef uint32_t UseCaseScenarioSupportType;
 typedef struct UseCaseSupportType UseCaseSupportType;
 
 struct UseCaseSupportType {
-  const UseCaseNameType* use_case_name;                      /**< "useCaseName" */
-  SpecificationVersionType use_case_version;                 /**< "useCaseVersion" */
-  const bool* use_case_available;                            /**< "useCaseAvailable" */
-  const UseCaseScenarioSupportType* const* scenario_support; /**< "scenarioSupport" */
-  size_t scenario_support_size;
-  const char* use_case_document_sub_revision; /**< "useCaseDocumentSubRevision" */
+    const UseCaseNameType* use_case_name;                      /**< "useCaseName" */
+    SpecificationVersionType use_case_version;                 /**< "useCaseVersion" */
+    const bool* use_case_available;                            /**< "useCaseAvailable" */
+    const UseCaseScenarioSupportType* const* scenario_support; /**< "scenarioSupport" */
+    size_t scenario_support_size;
+    const char* use_case_document_sub_revision; /**< "useCaseDocumentSubRevision" */
 };
 
 typedef struct UseCaseSupportElementsType UseCaseSupportElementsType;
 
 struct UseCaseSupportElementsType {
-  ElementTagType use_case_name;                  /**< "useCaseName" */
-  ElementTagType use_case_version;               /**< "useCaseVersion" */
-  ElementTagType use_case_available;             /**< "useCaseAvailable" */
-  ElementTagType scenario_support;               /**< "scenarioSupport" */
-  ElementTagType use_case_document_sub_revision; /**< "useCaseDocumentSubRevision" */
+    ElementTagType use_case_name;                  /**< "useCaseName" */
+    ElementTagType use_case_version;               /**< "useCaseVersion" */
+    ElementTagType use_case_available;             /**< "useCaseAvailable" */
+    ElementTagType scenario_support;               /**< "scenarioSupport" */
+    ElementTagType use_case_document_sub_revision; /**< "useCaseDocumentSubRevision" */
 };
 
 typedef struct UseCaseSupportSelectorsType UseCaseSupportSelectorsType;
 
 struct UseCaseSupportSelectorsType {
-  const UseCaseNameType* use_case_name;               /**< "useCaseName" */
-  SpecificationVersionType use_case_version;          /**< "useCaseVersion" */
-  const UseCaseScenarioSupportType* scenario_support; /**< "scenarioSupport" */
+    const UseCaseNameType* use_case_name;               /**< "useCaseName" */
+    SpecificationVersionType use_case_version;          /**< "useCaseVersion" */
+    const UseCaseScenarioSupportType* scenario_support; /**< "scenarioSupport" */
 };
 
 typedef struct UseCaseInformationDataType UseCaseInformationDataType;
 
 struct UseCaseInformationDataType {
-  const FeatureAddressType* address;                 /**< "address" */
-  const UseCaseActorType* actor;                     /**< "actor" */
-  const UseCaseSupportType* const* use_case_support; /**< "useCaseSupport" */
-  size_t use_case_support_size;
+    const FeatureAddressType* address;                 /**< "address" */
+    const UseCaseActorType* actor;                     /**< "actor" */
+    const UseCaseSupportType* const* use_case_support; /**< "useCaseSupport" */
+    size_t use_case_support_size;
 };
 
 typedef struct UseCaseInformationDataElementsType UseCaseInformationDataElementsType;
 
 struct UseCaseInformationDataElementsType {
-  ElementTagType address;          /**< "address" */
-  ElementTagType actor;            /**< "actor" */
-  ElementTagType use_case_support; /**< "useCaseSupport" */
+    ElementTagType address;          /**< "address" */
+    ElementTagType actor;            /**< "actor" */
+    ElementTagType use_case_support; /**< "useCaseSupport" */
 };
 
 typedef struct UseCaseInformationListDataType UseCaseInformationListDataType;
 
 struct UseCaseInformationListDataType {
-  const UseCaseInformationDataType* const* use_case_information_data; /**< "useCaseInformationData" */
-  size_t use_case_information_data_size;
+    const UseCaseInformationDataType* const* use_case_information_data; /**< "useCaseInformationData" */
+    size_t use_case_information_data_size;
 };
 
 typedef struct UseCaseInformationListDataSelectorsType UseCaseInformationListDataSelectorsType;
 
 struct UseCaseInformationListDataSelectorsType {
-  const FeatureAddressType* address;                   /**< "address" */
-  const UseCaseActorType* actor;                       /**< "actor" */
-  const UseCaseSupportSelectorsType* use_case_support; /**< "useCaseSupport" */
+    const FeatureAddressType* address;                   /**< "address" */
+    const UseCaseActorType* actor;                       /**< "actor" */
+    const UseCaseSupportSelectorsType* use_case_support; /**< "useCaseSupport" */
 };
 
 UseCaseInformationDataType* UseCaseInformationDataCreate(

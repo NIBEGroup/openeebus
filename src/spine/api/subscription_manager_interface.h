@@ -52,23 +52,31 @@ typedef struct SubscriptionManagerObject SubscriptionManagerObject;
  * @brief SubscriptionManager Interface Structure
  */
 struct SubscriptionManagerInterface {
-  void (*destruct)(SubscriptionManagerObject* self);
-  EebusError (*add_subscription)(SubscriptionManagerObject* self, DeviceRemoteObject* remote_device,
-      const SubscriptionManagementRequestCallType* data);
-  EebusError (*remove_subscription)(SubscriptionManagerObject* self, DeviceRemoteObject* remote_device,
-      const SubscriptionManagementDeleteCallType* data);
-  void (*remove_device_subscriptions)(SubscriptionManagerObject* self, DeviceRemoteObject* remote_device);
-  void (*remove_entity_subscriptions)(SubscriptionManagerObject* self, EntityRemoteObject* remote_entity);
-  void (*publish)(const SubscriptionManagerObject* self, const FeatureAddressType* feature_addr, const CmdType* cmd);
-  NodeManagementSubscriptionDataType* (*create_subscription_data)(
-      const SubscriptionManagerObject* self, DeviceRemoteObject* remote_device);
+    void (*destruct)(SubscriptionManagerObject* self);
+    EebusError (*add_subscription)(
+        SubscriptionManagerObject* self,
+        DeviceRemoteObject* remote_device,
+        const SubscriptionManagementRequestCallType* data
+    );
+    EebusError (*remove_subscription)(
+        SubscriptionManagerObject* self,
+        DeviceRemoteObject* remote_device,
+        const SubscriptionManagementDeleteCallType* data
+    );
+    void (*remove_device_subscriptions)(SubscriptionManagerObject* self, DeviceRemoteObject* remote_device);
+    void (*remove_entity_subscriptions)(SubscriptionManagerObject* self, EntityRemoteObject* remote_entity);
+    void (*publish)(const SubscriptionManagerObject* self, const FeatureAddressType* feature_addr, const CmdType* cmd);
+    NodeManagementSubscriptionDataType* (*create_subscription_data)(
+        const SubscriptionManagerObject* self,
+        DeviceRemoteObject* remote_device
+    );
 };
 
 /**
  * @brief Subscription Manager Object Structure
  */
 struct SubscriptionManagerObject {
-  const SubscriptionManagerInterface* interface_;
+    const SubscriptionManagerInterface* interface_;
 };
 
 /**
@@ -90,37 +98,37 @@ struct SubscriptionManagerObject {
  * @brief Subscription Manager Add Subscription caller definition
  */
 #define SUBSCRIPTION_MANAGER_ADD_SUBSCRIPTION(obj, remote_device, data) \
-  (SUBSCRIPTION_MANAGER_INTERFACE(obj)->add_subscription(obj, remote_device, data))
+    (SUBSCRIPTION_MANAGER_INTERFACE(obj)->add_subscription(obj, remote_device, data))
 
 /**
  * @brief Subscription Manager Remove Subscription caller definition
  */
 #define SUBSCRIPTION_MANAGER_REMOVE_SUBSCRIPTION(obj, remote_device, data) \
-  (SUBSCRIPTION_MANAGER_INTERFACE(obj)->remove_subscription(obj, remote_device, data))
+    (SUBSCRIPTION_MANAGER_INTERFACE(obj)->remove_subscription(obj, remote_device, data))
 
 /**
  * @brief Subscription Manager Remove Device Subscriptions caller definition
  */
 #define SUBSCRIPTION_MANAGER_REMOVE_DEVICE_SUBSCRIPTIONS(obj, remote_device) \
-  (SUBSCRIPTION_MANAGER_INTERFACE(obj)->remove_device_subscriptions(obj, remote_device))
+    (SUBSCRIPTION_MANAGER_INTERFACE(obj)->remove_device_subscriptions(obj, remote_device))
 
 /**
  * @brief Subscription Manager Remove Entity Subscriptions caller definition
  */
 #define SUBSCRIPTION_MANAGER_REMOVE_ENTITY_SUBSCRIPTIONS(obj, remote_entity) \
-  (SUBSCRIPTION_MANAGER_INTERFACE(obj)->remove_entity_subscriptions(obj, remote_entity))
+    (SUBSCRIPTION_MANAGER_INTERFACE(obj)->remove_entity_subscriptions(obj, remote_entity))
 
 /**
  * @brief Subscription Manager Publish caller definition
  */
 #define SUBSCRIPTION_MANAGER_PUBLISH(obj, feature_addr, cmd) \
-  (SUBSCRIPTION_MANAGER_INTERFACE(obj)->publish(obj, feature_addr, cmd))
+    (SUBSCRIPTION_MANAGER_INTERFACE(obj)->publish(obj, feature_addr, cmd))
 
 /**
  * @brief Subscription Manager Create Subscription Data caller definition
  */
 #define SUBSCRIPTION_MANAGER_CREATE_SUBSCRIPTION_DATA(obj, remote_device) \
-  (SUBSCRIPTION_MANAGER_INTERFACE(obj)->create_subscription_data(obj, remote_device))
+    (SUBSCRIPTION_MANAGER_INTERFACE(obj)->create_subscription_data(obj, remote_device))
 
 #ifdef __cplusplus
 }

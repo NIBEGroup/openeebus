@@ -27,28 +27,28 @@
 #include "src/use_case/model/scaled_value.h"
 
 EebusError LoadLimitInitWithLoadControlLimitData(LoadLimit* self, const LoadControlLimitDataType* limit_data) {
-  if (!LoadControlLimitIsValid(limit_data)) {
-    return kEebusErrorOther;
-  }
+    if (!LoadControlLimitIsValid(limit_data)) {
+        return kEebusErrorOther;
+    }
 
-  const ScaledNumberType* const power_limit_value = LoadControlLimitGetValue(limit_data);
+    const ScaledNumberType* const power_limit_value = LoadControlLimitGetValue(limit_data);
 
-  const EebusError err = ScaledValueInitWithScaledNumber(&self->value, power_limit_value);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err = ScaledValueInitWithScaledNumber(&self->value, power_limit_value);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  self->is_changeable = LoadControlLimitIsLimitChangeable(limit_data);
-  self->is_active     = LoadControlLimitIsActive(limit_data);
+    self->is_changeable = LoadControlLimitIsLimitChangeable(limit_data);
+    self->is_active     = LoadControlLimitIsActive(limit_data);
 
-  return LoadControlLimitGetDuration(limit_data, &self->duration, &self->delete_duration);
+    return LoadControlLimitGetDuration(limit_data, &self->duration, &self->delete_duration);
 }
 
 void LoadLimitPrint(const LoadLimit* self) {
-  printf("{\n");
-  ScaledValuePrint("  value         = %s,\n", &self->value);
-  EebusDurationPrint("  duration      = %s\n", &self->duration);
-  printf("  is_changeable = %s\n", self->is_changeable ? "true" : "false");
-  printf("  is_active     = %s\n", self->is_active ? "true" : "false");
-  printf("}\n");
+    printf("{\n");
+    ScaledValuePrint("  value         = %s,\n", &self->value);
+    EebusDurationPrint("  duration      = %s\n", &self->duration);
+    printf("  is_changeable = %s\n", self->is_changeable ? "true" : "false");
+    printf("  is_active     = %s\n", self->is_active ? "true" : "false");
+    printf("}\n");
 }

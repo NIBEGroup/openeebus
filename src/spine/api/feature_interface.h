@@ -46,21 +46,21 @@ typedef struct FeatureObject FeatureObject;
  * @brief Feature Interface Structure
  */
 struct FeatureInterface {
-  void (*destruct)(FeatureObject* self);
-  const FeatureAddressType* (*get_address)(const FeatureObject* self);
-  FeatureTypeType (*get_type)(const FeatureObject* self);
-  RoleType (*get_role)(const FeatureObject* self);
-  const OperationsObject* (*get_function_operations)(const FeatureObject* self, FunctionType fcn_type);
-  const char* (*get_description)(const FeatureObject* self);
-  void (*set_description)(FeatureObject* self, const char* description);
-  const char* (*to_string)(const FeatureObject* self);
+    void (*destruct)(FeatureObject* self);
+    const FeatureAddressType* (*get_address)(const FeatureObject* self);
+    FeatureTypeType (*get_type)(const FeatureObject* self);
+    RoleType (*get_role)(const FeatureObject* self);
+    const OperationsObject* (*get_function_operations)(const FeatureObject* self, FunctionType fcn_type);
+    const char* (*get_description)(const FeatureObject* self);
+    void (*set_description)(FeatureObject* self, const char* description);
+    const char* (*to_string)(const FeatureObject* self);
 };
 
 /**
  * @brief Feature Object Structure
  */
 struct FeatureObject {
-  const FeatureInterface* interface_;
+    const FeatureInterface* interface_;
 };
 
 /**

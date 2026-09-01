@@ -32,11 +32,11 @@
 typedef struct MaMpcListener MaMpcListener;
 
 struct MaMpcListener {
-  /** Implements the Ma Mpc Listener Interface */
-  MaMpcListenerObject obj;
+    /** Implements the Ma Mpc Listener Interface */
+    MaMpcListenerObject obj;
 
-  /* Pointer to the HEMS instance */
-  HemsObject* hems;
+    /* Pointer to the HEMS instance */
+    HemsObject* hems;
 };
 
 #define MA_MPC_LISTENER(obj) ((MaMpcListener*)(obj))
@@ -61,44 +61,44 @@ static const MaMpcListenerInterface ma_mpc_listener_methods = {
 static EebusError MaMpcListenerConstruct(MaMpcListener* self, HemsObject* hems);
 
 EebusError MaMpcListenerConstruct(MaMpcListener* self, HemsObject* hems) {
-  // Override "virtual functions table"
-  MA_MPC_LISTENER_INTERFACE(self) = &ma_mpc_listener_methods;
+    // Override "virtual functions table"
+    MA_MPC_LISTENER_INTERFACE(self) = &ma_mpc_listener_methods;
 
-  self->hems = hems;
+    self->hems = hems;
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 MaMpcListenerObject* MaMpcListenerCreate(HemsObject* hems) {
-  MaMpcListener* const ma_mpc_listener = (MaMpcListener*)EEBUS_MALLOC(sizeof(MaMpcListener));
-  if (ma_mpc_listener == NULL) {
-    return NULL;
-  }
+    MaMpcListener* const ma_mpc_listener = (MaMpcListener*)EEBUS_MALLOC(sizeof(MaMpcListener));
+    if (ma_mpc_listener == NULL) {
+        return NULL;
+    }
 
-  if (MaMpcListenerConstruct(ma_mpc_listener, hems) != kEebusErrorOk) {
-    MaMpcListenerDelete(MA_MPC_LISTENER_OBJECT(ma_mpc_listener));
-    return NULL;
-  }
+    if (MaMpcListenerConstruct(ma_mpc_listener, hems) != kEebusErrorOk) {
+        MaMpcListenerDelete(MA_MPC_LISTENER_OBJECT(ma_mpc_listener));
+        return NULL;
+    }
 
-  return MA_MPC_LISTENER_OBJECT(ma_mpc_listener);
+    return MA_MPC_LISTENER_OBJECT(ma_mpc_listener);
 }
 
 void Destruct(MaMpcListenerObject* self) {
-  UNUSED(self);
+    UNUSED(self);
 
-  // Nothing to be deallocated yet
+    // Nothing to be deallocated yet
 }
 
 void OnRemoteMuAdded(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
-  MaMpcListener* const ma_mpc_listener = MA_MPC_LISTENER(self);
+    MaMpcListener* const ma_mpc_listener = MA_MPC_LISTENER(self);
 
-  HemsAddMaMpcRemoteEntity(ma_mpc_listener->hems, entity_addr);
+    HemsAddMaMpcRemoteEntity(ma_mpc_listener->hems, entity_addr);
 }
 
 void OnRemoteMuRemoved(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
-  MaMpcListener* const ma_mpc_listener = MA_MPC_LISTENER(self);
+    MaMpcListener* const ma_mpc_listener = MA_MPC_LISTENER(self);
 
-  HemsRemoveMaMpcRemoteEntity(ma_mpc_listener->hems, entity_addr);
+    HemsRemoveMaMpcRemoteEntity(ma_mpc_listener->hems, entity_addr);
 }
 
 void OnMeasurementReceive(
@@ -107,15 +107,15 @@ void OnMeasurementReceive(
     const ScaledValue* measurement_value,
     const EntityAddressType* remote_entity_addr
 ) {
-  UNUSED(self);
+    UNUSED(self);
 
-  const char* name = MuMpcMeasurementGetName(name_id);
-  if (name == NULL) {
-    printf("MA MPC Measurement received: Unknown Measurement ID %d\n", (int)name_id);
-    return;
-  }
+    const char* name = MuMpcMeasurementGetName(name_id);
+    if (name == NULL) {
+        printf("MA MPC Measurement received: Unknown Measurement ID %d\n", (int)name_id);
+        return;
+    }
 
-  printf("MA MPC Measurement received: %s = ", name);
-  ScaledValuePrint("%s,", measurement_value);
-  EntityAddressPrint(" from entity: %s\n", remote_entity_addr);
+    printf("MA MPC Measurement received: %s = ", name);
+    ScaledValuePrint("%s,", measurement_value);
+    EntityAddressPrint(" from entity: %s\n", remote_entity_addr);
 }

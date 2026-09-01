@@ -33,8 +33,8 @@ extern "C" {
 typedef struct MeasurementCommon MeasurementCommon;
 
 struct MeasurementCommon {
-  FeatureLocalObject* feature_local;
-  FeatureRemoteObject* feature_remote;
+    FeatureLocalObject* feature_local;
+    FeatureRemoteObject* feature_remote;
 };
 
 /**
@@ -55,10 +55,12 @@ void MeasurementCommonConstruct(
  * @param self Pointer to the MeasurementCommon instance to retrieve the descriptions from
  * @return Pointer to the measurement description list
  */
-static inline const MeasurementDescriptionListDataType* MeasurementCommonGetDescriptions(const MeasurementCommon* self
+static inline const MeasurementDescriptionListDataType* MeasurementCommonGetDescriptions(
+    const MeasurementCommon* self
 ) {
-  return (const MeasurementDescriptionListDataType*)
-      HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementDescriptionListData);
+    return (
+        const MeasurementDescriptionListDataType*
+    )HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementDescriptionListData);
 }
 
 /**
@@ -67,8 +69,9 @@ static inline const MeasurementDescriptionListDataType* MeasurementCommonGetDesc
  * @return Pointer to the measurement list
  */
 static inline const MeasurementListDataType* MeasurementCommonGetMeasurements(const MeasurementCommon* self) {
-  return (const MeasurementListDataType*)
-      HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementListData);
+    return (
+        const MeasurementListDataType*
+    )HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeMeasurementListData);
 }
 
 /**

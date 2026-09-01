@@ -27,6 +27,7 @@
 
 static const UseCaseActorType valid_actor_types[] = {kUseCaseActorTypeControllableSystem};
 static const EntityTypeType valid_entity_types[]  = {
+    kEntityTypeTypeBattery,
     kEntityTypeTypeCEM,
     kEntityTypeTypeEVSE,
     kEntityTypeTypeInverter,
@@ -81,5 +82,5 @@ static const UseCaseInfo eg_lpp_use_case_info = {
 };
 
 EgLpUseCaseObject* EgLppUseCaseCreate(EntityLocalObject* local_entity, EgLpListenerObject* eg_lpp_listener) {
-  return EgLpUseCaseCreate(kEnergyDirectionTypeProduce, &eg_lpp_use_case_info, local_entity, eg_lpp_listener);
+    return EgLpUseCaseCreate(kEnergyDirectionTypeProduce, &eg_lpp_use_case_info, local_entity, eg_lpp_listener);
 }

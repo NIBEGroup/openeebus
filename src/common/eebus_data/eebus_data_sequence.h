@@ -42,9 +42,9 @@ extern const EebusDataInterface eebus_data_sequence_methods;
  * @brief End of EEBUS Data Sequence's items configuration container marker
  */
 #define EEBUS_DATA_END \
-  {                    \
-      .name = NULL,    \
-  }
+    {                  \
+        .name = NULL,  \
+    }
 
 /**
  * @brief EEBUS Data Sequence configuration. A sequence is a kind of collection of
@@ -69,14 +69,14 @@ extern const EebusDataInterface eebus_data_sequence_methods;
  * @param se_cfg Sequence element Data configuration entry point (shall keep mappings
  * for sequence internal data, e.g for name and age in example above)
  */
-#define EEBUS_DATA_SEQUENCE(ed_name, struct_name, struct_field, se_cfg) \
-  {                                                                     \
-      .interface_ = &eebus_data_sequence_methods,                       \
-      .name       = ed_name,                                            \
-      .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),    \
-      .size       = sizeof(*STRUCT_MEMBER(struct_name, struct_field)),  \
-      .metadata   = se_cfg,                                             \
-  }
+#define EEBUS_DATA_SEQUENCE(ed_name, struct_name, struct_field, se_cfg)  \
+    {                                                                    \
+        .interface_ = &eebus_data_sequence_methods,                      \
+        .name       = ed_name,                                           \
+        .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),   \
+        .size       = sizeof(*STRUCT_MEMBER(struct_name, struct_field)), \
+        .metadata   = se_cfg,                                            \
+    }
 
 /**
  * @brief EEBUS Data Sequence configuration with specific flags
@@ -88,14 +88,14 @@ extern const EebusDataInterface eebus_data_sequence_methods;
  * @param ed_flags EebusData flags to be applied (see @EebusDataFlag)
  */
 #define EEBUS_DATA_SEQUENCE_WITH_FLAGS(ed_name, struct_name, struct_field, se_cfg, ed_flags) \
-  {                                                                                          \
-      .interface_ = &eebus_data_sequence_methods,                                            \
-      .name       = ed_name,                                                                 \
-      .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),                         \
-      .size       = sizeof(*STRUCT_MEMBER(struct_name, struct_field)),                       \
-      .flags      = ed_flags,                                                                \
-      .metadata   = se_cfg,                                                                  \
-  }
+    {                                                                                        \
+        .interface_ = &eebus_data_sequence_methods,                                          \
+        .name       = ed_name,                                                               \
+        .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),                       \
+        .size       = sizeof(*STRUCT_MEMBER(struct_name, struct_field)),                     \
+        .flags      = ed_flags,                                                              \
+        .metadata   = se_cfg,                                                                \
+    }
 
 /**
  * @brief EEBUS Data Sequence configuration in order to simplify the
@@ -106,13 +106,13 @@ extern const EebusDataInterface eebus_data_sequence_methods;
  * @param se_cfg Sequence element Data configuration entry point
  */
 #define EEBUS_DATA_SEQUENCE_ROOT(ed_name, struct_name, se_cfg) \
-  {                                                            \
-      .interface_ = &eebus_data_sequence_methods,              \
-      .name       = ed_name,                                   \
-      .offset     = 0,                                         \
-      .size       = sizeof(struct_name),                       \
-      .metadata   = se_cfg,                                    \
-  }
+    {                                                          \
+        .interface_ = &eebus_data_sequence_methods,            \
+        .name       = ed_name,                                 \
+        .offset     = 0,                                       \
+        .size       = sizeof(struct_name),                     \
+        .metadata   = se_cfg,                                  \
+    }
 
 /**
  * @brief Temporary EEBUS Data Sequence configuration in order
@@ -121,13 +121,13 @@ extern const EebusDataInterface eebus_data_sequence_methods;
  * @param se_cfg Sequence element Data configuration entry point
  */
 #define EEBUS_DATA_SEQUENCE_TMP(struct_name, se_cfg) \
-  {                                                  \
-      .interface_ = &eebus_data_sequence_methods,    \
-      .name       = "",                              \
-      .offset     = 0,                               \
-      .size       = sizeof(struct_name),             \
-      .metadata   = se_cfg,                          \
-  }
+    {                                                \
+        .interface_ = &eebus_data_sequence_methods,  \
+        .name       = "",                            \
+        .offset     = 0,                             \
+        .size       = sizeof(struct_name),           \
+        .metadata   = se_cfg,                        \
+    }
 
 /**
  * @defgroup EebusDataSequenceMethods EEBUS Data Sequence implementation inherited by EEBUS Data Container
@@ -137,13 +137,22 @@ EebusError EebusDataSequenceFromJsonObjectItem(const EebusDataCfg* cfg, void* ba
 EebusError EebusDataSequenceToJsonObjectItem(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_obj);
 EebusError EebusDataSequenceWrite(const EebusDataCfg* cfg, void* base_addr, const void* src_base_addr);
 bool EebusDataSequenceCompare(
-    const EebusDataCfg* a_cfg, const void* a_base_addr, const EebusDataCfg* b_cfg, const void* b_base_addr);
+    const EebusDataCfg* a_cfg,
+    const void* a_base_addr,
+    const EebusDataCfg* b_cfg,
+    const void* b_base_addr
+);
 bool EebusDataSequenceIsNull(const EebusDataCfg* cfg, const void* base_addr);
 bool EebusDataSequenceIsEmpty(const EebusDataCfg* cfg, const void* base_addr);
 bool EebusDataSequenceHasIdentifiers(const EebusDataCfg* cfg, const void* base_addr);
 bool EebusDataSequenceIdentifiersMatch(const EebusDataCfg* cfg, const void* base_addr, const void* src_base_addr);
-EebusError EebusDataSequenceReadElements(const EebusDataCfg* cfg, const void* base_addr, void* dst_base_addr,
-    const EebusDataCfg* elements_cfg, const void* elements_base_addr);
+EebusError EebusDataSequenceReadElements(
+    const EebusDataCfg* cfg,
+    const void* base_addr,
+    void* dst_base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
 EebusError EebusDataSequenceWriteElements(const EebusDataCfg* cfg, void* base_addr, const void* src_base_addr);
 EebusError EebusDataSequenceWritePartial(
     const EebusDataCfg* cfg,
@@ -154,7 +163,11 @@ EebusError EebusDataSequenceWritePartial(
     SelectorsMatcher selectors_matcher
 );
 void EebusDataSequenceDeleteElements(
-    const EebusDataCfg* cfg, void* base_addr, const EebusDataCfg* elements_cfg, const void* elements_base_addr);
+    const EebusDataCfg* cfg,
+    void* base_addr,
+    const EebusDataCfg* elements_cfg,
+    const void* elements_base_addr
+);
 void EebusDataSequenceDelete(const EebusDataCfg* cfg, void* base_addr);
 /** @} */
 

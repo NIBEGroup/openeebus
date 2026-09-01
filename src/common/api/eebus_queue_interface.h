@@ -47,19 +47,19 @@ typedef struct EebusQueueObject EebusQueueObject;
  * @brief EebusQueue Interface Structure
  */
 struct EebusQueueInterface {
-  void (*destruct)(EebusQueueObject* self);
-  EebusError (*send)(EebusQueueObject* self, const void* msg, uint32_t timeout_ms);
-  EebusError (*receive)(EebusQueueObject* self, void* msg, uint32_t timeout_ms);
-  bool (*is_empty)(const EebusQueueObject* self);
-  bool (*is_full)(const EebusQueueObject* self);
-  void (*clear)(EebusQueueObject* self);
+    void (*destruct)(EebusQueueObject* self);
+    EebusError (*send)(EebusQueueObject* self, const void* msg, uint32_t timeout_ms);
+    EebusError (*receive)(EebusQueueObject* self, void* msg, uint32_t timeout_ms);
+    bool (*is_empty)(const EebusQueueObject* self);
+    bool (*is_full)(const EebusQueueObject* self);
+    void (*clear)(EebusQueueObject* self);
 };
 
 /**
  * @brief Eebus Queue Object Structure
  */
 struct EebusQueueObject {
-  const EebusQueueInterface* interface_;
+    const EebusQueueInterface* interface_;
 };
 
 /**

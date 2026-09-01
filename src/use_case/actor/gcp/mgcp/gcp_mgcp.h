@@ -68,7 +68,7 @@ extern "C" {
 typedef struct GcpMgcpPvCurtailmentConfig GcpMgcpPvCurtailmentConfig;
 
 struct GcpMgcpPvCurtailmentConfig {
-  uint8_t reserved; /**< Reserved for future extension */
+    uint8_t reserved; /**< Reserved for future extension */
 };
 
 /**
@@ -77,25 +77,25 @@ struct GcpMgcpPvCurtailmentConfig {
 typedef struct GcpMgcpConfig GcpMgcpConfig;
 
 struct GcpMgcpConfig {
-  /** Optional: Scenario 1 — PV curtailment limit factor; NULL = not supported */
-  const GcpMgcpPvCurtailmentConfig* pv_curtailment_cfg;
-  /** Required: Scenario 2 — total active power */
-  const GcpMgcpMonitorPowerConfig power_cfg;
-  /** Optional: Scenarios 3 and/or 4 — grid energy; NULL = not supported */
-  const GcpMgcpMonitorEnergyConfig* energy_cfg;
-  /** Optional: Scenario 5 — per-phase AC current; NULL = not supported */
-  const GcpMgcpMonitorCurrentConfig* current_cfg;
-  /** Optional: Scenario 6 — per-phase AC voltage; NULL = not supported */
-  const GcpMgcpMonitorVoltageConfig* voltage_cfg;
-  /** Optional: Scenario 7 — AC frequency; NULL = not supported */
-  const GcpMgcpMonitorFrequencyConfig* frequency_cfg;
+    /** Optional: Scenario 1 — PV curtailment limit factor; NULL = not supported */
+    const GcpMgcpPvCurtailmentConfig* pv_curtailment_cfg;
+    /** Required: Scenario 2 — total active power */
+    const GcpMgcpMonitorPowerConfig power_cfg;
+    /** Optional: Scenarios 3 and/or 4 — grid energy; NULL = not supported */
+    const GcpMgcpMonitorEnergyConfig* energy_cfg;
+    /** Optional: Scenario 5 — per-phase AC current; NULL = not supported */
+    const GcpMgcpMonitorCurrentConfig* current_cfg;
+    /** Optional: Scenario 6 — per-phase AC voltage; NULL = not supported */
+    const GcpMgcpMonitorVoltageConfig* voltage_cfg;
+    /** Optional: Scenario 7 — AC frequency; NULL = not supported */
+    const GcpMgcpMonitorFrequencyConfig* frequency_cfg;
 };
 
 typedef struct GcpMgcpUseCaseObject GcpMgcpUseCaseObject;
 
 struct GcpMgcpUseCaseObject {
-  /** Inherits the Use Case */
-  UseCaseObject obj;
+    /** Inherits the Use Case */
+    UseCaseObject obj;
 };
 
 #define GCP_MGCP_USE_CASE_OBJECT(obj) ((GcpMgcpUseCaseObject*)(obj))
@@ -115,7 +115,7 @@ GcpMgcpUseCaseCreate(EntityLocalObject* local_entity, ElectricalConnectionIdType
  * @param gcp_mgcp Pointer to the GCP MGCP use case instance to delete
  */
 static inline void GcpMgcpUseCaseDelete(GcpMgcpUseCaseObject* gcp_mgcp) {
-  UseCaseDelete(USE_CASE_OBJECT(gcp_mgcp));
+    UseCaseDelete(USE_CASE_OBJECT(gcp_mgcp));
 }
 
 /**

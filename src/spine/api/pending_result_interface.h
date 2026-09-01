@@ -47,18 +47,18 @@ typedef struct PendingResultObject PendingResultObject;
  * @brief Pending Result Interface Structure
  */
 struct PendingResultInterface {
-  void (*destruct)(PendingResultObject* self);
-  MsgCounterType (*get_msg_cnt_ref)(const PendingResultObject* self);
-  bool (*has_expired)(const PendingResultObject* self);
-  void (*update_time)(PendingResultObject* self);
-  void (*fire)(const PendingResultObject* self, const ResultMessage* result_msg, EebusError err);
+    void (*destruct)(PendingResultObject* self);
+    MsgCounterType (*get_msg_cnt_ref)(const PendingResultObject* self);
+    bool (*has_expired)(const PendingResultObject* self);
+    void (*update_time)(PendingResultObject* self);
+    void (*fire)(const PendingResultObject* self, const ResultMessage* result_msg, EebusError err);
 };
 
 /**
  * @brief Pending Result Object Structure
  */
 struct PendingResultObject {
-  const PendingResultInterface* interface_;
+    const PendingResultInterface* interface_;
 };
 
 /**

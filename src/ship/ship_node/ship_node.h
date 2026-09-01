@@ -56,10 +56,10 @@ ShipNodeObject* ShipNodeCreate(
 );
 
 static inline void ShipNodeDelete(ShipNodeObject* ship_node) {
-  if (ship_node != NULL) {
-    INFO_PROVIDER_DESTRUCT(INFO_PROVIDER_OBJECT(ship_node));
-    EEBUS_FREE(ship_node);
-  }
+    if (ship_node != NULL) {
+        INFO_PROVIDER_DESTRUCT(INFO_PROVIDER_OBJECT(ship_node));
+        EEBUS_FREE(ship_node);
+    }
 }
 
 #ifdef __cplusplus

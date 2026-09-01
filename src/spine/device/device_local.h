@@ -36,10 +36,10 @@ DeviceLocalObject*
 DeviceLocalCreate(const EebusDeviceInfo* device_info, const NetworkManagementFeatureSetType* feature_set);
 
 static inline void DeviceLocalDelete(DeviceLocalObject* device_local) {
-  if (device_local != NULL) {
-    DEVICE_DESTRUCT(DEVICE_OBJECT(device_local));
-    EEBUS_FREE(device_local);
-  }
+    if (device_local != NULL) {
+        DEVICE_DESTRUCT(DEVICE_OBJECT(device_local));
+        EEBUS_FREE(device_local);
+    }
 }
 
 #ifdef __cplusplus

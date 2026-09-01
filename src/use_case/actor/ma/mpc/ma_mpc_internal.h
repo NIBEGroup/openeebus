@@ -34,10 +34,10 @@ extern "C" {
 
 typedef struct MaMpcUseCase MaMpcUseCase;
 struct MaMpcUseCase {
-  /** Inherits the Use Case */
-  UseCase obj;
+    /** Inherits the Use Case */
+    UseCase obj;
 
-  MaMpcListenerObject* ma_mpc_listener;
+    MaMpcListenerObject* ma_mpc_listener;
 };
 
 #define MA_MPC_USE_CASE(obj) ((MaMpcUseCase*)(obj))

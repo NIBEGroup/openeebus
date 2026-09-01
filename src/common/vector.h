@@ -35,17 +35,17 @@ typedef struct Vector Vector;
 
 /** Vector structure */
 struct Vector {
-  /** Elements array */
-  void** elements;
+    /** Elements array */
+    void** elements;
 
-  /** Actual number of vector elements */
-  size_t num_elements;
+    /** Actual number of vector elements */
+    size_t num_elements;
 
-  /** Actual vector buffer size */
-  size_t buffer_size;
+    /** Actual vector buffer size */
+    size_t buffer_size;
 
-  /** Vector elements custom deallocator */
-  void (*deallocator)(void*);
+    /** Vector elements custom deallocator */
+    void (*deallocator)(void*);
 };
 
 /**
@@ -60,7 +60,9 @@ void VectorConstructWithDeallocator(Vector* self, void (*deallocator)(void*));
  * @brief Vector constructor
  * @param self Vector instance to be constructed
  */
-static inline void VectorConstruct(Vector* self) { VectorConstructWithDeallocator(self, NULL); }
+static inline void VectorConstruct(Vector* self) {
+    VectorConstructWithDeallocator(self, NULL);
+}
 
 /**
  * @brief Dynamically make and construct vector with custom deallocator
@@ -74,7 +76,9 @@ Vector* VectorCreateWithDeallocator(void (*deallocator)(void*));
  * @brief Dynamically make and construct vector
  * @return self Pointer on vector instance
  */
-static inline Vector* VectorCreate(void) { return VectorCreateWithDeallocator(NULL); }
+static inline Vector* VectorCreate(void) {
+    return VectorCreateWithDeallocator(NULL);
+}
 
 /**
  * @brief Clean vector data function. Deallocate memory which

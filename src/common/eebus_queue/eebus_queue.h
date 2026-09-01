@@ -38,10 +38,10 @@ typedef void (*QueueMsgDeallocator)(void*);
 EebusQueueObject* EebusQueueCreate(size_t max_msg, size_t msg_size, QueueMsgDeallocator msg_deallocator);
 
 static inline void EebusQueueDelete(EebusQueueObject* eebus_queue) {
-  if (eebus_queue != NULL) {
-    EEBUS_QUEUE_DESTRUCT(eebus_queue);
-    EEBUS_FREE(eebus_queue);
-  }
+    if (eebus_queue != NULL) {
+        EEBUS_QUEUE_DESTRUCT(eebus_queue);
+        EEBUS_FREE(eebus_queue);
+    }
 }
 
 #ifdef __cplusplus

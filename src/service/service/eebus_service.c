@@ -46,17 +46,17 @@
 typedef struct EebusService EebusService;
 
 struct EebusService {
-  /** Implements the Service Interface */
-  EebusServiceObject obj;
+    /** Implements the Service Interface */
+    EebusServiceObject obj;
 
-  ServiceDetails* local_service_details;
-  EebusDeviceInfo* device_info;
-  ShipNodeObject* ship_node;
-  DeviceLocalObject* spine_local_device;
-  const TlsCertificateObject* tls_certificate;
-  ServiceReaderObject* service_reader;
-  bool is_pairing_possible;
-  char* ship_qr_code_string;
+    ServiceDetails* local_service_details;
+    EebusDeviceInfo* device_info;
+    ShipNodeObject* ship_node;
+    DeviceLocalObject* spine_local_device;
+    const TlsCertificateObject* tls_certificate;
+    ServiceReaderObject* service_reader;
+    bool is_pairing_possible;
+    char* ship_qr_code_string;
 };
 
 #define EEBUS_SERVICE(obj) ((EebusService*)(obj))
@@ -120,29 +120,29 @@ static EebusError ServiceConstruct(
 
 static char*
 CreateQrCodeString(const char* ski, const char* ship_id, const char* brand, const char* type, const char* model) {
-  if (StringIsEmpty(ski) || StringIsEmpty(ship_id)) {
-    return NULL;
-  }
+    if (StringIsEmpty(ski) || StringIsEmpty(ship_id)) {
+        return NULL;
+    }
 
-  char* const normalized_ski = StringToUpper(ski);
-  if (normalized_ski == NULL) {
-    return NULL;
-  }
+    char* const normalized_ski = StringToUpper(ski);
+    if (normalized_ski == NULL) {
+        return NULL;
+    }
 
-  StringRemoveToken(normalized_ski, " ");
+    StringRemoveToken(normalized_ski, " ");
 
-  const char* const grouped_ski = StringGroupByN(normalized_ski, 4);
-  StringDelete((char*)normalized_ski);
-  if (grouped_ski == NULL) {
-    return NULL;
-  }
+    const char* const grouped_ski = StringGroupByN(normalized_ski, 4);
+    StringDelete((char*)normalized_ski);
+    if (grouped_ski == NULL) {
+        return NULL;
+    }
 
-  char* qr_string = (char*)
-      StringFmtSprintf("SHIP;SKI:%s;ID:%s;BRAND:%s;TYPE:%s;MODEL:%s;", grouped_ski, ship_id, brand, type, model);
+    char* qr_string = (char*)
+        StringFmtSprintf("SHIP;SKI:%s;ID:%s;BRAND:%s;TYPE:%s;MODEL:%s;", grouped_ski, ship_id, brand, type, model);
 
-  StringDelete((char*)grouped_ski);
+    StringDelete((char*)grouped_ski);
 
-  return qr_string;
+    return qr_string;
 }
 
 EebusError ServiceConstruct(
@@ -152,75 +152,75 @@ EebusError ServiceConstruct(
     const TlsCertificateObject* tls_certificate,
     ServiceReaderObject* service_reader
 ) {
-  // Override "virtual functions table"
-  EEBUS_SERVICE_INTERFACE(self) = &service_methods;
+    // Override "virtual functions table"
+    EEBUS_SERVICE_INTERFACE(self) = &service_methods;
 
-  self->local_service_details = NULL;
-  self->device_info           = NULL;
-  self->ship_node             = NULL;
-  self->spine_local_device    = NULL;
-  self->tls_certificate       = NULL;
-  self->service_reader        = NULL;
-  self->ship_qr_code_string   = NULL;
+    self->local_service_details = NULL;
+    self->device_info           = NULL;
+    self->ship_node             = NULL;
+    self->spine_local_device    = NULL;
+    self->tls_certificate       = NULL;
+    self->service_reader        = NULL;
+    self->ship_qr_code_string   = NULL;
 
-  const char* const type    = EebusServiceConfigGetDeviceType(cfg);
-  const char* const ship_id = EebusServiceConfigGetShipId(cfg);
-  const bool auto_accept    = EebusServiceConfigGetRegisterAutoAccept(cfg);
-  const char* const ski     = TLS_CERTIFICATE_GET_SKI(tls_certificate);
+    const char* const type    = EebusServiceConfigGetDeviceType(cfg);
+    const char* const ship_id = EebusServiceConfigGetShipId(cfg);
+    const bool auto_accept    = EebusServiceConfigGetRegisterAutoAccept(cfg);
+    const char* const ski     = TLS_CERTIFICATE_GET_SKI(tls_certificate);
 
-  self->local_service_details = ServiceDetailsCreate(ski, ship_id, type, auto_accept);
-  if (self->local_service_details == NULL) {
-    return kEebusErrorInit;
-  }
+    self->local_service_details = ServiceDetailsCreate(ski, ship_id, type, auto_accept);
+    if (self->local_service_details == NULL) {
+        return kEebusErrorInit;
+    }
 
-  const char* const vendor = EebusServiceConfigGetVendorCode(cfg);
-  const char* const brand  = EebusServiceConfigGetDeviceBrand(cfg);
-  const char* const model  = EebusServiceConfigGetDeviceModel(cfg);
-  const char* const serial = EebusServiceConfigGetDeviceSerialNumber(cfg);
+    const char* const vendor = EebusServiceConfigGetVendorCode(cfg);
+    const char* const brand  = EebusServiceConfigGetDeviceBrand(cfg);
+    const char* const model  = EebusServiceConfigGetDeviceModel(cfg);
+    const char* const serial = EebusServiceConfigGetDeviceSerialNumber(cfg);
 
-  self->device_info = EebusDeviceInfoCreate(type, vendor, brand, model, serial, ship_id);
-  if (self->device_info == NULL) {
-    return kEebusErrorInit;
-  }
+    self->device_info = EebusDeviceInfoCreate(type, vendor, brand, model, serial, ship_id);
+    if (self->device_info == NULL) {
+        return kEebusErrorInit;
+    }
 
-  self->ship_qr_code_string = CreateQrCodeString(ski, ship_id, brand, type, model);
-  if (self->ship_qr_code_string == NULL) {
-    return kEebusErrorInit;
-  }
+    self->ship_qr_code_string = CreateQrCodeString(ski, ship_id, brand, type, model);
+    if (self->ship_qr_code_string == NULL) {
+        return kEebusErrorInit;
+    }
 
-  const NetworkManagementFeatureSetType feature_set = EebusServiceConfigGetFeatureSet(cfg);
+    const NetworkManagementFeatureSetType feature_set = EebusServiceConfigGetFeatureSet(cfg);
 
-  // Create the local SPINE device
-  self->spine_local_device = DeviceLocalCreate(self->device_info, &feature_set);
-  if (self->spine_local_device == NULL) {
-    return kEebusErrorInit;
-  }
+    // Create the local SPINE device
+    self->spine_local_device = DeviceLocalCreate(self->device_info, &feature_set);
+    if (self->spine_local_device == NULL) {
+        return kEebusErrorInit;
+    }
 
-  const char* const service_name = EebusServiceConfigGetMdnsServiceName(cfg);
-  const int32_t port             = EebusServiceConfigGetPort(cfg);
+    const char* const service_name = EebusServiceConfigGetMdnsServiceName(cfg);
+    const int32_t port             = EebusServiceConfigGetPort(cfg);
 
-  self->tls_certificate = tls_certificate;
+    self->tls_certificate = tls_certificate;
 
-  // Create the Ship Node
-  self->ship_node = ShipNodeCreate(
-      ski,
-      role,
-      self->device_info,
-      service_name,
-      port,
-      tls_certificate,
-      SHIP_NODE_READER_OBJECT(self),
-      self->local_service_details
-  );
+    // Create the Ship Node
+    self->ship_node = ShipNodeCreate(
+        ski,
+        role,
+        self->device_info,
+        service_name,
+        port,
+        tls_certificate,
+        SHIP_NODE_READER_OBJECT(self),
+        self->local_service_details
+    );
 
-  if (self->ship_node == NULL) {
-    return kEebusErrorInit;
-  }
+    if (self->ship_node == NULL) {
+        return kEebusErrorInit;
+    }
 
-  self->service_reader      = service_reader;
-  self->is_pairing_possible = false;
+    self->service_reader      = service_reader;
+    self->is_pairing_possible = false;
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusServiceObject* EebusServiceCreate(
@@ -229,146 +229,146 @@ EebusServiceObject* EebusServiceCreate(
     const TlsCertificateObject* tls_certificate,
     ServiceReaderObject* service_reader
 ) {
-  EebusService* const service = (EebusService*)EEBUS_MALLOC(sizeof(EebusService));
-  if (service == NULL) {
-    return NULL;
-  }
+    EebusService* const service = (EebusService*)EEBUS_MALLOC(sizeof(EebusService));
+    if (service == NULL) {
+        return NULL;
+    }
 
-  if (ServiceConstruct(service, cfg, role, tls_certificate, service_reader) != kEebusErrorOk) {
-    EebusServiceDelete(EEBUS_SERVICE_OBJECT(service));
-    return NULL;
-  }
+    if (ServiceConstruct(service, cfg, role, tls_certificate, service_reader) != kEebusErrorOk) {
+        EebusServiceDelete(EEBUS_SERVICE_OBJECT(service));
+        return NULL;
+    }
 
-  return EEBUS_SERVICE_OBJECT(service);
+    return EEBUS_SERVICE_OBJECT(service);
 }
 
 void Destruct(ShipNodeReaderObject* self) {
-  EebusService* const service = EEBUS_SERVICE(self);
-  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): begin\n", __func__);
+    EebusService* const service = EEBUS_SERVICE(self);
+    EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): begin\n", __func__);
 
-  // Note: Service shall not own Service Reader therefore it is not released here
+    // Note: Service shall not own Service Reader therefore it is not released here
 
-  ShipNodeDelete(service->ship_node);
-  service->ship_node = NULL;
+    ShipNodeDelete(service->ship_node);
+    service->ship_node = NULL;
 
-  TlsCertificateDelete((TlsCertificateObject*)service->tls_certificate);
-  service->tls_certificate = NULL;
+    TlsCertificateDelete((TlsCertificateObject*)service->tls_certificate);
+    service->tls_certificate = NULL;
 
-  if (service->spine_local_device != NULL) {
-    DeviceLocalDelete(service->spine_local_device);
-    service->spine_local_device = NULL;
-  }
+    if (service->spine_local_device != NULL) {
+        DeviceLocalDelete(service->spine_local_device);
+        service->spine_local_device = NULL;
+    }
 
-  ServiceDetailsDelete(service->local_service_details);
-  service->local_service_details = NULL;
+    ServiceDetailsDelete(service->local_service_details);
+    service->local_service_details = NULL;
 
-  EebusDeviceInfoDelete(service->device_info);
-  service->device_info = NULL;
+    EebusDeviceInfoDelete(service->device_info);
+    service->device_info = NULL;
 
-  StringDelete(service->ship_qr_code_string);
-  service->ship_qr_code_string = NULL;
+    StringDelete(service->ship_qr_code_string);
+    service->ship_qr_code_string = NULL;
 
-  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): end\n", __func__);
+    EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): end\n", __func__);
 }
 
 void OnRemoteSkiConnected(ShipNodeReaderObject* self, const char* ski) {
-  EebusService* const service = EEBUS_SERVICE(self);
-  SERVICE_READER_ON_REMOTE_SKI_CONNECTED(service->service_reader, EEBUS_SERVICE_OBJECT(self), ski);
+    EebusService* const service = EEBUS_SERVICE(self);
+    SERVICE_READER_ON_REMOTE_SKI_CONNECTED(service->service_reader, EEBUS_SERVICE_OBJECT(self), ski);
 }
 
 void OnRemoteSkiDisconnected(ShipNodeReaderObject* self, const char* ski) {
-  EebusService* const service = EEBUS_SERVICE(self);
-  if (service->spine_local_device != NULL) {
-    DEVICE_LOCAL_REMOVE_REMOTE_DEVICE_CONNECTION(service->spine_local_device, ski);
-  }
+    EebusService* const service = EEBUS_SERVICE(self);
+    if (service->spine_local_device != NULL) {
+        DEVICE_LOCAL_REMOVE_REMOTE_DEVICE_CONNECTION(service->spine_local_device, ski);
+    }
 
-  SERVICE_READER_ON_REMOTE_SKI_DISCONNECTED(service->service_reader, EEBUS_SERVICE_OBJECT(self), ski);
+    SERVICE_READER_ON_REMOTE_SKI_DISCONNECTED(service->service_reader, EEBUS_SERVICE_OBJECT(self), ski);
 }
 
 DataReaderObject* SetupRemoteDevice(ShipNodeReaderObject* self, const char* ski, DataWriterObject* data_writer) {
-  EebusService* const service = EEBUS_SERVICE(self);
-  return DEVICE_LOCAL_SETUP_REMOTE_DEVICE(service->spine_local_device, ski, data_writer);
+    EebusService* const service = EEBUS_SERVICE(self);
+    return DEVICE_LOCAL_SETUP_REMOTE_DEVICE(service->spine_local_device, ski, data_writer);
 }
 
 void OnRemoteServicesUpdate(ShipNodeReaderObject* self, const Vector* entries) {
-  EebusService* const service = EEBUS_SERVICE(self);
-  SERVICE_READER_ON_REMOTE_SERVICES_UPDATE(service->service_reader, EEBUS_SERVICE_OBJECT(self), entries);
+    EebusService* const service = EEBUS_SERVICE(self);
+    SERVICE_READER_ON_REMOTE_SERVICES_UPDATE(service->service_reader, EEBUS_SERVICE_OBJECT(self), entries);
 }
 
 void OnShipIdUpdate(ShipNodeReaderObject* self, const char* ski, const char* ship_id) {
-  SERVICE_READER_ON_SHIP_ID_UPDATE(EEBUS_SERVICE(self)->service_reader, ski, ship_id);
+    SERVICE_READER_ON_SHIP_ID_UPDATE(EEBUS_SERVICE(self)->service_reader, ski, ship_id);
 }
 
 void OnHandleShipStateUpdate(ShipNodeReaderObject* self, const char* ski, SmeState state) {
-  SERVICE_READER_ON_SHIP_STATE_UPDATE(EEBUS_SERVICE(self)->service_reader, ski, state);
+    SERVICE_READER_ON_SHIP_STATE_UPDATE(EEBUS_SERVICE(self)->service_reader, ski, state);
 }
 
 bool IsWaitingForTrustAllowed(ShipNodeReaderObject* self, const char* ski) {
-  UNUSED(ski);
+    UNUSED(ski);
 
-  return EEBUS_SERVICE(self)->is_pairing_possible;
+    return EEBUS_SERVICE(self)->is_pairing_possible;
 }
 
 void Start(EebusServiceObject* self) {
-  EebusService* const service = EEBUS_SERVICE(self);
-  DEVICE_LOCAL_START(service->spine_local_device);
-  SHIP_NODE_START(service->ship_node);
+    EebusService* const service = EEBUS_SERVICE(self);
+    DEVICE_LOCAL_START(service->spine_local_device);
+    SHIP_NODE_START(service->ship_node);
 }
 
 void Stop(EebusServiceObject* self) {
-  EebusService* const service = EEBUS_SERVICE(self);
-  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): begin\n", __func__);
-  // Stop DeviceLocal first so its loop thread is joined before ShipNode
-  // frees remote-device objects — prevents dangling-pointer DeviceLocal::ProcessDatagram() crash
-  DEVICE_LOCAL_STOP(service->spine_local_device);
-  SHIP_NODE_STOP(service->ship_node);
-  EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): end\n", __func__);
+    EebusService* const service = EEBUS_SERVICE(self);
+    EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): begin\n", __func__);
+    // Stop DeviceLocal first so its loop thread is joined before ShipNode
+    // frees remote-device objects — prevents dangling-pointer DeviceLocal::ProcessDatagram() crash
+    DEVICE_LOCAL_STOP(service->spine_local_device);
+    SHIP_NODE_STOP(service->ship_node);
+    EEBUS_SERVICE_DEBUG_PRINTF("EebusService::%s(): end\n", __func__);
 }
 
 const ServiceDetails* GetLocalService(const EebusServiceObject* self) {
-  return EEBUS_SERVICE(self)->local_service_details;
+    return EEBUS_SERVICE(self)->local_service_details;
 }
 
 DeviceLocalObject* GetLocalDevice(const EebusServiceObject* self) {
-  return EEBUS_SERVICE(self)->spine_local_device;
+    return EEBUS_SERVICE(self)->spine_local_device;
 }
 
 const ConnectionState* GetConnectionStateWithSki(const EebusServiceObject* self, const char* ski) {
-  UNUSED(self);
-  UNUSED(ski);
-  // TODO: Implement method
-  return NULL;
+    UNUSED(self);
+    UNUSED(ski);
+    // TODO: Implement method
+    return NULL;
 }
 
 const ServiceDetails* GetRemoteServiceDetailsWithSki(const EebusServiceObject* self, const char* ski) {
-  UNUSED(self);
-  UNUSED(ski);
-  // TODO: Implement method
-  return NULL;
+    UNUSED(self);
+    UNUSED(ski);
+    // TODO: Implement method
+    return NULL;
 }
 
 void RegisterRemoteSki(EebusServiceObject* self, const char* ski, bool enable) {
-  SHIP_NODE_REGISTER_REMOTE_SKI(EEBUS_SERVICE(self)->ship_node, ski, enable);
+    SHIP_NODE_REGISTER_REMOTE_SKI(EEBUS_SERVICE(self)->ship_node, ski, enable);
 }
 
 void UnregisterRemoteSki(EebusServiceObject* self, const char* ski) {
-  SHIP_NODE_UNREGISTER_REMOTE_SKI(EEBUS_SERVICE(self)->ship_node, ski);
+    SHIP_NODE_UNREGISTER_REMOTE_SKI(EEBUS_SERVICE(self)->ship_node, ski);
 }
 
 void CancelPairingWithSki(EebusServiceObject* self, const char* ski) {
-  SHIP_NODE_CANCEL_PAIRING_WITH_SKI(EEBUS_SERVICE(self)->ship_node, ski);
+    SHIP_NODE_CANCEL_PAIRING_WITH_SKI(EEBUS_SERVICE(self)->ship_node, ski);
 }
 
 void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible) {
-  EEBUS_SERVICE(self)->is_pairing_possible = is_pairing_possible;
+    EEBUS_SERVICE(self)->is_pairing_possible = is_pairing_possible;
 }
 
 const char* GetLocalSki(EebusServiceObject* self) {
-  EebusService* const service = EEBUS_SERVICE(self);
-  return service->local_service_details->ski;
+    EebusService* const service = EEBUS_SERVICE(self);
+    return service->local_service_details->ski;
 }
 
 const char* GetQrCodeString(EebusServiceObject* self) {
-  EebusService* const service = EEBUS_SERVICE(self);
-  return (service->ship_qr_code_string != NULL) ? service->ship_qr_code_string : "";
+    EebusService* const service = EEBUS_SERVICE(self);
+    return (service->ship_qr_code_string != NULL) ? service->ship_qr_code_string : "";
 }

@@ -66,10 +66,10 @@ EebusMeasurementObject* GcpMgcpMeasurementCreate(GcpMeasurementNameId name, cons
  * @brief Delete a EebusMeasurementObject
  */
 static inline void GcpMgcpMeasurementDelete(EebusMeasurementObject* measurement) {
-  if (measurement != NULL) {
-    EEBUS_MEASUREMENT_DESTRUCT(measurement);
-    EEBUS_FREE(measurement);
-  }
+    if (measurement != NULL) {
+        EEBUS_MEASUREMENT_DESTRUCT(measurement);
+        EEBUS_FREE(measurement);
+    }
 }
 
 #ifdef __cplusplus

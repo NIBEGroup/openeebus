@@ -36,25 +36,25 @@ static const DeviceConfigurationKeyNameType kFailsafeDurationMinimumKeyName
 //-------------------------------------------------------------------------------------------//
 
 static const LoadControlLimitDescriptionDataType* EgLpActivePowerLimitFilter(const EgLpUseCase* self) {
-  static const LoadControlLimitTypeType kLimitType = kLoadControlLimitTypeTypeSignDependentAbsValueLimit;
-  static const ScopeTypeType kScopeType            = kScopeTypeTypeActivePowerLimit;
-  static const EnergyDirectionType kConsume        = kEnergyDirectionTypeConsume;
+    static const LoadControlLimitTypeType kLimitType = kLoadControlLimitTypeTypeSignDependentAbsValueLimit;
+    static const ScopeTypeType kScopeType            = kScopeTypeTypeActivePowerLimit;
+    static const EnergyDirectionType kConsume        = kEnergyDirectionTypeConsume;
 
-  static const LoadControlLimitDescriptionDataType kConsumeFilter = {
-      .limit_type      = &kLimitType,
-      .limit_direction = &kConsume,
-      .scope_type      = &kScopeType,
-  };
+    static const LoadControlLimitDescriptionDataType kConsumeFilter = {
+        .limit_type      = &kLimitType,
+        .limit_direction = &kConsume,
+        .scope_type      = &kScopeType,
+    };
 
-  static const EnergyDirectionType kProduce = kEnergyDirectionTypeProduce;
+    static const EnergyDirectionType kProduce = kEnergyDirectionTypeProduce;
 
-  static const LoadControlLimitDescriptionDataType kProduceFilter = {
-      .limit_type      = &kLimitType,
-      .limit_direction = &kProduce,
-      .scope_type      = &kScopeType,
-  };
+    static const LoadControlLimitDescriptionDataType kProduceFilter = {
+        .limit_type      = &kLimitType,
+        .limit_direction = &kProduce,
+        .scope_type      = &kScopeType,
+    };
 
-  return (self->energy_direction == kEnergyDirectionTypeConsume) ? &kConsumeFilter : &kProduceFilter;
+    return (self->energy_direction == kEnergyDirectionTypeConsume) ? &kConsumeFilter : &kProduceFilter;
 }
 
 EebusError EgLpGetActivePowerLimitInternal(
@@ -62,65 +62,65 @@ EebusError EgLpGetActivePowerLimitInternal(
     const EntityAddressType* remote_entity_addr,
     LoadLimit* limit
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  LoadControlClient lcc;
-  EebusError err = LoadControlClientConstruct(&lcc, use_case->local_entity, remote_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    LoadControlClient lcc;
+    EebusError err = LoadControlClientConstruct(&lcc, use_case->local_entity, remote_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  const LoadControlLimitDescriptionDataType* const filter = EgLpActivePowerLimitFilter(self);
+    const LoadControlLimitDescriptionDataType* const filter = EgLpActivePowerLimitFilter(self);
 
-  const LoadControlLimitDescriptionDataType* const limit_description
-      = LoadControlCommonGetLimitDescriptionWithFilter(&lcc.load_control_common, filter);
-  if ((limit_description == NULL) || (limit_description->limit_id == NULL)) {
-    return kEebusErrorNoChange;
-  }
+    const LoadControlLimitDescriptionDataType* const limit_description
+        = LoadControlCommonGetLimitDescriptionWithFilter(&lcc.load_control_common, filter);
+    if ((limit_description == NULL) || (limit_description->limit_id == NULL)) {
+        return kEebusErrorNoChange;
+    }
 
-  const LoadControlLimitDataType* const limit_data
-      = LoadControlCommonGetLimitWithId(&lcc.load_control_common, *limit_description->limit_id);
+    const LoadControlLimitDataType* const limit_data
+        = LoadControlCommonGetLimitWithId(&lcc.load_control_common, *limit_description->limit_id);
 
-  return LoadLimitInitWithLoadControlLimitData(limit, limit_data);
+    return LoadLimitInitWithLoadControlLimitData(limit, limit_data);
 }
 
 EebusError
 EgLpGetActivePowerLimit(const EgLpUseCaseObject* self, const EntityAddressType* remote_entity_addr, LoadLimit* limit) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if ((remote_entity_addr == NULL) || (limit == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((remote_entity_addr == NULL) || (limit == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpGetActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, limit);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpGetActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, limit);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 EebusError
 EgLpReadLoadControlLimit(EgLpUseCase* self, EntityRemoteObject* remote_entity, ReplyMessageCallback cb, void* ctx) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  LoadControlClient lcc;
-  const EebusError err = LoadControlClientConstruct(&lcc, use_case->local_entity, remote_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    LoadControlClient lcc;
+    const EebusError err = LoadControlClientConstruct(&lcc, use_case->local_entity, remote_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  const LoadControlLimitDescriptionDataType* const filter = EgLpActivePowerLimitFilter(self);
+    const LoadControlLimitDescriptionDataType* const filter = EgLpActivePowerLimitFilter(self);
 
-  return LoadControlClientReadLimit(&lcc, filter, cb, ctx);
+    return LoadControlClientReadLimit(&lcc, filter, cb, ctx);
 }
 
 EebusError EgLpReadActivePowerLimitInternal(
@@ -129,14 +129,14 @@ EebusError EgLpReadActivePowerLimitInternal(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  return EgLpReadLoadControlLimit((EgLpUseCase*)self, remote_entity, cb, ctx);
+    return EgLpReadLoadControlLimit((EgLpUseCase*)self, remote_entity, cb, ctx);
 }
 
 EebusError EgLpReadActivePowerLimit(
@@ -145,19 +145,19 @@ EebusError EgLpReadActivePowerLimit(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if (remote_entity_addr == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (remote_entity_addr == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpReadActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, cb, ctx);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpReadActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, cb, ctx);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 EebusError EgLpWriteLoadControlLimit(
@@ -167,59 +167,59 @@ EebusError EgLpWriteLoadControlLimit(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  LoadControlClient lcc;
-  const EebusError err = LoadControlClientConstruct(&lcc, use_case->local_entity, remote_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    LoadControlClient lcc;
+    const EebusError err = LoadControlClientConstruct(&lcc, use_case->local_entity, remote_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  const LoadControlLimitDescriptionDataType* const filter = EgLpActivePowerLimitFilter(self);
+    const LoadControlLimitDescriptionDataType* const filter = EgLpActivePowerLimitFilter(self);
 
-  const LoadControlLimitDataType* limit_data = LoadControlCommonGetLimitWithFilter(&lcc.load_control_common, filter);
+    const LoadControlLimitDataType* limit_data = LoadControlCommonGetLimitWithFilter(&lcc.load_control_common, filter);
 
-  if (limit_data == NULL || limit_data->limit_id == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (limit_data == NULL || limit_data->limit_id == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  // EEBus_UC_TS_LimitationOfPowerConsumption V1.0.0 3.2.2.2.2.2
-  // If set to "true", the timePeriod, value and isLimitActive Elements SHALL be writeable by a client.
-  if ((limit_data->is_limit_changeable != NULL) && (!*limit_data->is_limit_changeable)) {
-    return kEebusErrorNotSupported;
-  }
+    // EEBus_UC_TS_LimitationOfPowerConsumption V1.0.0 3.2.2.2.2.2
+    // If set to "true", the timePeriod, value and isLimitActive Elements SHALL be writeable by a client.
+    if ((limit_data->is_limit_changeable != NULL) && (!*limit_data->is_limit_changeable)) {
+        return kEebusErrorNotSupported;
+    }
 
-  const TimePeriodType time_period = {
-      .end_time = &ABSOLUTE_OR_RELATIVE_TIME_WITH_DURATION(limit->duration),
-  };
+    const TimePeriodType time_period = {
+        .end_time = &ABSOLUTE_OR_RELATIVE_TIME_WITH_DURATION(limit->duration),
+    };
 
-  const LoadControlLimitDataType new_limit = {
-      .limit_id        = limit_data->limit_id,
-      .is_limit_active = &limit->is_active,
-      .value           = &(ScaledNumberType){&limit->value.value, &limit->value.scale},
-      .time_period     = (EebusDurationToSeconds(&limit->duration) > 0) ? &time_period : NULL,
-  };
+    const LoadControlLimitDataType new_limit = {
+        .limit_id        = limit_data->limit_id,
+        .is_limit_active = &limit->is_active,
+        .value           = &(ScaledNumberType){&limit->value.value, &limit->value.scale},
+        .time_period     = (EebusDurationToSeconds(&limit->duration) > 0) ? &time_period : NULL,
+    };
 
-  const LoadControlLimitListDataType new_limit_list = (LoadControlLimitListDataType){
-      .load_control_limit_data      = &(const LoadControlLimitDataType*){&new_limit},
-      .load_control_limit_data_size = 1,
-  };
+    const LoadControlLimitListDataType new_limit_list = (LoadControlLimitListDataType){
+        .load_control_limit_data      = &(const LoadControlLimitDataType*){&new_limit},
+        .load_control_limit_data_size = 1,
+    };
 
-  const LoadControlLimitListDataSelectorsType* delete_selectors = &(LoadControlLimitListDataSelectorsType){
-      .limit_id = limit_data->limit_id,
-  };
+    const LoadControlLimitListDataSelectorsType* delete_selectors = &(LoadControlLimitListDataSelectorsType){
+        .limit_id = limit_data->limit_id,
+    };
 
-  const LoadControlLimitDataElementsType* delete_elements = &(LoadControlLimitDataElementsType){
-      .time_period = &(TimePeriodElementsType){.start_time = EEBUS_TAG_RESET, .end_time = EEBUS_TAG_RESET},
-  };
+    const LoadControlLimitDataElementsType* delete_elements = &(LoadControlLimitDataElementsType){
+        .time_period = &(TimePeriodElementsType){.start_time = EEBUS_TAG_RESET, .end_time = EEBUS_TAG_RESET},
+    };
 
-  // If timer period should not be deleted, reset delete_selectors and delete_elements
-  if (!limit->delete_duration) {
-    delete_selectors = NULL;
-    delete_elements  = NULL;
-  }
+    // If timer period should not be deleted, reset delete_selectors and delete_elements
+    if (!limit->delete_duration) {
+        delete_selectors = NULL;
+        delete_elements  = NULL;
+    }
 
-  return LoadControlClientWriteLimitList(&lcc, &new_limit_list, delete_selectors, delete_elements, cb, ctx);
+    return LoadControlClientWriteLimitList(&lcc, &new_limit_list, delete_selectors, delete_elements, cb, ctx);
 }
 
 EebusError EgLpSetActivePowerLimitInternal(
@@ -229,14 +229,14 @@ EebusError EgLpSetActivePowerLimitInternal(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  return EgLpWriteLoadControlLimit(self, remote_entity, limit, cb, ctx);
+    return EgLpWriteLoadControlLimit(self, remote_entity, limit, cb, ctx);
 }
 
 EebusError EgLpSetActivePowerLimit(
@@ -246,19 +246,19 @@ EebusError EgLpSetActivePowerLimit(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if ((remote_entity_addr == NULL) || (limit == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((remote_entity_addr == NULL) || (limit == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpSetActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, limit, cb, ctx);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpSetActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, limit, cb, ctx);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -272,31 +272,31 @@ EebusError EgLpGetFailsafeActivePowerLimitInternal(
     const EntityAddressType* remote_entity_addr,
     ScaledValue* power_limit
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  DeviceConfigurationClient dcc;
-  EebusError err = DeviceConfigurationClientConstruct(&dcc, use_case->local_entity, remote_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    DeviceConfigurationClient dcc;
+    EebusError err = DeviceConfigurationClientConstruct(&dcc, use_case->local_entity, remote_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  const DeviceConfigurationKeyValueDescriptionDataType filter = {
-      .key_name   = &self->failsafe_power_limit_key,
-      .value_type = &(DeviceConfigurationKeyValueTypeType){kDeviceConfigurationKeyValueTypeTypeScaledNumber},
-  };
+    const DeviceConfigurationKeyValueDescriptionDataType filter = {
+        .key_name   = &self->failsafe_power_limit_key,
+        .value_type = &(DeviceConfigurationKeyValueTypeType){kDeviceConfigurationKeyValueTypeTypeScaledNumber},
+    };
 
-  const DeviceConfigurationKeyValueDataType* const key_value
-      = DeviceConfigurationCommonGetKeyValueWithFilter(&dcc.device_cfg_common, &filter);
+    const DeviceConfigurationKeyValueDataType* const key_value
+        = DeviceConfigurationCommonGetKeyValueWithFilter(&dcc.device_cfg_common, &filter);
 
-  const ScaledNumberType* const scaled_number = DeviceConfigurationKeyValueGetScaledNumber(key_value);
-  return ScaledValueInitWithScaledNumber(power_limit, scaled_number);
+    const ScaledNumberType* const scaled_number = DeviceConfigurationKeyValueGetScaledNumber(key_value);
+    return ScaledValueInitWithScaledNumber(power_limit, scaled_number);
 }
 
 EebusError EgLpGetFailsafeActivePowerLimit(
@@ -304,19 +304,19 @@ EebusError EgLpGetFailsafeActivePowerLimit(
     const EntityAddressType* remote_entity_addr,
     ScaledValue* power_limit
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if ((remote_entity_addr == NULL) || (power_limit == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((remote_entity_addr == NULL) || (power_limit == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpGetFailsafeActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, power_limit);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpGetFailsafeActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, power_limit);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 EebusError EgLpReadDeviceConfigurationWithKeyName(
@@ -326,30 +326,30 @@ EebusError EgLpReadDeviceConfigurationWithKeyName(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  DeviceConfigurationClient dcc;
-  const EebusError err = DeviceConfigurationClientConstruct(&dcc, use_case->local_entity, remote_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    DeviceConfigurationClient dcc;
+    const EebusError err = DeviceConfigurationClientConstruct(&dcc, use_case->local_entity, remote_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  const DeviceConfigurationKeyValueDescriptionDataType filter = {
-      .key_name = &key_name,
-  };
+    const DeviceConfigurationKeyValueDescriptionDataType filter = {
+        .key_name = &key_name,
+    };
 
-  const DeviceConfigurationKeyValueDescriptionDataType* const description
-      = DeviceConfigurationCommonGetKeyValueDescriptionWithFilter(&dcc.device_cfg_common, &filter);
+    const DeviceConfigurationKeyValueDescriptionDataType* const description
+        = DeviceConfigurationCommonGetKeyValueDescriptionWithFilter(&dcc.device_cfg_common, &filter);
 
-  if ((description == NULL) || (description->key_id == NULL)) {
-    return kEebusErrorNotAvailable;
-  }
+    if ((description == NULL) || (description->key_id == NULL)) {
+        return kEebusErrorNotAvailable;
+    }
 
-  const DeviceConfigurationKeyValueListDataSelectorsType selectors = {
-      .key_id = description->key_id,
-  };
+    const DeviceConfigurationKeyValueListDataSelectorsType selectors = {
+        .key_id = description->key_id,
+    };
 
-  return DeviceConfigurationClientRequestKeyValue(&dcc, &selectors, NULL, cb, ctx);
+    return DeviceConfigurationClientRequestKeyValue(&dcc, &selectors, NULL, cb, ctx);
 }
 
 EebusError EgLpReadFailsafeActivePowerLimitInternal(
@@ -358,14 +358,14 @@ EebusError EgLpReadFailsafeActivePowerLimitInternal(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  return EgLpReadDeviceConfigurationWithKeyName(self, remote_entity, self->failsafe_power_limit_key, cb, ctx);
+    return EgLpReadDeviceConfigurationWithKeyName(self, remote_entity, self->failsafe_power_limit_key, cb, ctx);
 }
 
 EebusError EgLpReadFailsafeActivePowerLimit(
@@ -374,19 +374,19 @@ EebusError EgLpReadFailsafeActivePowerLimit(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if (remote_entity_addr == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (remote_entity_addr == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpReadFailsafeActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, cb, ctx);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpReadFailsafeActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, cb, ctx);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 EebusError EgLpSetFailsafeActivePowerLimitInternal(
@@ -396,33 +396,33 @@ EebusError EgLpSetFailsafeActivePowerLimitInternal(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  DeviceConfigurationClient dcc;
-  const EebusError err = DeviceConfigurationClientConstruct(&dcc, use_case->local_entity, remote_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    DeviceConfigurationClient dcc;
+    const EebusError err = DeviceConfigurationClientConstruct(&dcc, use_case->local_entity, remote_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  const DeviceConfigurationKeyValueDescriptionDataType filter = {
-      .key_name = &self->failsafe_power_limit_key,
-  };
+    const DeviceConfigurationKeyValueDescriptionDataType filter = {
+        .key_name = &self->failsafe_power_limit_key,
+    };
 
-  const DeviceConfigurationKeyValueDescriptionDataType* const description
-      = DeviceConfigurationCommonGetKeyValueDescriptionWithFilter(&dcc.device_cfg_common, &filter);
+    const DeviceConfigurationKeyValueDescriptionDataType* const description
+        = DeviceConfigurationCommonGetKeyValueDescriptionWithFilter(&dcc.device_cfg_common, &filter);
 
-  if ((description == NULL) || (description->key_id == NULL)) {
-    return kEebusErrorNotAvailable;
-  }
+    if ((description == NULL) || (description->key_id == NULL)) {
+        return kEebusErrorNotAvailable;
+    }
 
-  // clang-format off
+    // clang-format off
   const DeviceConfigurationKeyValueDataType key_value = {
       .key_id = description->key_id,
       .value  = &(DeviceConfigurationKeyValueValueType){
@@ -432,14 +432,14 @@ EebusError EgLpSetFailsafeActivePowerLimitInternal(
           },
       },
   };
-  // clang-format on
+    // clang-format on
 
-  const DeviceConfigurationKeyValueListDataType key_value_list = {
-      .device_configuration_key_value_data      = &(const DeviceConfigurationKeyValueDataType*){&key_value},
-      .device_configuration_key_value_data_size = 1,
-  };
+    const DeviceConfigurationKeyValueListDataType key_value_list = {
+        .device_configuration_key_value_data      = &(const DeviceConfigurationKeyValueDataType*){&key_value},
+        .device_configuration_key_value_data_size = 1,
+    };
 
-  return DeviceConfigurationClientWriteKeyValueList(&dcc, &key_value_list, cb, ctx);
+    return DeviceConfigurationClientWriteKeyValueList(&dcc, &key_value_list, cb, ctx);
 }
 
 EebusError EgLpSetFailsafeActivePowerLimit(
@@ -449,19 +449,19 @@ EebusError EgLpSetFailsafeActivePowerLimit(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if ((remote_entity_addr == NULL) || (power_limit == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((remote_entity_addr == NULL) || (power_limit == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpSetFailsafeActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, power_limit, cb, ctx);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpSetFailsafeActivePowerLimitInternal(EG_LP_USE_CASE(self), remote_entity_addr, power_limit, cb, ctx);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 EebusError EgLpGetFailsafeDurationMinimumInternal(
@@ -469,30 +469,30 @@ EebusError EgLpGetFailsafeDurationMinimumInternal(
     const EntityAddressType* remote_entity_addr,
     DurationType* duration
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  DeviceConfigurationClient dcc;
-  EebusError err = DeviceConfigurationClientConstruct(&dcc, use_case->local_entity, remote_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    DeviceConfigurationClient dcc;
+    EebusError err = DeviceConfigurationClientConstruct(&dcc, use_case->local_entity, remote_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  const DeviceConfigurationKeyValueDescriptionDataType filter = {
-      .key_name   = &kFailsafeDurationMinimumKeyName,
-      .value_type = &(DeviceConfigurationKeyValueTypeType){kDeviceConfigurationKeyValueTypeTypeDuration},
-  };
+    const DeviceConfigurationKeyValueDescriptionDataType filter = {
+        .key_name   = &kFailsafeDurationMinimumKeyName,
+        .value_type = &(DeviceConfigurationKeyValueTypeType){kDeviceConfigurationKeyValueTypeTypeDuration},
+    };
 
-  const DeviceConfigurationKeyValueDataType* const key_value
-      = DeviceConfigurationCommonGetKeyValueWithFilter(&dcc.device_cfg_common, &filter);
+    const DeviceConfigurationKeyValueDataType* const key_value
+        = DeviceConfigurationCommonGetKeyValueWithFilter(&dcc.device_cfg_common, &filter);
 
-  return DeviceConfigurationKeyValueGetDuration(key_value, duration);
+    return DeviceConfigurationKeyValueGetDuration(key_value, duration);
 }
 
 EebusError EgLpGetFailsafeDurationMinimum(
@@ -500,19 +500,19 @@ EebusError EgLpGetFailsafeDurationMinimum(
     const EntityAddressType* remote_entity_addr,
     DurationType* duration
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if ((remote_entity_addr == NULL) || (duration == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((remote_entity_addr == NULL) || (duration == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpGetFailsafeDurationMinimumInternal(EG_LP_USE_CASE(self), remote_entity_addr, duration);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpGetFailsafeDurationMinimumInternal(EG_LP_USE_CASE(self), remote_entity_addr, duration);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 EebusError EgLpReadFailsafeDurationMinimumInternal(
@@ -521,14 +521,14 @@ EebusError EgLpReadFailsafeDurationMinimumInternal(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  return EgLpReadDeviceConfigurationWithKeyName(self, remote_entity, kFailsafeDurationMinimumKeyName, cb, ctx);
+    return EgLpReadDeviceConfigurationWithKeyName(self, remote_entity, kFailsafeDurationMinimumKeyName, cb, ctx);
 }
 
 EebusError EgLpReadFailsafeDurationMinimum(
@@ -537,19 +537,19 @@ EebusError EgLpReadFailsafeDurationMinimum(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if (remote_entity_addr == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (remote_entity_addr == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpReadFailsafeDurationMinimumInternal(EG_LP_USE_CASE(self), remote_entity_addr, cb, ctx);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpReadFailsafeDurationMinimumInternal(EG_LP_USE_CASE(self), remote_entity_addr, cb, ctx);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 EebusError EgLpSetFailsafeDurationMinimumInternal(
@@ -559,53 +559,53 @@ EebusError EgLpSetFailsafeDurationMinimumInternal(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  static const EebusDuration two_hours         = {.hours = 2, .minutes = 0, .seconds = 0};
-  static const EebusDuration twenty_four_hours = {.hours = 24, .minutes = 0, .seconds = 0};
-  if (EebusDurationCompare(duration, &two_hours) < 0 || EebusDurationCompare(duration, &twenty_four_hours) > 0) {
-    return kEebusErrorInputArgumentOutOfRange;
-  }
+    static const EebusDuration two_hours         = {.hours = 2, .minutes = 0, .seconds = 0};
+    static const EebusDuration twenty_four_hours = {.hours = 24, .minutes = 0, .seconds = 0};
+    if (EebusDurationCompare(duration, &two_hours) < 0 || EebusDurationCompare(duration, &twenty_four_hours) > 0) {
+        return kEebusErrorInputArgumentOutOfRange;
+    }
 
-  DeviceConfigurationClient dcc;
-  EebusError err = DeviceConfigurationClientConstruct(&dcc, use_case->local_entity, remote_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    DeviceConfigurationClient dcc;
+    EebusError err = DeviceConfigurationClientConstruct(&dcc, use_case->local_entity, remote_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  const DeviceConfigurationKeyValueDescriptionDataType filter = {
-      .key_name = &kFailsafeDurationMinimumKeyName,
-  };
+    const DeviceConfigurationKeyValueDescriptionDataType filter = {
+        .key_name = &kFailsafeDurationMinimumKeyName,
+    };
 
-  const DeviceConfigurationKeyValueDataType* const key_value_tmp
-      = DeviceConfigurationCommonGetKeyValueWithFilter(&dcc.device_cfg_common, &filter);
+    const DeviceConfigurationKeyValueDataType* const key_value_tmp
+        = DeviceConfigurationCommonGetKeyValueWithFilter(&dcc.device_cfg_common, &filter);
 
-  if (key_value_tmp == NULL) {
-    return kEebusErrorNotAvailable;
-  }
+    if (key_value_tmp == NULL) {
+        return kEebusErrorNotAvailable;
+    }
 
-  // clang-format off
+    // clang-format off
   const DeviceConfigurationKeyValueDataType* const key_value = &(DeviceConfigurationKeyValueDataType){
       .key_id = key_value_tmp->key_id,
       .value  = &(DeviceConfigurationKeyValueValueType){
           .duration = duration,
       },
   };
-  // clang-format on
+    // clang-format on
 
-  const DeviceConfigurationKeyValueListDataType key_value_list = {
-      .device_configuration_key_value_data      = &(const DeviceConfigurationKeyValueDataType*){key_value},
-      .device_configuration_key_value_data_size = 1,
-  };
+    const DeviceConfigurationKeyValueListDataType key_value_list = {
+        .device_configuration_key_value_data      = &(const DeviceConfigurationKeyValueDataType*){key_value},
+        .device_configuration_key_value_data_size = 1,
+    };
 
-  return DeviceConfigurationClientWriteKeyValueList(&dcc, &key_value_list, cb, ctx);
+    return DeviceConfigurationClientWriteKeyValueList(&dcc, &key_value_list, cb, ctx);
 }
 
 EebusError EgLpSetFailsafeDurationMinimum(
@@ -615,19 +615,19 @@ EebusError EgLpSetFailsafeDurationMinimum(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if ((remote_entity_addr == NULL) || (duration == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((remote_entity_addr == NULL) || (duration == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpSetFailsafeDurationMinimumInternal(EG_LP_USE_CASE(self), remote_entity_addr, duration, cb, ctx);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpSetFailsafeDurationMinimumInternal(EG_LP_USE_CASE(self), remote_entity_addr, duration, cb, ctx);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -637,43 +637,43 @@ EebusError EgLpSetFailsafeDurationMinimum(
 //-------------------------------------------------------------------------------------------//
 
 const ElectricalConnectionCharacteristicDataType* EgLpNominalMaxPrimaryFilter(const EgLpUseCase* self) {
-  // Note: ElectricalConnectionCharacteristicTypeType has exactly two valid values per energy
-  // direction — pre-compute all variants as static const to avoid per-call construction.
-  static const ElectricalConnectionCharacteristicTypeType kConsumeType
-      = kElectricalConnectionCharacteristicTypeTypePowerConsumptionNominalMax;
-  static const ElectricalConnectionCharacteristicDataType kConsumeFilter = {
-      .characteristic_context = &kEccContextEntity,
-      .characteristic_type    = &kConsumeType,
-  };
+    // Note: ElectricalConnectionCharacteristicTypeType has exactly two valid values per energy
+    // direction — pre-compute all variants as static const to avoid per-call construction.
+    static const ElectricalConnectionCharacteristicTypeType kConsumeType
+        = kElectricalConnectionCharacteristicTypeTypePowerConsumptionNominalMax;
+    static const ElectricalConnectionCharacteristicDataType kConsumeFilter = {
+        .characteristic_context = &kEccContextEntity,
+        .characteristic_type    = &kConsumeType,
+    };
 
-  static const ElectricalConnectionCharacteristicTypeType kProduceType
-      = kElectricalConnectionCharacteristicTypeTypePowerProductionNominalMax;
-  static const ElectricalConnectionCharacteristicDataType kProduceFilter = {
-      .characteristic_context = &kEccContextEntity,
-      .characteristic_type    = &kProduceType,
-  };
+    static const ElectricalConnectionCharacteristicTypeType kProduceType
+        = kElectricalConnectionCharacteristicTypeTypePowerProductionNominalMax;
+    static const ElectricalConnectionCharacteristicDataType kProduceFilter = {
+        .characteristic_context = &kEccContextEntity,
+        .characteristic_type    = &kProduceType,
+    };
 
-  return (self->energy_direction == kEnergyDirectionTypeConsume) ? &kConsumeFilter : &kProduceFilter;
+    return (self->energy_direction == kEnergyDirectionTypeConsume) ? &kConsumeFilter : &kProduceFilter;
 }
 
 const ElectricalConnectionCharacteristicDataType* EgLpNominalMaxContractualFilter(const EgLpUseCase* self) {
-  // Note: ElectricalConnectionCharacteristicTypeType has exactly two valid values per energy
-  // direction — pre-compute all variants as static const to avoid per-call construction.
-  static const ElectricalConnectionCharacteristicTypeType kConsumeType
-      = kElectricalConnectionCharacteristicTypeTypeContractualConsumptionNominalMax;
-  static const ElectricalConnectionCharacteristicDataType kConsumeFilter = {
-      .characteristic_context = &kEccContextEntity,
-      .characteristic_type    = &kConsumeType,
-  };
+    // Note: ElectricalConnectionCharacteristicTypeType has exactly two valid values per energy
+    // direction — pre-compute all variants as static const to avoid per-call construction.
+    static const ElectricalConnectionCharacteristicTypeType kConsumeType
+        = kElectricalConnectionCharacteristicTypeTypeContractualConsumptionNominalMax;
+    static const ElectricalConnectionCharacteristicDataType kConsumeFilter = {
+        .characteristic_context = &kEccContextEntity,
+        .characteristic_type    = &kConsumeType,
+    };
 
-  static const ElectricalConnectionCharacteristicTypeType kProduceType
-      = kElectricalConnectionCharacteristicTypeTypeContractualProductionNominalMax;
-  static const ElectricalConnectionCharacteristicDataType kProduceFilter = {
-      .characteristic_context = &kEccContextEntity,
-      .characteristic_type    = &kProduceType,
-  };
+    static const ElectricalConnectionCharacteristicTypeType kProduceType
+        = kElectricalConnectionCharacteristicTypeTypeContractualProductionNominalMax;
+    static const ElectricalConnectionCharacteristicDataType kProduceFilter = {
+        .characteristic_context = &kEccContextEntity,
+        .characteristic_type    = &kProduceType,
+    };
 
-  return (self->energy_direction == kEnergyDirectionTypeConsume) ? &kConsumeFilter : &kProduceFilter;
+    return (self->energy_direction == kEnergyDirectionTypeConsume) ? &kConsumeFilter : &kProduceFilter;
 }
 
 EebusError EgLpGetPowerNominalMaxInternal(
@@ -681,37 +681,37 @@ EebusError EgLpGetPowerNominalMaxInternal(
     const EntityAddressType* remote_entity_addr,
     ScaledValue* power_limit
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  ElectricalConnectionClient ecc;
-  const EebusError err = ElectricalConnectionClientConstruct(&ecc, use_case->local_entity, remote_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    ElectricalConnectionClient ecc;
+    const EebusError err = ElectricalConnectionClientConstruct(&ecc, use_case->local_entity, remote_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  const ElectricalConnectionCharacteristicDataType* const filter = EgLpNominalMaxPrimaryFilter(self);
+    const ElectricalConnectionCharacteristicDataType* const filter = EgLpNominalMaxPrimaryFilter(self);
 
-  const ElectricalConnectionCharacteristicDataType* characteristic
-      = ElectricalConnectionCommonGetCharacteristicWithFilter(&ecc.el_connection_common, filter);
+    const ElectricalConnectionCharacteristicDataType* characteristic
+        = ElectricalConnectionCommonGetCharacteristicWithFilter(&ecc.el_connection_common, filter);
 
-  if (characteristic == NULL) {
-    characteristic = ElectricalConnectionCommonGetCharacteristicWithFilter(
-        &ecc.el_connection_common,
-        EgLpNominalMaxContractualFilter(self)
-    );
-  }
+    if (characteristic == NULL) {
+        characteristic = ElectricalConnectionCommonGetCharacteristicWithFilter(
+            &ecc.el_connection_common,
+            EgLpNominalMaxContractualFilter(self)
+        );
+    }
 
-  if (characteristic == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (characteristic == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  return ScaledValueInitWithScaledNumber(power_limit, characteristic->value);
+    return ScaledValueInitWithScaledNumber(power_limit, characteristic->value);
 }
 
 EebusError EgLpGetPowerNominalMax(
@@ -719,19 +719,19 @@ EebusError EgLpGetPowerNominalMax(
     const EntityAddressType* remote_entity_addr,
     ScaledValue* power_limit
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if ((remote_entity_addr == NULL) || (power_limit == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((remote_entity_addr == NULL) || (power_limit == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpGetPowerNominalMaxInternal(EG_LP_USE_CASE(self), remote_entity_addr, power_limit);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpGetPowerNominalMaxInternal(EG_LP_USE_CASE(self), remote_entity_addr, power_limit);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 EebusError EgLpReadPowerNominalMaxInternal(
@@ -740,27 +740,27 @@ EebusError EgLpReadPowerNominalMaxInternal(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
-  if (remote_entity == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (remote_entity == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  ElectricalConnectionClient ecc;
-  const EebusError err = ElectricalConnectionClientConstruct(&ecc, use_case->local_entity, remote_entity);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    ElectricalConnectionClient ecc;
+    const EebusError err = ElectricalConnectionClientConstruct(&ecc, use_case->local_entity, remote_entity);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  const ElectricalConnectionCharacteristicListDataSelectorsType selectors = {
-      .characteristic_context = &kEccContextEntity,
-      .characteristic_type    = &self->nominal_max_characteristic,
-  };
+    const ElectricalConnectionCharacteristicListDataSelectorsType selectors = {
+        .characteristic_context = &kEccContextEntity,
+        .characteristic_type    = &self->nominal_max_characteristic,
+    };
 
-  return ElectricalConnectionClientRequestCharacteristics(&ecc, &selectors, NULL, cb, ctx);
+    return ElectricalConnectionClientRequestCharacteristics(&ecc, &selectors, NULL, cb, ctx);
 }
 
 EebusError EgLpReadPowerNominalMax(
@@ -769,19 +769,19 @@ EebusError EgLpReadPowerNominalMax(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if (remote_entity_addr == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (remote_entity_addr == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  EebusError err = kEebusErrorOk;
+    EebusError err = kEebusErrorOk;
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  err = EgLpReadPowerNominalMaxInternal(EG_LP_USE_CASE(self), remote_entity_addr, cb, ctx);
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    err = EgLpReadPowerNominalMaxInternal(EG_LP_USE_CASE(self), remote_entity_addr, cb, ctx);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 
-  return err;
+    return err;
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -791,49 +791,52 @@ EebusError EgLpReadPowerNominalMax(
 //-------------------------------------------------------------------------------------------//
 
 void EgLpStartHeartbeat(EgLpUseCaseObject* self) {
-  UseCase* const use_case = USE_CASE(self);
+    UseCase* const use_case = USE_CASE(self);
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  HeartbeatManagerObject* const hm = ENTITY_LOCAL_GET_HEARTBEAT_MANAGER(use_case->local_entity);
-  if (hm != NULL) {
-    HEARTBEAT_MANAGER_START(hm);
-  }
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    HeartbeatManagerObject* const hm = ENTITY_LOCAL_GET_HEARTBEAT_MANAGER(use_case->local_entity);
+    if (hm != NULL) {
+        HEARTBEAT_MANAGER_START(hm);
+    }
 
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 }
 
 void EgLpStopHeartbeat(EgLpUseCaseObject* self) {
-  UseCase* const use_case = USE_CASE(self);
+    UseCase* const use_case = USE_CASE(self);
 
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  HeartbeatManagerObject* const hm = ENTITY_LOCAL_GET_HEARTBEAT_MANAGER(use_case->local_entity);
-  if (hm != NULL) {
-    HEARTBEAT_MANAGER_STOP(hm);
-  }
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    HeartbeatManagerObject* const hm = ENTITY_LOCAL_GET_HEARTBEAT_MANAGER(use_case->local_entity);
+    if (hm != NULL) {
+        HEARTBEAT_MANAGER_STOP(hm);
+    }
 
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
 }
 
 bool EgLpIsHeartbeatWithinDuration(EgLpUseCaseObject* self, const EntityAddressType* remote_entity_addr) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  if (remote_entity_addr == NULL) {
-    return false;
-  }
-
-  DEVICE_LOCAL_LOCK(use_case->local_device);
-  bool ret = false;
-
-  EntityRemoteObject* const remote_entity
-      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
-
-  if (remote_entity != NULL) {
-    DeviceDiagnosisClient ddc;
-    if (DeviceDiagnosisClientConstruct(&ddc, use_case->local_entity, remote_entity) == kEebusErrorOk) {
-      ret = DeviceDiagnosisCommonIsHeartbeatWithinDuration(&ddc.device_diag_common, &(DurationType){.minutes = 2});
+    if (remote_entity_addr == NULL) {
+        return false;
     }
-  }
 
-  DEVICE_LOCAL_UNLOCK(use_case->local_device);
-  return ret;
+    DEVICE_LOCAL_LOCK(use_case->local_device);
+    bool ret = false;
+
+    EntityRemoteObject* const remote_entity
+        = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+
+    if (remote_entity != NULL) {
+        DeviceDiagnosisClient ddc;
+        if (DeviceDiagnosisClientConstruct(&ddc, use_case->local_entity, remote_entity) == kEebusErrorOk) {
+            ret = DeviceDiagnosisCommonIsHeartbeatWithinDuration(
+                &ddc.device_diag_common,
+                &(DurationType){.minutes = 2}
+            );
+        }
+    }
+
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    return ret;
 }

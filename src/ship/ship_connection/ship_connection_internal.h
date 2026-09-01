@@ -45,12 +45,12 @@ extern "C" {
 #endif  // SHIP_CONNECTION_DEBUG
 
 enum ShipConnectionQueueMsgType {
-  kShipConnectionQueueMsgTypeDataReceived,
-  kShipConnectionQueueMsgTypeSpineDataToSend,
-  kShipConnectionQueueMsgTypeTimeout,
-  kShipConnectionQueueMsgTypeWebsocketError,
-  kShipConnectionQueueMsgTypeWebsocketClose,
-  kShipConnectionQueueMsgTypeCancel,
+    kShipConnectionQueueMsgTypeDataReceived,
+    kShipConnectionQueueMsgTypeSpineDataToSend,
+    kShipConnectionQueueMsgTypeTimeout,
+    kShipConnectionQueueMsgTypeWebsocketError,
+    kShipConnectionQueueMsgTypeWebsocketClose,
+    kShipConnectionQueueMsgTypeCancel,
 };
 
 typedef enum ShipConnectionQueueMsgType ShipConnectionQueueMsgType;
@@ -58,45 +58,51 @@ typedef enum ShipConnectionQueueMsgType ShipConnectionQueueMsgType;
 typedef struct ShipConnectionQueueMessage ShipConnectionQueueMessage;
 
 struct ShipConnectionQueueMessage {
-  ShipConnectionQueueMsgType type;
-  MessageBuffer msg_buf;
+    ShipConnectionQueueMsgType type;
+    MessageBuffer msg_buf;
 };
 
 typedef struct {
-  /** Implements the Ship Connecion Interface */
-  ShipConnectionObject sc_object;
+    /** Implements the Ship Connecion Interface */
+    ShipConnectionObject sc_object;
 
-  // The ship connection mode of this connection
-  ShipRole role;
-  const TlsCertificateObject* tls_cert;
-  const char* remote_ski;
-  const char* remote_ship_id;
-  const char* local_ship_id;
-  InfoProviderObject* info_provider;
-  DataReaderObject* data_reader;
-  WebsocketObject* websocket;
-  SmeState sme_state;
-  EebusError sme_error;
-  bool is_access_methods_req_sent;
-  EebusTimerObject* wait_for_ready_timer;
-  EebusTimerObject* send_prolongation_request_timer;
-  EebusTimerObject* prolongation_request_reply_timer;
-  uint32_t last_received_waiting_value;
-  // TODO: investigate better approach for call once in POSIX, e.g.
-  // pthread_once_t shutdownOnce;
-  bool shutdown_once;
+    // The ship connection mode of this connection
+    ShipRole role;
+    const TlsCertificateObject* tls_cert;
+    const char* remote_ski;
+    const char* remote_ship_id;
+    const char* local_ship_id;
+    InfoProviderObject* info_provider;
+    DataReaderObject* data_reader;
+    WebsocketObject* websocket;
+    SmeState sme_state;
+    EebusError sme_error;
+    bool is_access_methods_req_sent;
+    EebusTimerObject* wait_for_ready_timer;
+    EebusTimerObject* send_prolongation_request_timer;
+    EebusTimerObject* prolongation_request_reply_timer;
+    uint32_t last_received_waiting_value;
+    // TODO: investigate better approach for call once in POSIX, e.g.
+    // pthread_once_t shutdownOnce;
+    bool shutdown_once;
 
-  bool cancel;
+    bool cancel;
 
-  EebusQueueObject* msg_queue;
-  EebusThreadObject* thread;
-  MessageBuffer msg;
+    EebusQueueObject* msg_queue;
+    EebusThreadObject* thread;
+    MessageBuffer msg;
 } ShipConnection;
 
 #define SHIP_CONNECTION(obj) ((ShipConnection*)(obj))
 
-void ShipConnectionConstruct(ShipConnection* self, InfoProviderObject* info_provider, ShipRole role,
-    const char* local_ship_id, const char* remote_ski, const char* remote_ship_id);
+void ShipConnectionConstruct(
+    ShipConnection* self,
+    InfoProviderObject* info_provider,
+    ShipRole role,
+    const char* local_ship_id,
+    const char* remote_ski,
+    const char* remote_ship_id
+);
 
 void ShipConnectionSetSmeState(ShipConnection* self, SmeState state);
 

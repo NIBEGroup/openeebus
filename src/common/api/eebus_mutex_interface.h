@@ -42,16 +42,16 @@ typedef struct EebusMutexObject EebusMutexObject;
  * @brief EebusMutex Interface Structure
  */
 struct EebusMutexInterface {
-  void (*destruct)(EebusMutexObject* self);
-  void (*lock)(EebusMutexObject* self);
-  void (*unlock)(EebusMutexObject* self);
+    void (*destruct)(EebusMutexObject* self);
+    void (*lock)(EebusMutexObject* self);
+    void (*unlock)(EebusMutexObject* self);
 };
 
 /**
  * @brief EEBUS Mutex Object Structure
  */
 struct EebusMutexObject {
-  const EebusMutexInterface* interface;
+    const EebusMutexInterface* interface;
 };
 
 /**

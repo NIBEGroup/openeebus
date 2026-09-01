@@ -44,16 +44,16 @@ typedef struct MuMpcListenerObject MuMpcListenerObject;
  * @brief MuMpcListener Interface Structure
  */
 struct MuMpcListenerInterface {
-  void (*destruct)(MuMpcListenerObject* self);
-  void (*on_remote_ma_added)(MuMpcListenerObject* self, const EntityAddressType* entity_addr);
-  void (*on_remote_ma_removed)(MuMpcListenerObject* self, const EntityAddressType* entity_addr);
+    void (*destruct)(MuMpcListenerObject* self);
+    void (*on_remote_ma_added)(MuMpcListenerObject* self, const EntityAddressType* entity_addr);
+    void (*on_remote_ma_removed)(MuMpcListenerObject* self, const EntityAddressType* entity_addr);
 };
 
 /**
  * @brief Mu Mpc Listener Object Structure
  */
 struct MuMpcListenerObject {
-  const MuMpcListenerInterface* interface;
+    const MuMpcListenerInterface* interface;
 };
 
 /**
@@ -75,13 +75,13 @@ struct MuMpcListenerObject {
  * @brief Mu Mpc Listener On Remote MA Added caller definition
  */
 #define MU_MPC_LISTENER_ON_REMOTE_MA_ADDED(obj, entity_addr) \
-  (MU_MPC_LISTENER_INTERFACE(obj)->on_remote_ma_added(obj, entity_addr))
+    (MU_MPC_LISTENER_INTERFACE(obj)->on_remote_ma_added(obj, entity_addr))
 
 /**
  * @brief Mu Mpc Listener On Remote MA Removed caller definition
  */
 #define MU_MPC_LISTENER_ON_REMOTE_MA_REMOVED(obj, entity_addr) \
-  (MU_MPC_LISTENER_INTERFACE(obj)->on_remote_ma_removed(obj, entity_addr))
+    (MU_MPC_LISTENER_INTERFACE(obj)->on_remote_ma_removed(obj, entity_addr))
 
 #ifdef __cplusplus
 }

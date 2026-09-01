@@ -46,20 +46,20 @@ typedef struct ServiceReaderObject ServiceReaderObject;
  * @brief ServiceReader Interface Structure
  */
 struct ServiceReaderInterface {
-  void (*destruct)(ServiceReaderObject* self);
-  void (*on_remote_ski_connected)(ServiceReaderObject* self, EebusServiceObject* service, const char* ski);
-  void (*on_remote_ski_disconnected)(ServiceReaderObject* self, EebusServiceObject* service, const char* ski);
-  void (*on_remote_services_update)(ServiceReaderObject* self, EebusServiceObject* service, const Vector* entries);
-  void (*on_ship_id_update)(ServiceReaderObject* self, const char* ski, const char* ship_id);
-  void (*on_ship_state_update)(ServiceReaderObject* self, const char* ski, SmeState state);
-  bool (*is_waiting_for_trust_allowed)(const ServiceReaderObject* self, const char* ski);
+    void (*destruct)(ServiceReaderObject* self);
+    void (*on_remote_ski_connected)(ServiceReaderObject* self, EebusServiceObject* service, const char* ski);
+    void (*on_remote_ski_disconnected)(ServiceReaderObject* self, EebusServiceObject* service, const char* ski);
+    void (*on_remote_services_update)(ServiceReaderObject* self, EebusServiceObject* service, const Vector* entries);
+    void (*on_ship_id_update)(ServiceReaderObject* self, const char* ski, const char* ship_id);
+    void (*on_ship_state_update)(ServiceReaderObject* self, const char* ski, SmeState state);
+    bool (*is_waiting_for_trust_allowed)(const ServiceReaderObject* self, const char* ski);
 };
 
 /**
  * @brief Service Reader Object Structure
  */
 struct ServiceReaderObject {
-  const ServiceReaderInterface* interface_;
+    const ServiceReaderInterface* interface_;
 };
 
 /**
@@ -81,37 +81,37 @@ struct ServiceReaderObject {
  * @brief Service Reader On Remote Ski Connected caller definition
  */
 #define SERVICE_READER_ON_REMOTE_SKI_CONNECTED(obj, service, ski) \
-  (SERVICE_READER_INTERFACE(obj)->on_remote_ski_connected(obj, service, ski))
+    (SERVICE_READER_INTERFACE(obj)->on_remote_ski_connected(obj, service, ski))
 
 /**
  * @brief Service Reader On Remote Ski Disconnected caller definition
  */
 #define SERVICE_READER_ON_REMOTE_SKI_DISCONNECTED(obj, service, ski) \
-  (SERVICE_READER_INTERFACE(obj)->on_remote_ski_disconnected(obj, service, ski))
+    (SERVICE_READER_INTERFACE(obj)->on_remote_ski_disconnected(obj, service, ski))
 
 /**
  * @brief Service Reader On Remote Services Update caller definition
  */
 #define SERVICE_READER_ON_REMOTE_SERVICES_UPDATE(obj, service, entries) \
-  (SERVICE_READER_INTERFACE(obj)->on_remote_services_update(obj, service, entries))
+    (SERVICE_READER_INTERFACE(obj)->on_remote_services_update(obj, service, entries))
 
 /**
  * @brief Service Reader On Ship Id Update caller definition
  */
 #define SERVICE_READER_ON_SHIP_ID_UPDATE(obj, ski, shipd_id) \
-  (SERVICE_READER_INTERFACE(obj)->on_ship_id_update(obj, ski, shipd_id))
+    (SERVICE_READER_INTERFACE(obj)->on_ship_id_update(obj, ski, shipd_id))
 
 /**
  * @brief Service Reader On Ship State Update caller definition
  */
 #define SERVICE_READER_ON_SHIP_STATE_UPDATE(obj, ski, state) \
-  (SERVICE_READER_INTERFACE(obj)->on_ship_state_update(obj, ski, state))
+    (SERVICE_READER_INTERFACE(obj)->on_ship_state_update(obj, ski, state))
 
 /**
  * @brief Service Reader Is Waiting For Trust Allowed caller definition
  */
 #define SERVICE_READER_IS_WAITING_FOR_TRUST_ALLOWED(obj, ski) \
-  (SERVICE_READER_INTERFACE(obj)->is_waiting_for_trust_allowed(obj, ski))
+    (SERVICE_READER_INTERFACE(obj)->is_waiting_for_trust_allowed(obj, ski))
 
 #ifdef __cplusplus
 }

@@ -35,9 +35,9 @@ extern "C" {
 #define TIME_NS_TO_MS(t) ((t) / 1000000)
 
 enum EebusTimerState {
-  kEebusTimerStateIdle,
-  kEebusTimerStateRunning,
-  kEebusTimerStateExpired,
+    kEebusTimerStateIdle,
+    kEebusTimerStateRunning,
+    kEebusTimerStateExpired,
 };
 
 typedef enum EebusTimerState EebusTimerState;
@@ -64,18 +64,18 @@ typedef struct EebusTimerObject EebusTimerObject;
  * @brief EebusTimer Interface Structure
  */
 struct EebusTimerInterface {
-  void (*destruct)(EebusTimerObject* self);
-  void (*start)(EebusTimerObject* self, uint32_t timeout_ms, bool autoreload);
-  void (*stop)(EebusTimerObject* self);
-  uint32_t (*get_remaining_time)(const EebusTimerObject* self);
-  EebusTimerState (*get_timer_state)(const EebusTimerObject* self);
+    void (*destruct)(EebusTimerObject* self);
+    void (*start)(EebusTimerObject* self, uint32_t timeout_ms, bool autoreload);
+    void (*stop)(EebusTimerObject* self);
+    uint32_t (*get_remaining_time)(const EebusTimerObject* self);
+    EebusTimerState (*get_timer_state)(const EebusTimerObject* self);
 };
 
 /**
  * @brief EEBUS Timer Object Structure
  */
 struct EebusTimerObject {
-  const EebusTimerInterface* interface_;
+    const EebusTimerInterface* interface_;
 };
 
 /**

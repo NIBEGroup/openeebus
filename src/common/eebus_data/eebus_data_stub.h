@@ -42,14 +42,14 @@ extern const EebusDataInterface eebus_data_stub_methods;
  * @brief EEBUS Data Stub configuration
  * @param ed_name Expected Data record name
  */
-#define EEBUS_DATA_STUB(ed_name)              \
-  {                                           \
-      .interface_ = &eebus_data_stub_methods, \
-      .name       = ed_name,                  \
-      .offset     = 0,                        \
-      .size       = 0,                        \
-      .metadata   = NULL,                     \
-  }
+#define EEBUS_DATA_STUB(ed_name)                \
+    {                                           \
+        .interface_ = &eebus_data_stub_methods, \
+        .name       = ed_name,                  \
+        .offset     = 0,                        \
+        .size       = 0,                        \
+        .metadata   = NULL,                     \
+    }
 
 #ifdef __cplusplus
 }

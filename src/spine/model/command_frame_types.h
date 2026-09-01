@@ -36,19 +36,19 @@ typedef uint64_t MsgCounterType;
 typedef int32_t CommandClassifierType;
 
 enum {
-  kCommandClassifierTypeRead,   /**< "read" */
-  kCommandClassifierTypeReply,  /**< "reply" */
-  kCommandClassifierTypeNotify, /**< "notify" */
-  kCommandClassifierTypeWrite,  /**< "write" */
-  kCommandClassifierTypeCall,   /**< "call" */
-  kCommandClassifierTypeResult, /**< "result" */
+    kCommandClassifierTypeRead,   /**< "read" */
+    kCommandClassifierTypeReply,  /**< "reply" */
+    kCommandClassifierTypeNotify, /**< "notify" */
+    kCommandClassifierTypeWrite,  /**< "write" */
+    kCommandClassifierTypeCall,   /**< "call" */
+    kCommandClassifierTypeResult, /**< "result" */
 };
 
 typedef struct CmdControlType CmdControlType;
 
 struct CmdControlType {
-  const ElementTagType delete_; /**< "delete" */
-  const ElementTagType partial; /**< "partial" */
+    const ElementTagType delete_; /**< "delete" */
+    const ElementTagType partial; /**< "partial" */
 };
 
 typedef uint32_t FilterIdType;
@@ -56,34 +56,34 @@ typedef uint32_t FilterIdType;
 typedef struct FilterType FilterType;
 
 struct FilterType {
-  const FilterIdType* filter_id;  /**< "filterId" */
-  const CmdControlType* cmd_ctrl; /**< "cmdControl" */
+    const FilterIdType* filter_id;  /**< "filterId" */
+    const CmdControlType* cmd_ctrl; /**< "cmdControl" */
 
-  // DataSelectorsChoiceGroup
-  const void* data_selectors_choice;
-  int32_t data_selectors_choice_type_id;
+    // DataSelectorsChoiceGroup
+    const void* data_selectors_choice;
+    int32_t data_selectors_choice_type_id;
 
-  // DataElementsChoiceGroup
-  const void* data_elements_choice;
-  int32_t data_elements_choice_type_id;
+    // DataElementsChoiceGroup
+    const void* data_elements_choice;
+    int32_t data_elements_choice_type_id;
 };
 
 typedef struct CmdType CmdType;
 
 struct CmdType {
-  const FunctionType* function; /**< "function" */
+    const FunctionType* function; /**< "function" */
 
-  // CmdOptionGroup
-  const FilterType* const* filter; /**< "filter" */
-  size_t filter_size;
+    // CmdOptionGroup
+    const FilterType* const* filter; /**< "filter" */
+    size_t filter_size;
 
-  // DataChoiceGroup
-  const void* data_choice;
-  int32_t data_choice_type_id;
+    // DataChoiceGroup
+    const void* data_choice;
+    int32_t data_choice_type_id;
 
-  // DataExtendGroup
-  const AbsoluteOrRelativeTimeType* last_update_at; /**< "lastUpdateAt" */
-  const char* manufacturer_specific_extension;      /**< "manufacturerSpecificExtension" */
+    // DataExtendGroup
+    const AbsoluteOrRelativeTimeType* last_update_at; /**< "lastUpdateAt" */
+    const char* manufacturer_specific_extension;      /**< "manufacturerSpecificExtension" */
 };
 
 #ifdef __cplusplus

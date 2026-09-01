@@ -122,46 +122,46 @@ static EebusError
 MaMgcpUseCaseConstruct(MaMgcpUseCase* self, EntityLocalObject* local_entity, MaMgcpListenerObject* ma_mgcp_listener);
 
 static EebusError AddFeatures(UseCaseObject* self, EntityLocalObject* entity) {
-  UNUSED(self);
+    UNUSED(self);
 
-  const FeatureTypeType client_features[] = {
-      kFeatureTypeTypeElectricalConnection,
-      kFeatureTypeTypeMeasurement,
-      kFeatureTypeTypeDeviceConfiguration,
-  };
+    const FeatureTypeType client_features[] = {
+        kFeatureTypeTypeElectricalConnection,
+        kFeatureTypeTypeMeasurement,
+        kFeatureTypeTypeDeviceConfiguration,
+    };
 
-  for (size_t i = 0; i < ARRAY_SIZE(client_features); ++i) {
-    if (ENTITY_LOCAL_ADD_FEATURE_WITH_TYPE_AND_ROLE(entity, client_features[i], kRoleTypeClient) == NULL) {
-      return kEebusErrorInit;
+    for (size_t i = 0; i < ARRAY_SIZE(client_features); ++i) {
+        if (ENTITY_LOCAL_ADD_FEATURE_WITH_TYPE_AND_ROLE(entity, client_features[i], kRoleTypeClient) == NULL) {
+            return kEebusErrorInit;
+        }
     }
-  }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 static EebusError
 MaMgcpUseCaseConstruct(MaMgcpUseCase* self, EntityLocalObject* local_entity, MaMgcpListenerObject* ma_mgcp_listener) {
-  UseCaseConstruct(USE_CASE(self), &ma_mgcp_use_case_info, local_entity, MaMgcpHandleEvent);
-  USE_CASE_INTERFACE(self) = &ma_mgcp_use_case_methods;
+    UseCaseConstruct(USE_CASE(self), &ma_mgcp_use_case_info, local_entity, MaMgcpHandleEvent);
+    USE_CASE_INTERFACE(self) = &ma_mgcp_use_case_methods;
 
-  self->ma_mgcp_listener = ma_mgcp_listener;
-  return AddFeatures(USE_CASE_OBJECT(self), local_entity);
+    self->ma_mgcp_listener = ma_mgcp_listener;
+    return AddFeatures(USE_CASE_OBJECT(self), local_entity);
 }
 
 MaMgcpUseCaseObject* MaMgcpUseCaseCreate(EntityLocalObject* local_entity, MaMgcpListenerObject* ma_mgcp_listener) {
-  MaMgcpUseCase* const ma_mgcp_use_case = EEBUS_MALLOC(sizeof(*ma_mgcp_use_case));
-  if (ma_mgcp_use_case == NULL) {
-    return NULL;
-  }
+    MaMgcpUseCase* const ma_mgcp_use_case = EEBUS_MALLOC(sizeof(*ma_mgcp_use_case));
+    if (ma_mgcp_use_case == NULL) {
+        return NULL;
+    }
 
-  if (MaMgcpUseCaseConstruct(ma_mgcp_use_case, local_entity, ma_mgcp_listener) != kEebusErrorOk) {
-    MaMgcpUseCaseDelete(MA_MGCP_USE_CASE_OBJECT(ma_mgcp_use_case));
-    return NULL;
-  }
+    if (MaMgcpUseCaseConstruct(ma_mgcp_use_case, local_entity, ma_mgcp_listener) != kEebusErrorOk) {
+        MaMgcpUseCaseDelete(MA_MGCP_USE_CASE_OBJECT(ma_mgcp_use_case));
+        return NULL;
+    }
 
-  return MA_MGCP_USE_CASE_OBJECT(ma_mgcp_use_case);
+    return MA_MGCP_USE_CASE_OBJECT(ma_mgcp_use_case);
 }
 
 static void MaMgcpUseCaseDestruct(UseCaseObject* self) {
-  UseCaseDestruct(self);
+    UseCaseDestruct(self);
 }

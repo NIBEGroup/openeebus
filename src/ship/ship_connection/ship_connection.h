@@ -36,10 +36,10 @@ ShipConnectionObject* ShipConnectionCreate(
 );
 
 static inline void ShipConnectionDelete(ShipConnectionObject* ship_connection) {
-  if (ship_connection != NULL) {
-    SHIP_CONNECTION_DESTRUCT(ship_connection);
-    EEBUS_FREE(ship_connection);
-  }
+    if (ship_connection != NULL) {
+        SHIP_CONNECTION_DESTRUCT(ship_connection);
+        EEBUS_FREE(ship_connection);
+    }
 }
 
 #ifdef __cplusplus

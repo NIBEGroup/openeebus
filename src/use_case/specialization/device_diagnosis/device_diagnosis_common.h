@@ -35,8 +35,8 @@ extern "C" {
 typedef struct DeviceDiagnosisCommon DeviceDiagnosisCommon;
 
 struct DeviceDiagnosisCommon {
-  FeatureLocalObject* feature_local;
-  FeatureRemoteObject* feature_remote;
+    FeatureLocalObject* feature_local;
+    FeatureRemoteObject* feature_remote;
 };
 
 /**

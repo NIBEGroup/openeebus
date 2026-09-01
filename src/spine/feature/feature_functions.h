@@ -23,8 +23,8 @@
 
 #include <stddef.h>
 
-#include "src/spine/model/function_types.h"
 #include "src/spine/model/feature_types.h"
+#include "src/spine/model/function_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,9 +33,9 @@ extern "C" {
 typedef struct FeatureFunctions FeatureFunctions;
 
 struct FeatureFunctions {
-  FeatureTypeType feature_type;
-  const FunctionType* functions_list;
-  size_t functions_list_size;
+    FeatureTypeType feature_type;
+    const FunctionType* functions_list;
+    size_t functions_list_size;
 };
 
 const FeatureFunctions* GetFeatureFunctions(FeatureTypeType feature_type);

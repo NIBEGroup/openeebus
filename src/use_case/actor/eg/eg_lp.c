@@ -48,24 +48,24 @@ static EebusError EgLpUseCaseConstruct(
 );
 
 EebusError AddFeatures(EntityLocalObject* entity) {
-  // Energy Guard LP client features
-  static const FeatureTypeType eg_lp_client_features[] = {
-      kFeatureTypeTypeDeviceDiagnosis,
-      kFeatureTypeTypeLoadControl,
-      kFeatureTypeTypeDeviceConfiguration,
-      kFeatureTypeTypeElectricalConnection,
-  };
+    // Energy Guard LP client features
+    static const FeatureTypeType eg_lp_client_features[] = {
+        kFeatureTypeTypeDeviceDiagnosis,
+        kFeatureTypeTypeLoadControl,
+        kFeatureTypeTypeDeviceConfiguration,
+        kFeatureTypeTypeElectricalConnection,
+    };
 
-  for (size_t i = 0; i < ARRAY_SIZE(eg_lp_client_features); ++i) {
-    ENTITY_LOCAL_ADD_FEATURE_WITH_TYPE_AND_ROLE(entity, eg_lp_client_features[i], kRoleTypeClient);
-  }
+    for (size_t i = 0; i < ARRAY_SIZE(eg_lp_client_features); ++i) {
+        ENTITY_LOCAL_ADD_FEATURE_WITH_TYPE_AND_ROLE(entity, eg_lp_client_features[i], kRoleTypeClient);
+    }
 
-  // server features
-  FeatureLocalObject* const fl
-      = ENTITY_LOCAL_ADD_FEATURE_WITH_TYPE_AND_ROLE(entity, kFeatureTypeTypeDeviceDiagnosis, kRoleTypeServer);
-  FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeDeviceDiagnosisHeartbeatData, true, false);
+    // server features
+    FeatureLocalObject* const fl
+        = ENTITY_LOCAL_ADD_FEATURE_WITH_TYPE_AND_ROLE(entity, kFeatureTypeTypeDeviceDiagnosis, kRoleTypeServer);
+    FEATURE_LOCAL_SET_FUNCTION_OPERATIONS(fl, kFunctionTypeDeviceDiagnosisHeartbeatData, true, false);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError EgLpUseCaseConstruct(
@@ -75,29 +75,29 @@ EebusError EgLpUseCaseConstruct(
     EntityLocalObject* local_entity,
     EgLpListenerObject* eg_lp_listener
 ) {
-  UseCaseConstruct(USE_CASE(self), use_case_info, local_entity, EgLpHandleEvent);
-  // Override "virtual functions table"
-  USE_CASE_INTERFACE(self) = &lp_use_case_methods;
+    UseCaseConstruct(USE_CASE(self), use_case_info, local_entity, EgLpHandleEvent);
+    // Override "virtual functions table"
+    USE_CASE_INTERFACE(self) = &lp_use_case_methods;
 
-  self->energy_direction                       = energy_direction;
-  self->failsafe_power_limit_key               = (DeviceConfigurationKeyNameType)0;
-  self->nominal_max_characteristic             = (ElectricalConnectionCharacteristicTypeType)0;
-  self->contractual_nominal_max_characteristic = (ElectricalConnectionCharacteristicTypeType)0;
-  self->eg_lp_listener                         = eg_lp_listener;
+    self->energy_direction                       = energy_direction;
+    self->failsafe_power_limit_key               = (DeviceConfigurationKeyNameType)0;
+    self->nominal_max_characteristic             = (ElectricalConnectionCharacteristicTypeType)0;
+    self->contractual_nominal_max_characteristic = (ElectricalConnectionCharacteristicTypeType)0;
+    self->eg_lp_listener                         = eg_lp_listener;
 
-  if (energy_direction == kEnergyDirectionTypeConsume) {
-    self->failsafe_power_limit_key   = kDeviceConfigurationKeyNameTypeFailsafeConsumptionActivePowerLimit;
-    self->nominal_max_characteristic = kElectricalConnectionCharacteristicTypeTypePowerConsumptionNominalMax;
-    self->contractual_nominal_max_characteristic
-        = kElectricalConnectionCharacteristicTypeTypeContractualConsumptionNominalMax;
-  } else {
-    self->failsafe_power_limit_key   = kDeviceConfigurationKeyNameTypeFailsafeProductionActivePowerLimit;
-    self->nominal_max_characteristic = kElectricalConnectionCharacteristicTypeTypePowerProductionNominalMax;
-    self->contractual_nominal_max_characteristic
-        = kElectricalConnectionCharacteristicTypeTypeContractualProductionNominalMax;
-  }
+    if (energy_direction == kEnergyDirectionTypeConsume) {
+        self->failsafe_power_limit_key   = kDeviceConfigurationKeyNameTypeFailsafeConsumptionActivePowerLimit;
+        self->nominal_max_characteristic = kElectricalConnectionCharacteristicTypeTypePowerConsumptionNominalMax;
+        self->contractual_nominal_max_characteristic
+            = kElectricalConnectionCharacteristicTypeTypeContractualConsumptionNominalMax;
+    } else {
+        self->failsafe_power_limit_key   = kDeviceConfigurationKeyNameTypeFailsafeProductionActivePowerLimit;
+        self->nominal_max_characteristic = kElectricalConnectionCharacteristicTypeTypePowerProductionNominalMax;
+        self->contractual_nominal_max_characteristic
+            = kElectricalConnectionCharacteristicTypeTypeContractualProductionNominalMax;
+    }
 
-  return AddFeatures(local_entity);
+    return AddFeatures(local_entity);
 }
 
 EgLpUseCaseObject* EgLpUseCaseCreate(
@@ -106,17 +106,17 @@ EgLpUseCaseObject* EgLpUseCaseCreate(
     EntityLocalObject* local_entity,
     EgLpListenerObject* eg_lp_listener
 ) {
-  EgLpUseCase* eg_lp_use_case = EEBUS_MALLOC(sizeof(*eg_lp_use_case));
-  if (eg_lp_use_case == NULL) {
-    return NULL;
-  }
+    EgLpUseCase* eg_lp_use_case = EEBUS_MALLOC(sizeof(*eg_lp_use_case));
+    if (eg_lp_use_case == NULL) {
+        return NULL;
+    }
 
-  const EebusError err
-      = EgLpUseCaseConstruct(eg_lp_use_case, energy_direction, use_case_info, local_entity, eg_lp_listener);
-  if (err != kEebusErrorOk) {
-    EgLpUseCaseDelete(EG_LP_USE_CASE_OBJECT(eg_lp_use_case));
-    return NULL;
-  }
+    const EebusError err
+        = EgLpUseCaseConstruct(eg_lp_use_case, energy_direction, use_case_info, local_entity, eg_lp_listener);
+    if (err != kEebusErrorOk) {
+        EgLpUseCaseDelete(EG_LP_USE_CASE_OBJECT(eg_lp_use_case));
+        return NULL;
+    }
 
-  return EG_LP_USE_CASE_OBJECT(eg_lp_use_case);
+    return EG_LP_USE_CASE_OBJECT(eg_lp_use_case);
 }

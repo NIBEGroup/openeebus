@@ -42,9 +42,12 @@ extern "C" {
  */
 typedef struct GcpMgcpMonitorPowerConfig GcpMgcpMonitorPowerConfig;
 struct GcpMgcpMonitorPowerConfig {
-  /** Phases connected to this meter (e.g. kElectricalConnectionPhaseNameTypeAbc for 3-phase) */
-  ElectricalConnectionPhaseNameType phases;
-  GcpMgcpMeasurementConfig power_total_cfg;
+    /** Phases connected to this meter (e.g. kElectricalConnectionPhaseNameTypeAbc for 3-phase) */
+    ElectricalConnectionPhaseNameType phases;
+    GcpMgcpMeasurementConfig power_total_cfg;
+    const GcpMgcpMeasurementConfig* power_phase_a_cfg;
+    const GcpMgcpMeasurementConfig* power_phase_b_cfg;
+    const GcpMgcpMeasurementConfig* power_phase_c_cfg;
 };
 
 /**
@@ -54,10 +57,10 @@ struct GcpMgcpMonitorPowerConfig {
  */
 typedef struct GcpMgcpMonitorEnergyConfig GcpMgcpMonitorEnergyConfig;
 struct GcpMgcpMonitorEnergyConfig {
-  /** Scenario 3: grid feed-in energy; set NULL if not supported */
-  const GcpMgcpMeasurementConfig* energy_feed_in_cfg;
-  /** Scenario 4: grid consumed energy; set NULL if not supported */
-  const GcpMgcpMeasurementConfig* energy_consumed_cfg;
+    /** Scenario 3: grid feed-in energy; set NULL if not supported */
+    const GcpMgcpMeasurementConfig* energy_feed_in_cfg;
+    /** Scenario 4: grid consumed energy; set NULL if not supported */
+    const GcpMgcpMeasurementConfig* energy_consumed_cfg;
 };
 
 typedef EebusMonitorCurrentConfig GcpMgcpMonitorCurrentConfig;

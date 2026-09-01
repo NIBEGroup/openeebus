@@ -34,8 +34,8 @@ extern "C" {
 typedef struct ElectricalConnectionCommon ElectricalConnectionCommon;
 
 struct ElectricalConnectionCommon {
-  FeatureLocalObject* feature_local;
-  FeatureRemoteObject* feature_remote;
+    FeatureLocalObject* feature_local;
+    FeatureRemoteObject* feature_remote;
 };
 
 /**
@@ -71,11 +71,11 @@ void ElectricalConnectionCommonConstruct(
 static inline const ElectricalConnectionCharacteristicListDataType* ElectricalConnectionCommonGetCharacteristicList(
     const ElectricalConnectionCommon* self
 ) {
-  return (const ElectricalConnectionCharacteristicListDataType*)HelperGetFeatureData(
-      self->feature_local,
-      self->feature_remote,
-      kFunctionTypeElectricalConnectionCharacteristicListData
-  );
+    return (const ElectricalConnectionCharacteristicListDataType*)HelperGetFeatureData(
+        self->feature_local,
+        self->feature_remote,
+        kFunctionTypeElectricalConnectionCharacteristicListData
+    );
 }
 
 /**
@@ -92,11 +92,11 @@ static inline const ElectricalConnectionCharacteristicListDataType* ElectricalCo
  */
 static inline const ElectricalConnectionParameterDescriptionListDataType*
 ElectricalConnectionCommonGetParameterDescriptionList(const ElectricalConnectionCommon* self) {
-  return (const ElectricalConnectionParameterDescriptionListDataType*)HelperGetFeatureData(
-      self->feature_local,
-      self->feature_remote,
-      kFunctionTypeElectricalConnectionParameterDescriptionListData
-  );
+    return (const ElectricalConnectionParameterDescriptionListDataType*)HelperGetFeatureData(
+        self->feature_local,
+        self->feature_remote,
+        kFunctionTypeElectricalConnectionParameterDescriptionListData
+    );
 }
 
 /**

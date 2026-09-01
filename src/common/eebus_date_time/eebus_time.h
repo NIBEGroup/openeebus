@@ -34,9 +34,9 @@ extern "C" {
 typedef struct EebusTime EebusTime;
 
 struct EebusTime {
-  int32_t hour; /**< Hour of the day (0-23) */
-  int32_t min;  /**< Minute of the hour (0-59) */
-  int32_t sec;  /**< Second of the minute (0-59) */
+    int32_t hour; /**< Hour of the day (0-23) */
+    int32_t min;  /**< Minute of the hour (0-59) */
+    int32_t sec;  /**< Second of the minute (0-59) */
 };
 
 /**

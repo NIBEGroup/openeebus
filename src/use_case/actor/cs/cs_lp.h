@@ -34,8 +34,8 @@ extern "C" {
 
 typedef struct CsLpUseCaseObject CsLpUseCaseObject;
 struct CsLpUseCaseObject {
-  /** Inherits the Use Case */
-  UseCaseObject obj;
+    /** Inherits the Use Case */
+    UseCaseObject obj;
 };
 
 #define CS_LP_USE_CASE_OBJECT(obj) ((CsLpUseCaseObject*)(obj))
@@ -49,10 +49,10 @@ CsLpUseCaseObject* CsLpUseCaseCreate(
 );
 
 static inline void CsLpUseCaseDelete(CsLpUseCaseObject* cs_lp_use_case) {
-  if (cs_lp_use_case != NULL) {
-    USE_CASE_DESTRUCT(USE_CASE_OBJECT(cs_lp_use_case));
-    EEBUS_FREE(cs_lp_use_case);
-  }
+    if (cs_lp_use_case != NULL) {
+        USE_CASE_DESTRUCT(USE_CASE_OBJECT(cs_lp_use_case));
+        EEBUS_FREE(cs_lp_use_case);
+    }
 }
 
 /**

@@ -37,9 +37,9 @@ extern "C" {
  * At least one phase pointer must be non-NULL.
  */
 typedef struct EebusMonitorCurrentConfig {
-  const EebusMeasurementBaseConfig* current_phase_a_cfg;
-  const EebusMeasurementBaseConfig* current_phase_b_cfg;
-  const EebusMeasurementBaseConfig* current_phase_c_cfg;
+    const EebusMeasurementBaseConfig* current_phase_a_cfg;
+    const EebusMeasurementBaseConfig* current_phase_b_cfg;
+    const EebusMeasurementBaseConfig* current_phase_c_cfg;
 } EebusMonitorCurrentConfig;
 
 /**
@@ -49,19 +49,19 @@ typedef struct EebusMonitorCurrentConfig {
  * phase-to-neutral entries are also non-NULL. At least one entry must be non-NULL.
  */
 typedef struct EebusMonitorVoltageConfig {
-  const EebusMeasurementBaseConfig* voltage_phase_a_cfg;
-  const EebusMeasurementBaseConfig* voltage_phase_b_cfg;
-  const EebusMeasurementBaseConfig* voltage_phase_c_cfg;
-  const EebusMeasurementBaseConfig* voltage_phase_ab_cfg;
-  const EebusMeasurementBaseConfig* voltage_phase_bc_cfg;
-  const EebusMeasurementBaseConfig* voltage_phase_ac_cfg;
+    const EebusMeasurementBaseConfig* voltage_phase_a_cfg;
+    const EebusMeasurementBaseConfig* voltage_phase_b_cfg;
+    const EebusMeasurementBaseConfig* voltage_phase_c_cfg;
+    const EebusMeasurementBaseConfig* voltage_phase_ab_cfg;
+    const EebusMeasurementBaseConfig* voltage_phase_bc_cfg;
+    const EebusMeasurementBaseConfig* voltage_phase_ac_cfg;
 } EebusMonitorVoltageConfig;
 
 /**
  * @brief AC frequency monitor configuration.
  */
 typedef struct EebusMonitorFrequencyConfig {
-  EebusMeasurementBaseConfig frequency_cfg;
+    EebusMeasurementBaseConfig frequency_cfg;
 } EebusMonitorFrequencyConfig;
 
 /**
@@ -81,24 +81,24 @@ typedef struct EebusMonitorObject EebusMonitorObject;
  * @brief EebusMonitor Interface Structure
  */
 struct EebusMonitorInterface {
-  void (*destruct)(EebusMonitorObject* self);
-  EebusMeasurementMonitorNameId (*get_name)(const EebusMonitorObject* self);
-  EebusError (*configure)(
-      EebusMonitorObject* self,
-      MeasurementServer* msrv,
-      ElectricalConnectionServer* ecsrv,
-      ElectricalConnectionIdType ec_id,
-      MeasurementConstraintsListDataType* constraints
-  );
-  EebusMeasurementObject* (*get_measurement)(const EebusMonitorObject* self, EebusMeasurementNameId name_id);
-  EebusError (*flush_measurement_cache)(EebusMonitorObject* self, MeasurementListDataType* list);
+    void (*destruct)(EebusMonitorObject* self);
+    EebusMeasurementMonitorNameId (*get_name)(const EebusMonitorObject* self);
+    EebusError (*configure)(
+        EebusMonitorObject* self,
+        MeasurementServer* msrv,
+        ElectricalConnectionServer* ecsrv,
+        ElectricalConnectionIdType ec_id,
+        MeasurementConstraintsListDataType* constraints
+    );
+    EebusMeasurementObject* (*get_measurement)(const EebusMonitorObject* self, EebusMeasurementNameId name_id);
+    EebusError (*flush_measurement_cache)(EebusMonitorObject* self, MeasurementListDataType* list);
 };
 
 /**
  * @brief Eebus Monitor Object Structure
  */
 struct EebusMonitorObject {
-  const EebusMonitorInterface* interface_;
+    const EebusMonitorInterface* interface_;
 };
 
 /**
@@ -125,19 +125,19 @@ struct EebusMonitorObject {
  * @brief Eebus Monitor Configure caller definition
  */
 #define EEBUS_MONITOR_CONFIGURE(obj, msrv, ecsrv, ec_id, constraints) \
-  (EEBUS_MONITOR_INTERFACE(obj)->configure(EEBUS_MONITOR_OBJECT(obj), msrv, ecsrv, ec_id, constraints))
+    (EEBUS_MONITOR_INTERFACE(obj)->configure(EEBUS_MONITOR_OBJECT(obj), msrv, ecsrv, ec_id, constraints))
 
 /**
  * @brief Eebus Monitor Get Measurement caller definition
  */
 #define EEBUS_MONITOR_GET_MEASUREMENT(obj, name_id) \
-  (EEBUS_MONITOR_INTERFACE(obj)->get_measurement(EEBUS_MONITOR_OBJECT(obj), name_id))
+    (EEBUS_MONITOR_INTERFACE(obj)->get_measurement(EEBUS_MONITOR_OBJECT(obj), name_id))
 
 /**
  * @brief Eebus Monitor Flush Measurement Cache caller definition
  */
 #define EEBUS_MONITOR_FLUSH_MEASUREMENT_CACHE(obj, list) \
-  (EEBUS_MONITOR_INTERFACE(obj)->flush_measurement_cache(EEBUS_MONITOR_OBJECT(obj), list))
+    (EEBUS_MONITOR_INTERFACE(obj)->flush_measurement_cache(EEBUS_MONITOR_OBJECT(obj), list))
 
 #ifdef __cplusplus
 }

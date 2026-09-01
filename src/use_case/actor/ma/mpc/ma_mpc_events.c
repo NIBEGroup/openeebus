@@ -32,131 +32,132 @@ static void OnMeasurementDataUpdate(MaMpcUseCase* self, const EventPayload* payl
 static void OnDataChange(MaMpcUseCase* self, const EventPayload* payload);
 
 void OnRemoteMuAddedHandleElectricalConnection(const MaMpcUseCase* self, EntityRemoteObject* entity) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  ElectricalConnectionClient electrical_connection;
-  if (ElectricalConnectionClientConstruct(&electrical_connection, use_case->local_entity, entity) != kEebusErrorOk) {
-    return;
-  }
+    ElectricalConnectionClient electrical_connection;
+    if (ElectricalConnectionClientConstruct(&electrical_connection, use_case->local_entity, entity) != kEebusErrorOk) {
+        return;
+    }
 
-  FeatureInfoClient* feature_info = &electrical_connection.feature_info_client;
-  if (!HasSubscription(feature_info)) {
-    Subscribe(feature_info);
-  }
+    FeatureInfoClient* feature_info = &electrical_connection.feature_info_client;
+    if (!HasSubscription(feature_info)) {
+        Subscribe(feature_info);
+    }
 
-  // Get descriptions
-  ElectricalConnectionClientRequestDescriptions(&electrical_connection, NULL, NULL);
+    // Get descriptions
+    ElectricalConnectionClientRequestDescriptions(&electrical_connection, NULL, NULL);
 
-  // Get parameter descriptions
-  ElectricalConnectionClientRequestParameterDescriptions(&electrical_connection, NULL, NULL);
+    // Get parameter descriptions
+    ElectricalConnectionClientRequestParameterDescriptions(&electrical_connection, NULL, NULL);
 }
 
 void OnRemoteMuAddedHandleMeasurement(const MaMpcUseCase* self, EntityRemoteObject* entity) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  MeasurementClient measurement;
-  if (MeasurementClientConstruct(&measurement, use_case->local_entity, entity) != kEebusErrorOk) {
-    return;
-  }
+    MeasurementClient measurement;
+    if (MeasurementClientConstruct(&measurement, use_case->local_entity, entity) != kEebusErrorOk) {
+        return;
+    }
 
-  FeatureInfoClient* feature_info = &measurement.feature_info_client;
-  if (!HasSubscription(feature_info)) {
-    Subscribe(feature_info);
-  }
+    FeatureInfoClient* feature_info = &measurement.feature_info_client;
+    if (!HasSubscription(feature_info)) {
+        Subscribe(feature_info);
+    }
 
-  // Get descriptions
-  MeasurementClientRequestDescriptions(&measurement, NULL, NULL);
+    // Get descriptions
+    MeasurementClientRequestDescriptions(&measurement, NULL, NULL);
 
-  // Get constraints
-  MeasurementClientRequestConstraints(&measurement, NULL, NULL);
+    // Get constraints
+    MeasurementClientRequestConstraints(&measurement, NULL, NULL);
 }
 
 void OnRemoteMuChange(MaMpcUseCase* self, const EventPayload* payload) {
-  if (!USE_CASE_IS_USE_CASE_COMPATIBLE(USE_CASE_OBJECT(self), payload->use_case_filter)) {
-    return;
-  }
-
-  const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
-
-  if (payload->change_type == kElementChangeAdd) {
-    OnRemoteMuAddedHandleElectricalConnection(self, payload->entity);
-    OnRemoteMuAddedHandleMeasurement(self, payload->entity);
-    if (self->ma_mpc_listener != NULL) {
-      MA_MPC_LISTENER_ON_REMOTE_MU_ADDED(self->ma_mpc_listener, entity_addr);
+    if (!USE_CASE_IS_USE_CASE_COMPATIBLE(USE_CASE_OBJECT(self), payload->use_case_filter)) {
+        return;
     }
-  } else if (payload->change_type == kElementChangeRemove) {
-    if (self->ma_mpc_listener != NULL) {
-      MA_MPC_LISTENER_ON_REMOTE_MU_REMOVED(self->ma_mpc_listener, entity_addr);
+
+    const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
+
+    if (payload->change_type == kElementChangeAdd) {
+        OnRemoteMuAddedHandleElectricalConnection(self, payload->entity);
+        OnRemoteMuAddedHandleMeasurement(self, payload->entity);
+        if (self->ma_mpc_listener != NULL) {
+            MA_MPC_LISTENER_ON_REMOTE_MU_ADDED(self->ma_mpc_listener, entity_addr);
+        }
+    } else if (payload->change_type == kElementChangeRemove) {
+        if (self->ma_mpc_listener != NULL) {
+            MA_MPC_LISTENER_ON_REMOTE_MU_REMOVED(self->ma_mpc_listener, entity_addr);
+        }
     }
-  }
 }
 
 void OnMeasurementDataUpdate(MaMpcUseCase* self, const EventPayload* payload) {
-  const UseCase* const use_case = USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
 
-  MeasurementClient mcl;
-  if (MeasurementClientConstruct(&mcl, use_case->local_entity, payload->entity) != kEebusErrorOk) {
-    return;
-  }
-
-  ElectricalConnectionClient ecl;
-  if (ElectricalConnectionClientConstruct(&ecl, use_case->local_entity, payload->entity) != kEebusErrorOk) {
-    return;
-  }
-
-  const MeasurementListDataType* const measurement_list = payload->function_data;
-  if (measurement_list == NULL) {
-    return;
-  }
-
-  const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
-
-  for (size_t i = 0; i < measurement_list->measurement_data_size; ++i) {
-    const MeasurementDataType* const measurement = measurement_list->measurement_data[i];
-
-    const MaMeasurementObject* const mpc_measurement = MaMpcMeasurementGetInstance(&mcl, &ecl, measurement);
-    if (mpc_measurement == NULL) {
-      continue;
+    MeasurementClient mcl;
+    if (MeasurementClientConstruct(&mcl, use_case->local_entity, payload->entity) != kEebusErrorOk) {
+        return;
     }
 
-    ScaledValue value = {0};
-    if (MA_MEASUREMENT_GET_DATA(mpc_measurement, use_case->local_entity, payload->entity, &value) != kEebusErrorOk) {
-      continue;
+    ElectricalConnectionClient ecl;
+    if (ElectricalConnectionClientConstruct(&ecl, use_case->local_entity, payload->entity) != kEebusErrorOk) {
+        return;
     }
 
-    const EebusMeasurementNameId name_id = MA_MEASUREMENT_GET_NAME(mpc_measurement);
-    if (self->ma_mpc_listener != NULL) {
-      MA_MPC_LISTENER_ON_MEASUREMENT_RECEIVE(self->ma_mpc_listener, name_id, &value, entity_addr);
+    const MeasurementListDataType* const measurement_list = payload->function_data;
+    if (measurement_list == NULL) {
+        return;
     }
-  }
+
+    const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
+
+    for (size_t i = 0; i < measurement_list->measurement_data_size; ++i) {
+        const MeasurementDataType* const measurement = measurement_list->measurement_data[i];
+
+        const MaMeasurementObject* const mpc_measurement = MaMpcMeasurementGetInstance(&mcl, &ecl, measurement);
+        if (mpc_measurement == NULL) {
+            continue;
+        }
+
+        ScaledValue value = {0};
+        if (MA_MEASUREMENT_GET_DATA(mpc_measurement, use_case->local_entity, payload->entity, &value)
+            != kEebusErrorOk) {
+            continue;
+        }
+
+        const EebusMeasurementNameId name_id = MA_MEASUREMENT_GET_NAME(mpc_measurement);
+        if (self->ma_mpc_listener != NULL) {
+            MA_MPC_LISTENER_ON_MEASUREMENT_RECEIVE(self->ma_mpc_listener, name_id, &value, entity_addr);
+        }
+    }
 }
 
 static void OnDataChange(MaMpcUseCase* self, const EventPayload* payload) {
-  switch (payload->function_type) {
-    case kFunctionTypeMeasurementDescriptionListData: {
-      MaOnMeasurementDescriptionDataUpdate(USE_CASE(self), payload);
-      break;
-    }
+    switch (payload->function_type) {
+        case kFunctionTypeMeasurementDescriptionListData: {
+            MaOnMeasurementDescriptionDataUpdate(USE_CASE(self), payload);
+            break;
+        }
 
-    case kFunctionTypeMeasurementListData: {
-      OnMeasurementDataUpdate(self, payload);
-      break;
-    }
+        case kFunctionTypeMeasurementListData: {
+            OnMeasurementDataUpdate(self, payload);
+            break;
+        }
 
-    default: break;
-  }
+        default: break;
+    }
 }
 
 void MaMpcHandleEvent(const EventPayload* payload, void* ctx) {
-  MaMpcUseCase* ma_mpc_use_case = (MaMpcUseCase*)ctx;
+    MaMpcUseCase* ma_mpc_use_case = (MaMpcUseCase*)ctx;
 
-  if (!USE_CASE_IS_ENTITY_COMPATIBLE(USE_CASE_OBJECT(ma_mpc_use_case), payload->entity)) {
-    return;
-  }
+    if (!USE_CASE_IS_ENTITY_COMPATIBLE(USE_CASE_OBJECT(ma_mpc_use_case), payload->entity)) {
+        return;
+    }
 
-  if (payload->event_type == kEventTypeUseCaseChange) {
-    OnRemoteMuChange(ma_mpc_use_case, payload);
-  } else if ((payload->event_type == kEventTypeDataChange) || (payload->change_type == kElementChangeUpdate)) {
-    OnDataChange(ma_mpc_use_case, payload);
-  }
+    if (payload->event_type == kEventTypeUseCaseChange) {
+        OnRemoteMuChange(ma_mpc_use_case, payload);
+    } else if ((payload->event_type == kEventTypeDataChange) || (payload->change_type == kElementChangeUpdate)) {
+        OnDataChange(ma_mpc_use_case, payload);
+    }
 }

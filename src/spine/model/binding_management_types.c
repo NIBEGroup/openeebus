@@ -18,13 +18,16 @@
 #include "src/spine/model/model.h"
 
 BindingManagementEntryDataType* BindingManagementEntryDataCreate(
-    BindingIdType id, const FeatureAddressType* server_addr, const FeatureAddressType* client_addr) {
-  BindingManagementEntryDataType binding_entry_data_tmp = {
-      .binding_id     = &id,
-      .client_address = client_addr,
-      .server_address = server_addr,
-  };
+    BindingIdType id,
+    const FeatureAddressType* server_addr,
+    const FeatureAddressType* client_addr
+) {
+    BindingManagementEntryDataType binding_entry_data_tmp = {
+        .binding_id     = &id,
+        .client_address = client_addr,
+        .server_address = server_addr,
+    };
 
-  const EebusDataCfg* const cfg = ModelGetBindingManagementEntryDataCfg();
-  return ModelDataCopy(cfg, &binding_entry_data_tmp);
+    const EebusDataCfg* const cfg = ModelGetBindingManagementEntryDataCfg();
+    return ModelDataCopy(cfg, &binding_entry_data_tmp);
 }

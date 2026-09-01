@@ -27,36 +27,36 @@ void DeviceDiagnosisCommonConstruct(
     FeatureLocalObject* feature_local,
     FeatureRemoteObject* feature_remote
 ) {
-  self->feature_local  = feature_local;
-  self->feature_remote = feature_remote;
+    self->feature_local  = feature_local;
+    self->feature_remote = feature_remote;
 }
 
 const DeviceDiagnosisStateDataType* DeviceDiagnosisCommonGetState(const DeviceDiagnosisCommon* self) {
-  return HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeDeviceDiagnosisStateData);
+    return HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeDeviceDiagnosisStateData);
 }
 
 bool DeviceDiagnosisCommonIsHeartbeatWithinDuration(const DeviceDiagnosisCommon* self, const DurationType* duration) {
-  if (duration == NULL) {
-    return false;
-  }
+    if (duration == NULL) {
+        return false;
+    }
 
-  const DeviceDiagnosisHeartbeatDataType* const data
-      = HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeDeviceDiagnosisHeartbeatData);
+    const DeviceDiagnosisHeartbeatDataType* const data
+        = HelperGetFeatureData(self->feature_local, self->feature_remote, kFunctionTypeDeviceDiagnosisHeartbeatData);
 
-  if ((data == NULL) || (data->timestamp == NULL)) {
-    return false;
-  }
+    if ((data == NULL) || (data->timestamp == NULL)) {
+        return false;
+    }
 
-  const EebusDateTime time_value = AbsoluteOrRelativeTimeGetTime(data->timestamp);
-  if (!EebusDateTimeIsValid(&time_value)) {
-    return false;
-  }
+    const EebusDateTime time_value = AbsoluteOrRelativeTimeGetTime(data->timestamp);
+    if (!EebusDateTimeIsValid(&time_value)) {
+        return false;
+    }
 
-  EebusDuration duration_tmp = *duration;
-  EebusDurationInvertSign(&duration_tmp);
+    EebusDuration duration_tmp = *duration;
+    EebusDurationInvertSign(&duration_tmp);
 
-  EebusDateTime diff = EebusDateTimeNow();
-  EebusDateTimeAddDuration(&diff, &duration_tmp);
+    EebusDateTime diff = EebusDateTimeNow();
+    EebusDateTimeAddDuration(&diff, &duration_tmp);
 
-  return EebusDateTimeCompare(&diff, &time_value) <= 0;
+    return EebusDateTimeCompare(&diff, &time_value) <= 0;
 }

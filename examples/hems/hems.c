@@ -46,20 +46,20 @@ typedef struct Hems Hems;
 
 /** EEBUS Home Energy Manager Service type definition */
 struct Hems {
-  /** "Inherit" Service Reader */
-  ServiceReaderObject service_reader;
+    /** "Inherit" Service Reader */
+    ServiceReaderObject service_reader;
 
-  EebusServiceConfig* cfg;
-  EebusServiceObject* service;
-  EgLpUseCaseObject* eg_lpc;
-  EgLpListenerObject* eg_lpc_listener;
-  EgLpUseCaseObject* eg_lpp;
-  EgLpListenerObject* eg_lpp_listener;
-  MaMpcUseCaseObject* ma_mpc;
-  MaMpcListenerObject* ma_mpc_listener;
-  MaMgcpUseCaseObject* ma_mgcp;
-  MaMgcpListenerObject* ma_mgcp_listener;
-  EebusCliObject* cli;
+    EebusServiceConfig* cfg;
+    EebusServiceObject* service;
+    EgLpUseCaseObject* eg_lpc;
+    EgLpListenerObject* eg_lpc_listener;
+    EgLpUseCaseObject* eg_lpp;
+    EgLpListenerObject* eg_lpp_listener;
+    MaMpcUseCaseObject* ma_mpc;
+    MaMpcListenerObject* ma_mpc_listener;
+    MaMgcpUseCaseObject* ma_mgcp;
+    MaMgcpListenerObject* ma_mgcp_listener;
+    EebusCliObject* cli;
 };
 
 #define HEMS(obj) ((Hems*)(obj))
@@ -88,331 +88,332 @@ static EebusError HemsConstruct(Hems* self);
 static EebusError AddMaMgcp(Hems* self, DeviceLocalObject* device_local, EntityLocalObject* entity_local);
 
 EebusError HemsConstruct(Hems* self) {
-  // Override "virtual functions table"
-  SERVICE_READER_INTERFACE(self) = &hpsrv_methods;
+    // Override "virtual functions table"
+    SERVICE_READER_INTERFACE(self) = &hpsrv_methods;
 
-  self->cfg              = NULL;
-  self->service          = NULL;
-  self->eg_lpc           = NULL;
-  self->eg_lpc_listener  = NULL;
-  self->eg_lpp           = NULL;
-  self->eg_lpp_listener  = NULL;
-  self->ma_mpc           = NULL;
-  self->ma_mpc_listener  = NULL;
-  self->ma_mgcp          = NULL;
-  self->ma_mgcp_listener = NULL;
-  self->cli              = NULL;
+    self->cfg              = NULL;
+    self->service          = NULL;
+    self->eg_lpc           = NULL;
+    self->eg_lpc_listener  = NULL;
+    self->eg_lpp           = NULL;
+    self->eg_lpp_listener  = NULL;
+    self->ma_mpc           = NULL;
+    self->ma_mpc_listener  = NULL;
+    self->ma_mgcp          = NULL;
+    self->ma_mgcp_listener = NULL;
+    self->cli              = NULL;
 
-  self->cli = EebusCliCreate();
-  if (self->cli == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    self->cli = EebusCliCreate();
+    if (self->cli == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError AddEgLpc(Hems* self, DeviceLocalObject* device_local, EntityLocalObject* entity_local) {
-  UNUSED(device_local);
+    UNUSED(device_local);
 
-  self->eg_lpc_listener = EgLpcListenerCreate(HEMS_OBJECT(self));
-  if (self->eg_lpc_listener == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    self->eg_lpc_listener = EgLpcListenerCreate(HEMS_OBJECT(self));
+    if (self->eg_lpc_listener == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  self->eg_lpc = EgLpcUseCaseCreate(entity_local, self->eg_lpc_listener);
-  if (self->eg_lpc == NULL) {
-    EgLpcListenerDelete(self->eg_lpc_listener);
-    self->eg_lpc_listener = NULL;
-    return kEebusErrorInit;
-  }
+    self->eg_lpc = EgLpcUseCaseCreate(entity_local, self->eg_lpc_listener);
+    if (self->eg_lpc == NULL) {
+        EgLpcListenerDelete(self->eg_lpc_listener);
+        self->eg_lpc_listener = NULL;
+        return kEebusErrorInit;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError AddEgLpp(Hems* self, DeviceLocalObject* device_local, EntityLocalObject* entity_local) {
-  UNUSED(device_local);
+    UNUSED(device_local);
 
-  self->eg_lpp_listener = EgLppListenerCreate(HEMS_OBJECT(self));
-  if (self->eg_lpp_listener == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    self->eg_lpp_listener = EgLppListenerCreate(HEMS_OBJECT(self));
+    if (self->eg_lpp_listener == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  self->eg_lpp = EgLppUseCaseCreate(entity_local, self->eg_lpp_listener);
-  if (self->eg_lpp == NULL) {
-    EgLppListenerDelete(self->eg_lpp_listener);
-    self->eg_lpp_listener = NULL;
-    return kEebusErrorInit;
-  }
+    self->eg_lpp = EgLppUseCaseCreate(entity_local, self->eg_lpp_listener);
+    if (self->eg_lpp == NULL) {
+        EgLppListenerDelete(self->eg_lpp_listener);
+        self->eg_lpp_listener = NULL;
+        return kEebusErrorInit;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError AddMaMpc(Hems* self, DeviceLocalObject* device_local, EntityLocalObject* entity_local) {
-  UNUSED(device_local);
+    UNUSED(device_local);
 
-  self->ma_mpc_listener = MaMpcListenerCreate(HEMS_OBJECT(self));
-  if (self->ma_mpc_listener == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    self->ma_mpc_listener = MaMpcListenerCreate(HEMS_OBJECT(self));
+    if (self->ma_mpc_listener == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  self->ma_mpc = MaMpcUseCaseCreate(entity_local, self->ma_mpc_listener);
-  if (self->ma_mpc == NULL) {
-    MaMpcListenerDelete(self->ma_mpc_listener);
-    self->ma_mpc_listener = NULL;
-    return kEebusErrorInit;
-  }
+    self->ma_mpc = MaMpcUseCaseCreate(entity_local, self->ma_mpc_listener);
+    if (self->ma_mpc == NULL) {
+        MaMpcListenerDelete(self->ma_mpc_listener);
+        self->ma_mpc_listener = NULL;
+        return kEebusErrorInit;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError AddMaMgcp(Hems* self, DeviceLocalObject* device_local, EntityLocalObject* entity_local) {
-  UNUSED(device_local);
+    UNUSED(device_local);
 
-  self->ma_mgcp_listener = MaMgcpListenerCreate(HEMS_OBJECT(self));
-  if (self->ma_mgcp_listener == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    self->ma_mgcp_listener = MaMgcpListenerCreate(HEMS_OBJECT(self));
+    if (self->ma_mgcp_listener == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  self->ma_mgcp = MaMgcpUseCaseCreate(entity_local, self->ma_mgcp_listener);
-  if (self->ma_mgcp == NULL) {
-    MaMgcpListenerDelete(self->ma_mgcp_listener);
-    self->ma_mgcp_listener = NULL;
-    return kEebusErrorInit;
-  }
+    self->ma_mgcp = MaMgcpUseCaseCreate(entity_local, self->ma_mgcp_listener);
+    if (self->ma_mgcp == NULL) {
+        MaMgcpListenerDelete(self->ma_mgcp_listener);
+        self->ma_mgcp_listener = NULL;
+        return kEebusErrorInit;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError HemsStart(Hems* hems, int32_t port, const char* role, TlsCertificateObject* tls_certificate) {
-  if (tls_certificate == NULL) {
-    return kEebusErrorInputArgument;
-  }
+    if (tls_certificate == NULL) {
+        return kEebusErrorInputArgument;
+    }
 
-  hems->cfg = EebusServiceConfigCreate("OpenEEBUS", "OpenEEBUS", "HEMS", "123456789", "EnergyManagementSystem", port);
-  if (hems->cfg == NULL) {
-    return kEebusErrorInit;
-  }
+    hems->cfg = EebusServiceConfigCreate("OpenEEBUS", "OpenEEBUS", "HEMS", "123456789", "EnergyManagementSystem", port);
+    if (hems->cfg == NULL) {
+        return kEebusErrorInit;
+    }
 
   EebusServiceConfigSetAlternateIdentifier(hems->cfg, "OpenEEBUS-HEMS-123456789");
+  EebusServiceConfigSetAlternateMdnsServiceName(hems->cfg, "OpenEEBUS-HEMS-123456789");
 
   hems->service = EebusServiceCreate(hems->cfg, role, tls_certificate, SERVICE_READER_OBJECT(hems));
-  if (hems->service == NULL) {
-    EebusServiceConfigDelete(hems->cfg);
-    hems->cfg = NULL;
-    return kEebusErrorInit;
-  }
+    if (hems->service == NULL) {
+        EebusServiceConfigDelete(hems->cfg);
+        hems->cfg = NULL;
+        return kEebusErrorInit;
+    }
 
-  printf("Starting with SKI = %s\n", EEBUS_SERVICE_GET_LOCAL_SKI(hems->service));
+    printf("Starting with SKI = %s\n", EEBUS_SERVICE_GET_LOCAL_SKI(hems->service));
 
-  // Add entities to SPINE Device Local
-  DeviceLocalObject* const device_local = EEBUS_SERVICE_GET_LOCAL_DEVICE(hems->service);
+    // Add entities to SPINE Device Local
+    DeviceLocalObject* const device_local = EEBUS_SERVICE_GET_LOCAL_DEVICE(hems->service);
 
-  uint32_t entity_ids[1] = {VectorGetSize(DEVICE_LOCAL_GET_ENTITIES(device_local))};
+    uint32_t entity_ids[1] = {VectorGetSize(DEVICE_LOCAL_GET_ENTITIES(device_local))};
 
-  EntityLocalObject* const entity
-      = EntityLocalCreate(device_local, kEntityTypeTypeCEM, entity_ids, 1, kHeartbeatTimeoutSeconds);
+    EntityLocalObject* const entity
+        = EntityLocalCreate(device_local, kEntityTypeTypeCEM, entity_ids, 1, kHeartbeatTimeoutSeconds);
 
-  EebusError err = AddEgLpc(hems, device_local, entity);
-  if (err != kEebusErrorOk) {
-    EntityLocalDelete(entity);
-    return err;
-  }
+    EebusError err = AddEgLpc(hems, device_local, entity);
+    if (err != kEebusErrorOk) {
+        EntityLocalDelete(entity);
+        return err;
+    }
 
-  err = AddEgLpp(hems, device_local, entity);
-  if (err != kEebusErrorOk) {
-    EntityLocalDelete(entity);
-    return err;
-  }
+    err = AddEgLpp(hems, device_local, entity);
+    if (err != kEebusErrorOk) {
+        EntityLocalDelete(entity);
+        return err;
+    }
 
-  err = AddMaMpc(hems, device_local, entity);
-  if (err != kEebusErrorOk) {
-    EntityLocalDelete(entity);
-    return err;
-  }
+    err = AddMaMpc(hems, device_local, entity);
+    if (err != kEebusErrorOk) {
+        EntityLocalDelete(entity);
+        return err;
+    }
 
-  err = AddMaMgcp(hems, device_local, entity);
-  if (err != kEebusErrorOk) {
-    EntityLocalDelete(entity);
-    return err;
-  }
+    err = AddMaMgcp(hems, device_local, entity);
+    if (err != kEebusErrorOk) {
+        EntityLocalDelete(entity);
+        return err;
+    }
 
-  DEVICE_LOCAL_ADD_ENTITY(device_local, entity);
-  EEBUS_SERVICE_START(hems->service);
+    DEVICE_LOCAL_ADD_ENTITY(device_local, entity);
+    EEBUS_SERVICE_START(hems->service);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 HemsObject* HemsOpen(int32_t port, const char* role, TlsCertificateObject* tls_certificate) {
-  Hems* const hems = (Hems*)EEBUS_MALLOC(sizeof(Hems));
-  if (hems == NULL) {
-    return NULL;
-  }
+    Hems* const hems = (Hems*)EEBUS_MALLOC(sizeof(Hems));
+    if (hems == NULL) {
+        return NULL;
+    }
 
-  EebusError err = HemsConstruct(hems);
-  if (err != kEebusErrorOk) {
-    HemsClose(HEMS_OBJECT(hems));
-    return NULL;
-  }
+    EebusError err = HemsConstruct(hems);
+    if (err != kEebusErrorOk) {
+        HemsClose(HEMS_OBJECT(hems));
+        return NULL;
+    }
 
-  if (HemsStart(hems, port, role, tls_certificate) != kEebusErrorOk) {
-    HemsClose(HEMS_OBJECT(hems));
-    return NULL;
-  }
+    if (HemsStart(hems, port, role, tls_certificate) != kEebusErrorOk) {
+        HemsClose(HEMS_OBJECT(hems));
+        return NULL;
+    }
 
-  return HEMS_OBJECT(hems);
+    return HEMS_OBJECT(hems);
 }
 
 void Destruct(ServiceReaderObject* self) {
-  Hems* const hems = HEMS(self);
+    Hems* const hems = HEMS(self);
 
-  EebusCliDelete(hems->cli);
-  hems->cli = NULL;
+    EebusCliDelete(hems->cli);
+    hems->cli = NULL;
 
-  if (hems->service != NULL) {
-    EEBUS_SERVICE_STOP(hems->service);
-    EebusServiceDelete(hems->service);
-    hems->service = NULL;
-  }
+    if (hems->service != NULL) {
+        EEBUS_SERVICE_STOP(hems->service);
+        EebusServiceDelete(hems->service);
+        hems->service = NULL;
+    }
 
-  UseCaseDelete(USE_CASE_OBJECT(hems->ma_mgcp));
-  hems->ma_mgcp = NULL;
+    UseCaseDelete(USE_CASE_OBJECT(hems->ma_mgcp));
+    hems->ma_mgcp = NULL;
 
-  MaMgcpListenerDelete(hems->ma_mgcp_listener);
-  hems->ma_mgcp_listener = NULL;
+    MaMgcpListenerDelete(hems->ma_mgcp_listener);
+    hems->ma_mgcp_listener = NULL;
 
-  UseCaseDelete(USE_CASE_OBJECT(hems->ma_mpc));
-  hems->ma_mpc = NULL;
+    UseCaseDelete(USE_CASE_OBJECT(hems->ma_mpc));
+    hems->ma_mpc = NULL;
 
-  MaMpcListenerDelete(hems->ma_mpc_listener);
-  hems->ma_mpc_listener = NULL;
+    MaMpcListenerDelete(hems->ma_mpc_listener);
+    hems->ma_mpc_listener = NULL;
 
-  UseCaseDelete(USE_CASE_OBJECT(hems->eg_lpp));
-  hems->eg_lpp = NULL;
+    UseCaseDelete(USE_CASE_OBJECT(hems->eg_lpp));
+    hems->eg_lpp = NULL;
 
-  EgLppListenerDelete(hems->eg_lpp_listener);
-  hems->eg_lpp_listener = NULL;
+    EgLppListenerDelete(hems->eg_lpp_listener);
+    hems->eg_lpp_listener = NULL;
 
-  UseCaseDelete(USE_CASE_OBJECT(hems->eg_lpc));
-  hems->eg_lpc = NULL;
+    UseCaseDelete(USE_CASE_OBJECT(hems->eg_lpc));
+    hems->eg_lpc = NULL;
 
-  EgLpcListenerDelete(hems->eg_lpc_listener);
-  hems->eg_lpc_listener = NULL;
+    EgLpcListenerDelete(hems->eg_lpc_listener);
+    hems->eg_lpc_listener = NULL;
 
-  EebusServiceConfigDelete(hems->cfg);
-  hems->cfg = NULL;
+    EebusServiceConfigDelete(hems->cfg);
+    hems->cfg = NULL;
 }
 
 void OnRemoteSkiConnected(ServiceReaderObject* self, EebusServiceObject* service, const char* ski) {
-  UNUSED(self);
-  UNUSED(service);
+    UNUSED(self);
+    UNUSED(service);
 
-  printf("Remote SKI connected: %s\n", ski);
+    printf("Remote SKI connected: %s\n", ski);
 }
 
 void OnRemoteSkiDisconnected(ServiceReaderObject* self, EebusServiceObject* service, const char* ski) {
-  UNUSED(self);
-  UNUSED(service);
+    UNUSED(self);
+    UNUSED(service);
 
-  printf("Remote SKI disconnected: %s\n", ski);
+    printf("Remote SKI disconnected: %s\n", ski);
 }
 
 void OnRemoteServicesUpdate(ServiceReaderObject* self, EebusServiceObject* service, const Vector* entries) {
-  UNUSED(self);
-  UNUSED(service);
-  UNUSED(entries);
+    UNUSED(self);
+    UNUSED(service);
+    UNUSED(entries);
 
-  // Optional: print the remote services
+    // Optional: print the remote services
 }
 
 void OnShipIdUpdate(ServiceReaderObject* self, const char* ski, const char* shipd_id) {
-  UNUSED(self);
+    UNUSED(self);
 
-  printf("Ship ID update for SKI %s: %s\n", ski, shipd_id);
+    printf("Ship ID update for SKI %s: %s\n", ski, shipd_id);
 }
 
 void OnShipStateUpdate(ServiceReaderObject* self, const char* ski, SmeState state) {
-  UNUSED(self);
+    UNUSED(self);
 
-  printf("Ship state update for SKI %s: %d\n", ski, state);
+    printf("Ship state update for SKI %s: %d\n", ski, state);
 }
 
 bool IsWaitingForTrustAllowed(const ServiceReaderObject* self, const char* ski) {
-  UNUSED(self);
-  UNUSED(ski);
+    UNUSED(self);
+    UNUSED(ski);
 
-  return true;
+    return true;
 }
 
 void HemsRegisterRemoteSki(HemsObject* self, const char* ski) {
-  EEBUS_SERVICE_REGISTER_REMOTE_SKI(HEMS(self)->service, ski, true);
+    EEBUS_SERVICE_REGISTER_REMOTE_SKI(HEMS(self)->service, ski, true);
 }
 
 void HemsUnregisterRemoteSki(HemsObject* self, const char* ski) {
-  EEBUS_SERVICE_UNREGISTER_REMOTE_SKI(HEMS(self)->service, ski);
+    EEBUS_SERVICE_UNREGISTER_REMOTE_SKI(HEMS(self)->service, ski);
 }
 
 void HemsSetEgLpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
-  Hems* const hems = HEMS(self);
+    Hems* const hems = HEMS(self);
 
-  if (hems->cli == NULL) {
-    return;
-  }
+    if (hems->cli == NULL) {
+        return;
+    }
 
-  EgLpUseCaseObject* const eg_lpc = (entity_addr == NULL) ? NULL : hems->eg_lpc;
-  EEBUS_CLI_SET_EG_LPC(hems->cli, eg_lpc, entity_addr);
+    EgLpUseCaseObject* const eg_lpc = (entity_addr == NULL) ? NULL : hems->eg_lpc;
+    EEBUS_CLI_SET_EG_LPC(hems->cli, eg_lpc, entity_addr);
 }
 
 void HemsSetEgLppRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
-  Hems* const hems = HEMS(self);
+    Hems* const hems = HEMS(self);
 
-  if (hems->cli == NULL) {
-    return;
-  }
+    if (hems->cli == NULL) {
+        return;
+    }
 
-  EgLpUseCaseObject* const eg_lpp = (entity_addr == NULL) ? NULL : hems->eg_lpp;
-  EEBUS_CLI_SET_EG_LPP(hems->cli, eg_lpp, entity_addr);
+    EgLpUseCaseObject* const eg_lpp = (entity_addr == NULL) ? NULL : hems->eg_lpp;
+    EEBUS_CLI_SET_EG_LPP(hems->cli, eg_lpp, entity_addr);
 }
 
 void HemsAddMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
-  Hems* const hems = HEMS(self);
+    Hems* const hems = HEMS(self);
 
-  if ((hems->cli == NULL) || (entity_addr == NULL)) {
-    return;
-  }
+    if ((hems->cli == NULL) || (entity_addr == NULL)) {
+        return;
+    }
 
-  // Simplified check to avoid dealing with the subentity
-  // (as there is OHPCF with optional MPC attached to subentity)
-  if (entity_addr->entity_size == 1) {
-    EEBUS_CLI_SET_MA_MPC(hems->cli, hems->ma_mpc, entity_addr);
-  }
+    // Simplified check to avoid dealing with the subentity
+    // (as there is OHPCF with optional MPC attached to subentity)
+    if (entity_addr->entity_size == 1) {
+        EEBUS_CLI_SET_MA_MPC(hems->cli, hems->ma_mpc, entity_addr);
+    }
 }
 
 void HemsRemoveMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
-  Hems* const hems = HEMS(self);
+    Hems* const hems = HEMS(self);
 
-  if ((hems->cli == NULL) || (entity_addr == NULL)) {
-    return;
-  }
+    if ((hems->cli == NULL) || (entity_addr == NULL)) {
+        return;
+    }
 
-  // Simplified check to avoid dealing with the subentity
-  // (as there is OHPCF with optional MPC attached to subentity)
-  if (entity_addr->entity_size == 1) {
-    EEBUS_CLI_SET_MA_MPC(hems->cli, NULL, NULL);
-  }
+    // Simplified check to avoid dealing with the subentity
+    // (as there is OHPCF with optional MPC attached to subentity)
+    if (entity_addr->entity_size == 1) {
+        EEBUS_CLI_SET_MA_MPC(hems->cli, NULL, NULL);
+    }
 }
 
 void HemsSetMaMgcpRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
-  Hems* const hems = HEMS(self);
+    Hems* const hems = HEMS(self);
 
-  if (hems->cli == NULL) {
-    return;
-  }
+    if (hems->cli == NULL) {
+        return;
+    }
 
-  MaMgcpUseCaseObject* const ma_mgcp = (entity_addr == NULL) ? NULL : hems->ma_mgcp;
-  EEBUS_CLI_SET_MA_MGCP(hems->cli, ma_mgcp, entity_addr);
+    MaMgcpUseCaseObject* const ma_mgcp = (entity_addr == NULL) ? NULL : hems->ma_mgcp;
+    EEBUS_CLI_SET_MA_MGCP(hems->cli, ma_mgcp, entity_addr);
 }
 
 void HemsHandleCmd(HemsObject* self, char* cmd) {
-  Hems* const hems = HEMS(self);
-  EEBUS_CLI_HANDLE_CMD(hems->cli, cmd);
+    Hems* const hems = HEMS(self);
+    EEBUS_CLI_HANDLE_CMD(hems->cli, cmd);
 }

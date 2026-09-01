@@ -418,11 +418,11 @@ static const FeatureFunctions feature_functions_table[] = {
 };
 
 const FeatureFunctions* GetFeatureFunctions(FeatureTypeType feature_type) {
-  for (size_t i = 0; i < ARRAY_SIZE(feature_functions_table); ++i) {
-    if (feature_functions_table[i].feature_type == feature_type) {
-      return &feature_functions_table[i];
+    for (size_t i = 0; i < ARRAY_SIZE(feature_functions_table); ++i) {
+        if (feature_functions_table[i].feature_type == feature_type) {
+            return &feature_functions_table[i];
+        }
     }
-  }
 
-  return NULL;
+    return NULL;
 }

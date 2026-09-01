@@ -32,20 +32,20 @@
 typedef struct HeartbeatManager HeartbeatManager;
 
 struct HeartbeatManager {
-  /** Implements the Heartbeat Manager Interface */
-  HeartbeatManagerObject obj;
+    /** Implements the Heartbeat Manager Interface */
+    HeartbeatManagerObject obj;
 
-  EntityLocalObject* local_entity;
-  FeatureLocalObject* local_feature;
-  uint64_t heartbeat_num;
-  uint32_t tick_cnt;
-  // Period (in ticks/seconds) between two heartbeat transmissions.
-  // Note: this is not the remote heartbeat timeout (the deadline by which the
-  // remote expects a heartbeat); the application should choose
-  // heartbeat period <= remote heartbeat timeout.
-  uint32_t heartbeat_period;
+    EntityLocalObject* local_entity;
+    FeatureLocalObject* local_feature;
+    uint64_t heartbeat_num;
+    uint32_t tick_cnt;
+    // Period (in ticks/seconds) between two heartbeat transmissions.
+    // Note: this is not the remote heartbeat timeout (the deadline by which the
+    // remote expects a heartbeat); the application should choose
+    // heartbeat period <= remote heartbeat timeout.
+    uint32_t heartbeat_period;
 
-  bool running;
+    bool running;
 };
 
 #define HEARTBEAT_MANAGER(obj) ((HeartbeatManager*)(obj))
@@ -70,101 +70,101 @@ static void HeartbeatManagerConstruct(HeartbeatManager* self, EntityLocalObject*
 static void UpdateHeartbeatData(HeartbeatManager* self);
 
 void HeartbeatManagerConstruct(HeartbeatManager* self, EntityLocalObject* local_entity, uint32_t period) {
-  // Override "virtual functions table"
-  HEARTBEAT_MANAGER_INTERFACE(self) = &heartbeat_manager_methods;
+    // Override "virtual functions table"
+    HEARTBEAT_MANAGER_INTERFACE(self) = &heartbeat_manager_methods;
 
-  self->local_entity     = local_entity;
-  self->local_feature    = NULL;
-  self->heartbeat_num    = 0;
-  self->tick_cnt         = period;
-  self->heartbeat_period = period;
-  self->running          = false;
+    self->local_entity     = local_entity;
+    self->local_feature    = NULL;
+    self->heartbeat_num    = 0;
+    self->tick_cnt         = period;
+    self->heartbeat_period = period;
+    self->running          = false;
 }
 
 HeartbeatManagerObject* HeartbeatManagerCreate(EntityLocalObject* local_entity, uint32_t period) {
-  HeartbeatManager* const heartbeat_manager = (HeartbeatManager*)EEBUS_MALLOC(sizeof(HeartbeatManager));
+    HeartbeatManager* const heartbeat_manager = (HeartbeatManager*)EEBUS_MALLOC(sizeof(HeartbeatManager));
 
-  HeartbeatManagerConstruct(heartbeat_manager, local_entity, period);
+    HeartbeatManagerConstruct(heartbeat_manager, local_entity, period);
 
-  return HEARTBEAT_MANAGER_OBJECT(heartbeat_manager);
+    return HEARTBEAT_MANAGER_OBJECT(heartbeat_manager);
 }
 
 void Destruct(HeartbeatManagerObject* self) {
-  Stop(self);
+    Stop(self);
 }
 
 bool IsHeartbeatRunning(const HeartbeatManagerObject* self) {
-  HeartbeatManager* const hm = HEARTBEAT_MANAGER(self);
-  return hm->running;
+    HeartbeatManager* const hm = HEARTBEAT_MANAGER(self);
+    return hm->running;
 }
 
 void SetLocalFeature(HeartbeatManagerObject* self, EntityLocalObject* entity, FeatureLocalObject* feature) {
-  HeartbeatManager* const hm = HEARTBEAT_MANAGER(self);
+    HeartbeatManager* const hm = HEARTBEAT_MANAGER(self);
 
-  if (entity == NULL || feature == NULL) {
-    return;
-  }
+    if (entity == NULL || feature == NULL) {
+        return;
+    }
 
-  FeatureObject* const fr = FEATURE_OBJECT(feature);
-  if ((FEATURE_GET_TYPE(fr) != kFeatureTypeTypeDeviceDiagnosis) || (FEATURE_GET_ROLE(fr) != kRoleTypeServer)) {
-    return;
-  }
+    FeatureObject* const fr = FEATURE_OBJECT(feature);
+    if ((FEATURE_GET_TYPE(fr) != kFeatureTypeTypeDeviceDiagnosis) || (FEATURE_GET_ROLE(fr) != kRoleTypeServer)) {
+        return;
+    }
 
-  if (FEATURE_GET_FUNCTION_OPERATIONS(fr, kFunctionTypeDeviceDiagnosisHeartbeatData) == NULL) {
-    return;
-  }
+    if (FEATURE_GET_FUNCTION_OPERATIONS(fr, kFunctionTypeDeviceDiagnosisHeartbeatData) == NULL) {
+        return;
+    }
 
-  hm->local_entity  = entity;
-  hm->local_feature = feature;
+    hm->local_entity  = entity;
+    hm->local_feature = feature;
 
-  UpdateHeartbeatData(hm);
-  Start(self);
+    UpdateHeartbeatData(hm);
+    Start(self);
 }
 
 void Tick(HeartbeatManagerObject* self) {
-  HeartbeatManager* const hm = HEARTBEAT_MANAGER(self);
+    HeartbeatManager* const hm = HEARTBEAT_MANAGER(self);
 
-  if (hm->heartbeat_period == 0) {
-    return;
-  }
+    if (hm->heartbeat_period == 0) {
+        return;
+    }
 
-  if ((hm->running) && (hm->tick_cnt > 0)) {
-    hm->tick_cnt--;
-  }
+    if ((hm->running) && (hm->tick_cnt > 0)) {
+        hm->tick_cnt--;
+    }
 
-  if (hm->tick_cnt == 0) {
-    hm->heartbeat_num++;
-    UpdateHeartbeatData(hm);
-    // On period elapse, reset the heartbeat counter
-    hm->tick_cnt = hm->heartbeat_period;
-  }
+    if (hm->tick_cnt == 0) {
+        hm->heartbeat_num++;
+        UpdateHeartbeatData(hm);
+        // On period elapse, reset the heartbeat counter
+        hm->tick_cnt = hm->heartbeat_period;
+    }
 }
 
 void UpdateHeartbeatData(HeartbeatManager* self) {
-  DeviceDiagnosisHeartbeatDataType heartbeat_data = {
-      .timestamp         = &ABSOLUTE_OR_RELATIVE_TIME_NOW,
-      .heartbeat_counter = &self->heartbeat_num,
-      // The SPINE heartbeatTimeout wire field declares how often we send;
-      // it is filled with the configured heartbeat period.
-      // TODO: consider a separate parameter for the declared heartbeatTimeout
-      // wire value so the send period and the declared timeout can differ
-      .heartbeat_timeout = &(DurationType){.seconds = self->heartbeat_period},
-  };
+    DeviceDiagnosisHeartbeatDataType heartbeat_data = {
+        .timestamp         = &ABSOLUTE_OR_RELATIVE_TIME_NOW,
+        .heartbeat_counter = &self->heartbeat_num,
+        // The SPINE heartbeatTimeout wire field declares how often we send;
+        // it is filled with the configured heartbeat period.
+        // TODO: consider a separate parameter for the declared heartbeatTimeout
+        // wire value so the send period and the declared timeout can differ
+        .heartbeat_timeout = &(DurationType){.seconds = self->heartbeat_period},
+    };
 
-  FEATURE_LOCAL_SET_DATA(self->local_feature, kFunctionTypeDeviceDiagnosisHeartbeatData, &heartbeat_data);
+    FEATURE_LOCAL_SET_DATA(self->local_feature, kFunctionTypeDeviceDiagnosisHeartbeatData, &heartbeat_data);
 }
 
 EebusError Start(HeartbeatManagerObject* self) {
-  HeartbeatManager* const hm = HEARTBEAT_MANAGER(self);
+    HeartbeatManager* const hm = HEARTBEAT_MANAGER(self);
 
-  hm->running = true;
+    hm->running = true;
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 void Stop(HeartbeatManagerObject* self) {
-  HeartbeatManager* const hm = HEARTBEAT_MANAGER(self);
-  if (IsHeartbeatRunning(self)) {
-    hm->running = false;
-  }
+    HeartbeatManager* const hm = HEARTBEAT_MANAGER(self);
+    if (IsHeartbeatRunning(self)) {
+        hm->running = false;
+    }
 }

@@ -36,17 +36,17 @@ extern "C" {
 typedef struct FeatureLocal FeatureLocal;
 
 struct FeatureLocal {
-  /** Inherits the Feature */
-  Feature obj;
+    /** Inherits the Feature */
+    Feature obj;
 
-  EntityLocalObject* entity;
-  PendingReplyContainerObject* pending_replies;
-  PendingResultContainerObject* pending_results;
-  PendingWriteRequestContainerObject* pending_write_requests;
-  Vector wr_approval_cbs;
+    EntityLocalObject* entity;
+    PendingReplyContainerObject* pending_replies;
+    PendingResultContainerObject* pending_results;
+    PendingWriteRequestContainerObject* pending_write_requests;
+    Vector wr_approval_cbs;
 
-  FeatureAddressContainer bindings;
-  FeatureAddressContainer subscriptions;
+    FeatureAddressContainer bindings;
+    FeatureAddressContainer subscriptions;
 };
 
 #define FEATURE_LOCAL(obj) ((FeatureLocal*)(obj))

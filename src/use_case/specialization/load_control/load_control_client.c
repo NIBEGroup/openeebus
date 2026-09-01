@@ -30,19 +30,19 @@ EebusError LoadControlClientConstruct(
     EntityLocalObject* local_entity,
     EntityRemoteObject* remote_entity
 ) {
-  const EebusError err = FeatureInfoClientConstruct(
-      &self->feature_info_client,
-      kFeatureTypeTypeLoadControl,
-      local_entity,
-      remote_entity
-  );
+    const EebusError err = FeatureInfoClientConstruct(
+        &self->feature_info_client,
+        kFeatureTypeTypeLoadControl,
+        local_entity,
+        remote_entity
+    );
 
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  LocalLoadControlCommonConstruct(&self->load_control_common, NULL, self->feature_info_client.remote_feature);
-  return kEebusErrorOk;
+    LocalLoadControlCommonConstruct(&self->load_control_common, NULL, self->feature_info_client.remote_feature);
+    return kEebusErrorOk;
 }
 
 EebusError LoadControlClientRequestLimitDescriptions(
@@ -50,15 +50,15 @@ EebusError LoadControlClientRequestLimitDescriptions(
     const LoadControlLimitDescriptionListDataSelectorsType* selectors,
     const LoadControlLimitDescriptionDataElementsType* elements
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeLoadControlLimitDescriptionListData,
-      selectors,
-      elements,
-      NULL,
-      NULL
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeLoadControlLimitDescriptionListData,
+        selectors,
+        elements,
+        NULL,
+        NULL
+    );
 }
 
 EebusError LoadControlClientRequestLimitConstraints(
@@ -66,15 +66,15 @@ EebusError LoadControlClientRequestLimitConstraints(
     const LoadControlLimitConstraintsListDataSelectorsType* selectors,
     const LoadControlLimitConstraintsDataElementsType* elements
 ) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeLoadControlLimitConstraintsListData,
-      selectors,
-      elements,
-      NULL,
-      NULL
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeLoadControlLimitConstraintsListData,
+        selectors,
+        elements,
+        NULL,
+        NULL
+    );
 }
 
 EebusError LoadControlClientReadLimit(
@@ -83,26 +83,26 @@ EebusError LoadControlClientReadLimit(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  const LoadControlLimitDescriptionDataType* const description
-      = LoadControlCommonGetLimitDescriptionWithFilter(&self->load_control_common, filter);
+    const LoadControlLimitDescriptionDataType* const description
+        = LoadControlCommonGetLimitDescriptionWithFilter(&self->load_control_common, filter);
 
-  if ((description == NULL) || (description->limit_id == NULL)) {
-    return kEebusErrorNoChange;
-  }
+    if ((description == NULL) || (description->limit_id == NULL)) {
+        return kEebusErrorNoChange;
+    }
 
-  const LoadControlLimitListDataSelectorsType selectors = {
-      .limit_id = description->limit_id,
-  };
+    const LoadControlLimitListDataSelectorsType selectors = {
+        .limit_id = description->limit_id,
+    };
 
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      limit_fcn,
-      &selectors,
-      NULL,
-      cb,
-      ctx
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        limit_fcn,
+        &selectors,
+        NULL,
+        cb,
+        ctx
+    );
 }
 
 EebusError LoadControlClientWriteLimitList(
@@ -113,27 +113,27 @@ EebusError LoadControlClientWriteLimitList(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  if (limit_list == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (limit_list == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  if (limit_list->load_control_limit_data == NULL || limit_list->load_control_limit_data_size == 0) {
-    return kEebusErrorInputArgument;
-  }
+    if (limit_list->load_control_limit_data == NULL || limit_list->load_control_limit_data_size == 0) {
+        return kEebusErrorInputArgument;
+    }
 
-  const FilterType filter_delete_tmp = FILTER_DELETE(limit_fcn, NULL, delete_selectors, delete_elements);
+    const FilterType filter_delete_tmp = FILTER_DELETE(limit_fcn, NULL, delete_selectors, delete_elements);
 
-  const FilterType* const filter_delete
-      = ((delete_selectors != NULL) && (delete_elements != NULL)) ? &filter_delete_tmp : NULL;
+    const FilterType* const filter_delete
+        = ((delete_selectors != NULL) && (delete_elements != NULL)) ? &filter_delete_tmp : NULL;
 
-  return FEATURE_LOCAL_WRITE_TO_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      limit_fcn,
-      limit_list,
-      NULL,
-      filter_delete,
-      cb,
-      ctx
-  );
+    return FEATURE_LOCAL_WRITE_TO_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        limit_fcn,
+        limit_list,
+        NULL,
+        filter_delete,
+        cb,
+        ctx
+    );
 }

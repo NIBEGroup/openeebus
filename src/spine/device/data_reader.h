@@ -34,10 +34,10 @@ extern "C" {
 DataReaderObject* DataReaderCreate(DeviceRemoteObject* device_remote);
 
 static inline void DataReaderDelete(DataReaderObject* data_reader) {
-  if (data_reader != NULL) {
-    DATA_READER_DESTRUCT(data_reader);
-    EEBUS_FREE(data_reader);
-  }
+    if (data_reader != NULL) {
+        DATA_READER_DESTRUCT(data_reader);
+        EEBUS_FREE(data_reader);
+    }
 }
 
 #ifdef __cplusplus

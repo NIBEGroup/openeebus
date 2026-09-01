@@ -35,10 +35,10 @@ extern "C" {
 FunctionObject* FunctionCreate(FunctionType type);
 
 static inline void FunctionDelete(FunctionObject* function) {
-  if (function != NULL) {
-    FUNCTION_DESTRUCT(function);
-    EEBUS_FREE(function);
-  }
+    if (function != NULL) {
+        FUNCTION_DESTRUCT(function);
+        EEBUS_FREE(function);
+    }
 }
 
 #ifdef __cplusplus

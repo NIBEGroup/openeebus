@@ -36,8 +36,8 @@
 typedef struct WriteApprovalCbRecord WriteApprovalCbRecord;
 
 struct WriteApprovalCbRecord {
-  WriteApprovalCallback cb;
-  void* ctx;
+    WriteApprovalCallback cb;
+    void* ctx;
 };
 
 static EebusError HandleMessage(FeatureLocalObject* self, const Message* msg);
@@ -108,190 +108,191 @@ void FeatureLocalConstruct(
     FeatureTypeType type,
     RoleType role
 ) {
-  FeatureConstruct(FEATURE(self), type, ENTITY_GET_ADDRESS(ENTITY_OBJECT(entity)), id, role);
+    FeatureConstruct(FEATURE(self), type, ENTITY_GET_ADDRESS(ENTITY_OBJECT(entity)), id, role);
 
-  //  Override "virtual functions table"
-  FEATURE_LOCAL_INTERFACE(self) = &feature_local_methods;
+    //  Override "virtual functions table"
+    FEATURE_LOCAL_INTERFACE(self) = &feature_local_methods;
 
-  self->entity                 = entity;
-  self->pending_replies        = PendingReplyContainerCreate();
-  self->pending_results        = PendingResultContainerCreate();
-  self->pending_write_requests = PendingWriteRequestContainerCreate();
-  VectorConstruct(&self->wr_approval_cbs);
+    self->entity                 = entity;
+    self->pending_replies        = PendingReplyContainerCreate();
+    self->pending_results        = PendingResultContainerCreate();
+    self->pending_write_requests = PendingWriteRequestContainerCreate();
+    VectorConstruct(&self->wr_approval_cbs);
 
-  FeatureAddressContainerConstruct(&self->bindings);
-  FeatureAddressContainerConstruct(&self->subscriptions);
+    FeatureAddressContainerConstruct(&self->bindings);
+    FeatureAddressContainerConstruct(&self->subscriptions);
 }
 
 FeatureLocalObject* FeatureLocalCreate(uint32_t id, EntityLocalObject* entity, FeatureTypeType type, RoleType role) {
-  FeatureLocal* const feature_local = (FeatureLocal*)EEBUS_MALLOC(sizeof(FeatureLocal));
+    FeatureLocal* const feature_local = (FeatureLocal*)EEBUS_MALLOC(sizeof(FeatureLocal));
 
-  FeatureLocalConstruct(feature_local, id, entity, type, role);
+    FeatureLocalConstruct(feature_local, id, entity, type, role);
 
-  return FEATURE_LOCAL_OBJECT(feature_local);
+    return FEATURE_LOCAL_OBJECT(feature_local);
 }
 
 void FeatureLocalDestruct(FeatureObject* self) {
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
 
-  FeatureAddressContainerDestruct(&fl->subscriptions);
-  FeatureAddressContainerDestruct(&fl->bindings);
+    FeatureAddressContainerDestruct(&fl->subscriptions);
+    FeatureAddressContainerDestruct(&fl->bindings);
 
-  VectorFreeElements(&fl->wr_approval_cbs);
-  VectorDestruct(&fl->wr_approval_cbs);
-  PendingWriteRequestContainerDelete(fl->pending_write_requests);
-  PendingResultContainerDelete(fl->pending_results);
-  PendingReplyContainerDelete(fl->pending_replies);
+    VectorFreeElements(&fl->wr_approval_cbs);
+    VectorDestruct(&fl->wr_approval_cbs);
+    PendingWriteRequestContainerDelete(fl->pending_write_requests);
+    PendingResultContainerDelete(fl->pending_results);
+    PendingReplyContainerDelete(fl->pending_replies);
 
-  // TODO: Implement destructor
-  FeatureDestruct(self);
+    // TODO: Implement destructor
+    FeatureDestruct(self);
 }
 
 DeviceLocalObject* FeatureLocalGetDevice(const FeatureLocalObject* self) {
-  const FeatureLocal* const fl = FEATURE_LOCAL(self);
-  return ENTITY_LOCAL_GET_DEVICE(fl->entity);
+    const FeatureLocal* const fl = FEATURE_LOCAL(self);
+    return ENTITY_LOCAL_GET_DEVICE(fl->entity);
 }
 
 EntityLocalObject* FeatureLocalGetEntity(const FeatureLocalObject* self) {
-  return FEATURE_LOCAL(self)->entity;
+    return FEATURE_LOCAL(self)->entity;
 }
 
 const void* FeatureLocalGetData(const FeatureLocalObject* self, FunctionType function_type) {
-  const FunctionObject* const function = FeatureGetFunction(FEATURE(self), function_type);
-  if (function == NULL) {
-    return NULL;
-  }
+    const FunctionObject* const function = FeatureGetFunction(FEATURE(self), function_type);
+    if (function == NULL) {
+        return NULL;
+    }
 
-  return FUNCTION_GET_DATA(function);
+    return FUNCTION_GET_DATA(function);
 }
 
 void FeatureLocalSetFunctionOperations(FeatureLocalObject* self, FunctionType type, bool read, bool write) {
-  const Feature* const feature = FEATURE(self);
+    const Feature* const feature = FEATURE(self);
 
-  if ((feature->role != kRoleTypeServer) && (feature->role != kRoleTypeSpecial)) {
-    return;
-  }
+    if ((feature->role != kRoleTypeServer) && (feature->role != kRoleTypeSpecial)) {
+        return;
+    }
 
-  FunctionObject* const function = FeatureGetFunction(feature, type);
-  if (function == NULL) {
-    return;
-  }
+    FunctionObject* const function = FeatureGetFunction(feature, type);
+    if (function == NULL) {
+        return;
+    }
 
-  // Partial reads are currently not supported
-  FUNCTION_SET_OPERATIONS(function, read, false, write, true);
+    // Partial reads are currently not supported
+    FUNCTION_SET_OPERATIONS(function, read, false, write, true);
 
-  if ((feature->role == kRoleTypeServer) && (feature->type == kFeatureTypeTypeDeviceDiagnosis)
-      && (type == kFunctionTypeDeviceDiagnosisHeartbeatData)) {
-    // Update HeartbeatManager
-    const FeatureLocal* const fl = FEATURE_LOCAL(self);
-    HeartbeatManagerObject* hm   = ENTITY_LOCAL_GET_HEARTBEAT_MANAGER(fl->entity);
-    HEARTBEAT_MANAGER_SET_LOCAL_FEATURE(hm, fl->entity, self);
-  }
+    if ((feature->role == kRoleTypeServer) && (feature->type == kFeatureTypeTypeDeviceDiagnosis)
+        && (type == kFunctionTypeDeviceDiagnosisHeartbeatData)) {
+        // Update HeartbeatManager
+        const FeatureLocal* const fl = FEATURE_LOCAL(self);
+        HeartbeatManagerObject* hm   = ENTITY_LOCAL_GET_HEARTBEAT_MANAGER(fl->entity);
+        HEARTBEAT_MANAGER_SET_LOCAL_FEATURE(hm, fl->entity, self);
+    }
 }
 
 WriteApprovalCbRecord* WriteApprovalCbRecordCreate(WriteApprovalCallback cb, void* ctx) {
-  WriteApprovalCbRecord* const wr_approval_record = (WriteApprovalCbRecord*)EEBUS_MALLOC(sizeof(WriteApprovalCbRecord));
-  if (wr_approval_record != NULL) {
-    wr_approval_record->cb  = cb;
-    wr_approval_record->ctx = ctx;
-  }
+    WriteApprovalCbRecord* const wr_approval_record
+        = (WriteApprovalCbRecord*)EEBUS_MALLOC(sizeof(WriteApprovalCbRecord));
+    if (wr_approval_record != NULL) {
+        wr_approval_record->cb  = cb;
+        wr_approval_record->ctx = ctx;
+    }
 
-  return wr_approval_record;
+    return wr_approval_record;
 }
 
 EebusError FeatureLocalAddWriteApprovalCallback(FeatureLocalObject* self, WriteApprovalCallback cb, void* ctx) {
-  if (FEATURE_GET_ROLE(FEATURE_OBJECT(self)) != kRoleTypeServer) {
-    return kEebusErrorNoChange;
-  }
+    if (FEATURE_GET_ROLE(FEATURE_OBJECT(self)) != kRoleTypeServer) {
+        return kEebusErrorNoChange;
+    }
 
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
 
-  VectorPushBack(&fl->wr_approval_cbs, WriteApprovalCbRecordCreate(cb, ctx));
+    VectorPushBack(&fl->wr_approval_cbs, WriteApprovalCbRecordCreate(cb, ctx));
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError FeatureLocalTryApproveWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt) {
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
 
-  if ((FEATURE_GET_ROLE(FEATURE_OBJECT(self)) != kRoleTypeServer) || (ski == NULL)) {
-    return kEebusErrorInputArgument;
-  }
+    if ((FEATURE_GET_ROLE(FEATURE_OBJECT(self)) != kRoleTypeServer) || (ski == NULL)) {
+        return kEebusErrorInputArgument;
+    }
 
-  // Get pending write request for ski and message count
-  PendingWriteRequestObject* const pending_write_request
-      = PENDING_WRITE_REQUEST_CONTAINER_FIND(fl->pending_write_requests, ski, msg_cnt);
-  if (pending_write_request == NULL) {
-    return kEebusErrorNoChange;
-  }
+    // Get pending write request for ski and message count
+    PendingWriteRequestObject* const pending_write_request
+        = PENDING_WRITE_REQUEST_CONTAINER_FIND(fl->pending_write_requests, ski, msg_cnt);
+    if (pending_write_request == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  PENDING_WRITE_REQUEST_ADD_APPROVAL(pending_write_request);
+    PENDING_WRITE_REQUEST_ADD_APPROVAL(pending_write_request);
 
-  // Check if there are enough approvals for the write
-  const size_t num_req_approvals = VectorGetSize(&fl->wr_approval_cbs);
-  if (num_req_approvals > PENDING_WRITE_REQUEST_GET_NUMBER_OF_APPROVALS(pending_write_request)) {
-    return kEebusErrorOk;
-  }
+    // Check if there are enough approvals for the write
+    const size_t num_req_approvals = VectorGetSize(&fl->wr_approval_cbs);
+    if (num_req_approvals > PENDING_WRITE_REQUEST_GET_NUMBER_OF_APPROVALS(pending_write_request)) {
+        return kEebusErrorOk;
+    }
 
-  // If there are enough write approvals, remove pending request and process the write
-  Message msg;
-  EebusError status = PENDING_WRITE_REQUEST_GET_MESSAGE(pending_write_request, self, &msg);
-  if (status != kEebusErrorOk) {
+    // If there are enough write approvals, remove pending request and process the write
+    Message msg;
+    EebusError status = PENDING_WRITE_REQUEST_GET_MESSAGE(pending_write_request, self, &msg);
+    if (status != kEebusErrorOk) {
+        return status;
+    }
+
+    status = ProcessWriteInternal(FEATURE_LOCAL(self), &msg);
+    PENDING_WRITE_REQUEST_CONTAINER_REMOVE(fl->pending_write_requests, pending_write_request);
+
     return status;
-  }
-
-  status = ProcessWriteInternal(FEATURE_LOCAL(self), &msg);
-  PENDING_WRITE_REQUEST_CONTAINER_REMOVE(fl->pending_write_requests, pending_write_request);
-
-  return status;
 }
 
 EebusError
 FeatureLocalDenyWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err) {
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
 
-  if ((FEATURE_GET_ROLE(FEATURE_OBJECT(self)) != kRoleTypeServer) || (ski == NULL)) {
-    return kEebusErrorInputArgument;
-  }
+    if ((FEATURE_GET_ROLE(FEATURE_OBJECT(self)) != kRoleTypeServer) || (ski == NULL)) {
+        return kEebusErrorInputArgument;
+    }
 
-  if ((err == NULL) || (err->error_number == kErrorNumberTypeNoError)) {
-    return kEebusErrorInputArgument;
-  }
+    if ((err == NULL) || (err->error_number == kErrorNumberTypeNoError)) {
+        return kEebusErrorInputArgument;
+    }
 
-  // Get pending write request for ski and message count
-  PendingWriteRequestObject* const pending_write_request
-      = PENDING_WRITE_REQUEST_CONTAINER_FIND(fl->pending_write_requests, ski, msg_cnt);
-  if (pending_write_request == NULL) {
-    return kEebusErrorNoChange;
-  }
+    // Get pending write request for ski and message count
+    PendingWriteRequestObject* const pending_write_request
+        = PENDING_WRITE_REQUEST_CONTAINER_FIND(fl->pending_write_requests, ski, msg_cnt);
+    if (pending_write_request == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  Message msg;
-  EebusError status = PENDING_WRITE_REQUEST_GET_MESSAGE(pending_write_request, self, &msg);
-  if (status != kEebusErrorOk) {
-    return status;
-  }
+    Message msg;
+    EebusError status = PENDING_WRITE_REQUEST_GET_MESSAGE(pending_write_request, self, &msg);
+    if (status != kEebusErrorOk) {
+        return status;
+    }
 
-  SEND_RESULT_ERROR(MessageGetSender(&msg), msg.request_header, FEATURE_GET_ADDRESS(FEATURE_OBJECT(self)), err);
-  PENDING_WRITE_REQUEST_CONTAINER_REMOVE(fl->pending_write_requests, pending_write_request);
+    SEND_RESULT_ERROR(MessageGetSender(&msg), msg.request_header, FEATURE_GET_ADDRESS(FEATURE_OBJECT(self)), err);
+    PENDING_WRITE_REQUEST_CONTAINER_REMOVE(fl->pending_write_requests, pending_write_request);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 void ProcessWriteApprovalCallbacks(FeatureLocal* self, const Message* msg) {
-  for (size_t i = 0; i < VectorGetSize(&self->wr_approval_cbs); ++i) {
-    const WriteApprovalCbRecord* const wr_approval_record
-        = (WriteApprovalCbRecord*)VectorGetElement(&self->wr_approval_cbs, i);
-    wr_approval_record->cb(msg, wr_approval_record->ctx);
-  }
+    for (size_t i = 0; i < VectorGetSize(&self->wr_approval_cbs); ++i) {
+        const WriteApprovalCbRecord* const wr_approval_record
+            = (WriteApprovalCbRecord*)VectorGetElement(&self->wr_approval_cbs, i);
+        wr_approval_record->cb(msg, wr_approval_record->ctx);
+    }
 }
 
 void* FeatureLocalDataCopy(const FeatureLocalObject* self, FunctionType function_type) {
-  const FunctionObject* function = FeatureGetFunction(FEATURE(self), function_type);
-  if (function == NULL) {
-    return NULL;
-  }
+    const FunctionObject* function = FeatureGetFunction(FEATURE(self), function_type);
+    if (function == NULL) {
+        return NULL;
+    }
 
-  return FUNCTION_DATA_COPY(function);
+    return FUNCTION_DATA_COPY(function);
 }
 
 void FeatureLocalCleanRemoteDeviceCaches(
@@ -299,17 +300,17 @@ void FeatureLocalCleanRemoteDeviceCaches(
     const DeviceAddressType* remote_addr,
     const char* ski
 ) {
-  UNUSED(ski);
+    UNUSED(ski);
 
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
 
-  if ((remote_addr == NULL) || (remote_addr->device == NULL)) {
-    return;
-  }
+    if ((remote_addr == NULL) || (remote_addr->device == NULL)) {
+        return;
+    }
 
-  FeatureAddressContainerRemoveForDevice(&fl->subscriptions, remote_addr->device);
-  FeatureAddressContainerRemoveForDevice(&fl->bindings, remote_addr->device);
-  PENDING_REPLY_CONTAINER_REMOVE_FOR_DEVICE(fl->pending_replies, remote_addr->device);
+    FeatureAddressContainerRemoveForDevice(&fl->subscriptions, remote_addr->device);
+    FeatureAddressContainerRemoveForDevice(&fl->bindings, remote_addr->device);
+    PENDING_REPLY_CONTAINER_REMOVE_FOR_DEVICE(fl->pending_replies, remote_addr->device);
 }
 
 EebusError FunctionUpdateNotifySubscribers(
@@ -319,17 +320,17 @@ EebusError FunctionUpdateNotifySubscribers(
     const FilterType* filter_partial,
     const FilterType* filter_delete
 ) {
-  DeviceLocalObject* const device      = FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self));
-  const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
+    DeviceLocalObject* const device      = FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self));
+    const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
 
-  const CmdType* const cmd = FUNCTION_CREATE_NOTIFY_CMD(function, new_data, filter_partial, filter_delete);
-  if (cmd == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    const CmdType* const cmd = FUNCTION_CREATE_NOTIFY_CMD(function, new_data, filter_partial, filter_delete);
+    if (cmd == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  DEVICE_LOCAL_NOTIFY_SUBSCRIBERS(device, addr, cmd);
-  CmdDelete((CmdType*)cmd);
-  return kEebusErrorOk;
+    DEVICE_LOCAL_NOTIFY_SUBSCRIBERS(device, addr, cmd);
+    CmdDelete((CmdType*)cmd);
+    return kEebusErrorOk;
 }
 
 EebusError FeatureLocalUpdateData(
@@ -339,21 +340,21 @@ EebusError FeatureLocalUpdateData(
     const FilterType* filter_partial,
     const FilterType* filter_delete
 ) {
-  FunctionObject* function = FeatureGetFunction(FEATURE(self), fcn_type);
-  if (function == NULL) {
-    return kEebusErrorNoChange;
-  }
+    FunctionObject* function = FeatureGetFunction(FEATURE(self), fcn_type);
+    if (function == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  EebusError err = FUNCTION_UPDATE_DATA(function, data, filter_partial, filter_delete, false, true);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    EebusError err = FUNCTION_UPDATE_DATA(function, data, filter_partial, filter_delete, false, true);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  return FunctionUpdateNotifySubscribers(FEATURE_LOCAL(self), function, data, filter_partial, filter_delete);
+    return FunctionUpdateNotifySubscribers(FEATURE_LOCAL(self), function, data, filter_partial, filter_delete);
 }
 
 void FeatureLocalSetData(FeatureLocalObject* self, FunctionType function_type, void* data) {
-  FEATURE_LOCAL_UPDATE_DATA(self, function_type, data, NULL, NULL);
+    FEATURE_LOCAL_UPDATE_DATA(self, function_type, data, NULL, NULL);
 }
 
 static EebusError FeatureLocalRequestRemoteData(
@@ -363,222 +364,222 @@ static EebusError FeatureLocalRequestRemoteData(
     FeatureRemoteObject* dest_feature,
     MsgCounterType* msg_cnt
 ) {
-  FunctionObject* function = FeatureGetFunction(FEATURE(self), function_type);
-  if (function == NULL) {
-    return kEebusErrorNoChange;
-  }
+    FunctionObject* function = FeatureGetFunction(FEATURE(self), function_type);
+    if (function == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  const CmdType* cmd = FUNCTION_CREATE_READ_CMD(function, filter_partial);
-  if (cmd == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    const CmdType* cmd = FUNCTION_CREATE_READ_CMD(function, filter_partial);
+    if (cmd == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  const DeviceRemoteObject* const dest_device = FEATURE_REMOTE_GET_DEVICE(dest_feature);
+    const DeviceRemoteObject* const dest_device = FEATURE_REMOTE_GET_DEVICE(dest_feature);
 
-  SenderObject* const sender     = DEVICE_REMOTE_GET_SENDER(dest_device);
-  const FeatureAddressType* addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(dest_feature));
+    SenderObject* const sender     = DEVICE_REMOTE_GET_SENDER(dest_device);
+    const FeatureAddressType* addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(dest_feature));
 
-  const EebusError ret = SEND_READ(sender, FEATURE_GET_ADDRESS(FEATURE_OBJECT(self)), addr, cmd, msg_cnt);
-  CmdDelete((CmdType*)cmd);
-  return ret;
+    const EebusError ret = SEND_READ(sender, FEATURE_GET_ADDRESS(FEATURE_OBJECT(self)), addr, cmd, msg_cnt);
+    CmdDelete((CmdType*)cmd);
+    return ret;
 }
 
 bool FeatureLocalHasSubscriptionToRemote(const FeatureLocalObject* self, const FeatureAddressType* remote_addr) {
-  const FeatureLocal* const fl = FEATURE_LOCAL(self);
-  return FeatureAddressContainerFind(&fl->subscriptions, remote_addr) != NULL;
+    const FeatureLocal* const fl = FEATURE_LOCAL(self);
+    return FeatureAddressContainerFind(&fl->subscriptions, remote_addr) != NULL;
 }
 
 SenderObject* GetRemoteDeviceSender(const FeatureLocal* self, const FeatureAddressType* remote_addr) {
-  if ((remote_addr == NULL) || (remote_addr->device == NULL)) {
-    return NULL;
-  }
+    if ((remote_addr == NULL) || (remote_addr->device == NULL)) {
+        return NULL;
+    }
 
-  const DeviceLocalObject* const dl = FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self));
-  if (dl == NULL) {
-    return NULL;
-  }
+    const DeviceLocalObject* const dl = FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self));
+    if (dl == NULL) {
+        return NULL;
+    }
 
-  const DeviceRemoteObject* dr = DEVICE_LOCAL_GET_REMOTE_DEVICE_WITH_ADDRESS(dl, remote_addr->device);
-  if (dr == NULL) {
-    return NULL;
-  }
+    const DeviceRemoteObject* dr = DEVICE_LOCAL_GET_REMOTE_DEVICE_WITH_ADDRESS(dl, remote_addr->device);
+    if (dr == NULL) {
+        return NULL;
+    }
 
-  return DEVICE_REMOTE_GET_SENDER(dr);
+    return DEVICE_REMOTE_GET_SENDER(dr);
 }
 
 EebusError FeatureLocalSubscribeToRemote(FeatureLocalObject* self, const FeatureAddressType* remote_addr) {
-  FeatureObject* const feature = FEATURE_OBJECT(self);
-  if (FEATURE_GET_ROLE(feature) == kRoleTypeServer) {
-    return kEebusErrorNoChange;
-  }
+    FeatureObject* const feature = FEATURE_OBJECT(self);
+    if (FEATURE_GET_ROLE(feature) == kRoleTypeServer) {
+        return kEebusErrorNoChange;
+    }
 
-  FeatureLocal* const fl     = FEATURE_LOCAL(self);
-  SenderObject* const sender = GetRemoteDeviceSender(fl, remote_addr);
-  if (sender == NULL) {
-    return kEebusErrorNoChange;
-  }
+    FeatureLocal* const fl     = FEATURE_LOCAL(self);
+    SenderObject* const sender = GetRemoteDeviceSender(fl, remote_addr);
+    if (sender == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(feature);
-  const FeatureTypeType feature_type   = FEATURE_GET_TYPE(feature);
+    const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(feature);
+    const FeatureTypeType feature_type   = FEATURE_GET_TYPE(feature);
 
-  const EebusError err = SEND_CALL_SUBSCRIBE(sender, addr, remote_addr, feature_type);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err = SEND_CALL_SUBSCRIBE(sender, addr, remote_addr, feature_type);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  FeatureAddressContainerAdd(&fl->subscriptions, remote_addr);
-  return kEebusErrorOk;
+    FeatureAddressContainerAdd(&fl->subscriptions, remote_addr);
+    return kEebusErrorOk;
 }
 
 EebusError FeatureLocalRemoveRemoteSubscription(FeatureLocalObject* self, const FeatureAddressType* remote_addr) {
-  FeatureLocal* const fl     = FEATURE_LOCAL(self);
-  SenderObject* const sender = GetRemoteDeviceSender(fl, remote_addr);
-  if (sender == NULL) {
-    return kEebusErrorNoChange;
-  }
+    FeatureLocal* const fl     = FEATURE_LOCAL(self);
+    SenderObject* const sender = GetRemoteDeviceSender(fl, remote_addr);
+    if (sender == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  FeatureObject* const feature = FEATURE_OBJECT(self);
+    FeatureObject* const feature = FEATURE_OBJECT(self);
 
-  const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(feature);
+    const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(feature);
 
-  const EebusError err = SEND_CALL_UNSUBSCRIBE(sender, addr, remote_addr);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err = SEND_CALL_UNSUBSCRIBE(sender, addr, remote_addr);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  FeatureAddressContainerRemove(&fl->subscriptions, remote_addr);
-  return kEebusErrorOk;
+    FeatureAddressContainerRemove(&fl->subscriptions, remote_addr);
+    return kEebusErrorOk;
 }
 
 void FeatureLocalRemoveAllRemoteSubscriptions(FeatureLocalObject* self) {
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
 
-  size_t n = 0;
-  while ((n = FeatureAddressContainerGetSize(&fl->subscriptions)) != 0) {
-    const FeatureAddressType* const addr = FeatureAddressContainerGetElement(&fl->subscriptions, n - 1);
-    FEATURE_LOCAL_REMOVE_REMOTE_SUBSCRIPTION(self, addr);
-  }
+    size_t n = 0;
+    while ((n = FeatureAddressContainerGetSize(&fl->subscriptions)) != 0) {
+        const FeatureAddressType* const addr = FeatureAddressContainerGetElement(&fl->subscriptions, n - 1);
+        FEATURE_LOCAL_REMOVE_REMOTE_SUBSCRIPTION(self, addr);
+    }
 }
 
 bool FeatureLocalHasBindingToRemote(const FeatureLocalObject* self, const FeatureAddressType* remote_addr) {
-  const FeatureLocal* const fl = FEATURE_LOCAL(self);
-  return FeatureAddressContainerFind(&fl->bindings, remote_addr) != NULL;
+    const FeatureLocal* const fl = FEATURE_LOCAL(self);
+    return FeatureAddressContainerFind(&fl->bindings, remote_addr) != NULL;
 }
 
 EebusError FeatureLocalBindToRemote(FeatureLocalObject* self, const FeatureAddressType* remote_addr) {
-  FeatureObject* const feature = FEATURE_OBJECT(self);
-  if (FEATURE_GET_ROLE(feature) == kRoleTypeServer) {
-    return kEebusErrorNoChange;
-  }
+    FeatureObject* const feature = FEATURE_OBJECT(self);
+    if (FEATURE_GET_ROLE(feature) == kRoleTypeServer) {
+        return kEebusErrorNoChange;
+    }
 
-  FeatureLocal* const fl     = FEATURE_LOCAL(self);
-  SenderObject* const sender = GetRemoteDeviceSender(fl, remote_addr);
-  if (sender == NULL) {
-    return kEebusErrorNoChange;
-  }
+    FeatureLocal* const fl     = FEATURE_LOCAL(self);
+    SenderObject* const sender = GetRemoteDeviceSender(fl, remote_addr);
+    if (sender == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(feature);
-  const FeatureTypeType feature_type   = FEATURE_GET_TYPE(feature);
+    const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(feature);
+    const FeatureTypeType feature_type   = FEATURE_GET_TYPE(feature);
 
-  const EebusError err = SEND_CALL_BIND(sender, addr, remote_addr, feature_type);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err = SEND_CALL_BIND(sender, addr, remote_addr, feature_type);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  FeatureAddressContainerAdd(&fl->bindings, remote_addr);
-  return kEebusErrorOk;
+    FeatureAddressContainerAdd(&fl->bindings, remote_addr);
+    return kEebusErrorOk;
 }
 
 EebusError FeatureLocalRemoveRemoteBinding(FeatureLocalObject* self, const FeatureAddressType* remote_addr) {
-  FeatureLocal* const fl     = FEATURE_LOCAL(self);
-  SenderObject* const sender = GetRemoteDeviceSender(fl, remote_addr);
-  if (sender == NULL) {
-    return kEebusErrorNoChange;
-  }
+    FeatureLocal* const fl     = FEATURE_LOCAL(self);
+    SenderObject* const sender = GetRemoteDeviceSender(fl, remote_addr);
+    if (sender == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  FeatureObject* const feature = FEATURE_OBJECT(self);
+    FeatureObject* const feature = FEATURE_OBJECT(self);
 
-  const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(feature);
+    const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(feature);
 
-  const EebusError err = SEND_CALL_UNBIND(sender, addr, remote_addr);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err = SEND_CALL_UNBIND(sender, addr, remote_addr);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  FeatureAddressContainerRemove(&fl->bindings, remote_addr);
-  return kEebusErrorOk;
+    FeatureAddressContainerRemove(&fl->bindings, remote_addr);
+    return kEebusErrorOk;
 }
 
 void FeatureLocalRemoveAllRemoteBindings(FeatureLocalObject* self) {
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
 
-  size_t n = 0;
-  while ((n = FeatureAddressContainerGetSize(&fl->bindings)) != 0) {
-    const FeatureAddressType* const addr = FeatureAddressContainerGetElement(&fl->bindings, n - 1);
-    FEATURE_LOCAL_REMOVE_REMOTE_BINDING(self, addr);
-  }
+    size_t n = 0;
+    while ((n = FeatureAddressContainerGetSize(&fl->bindings)) != 0) {
+        const FeatureAddressType* const addr = FeatureAddressContainerGetElement(&fl->bindings, n - 1);
+        FEATURE_LOCAL_REMOVE_REMOTE_BINDING(self, addr);
+    }
 }
 
 EebusError FeatureLocalProcessResult(FeatureLocal* self, const Message* msg) {
-  if (msg->cmd->data_choice_type_id != kFunctionTypeResultData) {
-    return kEebusErrorInputArgument;
-  }
+    if (msg->cmd->data_choice_type_id != kFunctionTypeResultData) {
+        return kEebusErrorInputArgument;
+    }
 
-  const ResultDataType* const result_data = msg->cmd->data_choice;
-  if ((result_data == NULL) || (result_data->error_number == NULL)) {
-    return kEebusErrorNotImplemented;
-  }
+    const ResultDataType* const result_data = msg->cmd->data_choice;
+    if ((result_data == NULL) || (result_data->error_number == NULL)) {
+        return kEebusErrorNotImplemented;
+    }
 
-  if (*result_data->error_number != kErrorNumberTypeNoError) {
-    // Error num bers explained in Resource Spec 3.11
-    // TODO: Add error logging
-  }
+    if (*result_data->error_number != kErrorNumberTypeNoError) {
+        // Error num bers explained in Resource Spec 3.11
+        // TODO: Add error logging
+    }
 
-  // We don't need to populate this msg if there is no MsgCounterReference
-  if ((msg->request_header == NULL) || (msg->request_header->msg_cnt_ref == NULL)) {
+    // We don't need to populate this msg if there is no MsgCounterReference
+    if ((msg->request_header == NULL) || (msg->request_header->msg_cnt_ref == NULL)) {
+        return kEebusErrorOk;
+    }
+
+    const MsgCounterType msg_cnt_ref = *msg->request_header->msg_cnt_ref;
+
+    const ResultMessage result_msg = {
+        .msg_cnt_ref    = msg_cnt_ref,
+        .result_data    = result_data,
+        .feature_local  = FEATURE_LOCAL_OBJECT(self),
+        .feature_remote = msg->feature_remote,
+        .entity_remote  = msg->entity_remote,
+        .device_remote  = msg->device_remote,
+    };
+
+    PENDING_RESULT_CONTAINER_PROCESS(self->pending_results, &result_msg);
     return kEebusErrorOk;
-  }
-
-  const MsgCounterType msg_cnt_ref = *msg->request_header->msg_cnt_ref;
-
-  const ResultMessage result_msg = {
-      .msg_cnt_ref    = msg_cnt_ref,
-      .result_data    = result_data,
-      .feature_local  = FEATURE_LOCAL_OBJECT(self),
-      .feature_remote = msg->feature_remote,
-      .entity_remote  = msg->entity_remote,
-      .device_remote  = msg->device_remote,
-  };
-
-  PENDING_RESULT_CONTAINER_PROCESS(self->pending_results, &result_msg);
-  return kEebusErrorOk;
 }
 
 EebusError ProcessRead(FeatureLocal* self, const Message* msg) {
-  // Is this a read request to a local server/special feature?
-  FeatureObject* const feature = FEATURE_OBJECT(self);
-  if (FEATURE_GET_ROLE(feature) == kRoleTypeClient) {
-    // Read requests to a client feature are not allowed
-    return kEebusErrorNoChange;
-  }
+    // Is this a read request to a local server/special feature?
+    FeatureObject* const feature = FEATURE_OBJECT(self);
+    if (FEATURE_GET_ROLE(feature) == kRoleTypeClient) {
+        // Read requests to a client feature are not allowed
+        return kEebusErrorNoChange;
+    }
 
-  const FunctionType function_type = msg->cmd->data_choice_type_id;
+    const FunctionType function_type = msg->cmd->data_choice_type_id;
 
-  FunctionObject* const function = FeatureGetFunction(FEATURE(feature), function_type);
-  if (function == NULL) {
-    return kEebusErrorNoChange;
-  }
+    FunctionObject* const function = FeatureGetFunction(FEATURE(feature), function_type);
+    if (function == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  const CmdType* const cmd = FUNCTION_CREATE_REPLY_CMD(function);
-  if (cmd == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+    const CmdType* const cmd = FUNCTION_CREATE_REPLY_CMD(function);
+    if (cmd == NULL) {
+        return kEebusErrorMemoryAllocate;
+    }
 
-  const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(feature);
+    const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(feature);
 
-  const EebusError err = SEND_REPLY(MessageGetSender(msg), msg->request_header, addr, cmd);
-  CmdDelete((CmdType*)cmd);
-  return err;
+    const EebusError err = SEND_REPLY(MessageGetSender(msg), msg->request_header, addr, cmd);
+    CmdDelete((CmdType*)cmd);
+    return err;
 }
 
 void PublishDataUpdateEvent(
@@ -588,229 +589,229 @@ void PublishDataUpdateEvent(
     const void* const new_data,
     CommandClassifierType cmd_classifier
 ) {
-  DeviceRemoteObject* const device_remote = FEATURE_REMOTE_GET_DEVICE(feature_remote);
+    DeviceRemoteObject* const device_remote = FEATURE_REMOTE_GET_DEVICE(feature_remote);
 
-  const EventPayload payload = {
-      .ski            = DEVICE_REMOTE_GET_SKI(device_remote),
-      .event_type     = kEventTypeDataChange,
-      .change_type    = kElementChangeUpdate,
-      .feature        = feature_remote,
-      .device         = device_remote,
-      .entity         = FEATURE_REMOTE_GET_ENTITY(feature_remote),
-      .local_feature  = FEATURE_LOCAL_OBJECT(self),
-      .function_type  = function_type,
-      .function_data  = new_data,
-      .cmd_classifier = &cmd_classifier,
-  };
+    const EventPayload payload = {
+        .ski            = DEVICE_REMOTE_GET_SKI(device_remote),
+        .event_type     = kEventTypeDataChange,
+        .change_type    = kElementChangeUpdate,
+        .feature        = feature_remote,
+        .device         = device_remote,
+        .entity         = FEATURE_REMOTE_GET_ENTITY(feature_remote),
+        .local_feature  = FEATURE_LOCAL_OBJECT(self),
+        .function_type  = function_type,
+        .function_data  = new_data,
+        .cmd_classifier = &cmd_classifier,
+    };
 
-  EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self))), &payload);
+    EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self))), &payload);
 }
 
 EebusError ProcessNotify(FeatureLocal* self, const Message* msg) {
-  FeatureRemoteObject* const fr          = msg->feature_remote;
-  const FunctionType function_type       = msg->cmd->data_choice_type_id;
-  const void* const new_data             = msg->cmd->data_choice;
-  const FilterType* const filter_partial = msg->filter_partial;
-  const FilterType* const filter_delete  = msg->filter_delete;
+    FeatureRemoteObject* const fr          = msg->feature_remote;
+    const FunctionType function_type       = msg->cmd->data_choice_type_id;
+    const void* const new_data             = msg->cmd->data_choice;
+    const FilterType* const filter_partial = msg->filter_partial;
+    const FilterType* const filter_delete  = msg->filter_delete;
 
-  const EebusError err = FEATURE_REMOTE_UPDATE_DATA(fr, function_type, new_data, filter_partial, filter_delete, true);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err = FEATURE_REMOTE_UPDATE_DATA(fr, function_type, new_data, filter_partial, filter_delete, true);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  PublishDataUpdateEvent(self, fr, function_type, new_data, kCommandClassifierTypeNotify);
+    PublishDataUpdateEvent(self, fr, function_type, new_data, kCommandClassifierTypeNotify);
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError ProcessWriteFunctionData(FeatureLocal* self, const Message* msg) {
-  const FunctionType function_type       = msg->cmd->data_choice_type_id;
-  const void* const new_data             = msg->cmd->data_choice;
-  const FilterType* const filter_partial = msg->filter_partial;
-  const FilterType* const filter_delete  = msg->filter_delete;
+    const FunctionType function_type       = msg->cmd->data_choice_type_id;
+    const void* const new_data             = msg->cmd->data_choice;
+    const FilterType* const filter_partial = msg->filter_partial;
+    const FilterType* const filter_delete  = msg->filter_delete;
 
-  FunctionObject* function = FeatureGetFunction(FEATURE(self), function_type);
-  if (function == NULL) {
-    return kEebusErrorNoChange;
-  }
+    FunctionObject* function = FeatureGetFunction(FEATURE(self), function_type);
+    if (function == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  EebusError err = FUNCTION_UPDATE_DATA(function, new_data, filter_partial, filter_delete, true, true);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    EebusError err = FUNCTION_UPDATE_DATA(function, new_data, filter_partial, filter_delete, true, true);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  FunctionUpdateNotifySubscribers(self, function, new_data, filter_partial, filter_delete);
+    FunctionUpdateNotifySubscribers(self, function, new_data, filter_partial, filter_delete);
 
-  PublishDataUpdateEvent(self, msg->feature_remote, function_type, new_data, kCommandClassifierTypeWrite);
-  return kEebusErrorOk;
+    PublishDataUpdateEvent(self, msg->feature_remote, function_type, new_data, kCommandClassifierTypeWrite);
+    return kEebusErrorOk;
 }
 
 EebusError ProcessWriteInternal(FeatureLocal* self, const Message* msg) {
-  if (msg->request_header == NULL) {
-    return kEebusErrorInvalid;
-  }
-
-  SenderObject* const sender = MessageGetSender(msg);
-
-  const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
-
-  if (ProcessWriteFunctionData(self, msg) != kEebusErrorOk) {
-    const ErrorType error = {
-        .error_number = kErrorNumberTypeGeneralError,
-        .description  = "Error processing write request",
-    };
-
-    SEND_RESULT_ERROR(sender, msg->request_header, addr, &error);
-  } else {
-    const bool* const ack_request = msg->request_header->ack_request;
-    if ((ack_request != NULL) && (*ack_request)) {
-      SEND_RESULT_SUCCESS(sender, msg->request_header, addr);
+    if (msg->request_header == NULL) {
+        return kEebusErrorInvalid;
     }
-  }
 
-  return kEebusErrorOk;
+    SenderObject* const sender = MessageGetSender(msg);
+
+    const FeatureAddressType* const addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
+
+    if (ProcessWriteFunctionData(self, msg) != kEebusErrorOk) {
+        const ErrorType error = {
+            .error_number = kErrorNumberTypeGeneralError,
+            .description  = "Error processing write request",
+        };
+
+        SEND_RESULT_ERROR(sender, msg->request_header, addr, &error);
+    } else {
+        const bool* const ack_request = msg->request_header->ack_request;
+        if ((ack_request != NULL) && (*ack_request)) {
+            SEND_RESULT_SUCCESS(sender, msg->request_header, addr);
+        }
+    }
+
+    return kEebusErrorOk;
 }
 
 EebusError ProcessWrite(FeatureLocal* self, const Message* msg) {
-  if (VectorGetSize(&self->wr_approval_cbs) > 0) {
-    PENDING_WRITE_REQUEST_CONTAINER_ADD(self->pending_write_requests, msg);
-    ProcessWriteApprovalCallbacks(self, msg);
-    return kEebusErrorOk;
-  } else {
-    return ProcessWriteInternal(self, msg);
-  }
+    if (VectorGetSize(&self->wr_approval_cbs) > 0) {
+        PENDING_WRITE_REQUEST_CONTAINER_ADD(self->pending_write_requests, msg);
+        ProcessWriteApprovalCallbacks(self, msg);
+        return kEebusErrorOk;
+    } else {
+        return ProcessWriteInternal(self, msg);
+    }
 }
 
 EebusError ProcessReply(FeatureLocal* self, const Message* msg) {
-  const FunctionType function_type       = msg->cmd->data_choice_type_id;
-  const void* const new_data             = msg->cmd->data_choice;
-  const FilterType* const filter_partial = msg->filter_partial;
-  const FilterType* const filter_delete  = msg->filter_delete;
-  FeatureRemoteObject* const fr          = msg->feature_remote;
+    const FunctionType function_type       = msg->cmd->data_choice_type_id;
+    const void* const new_data             = msg->cmd->data_choice;
+    const FilterType* const filter_partial = msg->filter_partial;
+    const FilterType* const filter_delete  = msg->filter_delete;
+    FeatureRemoteObject* const fr          = msg->feature_remote;
 
-  const EebusError err = FEATURE_REMOTE_UPDATE_DATA(fr, function_type, new_data, filter_partial, filter_delete, true);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err = FEATURE_REMOTE_UPDATE_DATA(fr, function_type, new_data, filter_partial, filter_delete, true);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  PublishDataUpdateEvent(self, fr, function_type, new_data, kCommandClassifierTypeReply);
+    PublishDataUpdateEvent(self, fr, function_type, new_data, kCommandClassifierTypeReply);
 
-  // We don't need to populate this message if there is no MsgCounterReference
-  if ((msg->request_header == NULL) || (msg->request_header->msg_cnt_ref == NULL)) {
+    // We don't need to populate this message if there is no MsgCounterReference
+    if ((msg->request_header == NULL) || (msg->request_header->msg_cnt_ref == NULL)) {
+        return kEebusErrorOk;
+    }
+
+    const MsgCounterType msg_cnt_ref = *msg->request_header->msg_cnt_ref;
+
+    const ReplyMessage reply_msg = {
+        .msg_cnt_ref    = msg_cnt_ref,
+        .function_data  = new_data,
+        .function_type  = function_type,
+        .feature_local  = FEATURE_LOCAL_OBJECT(self),
+        .feature_remote = msg->feature_remote,
+        .entity_remote  = msg->entity_remote,
+        .device_remote  = msg->device_remote,
+    };
+
+    PENDING_REPLY_CONTAINER_PROCESS(self->pending_replies, &reply_msg, kEebusErrorOk);
     return kEebusErrorOk;
-  }
-
-  const MsgCounterType msg_cnt_ref = *msg->request_header->msg_cnt_ref;
-
-  const ReplyMessage reply_msg = {
-      .msg_cnt_ref    = msg_cnt_ref,
-      .function_data  = new_data,
-      .function_type  = function_type,
-      .feature_local  = FEATURE_LOCAL_OBJECT(self),
-      .feature_remote = msg->feature_remote,
-      .entity_remote  = msg->entity_remote,
-      .device_remote  = msg->device_remote,
-  };
-
-  PENDING_REPLY_CONTAINER_PROCESS(self->pending_replies, &reply_msg, kEebusErrorOk);
-  return kEebusErrorOk;
 }
 
 EebusError HandleMessage(FeatureLocalObject* self, const Message* msg) {
-  if ((msg == NULL) || (msg->cmd == NULL) || (msg->cmd->data_choice == NULL)) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if ((msg == NULL) || (msg->cmd == NULL) || (msg->cmd->data_choice == NULL)) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
 
-  switch (msg->cmd_classifier) {
-    case kCommandClassifierTypeResult: return FeatureLocalProcessResult(fl, msg);
-    case kCommandClassifierTypeRead: return ProcessRead(fl, msg);
-    case kCommandClassifierTypeReply: return ProcessReply(fl, msg);
-    case kCommandClassifierTypeNotify: return ProcessNotify(fl, msg);
-    case kCommandClassifierTypeWrite: return ProcessWrite(fl, msg);
-    default: return kEebusErrorNotImplemented;
-  }
+    switch (msg->cmd_classifier) {
+        case kCommandClassifierTypeResult: return FeatureLocalProcessResult(fl, msg);
+        case kCommandClassifierTypeRead: return ProcessRead(fl, msg);
+        case kCommandClassifierTypeReply: return ProcessReply(fl, msg);
+        case kCommandClassifierTypeNotify: return ProcessNotify(fl, msg);
+        case kCommandClassifierTypeWrite: return ProcessWrite(fl, msg);
+        default: return kEebusErrorNotImplemented;
+    }
 }
 
 EebusError AddSupportedFunctions(const FeatureLocal* self, NetworkManagementFeatureDescriptionDataType* description) {
-  Feature* feature = FEATURE(self);
+    Feature* feature = FEATURE(self);
 
-  size_t n = 0;
-  for (size_t i = 0; i < VectorGetSize(&feature->functions); ++i) {
-    FunctionObject* const function = (FunctionObject*)VectorGetElement(&feature->functions, i);
-    if (FUNCTION_GET_OPERATIONS(function) != NULL) {
-      ++n;
+    size_t n = 0;
+    for (size_t i = 0; i < VectorGetSize(&feature->functions); ++i) {
+        FunctionObject* const function = (FunctionObject*)VectorGetElement(&feature->functions, i);
+        if (FUNCTION_GET_OPERATIONS(function) != NULL) {
+            ++n;
+        }
     }
-  }
 
-  description->supported_function      = NULL;
-  description->supported_function_size = 0;
-  if (n == 0) {
-    // Ok - nothing to be added
-    return kEebusErrorOk;
-  }
+    description->supported_function      = NULL;
+    description->supported_function_size = 0;
+    if (n == 0) {
+        // Ok - nothing to be added
+        return kEebusErrorOk;
+    }
 
-  const FunctionPropertyType** const supported_function
-      = (const FunctionPropertyType**)EEBUS_MALLOC(sizeof(description->supported_function[0]) * n);
+    const FunctionPropertyType** const supported_function
+        = (const FunctionPropertyType**)EEBUS_MALLOC(sizeof(description->supported_function[0]) * n);
 
-  description->supported_function = supported_function;
+    description->supported_function = supported_function;
 
-  if (description->supported_function == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
-
-  for (size_t i = 0; i < VectorGetSize(&feature->functions); ++i) {
-    FunctionObject* const function = (FunctionObject*)VectorGetElement(&feature->functions, i);
-
-    const OperationsObject* const ops = FUNCTION_GET_OPERATIONS(function);
-    if (ops != NULL) {
-      const FunctionType function_type = FUNCTION_GET_FUNCTION_TYPE(function);
-
-      const PossibleOperationsType* const ops_info = OPERATIONS_GET_INFORMATION(ops);
-
-      supported_function[description->supported_function_size] = FunctionPropertyCreate(function_type, ops_info);
-      if (supported_function[description->supported_function_size] == NULL) {
+    if (description->supported_function == NULL) {
         return kEebusErrorMemoryAllocate;
-      }
-
-      description->supported_function_size++;
     }
-  }
 
-  return kEebusErrorOk;
+    for (size_t i = 0; i < VectorGetSize(&feature->functions); ++i) {
+        FunctionObject* const function = (FunctionObject*)VectorGetElement(&feature->functions, i);
+
+        const OperationsObject* const ops = FUNCTION_GET_OPERATIONS(function);
+        if (ops != NULL) {
+            const FunctionType function_type = FUNCTION_GET_FUNCTION_TYPE(function);
+
+            const PossibleOperationsType* const ops_info = OPERATIONS_GET_INFORMATION(ops);
+
+            supported_function[description->supported_function_size] = FunctionPropertyCreate(function_type, ops_info);
+            if (supported_function[description->supported_function_size] == NULL) {
+                return kEebusErrorMemoryAllocate;
+            }
+
+            description->supported_function_size++;
+        }
+    }
+
+    return kEebusErrorOk;
 }
 
 NodeManagementDetailedDiscoveryFeatureInformationType* FeatureLocalCreateInformation(const FeatureLocalObject* self) {
-  const FeatureLocal* const fl = FEATURE_LOCAL(self);
+    const FeatureLocal* const fl = FEATURE_LOCAL(self);
 
-  const Feature* const feature = FEATURE(self);
+    const Feature* const feature = FEATURE(self);
 
-  NodeManagementDetailedDiscoveryFeatureInformationType* const info
-      = NodeManagementDetailedDiscoveryFeatureInformationCreate(
-          feature->address,
-          feature->type,
-          feature->role,
-          feature->description
-      );
+    NodeManagementDetailedDiscoveryFeatureInformationType* const info
+        = NodeManagementDetailedDiscoveryFeatureInformationCreate(
+            feature->address,
+            feature->type,
+            feature->role,
+            feature->description
+        );
 
-  if (info == NULL) {
-    return NULL;
-  }
+    if (info == NULL) {
+        return NULL;
+    }
 
-  if (AddSupportedFunctions(fl, (NetworkManagementFeatureDescriptionDataType*)info->description) != kEebusErrorOk) {
-    NodeManagementDetailedDiscoveryFeatureInformationDelete(info);
-    return NULL;
-  }
+    if (AddSupportedFunctions(fl, (NetworkManagementFeatureDescriptionDataType*)info->description) != kEebusErrorOk) {
+        NodeManagementDetailedDiscoveryFeatureInformationDelete(info);
+        return NULL;
+    }
 
-  return info;
+    return info;
 }
 
 void FeatureLocalTick(FeatureLocalObject* self) {
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
-  PENDING_WRITE_REQUEST_CONTAINER_TICK(fl->pending_write_requests, self);
-  PENDING_REPLY_CONTAINER_TICK(fl->pending_replies);
-  PENDING_RESULT_CONTAINER_TICK(fl->pending_results);
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
+    PENDING_WRITE_REQUEST_CONTAINER_TICK(fl->pending_write_requests, self);
+    PENDING_REPLY_CONTAINER_TICK(fl->pending_replies);
+    PENDING_RESULT_CONTAINER_TICK(fl->pending_results);
 }
 
 EebusError FeatureLocalWriteToRemote(
@@ -823,61 +824,62 @@ EebusError FeatureLocalWriteToRemote(
     ResultMessageCallback cb,
     void* ctx
 ) {
-  if (data == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
-
-  SenderObject* const sender = DEVICE_REMOTE_GET_SENDER(FEATURE_REMOTE_GET_DEVICE(dest_feature));
-  if (sender == NULL) {
-    return kEebusErrorInit;
-  }
-
-  const FeatureAddressType* const sender_addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
-  const FeatureAddressType* const dest_addr   = FEATURE_GET_ADDRESS(FEATURE_OBJECT(dest_feature));
-  if ((sender_addr == NULL) || (dest_addr == NULL)) {
-    return kEebusErrorNoChange;
-  }
-
-  const OperationsObject* const ops = FEATURE_GET_FUNCTION_OPERATIONS(FEATURE_OBJECT(dest_feature), fcn_type);
-
-  MsgCounterType msg_cnt = 0;
-
-  EebusError err;
-  if ((ops == NULL) || !OPERATIONS_GET_WRITE_PARTIAL(ops)) {
-    err = FEATURE_REMOTE_UPDATE_DATA(dest_feature, fcn_type, data, NULL, NULL, false);
-    if (err != kEebusErrorOk) {
-      return err;
+    if (data == NULL) {
+        return kEebusErrorInputArgumentNull;
     }
 
-    const CmdType cmd = {
-        .data_choice         = FEATURE_REMOTE_GET_DATA(dest_feature, fcn_type),
-        .data_choice_type_id = fcn_type,
-    };
+    SenderObject* const sender = DEVICE_REMOTE_GET_SENDER(FEATURE_REMOTE_GET_DEVICE(dest_feature));
+    if (sender == NULL) {
+        return kEebusErrorInit;
+    }
 
-    err = SEND_WRITE(sender, sender_addr, dest_addr, &cmd, (cb != NULL) ? &msg_cnt : NULL);
-  } else {
-    const FilterType filter_t_partial_default = FILTER_PARTIAL(fcn_type, NULL, NULL, NULL);
-    const FilterType* const p_filter_partial  = (filter_partial != NULL) ? filter_partial : &filter_t_partial_default;
-    const FilterType* filters[2]              = {p_filter_partial, filter_delete};
-    const size_t filters_size                 = (filter_delete != NULL) ? 2 : 1;
+    const FeatureAddressType* const sender_addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(self));
+    const FeatureAddressType* const dest_addr   = FEATURE_GET_ADDRESS(FEATURE_OBJECT(dest_feature));
+    if ((sender_addr == NULL) || (dest_addr == NULL)) {
+        return kEebusErrorNoChange;
+    }
 
-    const CmdType cmd = {
-        .data_choice         = data,
-        .data_choice_type_id = fcn_type,
-        .filter              = filters,
-        .filter_size         = filters_size,
-        .function            = &(FunctionType){fcn_type},
-    };
+    const OperationsObject* const ops = FEATURE_GET_FUNCTION_OPERATIONS(FEATURE_OBJECT(dest_feature), fcn_type);
 
-    err = SEND_WRITE(sender, sender_addr, dest_addr, &cmd, (cb != NULL) ? &msg_cnt : NULL);
-  }
+    MsgCounterType msg_cnt = 0;
 
-  if ((err == kEebusErrorOk) && (cb != NULL)) {
-    FeatureLocal* const fl = FEATURE_LOCAL(self);
-    PENDING_RESULT_CONTAINER_ADD(fl->pending_results, msg_cnt, fcn_type, dest_addr, cb, ctx);
-  }
+    EebusError err;
+    if ((ops == NULL) || !OPERATIONS_GET_WRITE_PARTIAL(ops)) {
+        err = FEATURE_REMOTE_UPDATE_DATA(dest_feature, fcn_type, data, NULL, NULL, false);
+        if (err != kEebusErrorOk) {
+            return err;
+        }
 
-  return err;
+        const CmdType cmd = {
+            .data_choice         = FEATURE_REMOTE_GET_DATA(dest_feature, fcn_type),
+            .data_choice_type_id = fcn_type,
+        };
+
+        err = SEND_WRITE(sender, sender_addr, dest_addr, &cmd, (cb != NULL) ? &msg_cnt : NULL);
+    } else {
+        const FilterType filter_t_partial_default = FILTER_PARTIAL(fcn_type, NULL, NULL, NULL);
+        const FilterType* const p_filter_partial
+            = (filter_partial != NULL) ? filter_partial : &filter_t_partial_default;
+        const FilterType* filters[2] = {p_filter_partial, filter_delete};
+        const size_t filters_size    = (filter_delete != NULL) ? 2 : 1;
+
+        const CmdType cmd = {
+            .data_choice         = data,
+            .data_choice_type_id = fcn_type,
+            .filter              = filters,
+            .filter_size         = filters_size,
+            .function            = &(FunctionType){fcn_type},
+        };
+
+        err = SEND_WRITE(sender, sender_addr, dest_addr, &cmd, (cb != NULL) ? &msg_cnt : NULL);
+    }
+
+    if ((err == kEebusErrorOk) && (cb != NULL)) {
+        FeatureLocal* const fl = FEATURE_LOCAL(self);
+        PENDING_RESULT_CONTAINER_ADD(fl->pending_results, msg_cnt, fcn_type, dest_addr, cb, ctx);
+    }
+
+    return err;
 }
 
 EebusError FeatureLocalReadFromRemote(
@@ -889,31 +891,31 @@ EebusError FeatureLocalReadFromRemote(
     ReplyMessageCallback cb,
     void* ctx
 ) {
-  FeatureLocal* const fl = FEATURE_LOCAL(self);
+    FeatureLocal* const fl = FEATURE_LOCAL(self);
 
-  if (dest_feature == NULL) {
-    return kEebusErrorNoChange;
-  }
+    if (dest_feature == NULL) {
+        return kEebusErrorNoChange;
+    }
 
-  const OperationsObject* const ops = FEATURE_GET_FUNCTION_OPERATIONS(FEATURE_OBJECT(dest_feature), function_type);
+    const OperationsObject* const ops = FEATURE_GET_FUNCTION_OPERATIONS(FEATURE_OBJECT(dest_feature), function_type);
 
-  if ((ops == NULL) || !OPERATIONS_GET_READ(ops)) {
-    return kEebusErrorNoChange;
-  }
+    if ((ops == NULL) || !OPERATIONS_GET_READ(ops)) {
+        return kEebusErrorNoChange;
+    }
 
-  const FilterType* filter_partial = &FILTER_PARTIAL(function_type, NULL, selectors, elements);
-  if ((selectors == NULL) || !OPERATIONS_GET_READ_PARTIAL(ops) || !OPERATIONS_GET_WRITE_PARTIAL(ops)) {
-    filter_partial = NULL;
-  }
+    const FilterType* filter_partial = &FILTER_PARTIAL(function_type, NULL, selectors, elements);
+    if ((selectors == NULL) || !OPERATIONS_GET_READ_PARTIAL(ops) || !OPERATIONS_GET_WRITE_PARTIAL(ops)) {
+        filter_partial = NULL;
+    }
 
-  MsgCounterType msg_cnt = 0;
+    MsgCounterType msg_cnt = 0;
 
-  const EebusError err = FeatureLocalRequestRemoteData(self, function_type, filter_partial, dest_feature, &msg_cnt);
+    const EebusError err = FeatureLocalRequestRemoteData(self, function_type, filter_partial, dest_feature, &msg_cnt);
 
-  if ((err == kEebusErrorOk) && (cb != NULL)) {
-    const FeatureAddressType* const dest_addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(dest_feature));
-    PENDING_REPLY_CONTAINER_ADD(fl->pending_replies, msg_cnt, dest_addr, function_type, NULL, cb, ctx);
-  }
+    if ((err == kEebusErrorOk) && (cb != NULL)) {
+        const FeatureAddressType* const dest_addr = FEATURE_GET_ADDRESS(FEATURE_OBJECT(dest_feature));
+        PENDING_REPLY_CONTAINER_ADD(fl->pending_replies, msg_cnt, dest_addr, function_type, NULL, cb, ctx);
+    }
 
-  return err;
+    return err;
 }

@@ -57,24 +57,24 @@ static const lws_usec_t kWebsocketStaggerDelay = 50 * LWS_US_PER_MS;
 typedef struct Websocket Websocket;
 
 struct Websocket {
-  /** Implements the Websocket Interface */
-  WebsocketObject obj;
+    /** Implements the Websocket Interface */
+    WebsocketObject obj;
 
-  struct lws* wsi;
-  struct lws_context* lws_ctx;
+    struct lws* wsi;
+    struct lws_context* lws_ctx;
 
-  WebsocketCallback callback;
-  void* context;
+    WebsocketCallback callback;
+    void* context;
 
-  bool is_closed;
-  int32_t close_error;
+    bool is_closed;
+    int32_t close_error;
 
-  EebusQueueObject* wr_queue;
-  EebusMutexObject* wr_mutex;
+    EebusQueueObject* wr_queue;
+    EebusMutexObject* wr_mutex;
 
-  uint8_t* buf_tmp;
-  size_t buf_tmp_size;
-  lws_sorted_usec_list_t sul_stagger;
+    uint8_t* buf_tmp;
+    size_t buf_tmp_size;
+    lws_sorted_usec_list_t sul_stagger;
 };
 
 #define WEBSOCKET(obj) ((Websocket*)(obj))

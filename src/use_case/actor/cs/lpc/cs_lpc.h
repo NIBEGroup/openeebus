@@ -38,7 +38,7 @@ CsLpUseCaseObject* CsLpcUseCaseCreate(
 );
 
 static inline void CsLpcUseCaseDelete(CsLpUseCaseObject* cs_lpc_use_case) {
-  CsLpUseCaseDelete(CS_LP_USE_CASE_OBJECT(cs_lpc_use_case));
+    CsLpUseCaseDelete(CS_LP_USE_CASE_OBJECT(cs_lpc_use_case));
 }
 
 /**
@@ -48,7 +48,7 @@ static inline void CsLpcUseCaseDelete(CsLpUseCaseObject* cs_lpc_use_case) {
  * @return kEebusErrorOk on success, error code otherwise
  */
 static inline EebusError CsLpcGetActiveConsumptionPowerLimit(const CsLpUseCaseObject* self, LoadLimit* limit) {
-  return CsLpGetActivePowerLimit(CS_LP_USE_CASE_OBJECT(self), limit);
+    return CsLpGetActivePowerLimit(CS_LP_USE_CASE_OBJECT(self), limit);
 }
 
 /**
@@ -65,7 +65,7 @@ static inline EebusError CsLpcSetActiveConsumptionPowerLimit(
     bool is_active,
     bool is_changeable
 ) {
-  return CsLpSetActivePowerLimit(CS_LP_USE_CASE_OBJECT(self), limit, is_active, is_changeable);
+    return CsLpSetActivePowerLimit(CS_LP_USE_CASE_OBJECT(self), limit, is_active, is_changeable);
 }
 
 /**
@@ -81,7 +81,7 @@ static inline EebusError CsLpcGetFailsafeConsumptionActivePowerLimit(
     ScaledValue* power_limit,
     bool* is_changeable
 ) {
-  return CsLpGetFailsafeActivePowerLimit(CS_LP_USE_CASE_OBJECT(self), power_limit, is_changeable);
+    return CsLpGetFailsafeActivePowerLimit(CS_LP_USE_CASE_OBJECT(self), power_limit, is_changeable);
 }
 
 /**
@@ -97,7 +97,7 @@ static inline EebusError CsLpcSetFailsafeConsumptionActivePowerLimit(
     const ScaledValue* power_limit,
     bool is_changeable
 ) {
-  return CsLpSetFailsafeActivePowerLimit(CS_LP_USE_CASE_OBJECT(self), power_limit, is_changeable);
+    return CsLpSetFailsafeActivePowerLimit(CS_LP_USE_CASE_OBJECT(self), power_limit, is_changeable);
 }
 
 /**
@@ -110,7 +110,7 @@ static inline EebusError CsLpcSetFailsafeConsumptionActivePowerLimit(
  */
 static inline EebusError
 CsLpcGetFailsafeDurationMinimum(const CsLpUseCaseObject* self, DurationType* duration, bool* is_changeable) {
-  return CsLpGetFailsafeDurationMinimum(CS_LP_USE_CASE_OBJECT(self), duration, is_changeable);
+    return CsLpGetFailsafeDurationMinimum(CS_LP_USE_CASE_OBJECT(self), duration, is_changeable);
 }
 
 /**
@@ -123,7 +123,7 @@ CsLpcGetFailsafeDurationMinimum(const CsLpUseCaseObject* self, DurationType* dur
  */
 static inline EebusError
 CsLpcSetFailsafeDurationMinimum(CsLpUseCaseObject* self, const DurationType* duration, bool is_changeable) {
-  return CsLpSetFailsafeDurationMinimum(CS_LP_USE_CASE_OBJECT(self), duration, is_changeable);
+    return CsLpSetFailsafeDurationMinimum(CS_LP_USE_CASE_OBJECT(self), duration, is_changeable);
 }
 
 /**
@@ -132,7 +132,7 @@ CsLpcSetFailsafeDurationMinimum(CsLpUseCaseObject* self, const DurationType* dur
  * @param self CS LPC Use Case instance to start the heartbeat with
  */
 static inline void CsLpcStartHeartbeat(CsLpUseCaseObject* self) {
-  CsLpStartHeartbeat(CS_LP_USE_CASE_OBJECT(self));
+    CsLpStartHeartbeat(CS_LP_USE_CASE_OBJECT(self));
 }
 
 /**
@@ -140,7 +140,7 @@ static inline void CsLpcStartHeartbeat(CsLpUseCaseObject* self) {
  * @param self CS LPC Use Case instance to stop the heartbeat with
  */
 static inline void CsLpcStopHeartbeat(CsLpUseCaseObject* self) {
-  CsLpStopHeartbeat(CS_LP_USE_CASE_OBJECT(self));
+    CsLpStopHeartbeat(CS_LP_USE_CASE_OBJECT(self));
 }
 
 /**
@@ -149,7 +149,7 @@ static inline void CsLpcStopHeartbeat(CsLpUseCaseObject* self) {
  * @return true if check is passed, false otherwise
  */
 static inline bool CsLpcIsHeartbeatWithinDuration(CsLpUseCaseObject* self) {
-  return CsLpIsHeartbeatWithinDuration(CS_LP_USE_CASE_OBJECT(self));
+    return CsLpIsHeartbeatWithinDuration(CS_LP_USE_CASE_OBJECT(self));
 }
 
 /**
@@ -164,7 +164,7 @@ static inline bool CsLpcIsHeartbeatWithinDuration(CsLpUseCaseObject* self) {
  * @return EebusError indicating the success or failure of the operation.
  */
 static inline EebusError CsLpcGetConsumptionNominalMax(CsLpUseCaseObject* self, ScaledValue* nominal_max) {
-  return CsLpGetNominalMax(CS_LP_USE_CASE_OBJECT(self), nominal_max);
+    return CsLpGetNominalMax(CS_LP_USE_CASE_OBJECT(self), nominal_max);
 }
 
 /**
@@ -179,7 +179,7 @@ static inline EebusError CsLpcGetConsumptionNominalMax(CsLpUseCaseObject* self, 
  * @return EebusError indicating the success or failure of the operation.
  */
 static inline EebusError CsLpcSetConsumptionNominalMax(CsLpUseCaseObject* self, const ScaledValue* new_nominal_max) {
-  return CsLpSetNominalMax(CS_LP_USE_CASE_OBJECT(self), new_nominal_max);
+    return CsLpSetNominalMax(CS_LP_USE_CASE_OBJECT(self), new_nominal_max);
 }
 
 /**
@@ -190,7 +190,7 @@ static inline EebusError CsLpcSetConsumptionNominalMax(CsLpUseCaseObject* self, 
 static inline ElectricalConnectionCharacteristicTypeType CsLpcGetElectricalConnectionCharacteristicType(
     const CsLpUseCaseObject* self
 ) {
-  return CsLpGetElectricalConnectionCharacteristicType(CS_LP_USE_CASE_OBJECT(self));
+    return CsLpGetElectricalConnectionCharacteristicType(CS_LP_USE_CASE_OBJECT(self));
 }
 
 #ifdef __cplusplus

@@ -42,6 +42,7 @@ static const UseCaseInterface mam_mpc_use_case_methods = {
 
 static const UseCaseActorType valid_actor_types[] = {kUseCaseActorTypeMonitoredUnit};
 static const EntityTypeType valid_entity_types[]  = {
+    kEntityTypeTypeBattery,
     kEntityTypeTypeCompressor,
     kEntityTypeTypeElectricalImmersionHeater,
     kEntityTypeTypeEVSE,
@@ -106,46 +107,46 @@ static EebusError
 MaMpcUseCaseConstruct(MaMpcUseCase* self, EntityLocalObject* local_entity, MaMpcListenerObject* ma_mpc_listener);
 
 EebusError AddFeatures(UseCaseObject* self, EntityLocalObject* entity) {
-  UNUSED(self);
-  // client features
-  const FeatureTypeType client_features[] = {
-      kFeatureTypeTypeElectricalConnection,
-      kFeatureTypeTypeMeasurement,
-  };
+    UNUSED(self);
+    // client features
+    const FeatureTypeType client_features[] = {
+        kFeatureTypeTypeElectricalConnection,
+        kFeatureTypeTypeMeasurement,
+    };
 
-  for (size_t i = 0; i < ARRAY_SIZE(client_features); ++i) {
-    if (ENTITY_LOCAL_ADD_FEATURE_WITH_TYPE_AND_ROLE(entity, client_features[i], kRoleTypeClient) == NULL) {
-      return kEebusErrorInit;
+    for (size_t i = 0; i < ARRAY_SIZE(client_features); ++i) {
+        if (ENTITY_LOCAL_ADD_FEATURE_WITH_TYPE_AND_ROLE(entity, client_features[i], kRoleTypeClient) == NULL) {
+            return kEebusErrorInit;
+        }
     }
-  }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError
 MaMpcUseCaseConstruct(MaMpcUseCase* self, EntityLocalObject* local_entity, MaMpcListenerObject* ma_mpc_listener) {
-  UseCaseConstruct(USE_CASE(self), &ma_mpc_use_case_info, local_entity, MaMpcHandleEvent);
-  // Override "virtual functions table"
-  USE_CASE_INTERFACE(self) = &mam_mpc_use_case_methods;
+    UseCaseConstruct(USE_CASE(self), &ma_mpc_use_case_info, local_entity, MaMpcHandleEvent);
+    // Override "virtual functions table"
+    USE_CASE_INTERFACE(self) = &mam_mpc_use_case_methods;
 
-  self->ma_mpc_listener = ma_mpc_listener;
-  return AddFeatures(USE_CASE_OBJECT(self), local_entity);
+    self->ma_mpc_listener = ma_mpc_listener;
+    return AddFeatures(USE_CASE_OBJECT(self), local_entity);
 }
 
 MaMpcUseCaseObject* MaMpcUseCaseCreate(EntityLocalObject* local_entity, MaMpcListenerObject* ma_mpc_listener) {
-  MaMpcUseCase* ma_mpc_use_case = EEBUS_MALLOC(sizeof(*ma_mpc_use_case));
-  if (ma_mpc_use_case == NULL) {
-    return NULL;
-  }
+    MaMpcUseCase* ma_mpc_use_case = EEBUS_MALLOC(sizeof(*ma_mpc_use_case));
+    if (ma_mpc_use_case == NULL) {
+        return NULL;
+    }
 
-  if (MaMpcUseCaseConstruct(ma_mpc_use_case, local_entity, ma_mpc_listener) != kEebusErrorOk) {
-    MaMpcUseCaseDelete(MA_MPC_USE_CASE_OBJECT(ma_mpc_use_case));
-    return NULL;
-  }
+    if (MaMpcUseCaseConstruct(ma_mpc_use_case, local_entity, ma_mpc_listener) != kEebusErrorOk) {
+        MaMpcUseCaseDelete(MA_MPC_USE_CASE_OBJECT(ma_mpc_use_case));
+        return NULL;
+    }
 
-  return MA_MPC_USE_CASE_OBJECT(ma_mpc_use_case);
+    return MA_MPC_USE_CASE_OBJECT(ma_mpc_use_case);
 }
 
 void MaMpcUseCaseDestruct(UseCaseObject* self) {
-  UseCaseDestruct(self);
+    UseCaseDestruct(self);
 }

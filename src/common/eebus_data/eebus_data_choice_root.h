@@ -48,14 +48,14 @@ extern const EebusDataInterface eebus_data_choice_root_methods;
  * @param struct_name Structure name associated with Data record
  * @param c_cfg Choice Data configuration entry point
  */
-#define EEBUS_DATA_CHOICE_ROOT(struct_name, c_cfg)   \
-  {                                                  \
-      .interface_ = &eebus_data_choice_root_methods, \
-      .name       = "",                              \
-      .offset     = 0,                               \
-      .size       = sizeof(struct_name),             \
-      .metadata   = c_cfg,                           \
-  }
+#define EEBUS_DATA_CHOICE_ROOT(struct_name, c_cfg)     \
+    {                                                  \
+        .interface_ = &eebus_data_choice_root_methods, \
+        .name       = "",                              \
+        .offset     = 0,                               \
+        .size       = sizeof(struct_name),             \
+        .metadata   = c_cfg,                           \
+    }
 
 #ifdef __cplusplus
 }

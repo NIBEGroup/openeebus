@@ -33,112 +33,112 @@ extern "C" {
 typedef int32_t SensingStateType;
 
 enum {
-  kSensingStateTypeOn,                      /**< "on" */
-  kSensingStateTypeOff,                     /**< "off" */
-  kSensingStateTypeToggle,                  /**< "toggle" */
-  kSensingStateTypeLevel,                   /**< "level" */
-  kSensingStateTypeLevelUp,                 /**< "levelUp" */
-  kSensingStateTypeLevelDown,               /**< "levelDown" */
-  kSensingStateTypeLevelStart,              /**< "levelStart" */
-  kSensingStateTypeLevelStop,               /**< "levelStop" */
-  kSensingStateTypeLevelAbsolute,           /**< "levelAbsolute" */
-  kSensingStateTypeLevelRelative,           /**< "levelRelative" */
-  kSensingStateTypeLevelPercentageAbsolute, /**< "levelPercentageAbsolute" */
-  kSensingStateTypeLevelPercentageRelative, /**< "levelPercentageRelative" */
-  kSensingStateTypePressed,                 /**< "pressed" */
-  kSensingStateTypeLongPressed,             /**< "longPressed" */
-  kSensingStateTypeReleased,                /**< "released" */
-  kSensingStateTypeChanged,                 /**< "changed" */
-  kSensingStateTypeStarted,                 /**< "started" */
-  kSensingStateTypeStopped,                 /**< "stopped" */
-  kSensingStateTypePaused,                  /**< "paused" */
-  kSensingStateTypeMiddle,                  /**< "middle" */
-  kSensingStateTypeUp,                      /**< "up" */
-  kSensingStateTypeDown,                    /**< "down" */
-  kSensingStateTypeForward,                 /**< "forward" */
-  kSensingStateTypeBackwards,               /**< "backwards" */
-  kSensingStateTypeOpen,                    /**< "open" */
-  kSensingStateTypeClosed,                  /**< "closed" */
-  kSensingStateTypeOpening,                 /**< "opening" */
-  kSensingStateTypeClosing,                 /**< "closing" */
-  kSensingStateTypeHigh,                    /**< "high" */
-  kSensingStateTypeLow,                     /**< "low" */
-  kSensingStateTypeDay,                     /**< "day" */
-  kSensingStateTypeNight,                   /**< "night" */
-  kSensingStateTypeDetected,                /**< "detected" */
-  kSensingStateTypeNotDetected,             /**< "notDetected" */
-  kSensingStateTypeAlarmed,                 /**< "alarmed" */
-  kSensingStateTypeNotAlarmed,              /**< "notAlarmed" */
+    kSensingStateTypeOn,                      /**< "on" */
+    kSensingStateTypeOff,                     /**< "off" */
+    kSensingStateTypeToggle,                  /**< "toggle" */
+    kSensingStateTypeLevel,                   /**< "level" */
+    kSensingStateTypeLevelUp,                 /**< "levelUp" */
+    kSensingStateTypeLevelDown,               /**< "levelDown" */
+    kSensingStateTypeLevelStart,              /**< "levelStart" */
+    kSensingStateTypeLevelStop,               /**< "levelStop" */
+    kSensingStateTypeLevelAbsolute,           /**< "levelAbsolute" */
+    kSensingStateTypeLevelRelative,           /**< "levelRelative" */
+    kSensingStateTypeLevelPercentageAbsolute, /**< "levelPercentageAbsolute" */
+    kSensingStateTypeLevelPercentageRelative, /**< "levelPercentageRelative" */
+    kSensingStateTypePressed,                 /**< "pressed" */
+    kSensingStateTypeLongPressed,             /**< "longPressed" */
+    kSensingStateTypeReleased,                /**< "released" */
+    kSensingStateTypeChanged,                 /**< "changed" */
+    kSensingStateTypeStarted,                 /**< "started" */
+    kSensingStateTypeStopped,                 /**< "stopped" */
+    kSensingStateTypePaused,                  /**< "paused" */
+    kSensingStateTypeMiddle,                  /**< "middle" */
+    kSensingStateTypeUp,                      /**< "up" */
+    kSensingStateTypeDown,                    /**< "down" */
+    kSensingStateTypeForward,                 /**< "forward" */
+    kSensingStateTypeBackwards,               /**< "backwards" */
+    kSensingStateTypeOpen,                    /**< "open" */
+    kSensingStateTypeClosed,                  /**< "closed" */
+    kSensingStateTypeOpening,                 /**< "opening" */
+    kSensingStateTypeClosing,                 /**< "closing" */
+    kSensingStateTypeHigh,                    /**< "high" */
+    kSensingStateTypeLow,                     /**< "low" */
+    kSensingStateTypeDay,                     /**< "day" */
+    kSensingStateTypeNight,                   /**< "night" */
+    kSensingStateTypeDetected,                /**< "detected" */
+    kSensingStateTypeNotDetected,             /**< "notDetected" */
+    kSensingStateTypeAlarmed,                 /**< "alarmed" */
+    kSensingStateTypeNotAlarmed,              /**< "notAlarmed" */
 };
 
 typedef int32_t SensingTypeType;
 
 enum {
-  kSensingTypeTypeSwitch,            /**< "switch" */
-  kSensingTypeTypeButton,            /**< "button" */
-  kSensingTypeTypeLevel,             /**< "level" */
-  kSensingTypeTypeLevelSwitch,       /**< "levelSwitch" */
-  kSensingTypeTypeWindowHandle,      /**< "windowHandle" */
-  kSensingTypeTypeContactSensor,     /**< "contactSensor" */
-  kSensingTypeTypeOccupancySensor,   /**< "occupancySensor" */
-  kSensingTypeTypeMotionDetector,    /**< "motionDetector" */
-  kSensingTypeTypeFireDetector,      /**< "fireDetector" */
-  kSensingTypeTypeSmokeDetector,     /**< "smokeDetector" */
-  kSensingTypeTypeHeatDetector,      /**< "heatDetector" */
-  kSensingTypeTypeWaterDetector,     /**< "waterDetector" */
-  kSensingTypeTypeGasDetector,       /**< "gasDetector" */
-  kSensingTypeTypeAlarmSensor,       /**< "alarmSensor" */
-  kSensingTypeTypePowerAlarmSensor,  /**< "powerAlarmSensor" */
-  kSensingTypeTypeDayNightIndicator, /**< "dayNightIndicator" */
+    kSensingTypeTypeSwitch,            /**< "switch" */
+    kSensingTypeTypeButton,            /**< "button" */
+    kSensingTypeTypeLevel,             /**< "level" */
+    kSensingTypeTypeLevelSwitch,       /**< "levelSwitch" */
+    kSensingTypeTypeWindowHandle,      /**< "windowHandle" */
+    kSensingTypeTypeContactSensor,     /**< "contactSensor" */
+    kSensingTypeTypeOccupancySensor,   /**< "occupancySensor" */
+    kSensingTypeTypeMotionDetector,    /**< "motionDetector" */
+    kSensingTypeTypeFireDetector,      /**< "fireDetector" */
+    kSensingTypeTypeSmokeDetector,     /**< "smokeDetector" */
+    kSensingTypeTypeHeatDetector,      /**< "heatDetector" */
+    kSensingTypeTypeWaterDetector,     /**< "waterDetector" */
+    kSensingTypeTypeGasDetector,       /**< "gasDetector" */
+    kSensingTypeTypeAlarmSensor,       /**< "alarmSensor" */
+    kSensingTypeTypePowerAlarmSensor,  /**< "powerAlarmSensor" */
+    kSensingTypeTypeDayNightIndicator, /**< "dayNightIndicator" */
 };
 
 typedef struct SensingDataType SensingDataType;
 
 struct SensingDataType {
-  const AbsoluteOrRelativeTimeType* timestamp; /**< "timestamp" */
-  const SensingStateType* state;               /**< "state" */
-  const ScaledNumberType* value;               /**< "value" */
+    const AbsoluteOrRelativeTimeType* timestamp; /**< "timestamp" */
+    const SensingStateType* state;               /**< "state" */
+    const ScaledNumberType* value;               /**< "value" */
 };
 
 typedef struct SensingDataElementsType SensingDataElementsType;
 
 struct SensingDataElementsType {
-  ElementTagType timestamp;              /**< "timestamp" */
-  ElementTagType state;                  /**< "state" */
-  const ScaledNumberElementsType* value; /**< "value" */
+    ElementTagType timestamp;              /**< "timestamp" */
+    ElementTagType state;                  /**< "state" */
+    const ScaledNumberElementsType* value; /**< "value" */
 };
 
 typedef struct SensingListDataType SensingListDataType;
 
 struct SensingListDataType {
-  const SensingDataType* const* sensing_data; /**< "sensingData" */
-  size_t sensing_data_size;
+    const SensingDataType* const* sensing_data; /**< "sensingData" */
+    size_t sensing_data_size;
 };
 
 typedef struct SensingListDataSelectorsType SensingListDataSelectorsType;
 
 struct SensingListDataSelectorsType {
-  const TimestampIntervalType* timestamp_interval; /**< "timestampInterval" */
+    const TimestampIntervalType* timestamp_interval; /**< "timestampInterval" */
 };
 
 typedef struct SensingDescriptionDataType SensingDescriptionDataType;
 
 struct SensingDescriptionDataType {
-  const SensingTypeType* sensing_type; /**< "sensingType" */
-  const UnitOfMeasurementType* unit;   /**< "unit" */
-  const ScopeTypeType* scope_type;     /**< "scopeType" */
-  LabelType label;                     /**< "label" */
-  DescriptionType description;         /**< "description" */
+    const SensingTypeType* sensing_type; /**< "sensingType" */
+    const UnitOfMeasurementType* unit;   /**< "unit" */
+    const ScopeTypeType* scope_type;     /**< "scopeType" */
+    LabelType label;                     /**< "label" */
+    DescriptionType description;         /**< "description" */
 };
 
 typedef struct SensingDescriptionDataElementsType SensingDescriptionDataElementsType;
 
 struct SensingDescriptionDataElementsType {
-  ElementTagType sensing_type; /**< "sensingType" */
-  ElementTagType unit;         /**< "unit" */
-  ElementTagType scope_type;   /**< "scopeType" */
-  ElementTagType label;        /**< "label" */
-  ElementTagType description;  /**< "description" */
+    ElementTagType sensing_type; /**< "sensingType" */
+    ElementTagType unit;         /**< "unit" */
+    ElementTagType scope_type;   /**< "scopeType" */
+    ElementTagType label;        /**< "label" */
+    ElementTagType description;  /**< "description" */
 };
 
 #ifdef __cplusplus

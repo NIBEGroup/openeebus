@@ -37,8 +37,8 @@ typedef struct DateTimeParseInterface DateTimeParseInterface;
  * @brief Json Date Time Converter interface type definition
  */
 struct DateTimeParseInterface {
-  EebusError (*parse)(const char* s, void* buf, size_t buf_size);
-  char* (*to_string)(const void* buf, size_t buf_size);
+    EebusError (*parse)(const char* s, void* buf, size_t buf_size);
+    char* (*to_string)(const void* buf, size_t buf_size);
 };
 
 /**
@@ -56,7 +56,7 @@ extern const DateTimeParseInterface absolute_or_relative_time_parser;
  * @brief EEBUS Data Absolute or Relative Time type check
  */
 #define EEBUS_DATA_IS_ABSOLUTE_OR_RELATIVE_TIME(cfg) \
-  (EEBUS_DATA_INTERFACE(cfg) == &eebus_data_absolute_or_relative_time_methods)
+    (EEBUS_DATA_INTERFACE(cfg) == &eebus_data_absolute_or_relative_time_methods)
 
 /**
  * @brief A helper definition to declare Date & Time configurations
@@ -67,13 +67,13 @@ extern const DateTimeParseInterface absolute_or_relative_time_parser;
  * are used to calcualte the offset of filed within structure
  */
 #define EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, parser) \
-  {                                                                               \
-      .interface_ = &eebus_data_absolute_or_relative_time_methods,                \
-      .name       = ed_name,                                                      \
-      .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),              \
-      .size       = sizeof(*STRUCT_MEMBER(struct_name, struct_field)),            \
-      .metadata   = parser,                                                       \
-  }
+    {                                                                             \
+        .interface_ = &eebus_data_absolute_or_relative_time_methods,              \
+        .name       = ed_name,                                                    \
+        .offset     = STRUCT_MEMBER_OFFSET(struct_name, struct_field),            \
+        .size       = sizeof(*STRUCT_MEMBER(struct_name, struct_field)),          \
+        .metadata   = parser,                                                     \
+    }
 
 /**
  * @brief Duration Data configuration
@@ -83,7 +83,7 @@ extern const DateTimeParseInterface absolute_or_relative_time_parser;
  * are used to calcualte the offset of filed within structure
  */
 #define EEBUS_DATA_DURATION(ed_name, struct_name, struct_field) \
-  EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, &duration_parser)
+    EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, &duration_parser)
 
 /**
  * @brief Time Data configuration
@@ -93,7 +93,7 @@ extern const DateTimeParseInterface absolute_or_relative_time_parser;
  * are used to calcualte the offset of filed within structure
  */
 #define EEBUS_DATA_TIME(ed_name, struct_name, struct_field) \
-  EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, &time_parser)
+    EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, &time_parser)
 
 /**
  * @brief Date Data configuration
@@ -103,7 +103,7 @@ extern const DateTimeParseInterface absolute_or_relative_time_parser;
  * are used to calcualte the offset of filed within structure
  */
 #define EEBUS_DATA_DATE(ed_name, struct_name, struct_field) \
-  EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, &date_parser)
+    EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, &date_parser)
 
 /**
  * @brief Date & Time Data configuration
@@ -113,7 +113,7 @@ extern const DateTimeParseInterface absolute_or_relative_time_parser;
  * are used to calcualte the offset of filed within structure
  */
 #define EEBUS_DATA_DATE_TIME(ed_name, struct_name, struct_field) \
-  EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, &date_time_parser)
+    EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, &date_time_parser)
 
 /**
  * @brief Absolute or Relative Time Data configuration
@@ -123,6 +123,6 @@ extern const DateTimeParseInterface absolute_or_relative_time_parser;
  * are used to calcualte the offset of filed within structure
  */
 #define EEBUS_DATA_ABSOLUTE_OR_RELATIVE_TIME(ed_name, struct_name, struct_field) \
-  EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, &absolute_or_relative_time_parser)
+    EEBUS_DATA_DATE_TIME_TEMPLATE(ed_name, struct_name, struct_field, &absolute_or_relative_time_parser)
 
 #endif  // SRC_COMMON_EEBUS_DATA_EEBUS_DATA_EEBUS_DATA_ABSOLUTE_OR_RELATIVE_TIME_H_

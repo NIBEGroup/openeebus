@@ -52,11 +52,11 @@ char* StringNCopy(const char* src, size_t n);
  * @param s String to be deallocated
  */
 static inline void StringDelete(char* s) {
-  if (s == NULL) {
-    return;
-  }
+    if (s == NULL) {
+        return;
+    }
 
-  EEBUS_FREE(s);
+    EEBUS_FREE(s);
 }
 
 /**
@@ -64,7 +64,7 @@ static inline void StringDelete(char* s) {
  * @param s String to be checked
  */
 static inline bool StringIsEmpty(const char* s) {
-  return (s == NULL) || (strlen(s) == 0);
+    return (s == NULL) || (strlen(s) == 0);
 }
 
 /**

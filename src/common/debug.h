@@ -29,20 +29,20 @@ extern "C" {
 #endif  // __cplusplus
 
 /** Print the debug message */
-#define DEBUG_PRINTF(stream, fmt, ...) \
-  do {                                 \
-    if (stream) {                      \
-      DebugPrintf((fmt), __VA_ARGS__); \
-    }                                  \
-  } while (0)
+#define DEBUG_PRINTF(stream, fmt, ...)       \
+    do {                                     \
+        if (stream) {                        \
+            DebugPrintf((fmt), __VA_ARGS__); \
+        }                                    \
+    } while (0)
 
 /** Debug hexdump */
 #define DEBUG_HEXDUMP(stream, in, len) \
-  do {                                 \
-    if (stream) {                      \
-      DebugHexdump((in), (len));       \
-    }                                  \
-  } while (0)
+    do {                               \
+        if (stream) {                  \
+            DebugHexdump((in), (len)); \
+        }                              \
+    } while (0)
 
 /**
  * @brief Debug printf(), add a timestamp printing before

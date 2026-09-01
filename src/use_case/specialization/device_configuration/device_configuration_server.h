@@ -32,9 +32,9 @@ extern "C" {
 typedef struct DeviceConfigurationServer DeviceConfigurationServer;
 
 struct DeviceConfigurationServer {
-  FeatureInfoServer feature_info_server;
+    FeatureInfoServer feature_info_server;
 
-  DeviceConfigurationCommon device_cfg_common;
+    DeviceConfigurationCommon device_cfg_common;
 };
 
 /**

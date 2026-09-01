@@ -52,50 +52,50 @@ typedef struct ShipConnectionObject ShipConnectionObject;
  * @brief Ship Connection Interface structure
  */
 struct ShipConnectionInterface {
-  /**
-   * @brief "Extends" the DataWriterInterface
-   */
-  DataWriterInterface data_writer_interface;
-  /**
-   * @brief Transformed from Run()
-   * @return kEebusErrorOk if started ok, error code otherwise
-   */
-  EebusError (*start)(ShipConnectionObject* self, WebsocketCreatorObject* websocket_creator);
-  /**
-   * @brief Executes close_connection(false, 0, "")
-   */
-  void (*stop)(ShipConnectionObject* self);
-  /**
-   * @brief Transformed from DataHandler()
-   */
-  WebsocketObject* (*get_websocket_connection)(ShipConnectionObject* self);
-  /**
-   * @brief Transformed from CloseConnection()
-   */
-  void (*close_connection)(ShipConnectionObject* self, bool safe, int32_t code, const char* reason);
-  /**
-   * @brief Transformed from RemoteSKI()
-   */
-  const char* (*get_remote_ski)(ShipConnectionObject* self);
-  /**
-   * @brief Transformed from ApprovePendingHandshake()
-   */
-  void (*approve_pending_handshake)(ShipConnectionObject* self);
-  /**
-   * @brief Transformed from AbortPendingHandshake()
-   */
-  void (*abort_pending_handshake)(ShipConnectionObject* self);
-  /**
-   * @brief Transformed from ShipHandshakeState()
-   */
-  SmeState (*get_state)(ShipConnectionObject* self, EebusError* err);
+    /**
+     * @brief "Extends" the DataWriterInterface
+     */
+    DataWriterInterface data_writer_interface;
+    /**
+     * @brief Transformed from Run()
+     * @return kEebusErrorOk if started ok, error code otherwise
+     */
+    EebusError (*start)(ShipConnectionObject* self, WebsocketCreatorObject* websocket_creator);
+    /**
+     * @brief Executes close_connection(false, 0, "")
+     */
+    void (*stop)(ShipConnectionObject* self);
+    /**
+     * @brief Transformed from DataHandler()
+     */
+    WebsocketObject* (*get_websocket_connection)(ShipConnectionObject* self);
+    /**
+     * @brief Transformed from CloseConnection()
+     */
+    void (*close_connection)(ShipConnectionObject* self, bool safe, int32_t code, const char* reason);
+    /**
+     * @brief Transformed from RemoteSKI()
+     */
+    const char* (*get_remote_ski)(ShipConnectionObject* self);
+    /**
+     * @brief Transformed from ApprovePendingHandshake()
+     */
+    void (*approve_pending_handshake)(ShipConnectionObject* self);
+    /**
+     * @brief Transformed from AbortPendingHandshake()
+     */
+    void (*abort_pending_handshake)(ShipConnectionObject* self);
+    /**
+     * @brief Transformed from ShipHandshakeState()
+     */
+    SmeState (*get_state)(ShipConnectionObject* self, EebusError* err);
 };
 
 /**
  * @brief Ship Connection Object structure
  */
 struct ShipConnectionObject {
-  const ShipConnectionInterface* interface_;
+    const ShipConnectionInterface* interface_;
 };
 
 /**
@@ -128,37 +128,37 @@ struct ShipConnectionObject {
  * @brief Ship Connection Get Websocket Connection caller definition
  */
 #define SHIP_CONNECTION_GET_WEBSOCKET_CONNECTION(obj) \
-  (SHIP_CONNECTION_INTERFACE(obj)->get_websocket_connection(SHIP_CONNECTION_OBJECT(obj)))
+    (SHIP_CONNECTION_INTERFACE(obj)->get_websocket_connection(SHIP_CONNECTION_OBJECT(obj)))
 
 /**
  * @brief Ship Connection Close connection caller definition
  */
 #define SHIP_CONNECTION_CLOSE_CONNECTION(obj, safe, code, reason) \
-  (SHIP_CONNECTION_INTERFACE(obj)->close_connection(SHIP_CONNECTION_OBJECT(obj), (safe), (code), (reason)))
+    (SHIP_CONNECTION_INTERFACE(obj)->close_connection(SHIP_CONNECTION_OBJECT(obj), (safe), (code), (reason)))
 
 /**
  * @brief Ship Connection Remote SKI caller definition
  */
 #define SHIP_CONNECTION_GET_REMOTE_SKI(obj) \
-  (SHIP_CONNECTION_INTERFACE(obj)->get_remote_ski(SHIP_CONNECTION_OBJECT(obj)))
+    (SHIP_CONNECTION_INTERFACE(obj)->get_remote_ski(SHIP_CONNECTION_OBJECT(obj)))
 
 /**
  * @brief Ship Connection Approve Pending Handshake caller definition
  */
 #define SHIP_CONNECTION_APPROVE_PENDING_HANDSHAKE(obj) \
-  (SHIP_CONNECTION_INTERFACE(obj)->approve_pending_handshake(SHIP_CONNECTION_OBJECT(obj)))
+    (SHIP_CONNECTION_INTERFACE(obj)->approve_pending_handshake(SHIP_CONNECTION_OBJECT(obj)))
 
 /**
  * @brief Ship Connection Abort Pending Handshake caller definition
  */
 #define SHIP_CONNECTION_ABORT_PENDING_HANDSHAKE(obj) \
-  (SHIP_CONNECTION_INTERFACE(obj)->abort_pending_handshake(SHIP_CONNECTION_OBJECT(obj)))
+    (SHIP_CONNECTION_INTERFACE(obj)->abort_pending_handshake(SHIP_CONNECTION_OBJECT(obj)))
 
 /**
  * @brief Ship Connection Get State caller definition
  */
 #define SHIP_CONNECTION_GET_SHIP_STATE(obj, err) \
-  (SHIP_CONNECTION_INTERFACE(obj)->get_state(SHIP_CONNECTION_OBJECT(obj), err))
+    (SHIP_CONNECTION_INTERFACE(obj)->get_state(SHIP_CONNECTION_OBJECT(obj), err))
 
 #ifdef __cplusplus
 }

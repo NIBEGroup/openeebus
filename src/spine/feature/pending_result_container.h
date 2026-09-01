@@ -31,10 +31,10 @@ extern "C" {
 PendingResultContainerObject* PendingResultContainerCreate(void);
 
 static inline void PendingResultContainerDelete(PendingResultContainerObject* self) {
-  if (self != NULL) {
-    PENDING_RESULT_CONTAINER_DESTRUCT(self);
-    EEBUS_FREE(self);
-  }
+    if (self != NULL) {
+        PENDING_RESULT_CONTAINER_DESTRUCT(self);
+        EEBUS_FREE(self);
+    }
 }
 
 #ifdef __cplusplus

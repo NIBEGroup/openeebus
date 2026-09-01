@@ -30,18 +30,22 @@ extern "C" {
 typedef struct Device Device;
 
 struct Device {
-  /** Implements the Device Interface */
-  DeviceObject obj;
+    /** Implements the Device Interface */
+    DeviceObject obj;
 
-  const char* address;
-  const DeviceTypeType* type;
-  const NetworkManagementFeatureSetType* feature_set;
+    const char* address;
+    const DeviceTypeType* type;
+    const NetworkManagementFeatureSetType* feature_set;
 };
 
 #define DEVICE(obj) ((Device*)(obj))
 
 void DeviceConstruct(
-    Device* self, const char* addr, const char* type, const NetworkManagementFeatureSetType* feature_set);
+    Device* self,
+    const char* addr,
+    const char* type,
+    const NetworkManagementFeatureSetType* feature_set
+);
 void DeviceDestruct(DeviceObject* self);
 const char* DeviceGetAddress(const DeviceObject* self);
 const DeviceTypeType* DeviceGetDeviceType(const DeviceObject* self);

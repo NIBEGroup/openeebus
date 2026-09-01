@@ -33,18 +33,18 @@
 typedef struct PendingWriteRequest PendingWriteRequest;
 
 struct PendingWriteRequest {
-  /** Implements the Pending Write Request Interface */
-  PendingWriteRequestObject obj;
+    /** Implements the Pending Write Request Interface */
+    PendingWriteRequestObject obj;
 
-  const char* ski;
-  uint64_t msg_counter;
-  uint64_t num_approvals;
-  EebusCountdown countdown;
+    const char* ski;
+    uint64_t msg_counter;
+    uint64_t num_approvals;
+    EebusCountdown countdown;
 
-  CommandClassifierType cmd_classifier;
-  CmdType* cmd;
-  HeaderType* header;
-  FeatureAddressType* feature_address;
+    CommandClassifierType cmd_classifier;
+    CmdType* cmd;
+    HeaderType* header;
+    FeatureAddressType* feature_address;
 };
 
 #define PENDING_WRITE_REQUEST(obj) ((PendingWriteRequest*)(obj))
@@ -76,159 +76,159 @@ static EebusError PendingWriteRequestCopyMessageInfo(PendingWriteRequest* self, 
 static EebusError PendingWriteRequestConstruct(PendingWriteRequest* self, const Message* msg);
 
 EebusError PendingWriteRequestCopyMessageInfo(PendingWriteRequest* self, const Message* msg) {
-  EebusError err = EEBUS_DATA_COPY(ModelGetHeaderCfg(), &msg->request_header, &self->header);
-  if ((self->header == NULL) || (err != kEebusErrorOk)) {
-    return kEebusErrorInit;
-  }
+    EebusError err = EEBUS_DATA_COPY(ModelGetHeaderCfg(), &msg->request_header, &self->header);
+    if ((self->header == NULL) || (err != kEebusErrorOk)) {
+        return kEebusErrorInit;
+    }
 
-  self->cmd_classifier = msg->cmd_classifier;
+    self->cmd_classifier = msg->cmd_classifier;
 
-  self->cmd = CmdCopy(msg->cmd);
-  if (self->cmd == NULL) {
-    return kEebusErrorInit;
-  }
+    self->cmd = CmdCopy(msg->cmd);
+    if (self->cmd == NULL) {
+        return kEebusErrorInit;
+    }
 
-  self->feature_address = FeatureAddressCopy(FEATURE_GET_ADDRESS(FEATURE_OBJECT(msg->feature_remote)));
-  if (self->feature_address == NULL) {
-    return kEebusErrorInit;
-  }
+    self->feature_address = FeatureAddressCopy(FEATURE_GET_ADDRESS(FEATURE_OBJECT(msg->feature_remote)));
+    if (self->feature_address == NULL) {
+        return kEebusErrorInit;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 EebusError PendingWriteRequestConstruct(PendingWriteRequest* self, const Message* msg) {
-  // Override "virtual functions table"
-  PENDING_WRITE_REQUEST_INTERFACE(self) = &pending_write_request_methods;
+    // Override "virtual functions table"
+    PENDING_WRITE_REQUEST_INTERFACE(self) = &pending_write_request_methods;
 
-  self->ski             = NULL;
-  self->msg_counter     = 0;
-  self->num_approvals   = 0;
-  self->cmd_classifier  = (CommandClassifierType)0;
-  self->countdown       = EEBUS_COUNTDOWN(TIME_MS_TO_S(kDefaultMaxResponseDelayMs));
-  self->cmd             = NULL;
-  self->header          = NULL;
-  self->feature_address = NULL;
+    self->ski             = NULL;
+    self->msg_counter     = 0;
+    self->num_approvals   = 0;
+    self->cmd_classifier  = (CommandClassifierType)0;
+    self->countdown       = EEBUS_COUNTDOWN(TIME_MS_TO_S(kDefaultMaxResponseDelayMs));
+    self->cmd             = NULL;
+    self->header          = NULL;
+    self->feature_address = NULL;
 
-  // Initialize member variables
-  self->ski = StringCopy(DEVICE_REMOTE_GET_SKI(msg->device_remote));
-  if (self->ski == NULL) {
-    return kEebusErrorInit;
-  }
+    // Initialize member variables
+    self->ski = StringCopy(DEVICE_REMOTE_GET_SKI(msg->device_remote));
+    if (self->ski == NULL) {
+        return kEebusErrorInit;
+    }
 
-  if (msg->request_header->msg_cnt != NULL) {
-    self->msg_counter = *msg->request_header->msg_cnt;
-  } else {
-    return kEebusErrorInit;
-  }
+    if (msg->request_header->msg_cnt != NULL) {
+        self->msg_counter = *msg->request_header->msg_cnt;
+    } else {
+        return kEebusErrorInit;
+    }
 
-  const EebusError err = PendingWriteRequestCopyMessageInfo(self, msg);
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    const EebusError err = PendingWriteRequestCopyMessageInfo(self, msg);
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 PendingWriteRequestObject* PendingWriteRequestCreate(const Message* msg) {
-  PendingWriteRequest* const pending_write_request = (PendingWriteRequest*)EEBUS_MALLOC(sizeof(PendingWriteRequest));
-  if (pending_write_request == NULL) {
-    return NULL;
-  }
+    PendingWriteRequest* const pending_write_request = (PendingWriteRequest*)EEBUS_MALLOC(sizeof(PendingWriteRequest));
+    if (pending_write_request == NULL) {
+        return NULL;
+    }
 
-  const EebusError err = PendingWriteRequestConstruct(pending_write_request, msg);
-  if (err != kEebusErrorOk) {
-    PendingWriteRequestDelete(PENDING_WRITE_REQUEST_OBJECT(pending_write_request));
-    return NULL;
-  }
+    const EebusError err = PendingWriteRequestConstruct(pending_write_request, msg);
+    if (err != kEebusErrorOk) {
+        PendingWriteRequestDelete(PENDING_WRITE_REQUEST_OBJECT(pending_write_request));
+        return NULL;
+    }
 
-  return PENDING_WRITE_REQUEST_OBJECT(pending_write_request);
+    return PENDING_WRITE_REQUEST_OBJECT(pending_write_request);
 }
 
 void Destruct(PendingWriteRequestObject* self) {
-  PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
+    PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
 
-  StringDelete((char*)pwr->ski);
-  pwr->ski = NULL;
+    StringDelete((char*)pwr->ski);
+    pwr->ski = NULL;
 
-  ModelDataDelete(ModelGetHeaderCfg(), pwr->header);
-  pwr->header = NULL;
+    ModelDataDelete(ModelGetHeaderCfg(), pwr->header);
+    pwr->header = NULL;
 
-  CmdDelete(pwr->cmd);
-  pwr->cmd = NULL;
+    CmdDelete(pwr->cmd);
+    pwr->cmd = NULL;
 
-  FeatureAddressDelete(pwr->feature_address);
-  pwr->feature_address = NULL;
+    FeatureAddressDelete(pwr->feature_address);
+    pwr->feature_address = NULL;
 }
 
 const char* GetSki(PendingWriteRequestObject* self) {
-  PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
-  return pwr->ski;
+    PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
+    return pwr->ski;
 }
 
 uint64_t GetMessageCounter(PendingWriteRequestObject* self) {
-  PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
-  return pwr->msg_counter;
+    PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
+    return pwr->msg_counter;
 }
 
 EebusError GetMessage(PendingWriteRequestObject* self, FeatureLocalObject* fl, Message* msg) {
-  PendingWriteRequest* const pwr = PENDING_WRITE_REQUEST(self);
+    PendingWriteRequest* const pwr = PENDING_WRITE_REQUEST(self);
 
-  if (fl == NULL || msg == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (fl == NULL || msg == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  DeviceLocalObject* dl = FEATURE_LOCAL_GET_DEVICE(fl);
-  if (dl == NULL) {
-    return kEebusErrorNotAvailable;
-  }
+    DeviceLocalObject* dl = FEATURE_LOCAL_GET_DEVICE(fl);
+    if (dl == NULL) {
+        return kEebusErrorNotAvailable;
+    }
 
-  DeviceRemoteObject* dr = DEVICE_LOCAL_GET_REMOTE_DEVICE_WITH_ADDRESS(dl, pwr->feature_address->device);
-  if (dr == NULL) {
-    return kEebusErrorNotAvailable;
-  }
+    DeviceRemoteObject* dr = DEVICE_LOCAL_GET_REMOTE_DEVICE_WITH_ADDRESS(dl, pwr->feature_address->device);
+    if (dr == NULL) {
+        return kEebusErrorNotAvailable;
+    }
 
-  FeatureRemoteObject* fr = DEVICE_REMOTE_GET_FEATURE_WITH_ADDRESS(dr, pwr->feature_address);
-  if (fr == NULL) {
-    return kEebusErrorNotAvailable;
-  }
+    FeatureRemoteObject* fr = DEVICE_REMOTE_GET_FEATURE_WITH_ADDRESS(dr, pwr->feature_address);
+    if (fr == NULL) {
+        return kEebusErrorNotAvailable;
+    }
 
-  EntityRemoteObject* er = FEATURE_REMOTE_GET_ENTITY(fr);
-  if (er == NULL) {
-    return kEebusErrorNotAvailable;
-  }
+    EntityRemoteObject* er = FEATURE_REMOTE_GET_ENTITY(fr);
+    if (er == NULL) {
+        return kEebusErrorNotAvailable;
+    }
 
-  *msg = (Message){
-      .request_header = pwr->header,
-      .cmd_classifier = pwr->cmd_classifier,
-      .cmd            = pwr->cmd,
-      .filter_partial = CmdGetFilterPartial(pwr->cmd),
-      .filter_delete  = CmdGetFilterDelete(pwr->cmd),
-      .feature_remote = fr,
-      .entity_remote  = er,
-      .device_remote  = dr,
-  };
+    *msg = (Message){
+        .request_header = pwr->header,
+        .cmd_classifier = pwr->cmd_classifier,
+        .cmd            = pwr->cmd,
+        .filter_partial = CmdGetFilterPartial(pwr->cmd),
+        .filter_delete  = CmdGetFilterDelete(pwr->cmd),
+        .feature_remote = fr,
+        .entity_remote  = er,
+        .device_remote  = dr,
+    };
 
-  return kEebusErrorOk;
+    return kEebusErrorOk;
 }
 
 uint64_t GetNumberOfApprovals(PendingWriteRequestObject* self) {
-  PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
-  return pwr->num_approvals;
+    PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
+    return pwr->num_approvals;
 }
 
 void AddApproval(PendingWriteRequestObject* self) {
-  PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
-  pwr->num_approvals++;
+    PendingWriteRequest* pwr = PENDING_WRITE_REQUEST(self);
+    pwr->num_approvals++;
 }
 
 uint32_t GetRemainingTime(PendingWriteRequestObject* self) {
-  return EebusCountdownGetRemaining(&PENDING_WRITE_REQUEST(self)->countdown);
+    return EebusCountdownGetRemaining(&PENDING_WRITE_REQUEST(self)->countdown);
 }
 
 void UpdateRemainingTime(PendingWriteRequestObject* self) {
-  EebusCountdownTick(&PENDING_WRITE_REQUEST(self)->countdown);
+    EebusCountdownTick(&PENDING_WRITE_REQUEST(self)->countdown);
 }
 
 bool HasExpired(PendingWriteRequestObject* self) {
-  return EebusCountdownHasExpired(&PENDING_WRITE_REQUEST(self)->countdown);
+    return EebusCountdownHasExpired(&PENDING_WRITE_REQUEST(self)->countdown);
 }

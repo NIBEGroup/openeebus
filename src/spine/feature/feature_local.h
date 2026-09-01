@@ -33,10 +33,10 @@ extern "C" {
 FeatureLocalObject* FeatureLocalCreate(uint32_t id, EntityLocalObject* entity, FeatureTypeType type, RoleType role);
 
 static inline void FeatureLocalDelete(FeatureLocalObject* feature_local) {
-  if (feature_local != NULL) {
-    FEATURE_DESTRUCT(FEATURE_OBJECT(feature_local));
-    EEBUS_FREE(feature_local);
-  }
+    if (feature_local != NULL) {
+        FEATURE_DESTRUCT(FEATURE_OBJECT(feature_local));
+        EEBUS_FREE(feature_local);
+    }
 }
 
 #ifdef __cplusplus

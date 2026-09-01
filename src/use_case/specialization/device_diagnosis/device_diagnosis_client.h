@@ -31,8 +31,8 @@ extern "C" {
 typedef struct DeviceDiagnosisClient DeviceDiagnosisClient;
 
 struct DeviceDiagnosisClient {
-  FeatureInfoClient feature_info_client;
-  DeviceDiagnosisCommon device_diag_common;
+    FeatureInfoClient feature_info_client;
+    DeviceDiagnosisCommon device_diag_common;
 };
 
 /**
@@ -79,9 +79,9 @@ DeviceDiagnosisClient* DeviceDiagnosisClientCreate(EntityLocalObject* local_enti
  *             If self is NULL, the function does nothing.
  */
 static inline void DeviceDiagnosisClientDelete(DeviceDiagnosisClient* self) {
-  if (self != NULL) {
-    EEBUS_FREE(self);
-  }
+    if (self != NULL) {
+        EEBUS_FREE(self);
+    }
 }
 
 /**

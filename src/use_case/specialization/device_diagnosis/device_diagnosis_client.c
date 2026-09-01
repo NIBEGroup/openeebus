@@ -28,55 +28,55 @@ EebusError DeviceDiagnosisClientConstruct(
     EntityLocalObject* local_entity,
     EntityRemoteObject* remote_entity
 ) {
-  const EebusError err = FeatureInfoClientConstruct(
-      &self->feature_info_client,
-      kFeatureTypeTypeDeviceDiagnosis,
-      local_entity,
-      remote_entity
-  );
+    const EebusError err = FeatureInfoClientConstruct(
+        &self->feature_info_client,
+        kFeatureTypeTypeDeviceDiagnosis,
+        local_entity,
+        remote_entity
+    );
 
-  if (err != kEebusErrorOk) {
-    return err;
-  }
+    if (err != kEebusErrorOk) {
+        return err;
+    }
 
-  DeviceDiagnosisCommonConstruct(&self->device_diag_common, NULL, self->feature_info_client.remote_feature);
-  return kEebusErrorOk;
+    DeviceDiagnosisCommonConstruct(&self->device_diag_common, NULL, self->feature_info_client.remote_feature);
+    return kEebusErrorOk;
 }
 
 DeviceDiagnosisClient* DeviceDiagnosisClientCreate(EntityLocalObject* local_entity, EntityRemoteObject* remote_entity) {
-  DeviceDiagnosisClient* const ddc = EEBUS_MALLOC(sizeof(*ddc));
-  if (ddc == NULL) {
-    return NULL;
-  }
+    DeviceDiagnosisClient* const ddc = EEBUS_MALLOC(sizeof(*ddc));
+    if (ddc == NULL) {
+        return NULL;
+    }
 
-  if (DeviceDiagnosisClientConstruct(ddc, local_entity, remote_entity) != kEebusErrorOk) {
-    EEBUS_FREE(ddc);
-    return NULL;
-  }
+    if (DeviceDiagnosisClientConstruct(ddc, local_entity, remote_entity) != kEebusErrorOk) {
+        EEBUS_FREE(ddc);
+        return NULL;
+    }
 
-  return ddc;
+    return ddc;
 }
 
 EebusError DeviceDiagnosisClientRequestState(DeviceDiagnosisClient* self) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeDeviceDiagnosisStateData,
-      NULL,
-      NULL,
-      NULL,
-      NULL
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeDeviceDiagnosisStateData,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    );
 }
 
 EebusError DeviceDiagnosisClientRequestHeartbeat(DeviceDiagnosisClient* self) {
-  return FEATURE_LOCAL_READ_FROM_REMOTE(
-      self->feature_info_client.local_feature,
-      self->feature_info_client.remote_feature,
-      kFunctionTypeDeviceDiagnosisHeartbeatData,
-      NULL,
-      NULL,
-      NULL,
-      NULL
-  );
+    return FEATURE_LOCAL_READ_FROM_REMOTE(
+        self->feature_info_client.local_feature,
+        self->feature_info_client.remote_feature,
+        kFunctionTypeDeviceDiagnosisHeartbeatData,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    );
 }

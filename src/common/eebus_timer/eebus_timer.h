@@ -33,10 +33,10 @@ extern "C" {
 EebusTimerObject* EebusTimerCreate(EebusTimerTimeoutCallback cb, void* ctx);
 
 static inline void EebusTimerDelete(EebusTimerObject* eebus_timer) {
-  if (eebus_timer != NULL) {
-    EEBUS_TIMER_DESTRUCT(eebus_timer);
-    EEBUS_FREE(eebus_timer);
-  }
+    if (eebus_timer != NULL) {
+        EEBUS_TIMER_DESTRUCT(eebus_timer);
+        EEBUS_FREE(eebus_timer);
+    }
 }
 
 #ifdef __cplusplus

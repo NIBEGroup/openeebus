@@ -35,22 +35,24 @@ extern "C" {
 typedef struct FeatureLink FeatureLink;
 
 struct FeatureLink {
-  uint64_t id;
-  FeatureLocalObject* server_feature;
-  FeatureRemoteObject* client_feature;
+    uint64_t id;
+    FeatureLocalObject* server_feature;
+    FeatureRemoteObject* client_feature;
 };
 
 FeatureLink* FeatureLinkCreate(uint64_t id, FeatureLocalObject* server_feature, FeatureRemoteObject* client_feature);
-static inline void FeatureLinkDelete(FeatureLink* self) { EEBUS_FREE(self); };
+static inline void FeatureLinkDelete(FeatureLink* self) {
+    EEBUS_FREE(self);
+};
 bool FeatureLinkRemoteDeviceMatch(const FeatureLink* self, const DeviceRemoteObject* remote_device);
 bool FeatureLinkRemoteEntityMatch(const FeatureLink* self, const EntityRemoteObject* remote_entity);
 
 static inline const FeatureAddressType* FeatureLinkGetClientAddr(const FeatureLink* self) {
-  return FEATURE_GET_ADDRESS(FEATURE_OBJECT(self->client_feature));
+    return FEATURE_GET_ADDRESS(FEATURE_OBJECT(self->client_feature));
 }
 
 static inline const FeatureAddressType* FeatureLinkGetServerAddr(const FeatureLink* self) {
-  return FEATURE_GET_ADDRESS(FEATURE_OBJECT(self->server_feature));
+    return FEATURE_GET_ADDRESS(FEATURE_OBJECT(self->server_feature));
 }
 
 #ifdef __cplusplus

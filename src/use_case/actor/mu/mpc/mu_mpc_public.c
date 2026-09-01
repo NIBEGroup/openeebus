@@ -21,19 +21,19 @@ EebusError MuMpcGetMeasurementData(
     MuMpcMeasurementNameId measurement_element_id,
     ScaledValue* measurement_value
 ) {
-  if (measurement_value == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (measurement_value == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  MuMpcUseCase* const mu_mpc    = MU_MPC_USE_CASE(self);
-  const UseCase* const use_case = USE_CASE(self);
-  return EebusMonitorContainerGetMeasurementData(
-      &mu_mpc->monitor_container,
-      use_case->local_entity,
-      use_case->local_device,
-      measurement_element_id,
-      measurement_value
-  );
+    MuMpcUseCase* const mu_mpc    = MU_MPC_USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
+    return EebusMonitorContainerGetMeasurementData(
+        &mu_mpc->monitor_container,
+        use_case->local_entity,
+        use_case->local_device,
+        measurement_element_id,
+        measurement_value
+    );
 }
 
 EebusError MuMpcSetMeasurementDataCache(
@@ -43,24 +43,24 @@ EebusError MuMpcSetMeasurementDataCache(
     const EebusDateTime* timestamp,
     const MeasurementValueStateType* value_state
 ) {
-  if (measurement_value == NULL) {
-    return kEebusErrorInputArgumentNull;
-  }
+    if (measurement_value == NULL) {
+        return kEebusErrorInputArgumentNull;
+    }
 
-  MuMpcUseCase* const mu_mpc = MU_MPC_USE_CASE(self);
-  return EebusMonitorContainerSetMeasurementDataCache(
-      &mu_mpc->monitor_container,
-      measurement_name,
-      measurement_value,
-      timestamp,
-      value_state
-  );
+    MuMpcUseCase* const mu_mpc = MU_MPC_USE_CASE(self);
+    return EebusMonitorContainerSetMeasurementDataCache(
+        &mu_mpc->monitor_container,
+        measurement_name,
+        measurement_value,
+        timestamp,
+        value_state
+    );
 }
 
 EebusError MuMpcUpdate(const MuMpcUseCaseObject* self) {
-  MuMpcUseCase* const mu_mpc    = MU_MPC_USE_CASE(self);
-  const UseCase* const use_case = USE_CASE(self);
-  return EebusMonitorContainerUpdate(&mu_mpc->monitor_container, use_case->local_entity, use_case->local_device);
+    MuMpcUseCase* const mu_mpc    = MU_MPC_USE_CASE(self);
+    const UseCase* const use_case = USE_CASE(self);
+    return EebusMonitorContainerUpdate(&mu_mpc->monitor_container, use_case->local_entity, use_case->local_device);
 }
 
 EebusError MuMpcSetEnergyConsumedCache(
@@ -71,16 +71,16 @@ EebusError MuMpcSetEnergyConsumedCache(
     const EebusDateTime* start_time,
     const EebusDateTime* end_time
 ) {
-  MuMpcUseCase* const mu_mpc = MU_MPC_USE_CASE(self);
-  return EebusMonitorContainerSetMeasurementDataCacheWithTime(
-      &mu_mpc->monitor_container,
-      kMpcEnergyConsumed,
-      energy_consumed,
-      timestamp,
-      value_state,
-      start_time,
-      end_time
-  );
+    MuMpcUseCase* const mu_mpc = MU_MPC_USE_CASE(self);
+    return EebusMonitorContainerSetMeasurementDataCacheWithTime(
+        &mu_mpc->monitor_container,
+        kMpcEnergyConsumed,
+        energy_consumed,
+        timestamp,
+        value_state,
+        start_time,
+        end_time
+    );
 }
 
 EebusError MuMpcSetEnergyProducedCache(
@@ -91,14 +91,14 @@ EebusError MuMpcSetEnergyProducedCache(
     const EebusDateTime* start_time,
     const EebusDateTime* end_time
 ) {
-  MuMpcUseCase* const mu_mpc = MU_MPC_USE_CASE(self);
-  return EebusMonitorContainerSetMeasurementDataCacheWithTime(
-      &mu_mpc->monitor_container,
-      kMpcEnergyProduced,
-      energy_produced,
-      timestamp,
-      value_state,
-      start_time,
-      end_time
-  );
+    MuMpcUseCase* const mu_mpc = MU_MPC_USE_CASE(self);
+    return EebusMonitorContainerSetMeasurementDataCacheWithTime(
+        &mu_mpc->monitor_container,
+        kMpcEnergyProduced,
+        energy_produced,
+        timestamp,
+        value_state,
+        start_time,
+        end_time
+    );
 }

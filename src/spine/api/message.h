@@ -36,14 +36,14 @@ extern "C" {
 typedef struct Message Message;
 
 struct Message {
-  const HeaderType* request_header;
-  CommandClassifierType cmd_classifier;
-  const CmdType* cmd;
-  const FilterType* filter_partial;
-  const FilterType* filter_delete;
-  FeatureRemoteObject* feature_remote;
-  EntityRemoteObject* entity_remote;
-  DeviceRemoteObject* device_remote;
+    const HeaderType* request_header;
+    CommandClassifierType cmd_classifier;
+    const CmdType* cmd;
+    const FilterType* filter_partial;
+    const FilterType* filter_delete;
+    FeatureRemoteObject* feature_remote;
+    EntityRemoteObject* entity_remote;
+    DeviceRemoteObject* device_remote;
 };
 
 typedef struct FeatureLocalObject FeatureLocalObject;
@@ -51,35 +51,35 @@ typedef struct FeatureLocalObject FeatureLocalObject;
 typedef struct ReplyMessage ReplyMessage;
 
 struct ReplyMessage {
-  MsgCounterType msg_cnt_ref;
-  const void* function_data;
-  FunctionType function_type;
-  FeatureLocalObject* feature_local;
-  FeatureRemoteObject* feature_remote;
-  EntityRemoteObject* entity_remote;
-  DeviceRemoteObject* device_remote;
-  const char* ski;
+    MsgCounterType msg_cnt_ref;
+    const void* function_data;
+    FunctionType function_type;
+    FeatureLocalObject* feature_local;
+    FeatureRemoteObject* feature_remote;
+    EntityRemoteObject* entity_remote;
+    DeviceRemoteObject* device_remote;
+    const char* ski;
 };
 
 typedef struct ResultMessage ResultMessage;
 
 struct ResultMessage {
-  MsgCounterType msg_cnt_ref;
-  FunctionType function_type;
-  const ResultDataType* result_data;
-  FeatureLocalObject* feature_local;
-  FeatureRemoteObject* feature_remote;
-  EntityRemoteObject* entity_remote;
-  DeviceRemoteObject* device_remote;
+    MsgCounterType msg_cnt_ref;
+    FunctionType function_type;
+    const ResultDataType* result_data;
+    FeatureLocalObject* feature_local;
+    FeatureRemoteObject* feature_remote;
+    EntityRemoteObject* entity_remote;
+    DeviceRemoteObject* device_remote;
 };
 
 static inline SenderObject* MessageGetSender(const Message* msg) {
-  const DeviceRemoteObject* const dr = msg->device_remote;
-  if (dr == NULL) {
-    return NULL;
-  }
+    const DeviceRemoteObject* const dr = msg->device_remote;
+    if (dr == NULL) {
+        return NULL;
+    }
 
-  return DEVICE_REMOTE_GET_SENDER(dr);
+    return DEVICE_REMOTE_GET_SENDER(dr);
 }
 
 #ifdef __cplusplus

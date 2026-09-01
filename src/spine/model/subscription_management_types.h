@@ -36,69 +36,69 @@ typedef uint32_t SubscriptionIdType;
 typedef struct SubscriptionManagementEntryDataType SubscriptionManagementEntryDataType;
 
 struct SubscriptionManagementEntryDataType {
-  const SubscriptionIdType* subscription_id; /**< "subscriptionId" */
-  const FeatureAddressType* client_address;  /**< "clientAddress" */
-  const FeatureAddressType* server_address;  /**< "serverAddress" */
-  LabelType label;                           /**< "label" */
-  DescriptionType description;               /**< "description" */
+    const SubscriptionIdType* subscription_id; /**< "subscriptionId" */
+    const FeatureAddressType* client_address;  /**< "clientAddress" */
+    const FeatureAddressType* server_address;  /**< "serverAddress" */
+    LabelType label;                           /**< "label" */
+    DescriptionType description;               /**< "description" */
 };
 
 typedef struct SubscriptionManagementEntryDataElementsType SubscriptionManagementEntryDataElementsType;
 
 struct SubscriptionManagementEntryDataElementsType {
-  const ElementTagType subscription_id;             /**< "subscriptionId" */
-  const FeatureAddressElementsType* client_address; /**< "clientAddress" */
-  const FeatureAddressElementsType* server_address; /**< "serverAddress" */
-  ElementTagType label;                             /**< "label" */
-  ElementTagType description;                       /**< "description" */
+    const ElementTagType subscription_id;             /**< "subscriptionId" */
+    const FeatureAddressElementsType* client_address; /**< "clientAddress" */
+    const FeatureAddressElementsType* server_address; /**< "serverAddress" */
+    ElementTagType label;                             /**< "label" */
+    ElementTagType description;                       /**< "description" */
 };
 
 typedef struct SubscriptionManagementEntryListDataType SubscriptionManagementEntryListDataType;
 
 struct SubscriptionManagementEntryListDataType {
-  const SubscriptionManagementEntryDataType* const*
-      subscription_management_entry_data; /**< "subscriptionManagementEntryData" */
-  size_t subscription_management_entry_data_size;
+    const SubscriptionManagementEntryDataType* const*
+        subscription_management_entry_data; /**< "subscriptionManagementEntryData" */
+    size_t subscription_management_entry_data_size;
 };
 
 typedef struct SubscriptionManagementEntryListDataSelectorsType SubscriptionManagementEntryListDataSelectorsType;
 
 struct SubscriptionManagementEntryListDataSelectorsType {
-  const SubscriptionIdType* subscription_id; /**< "subscriptionId" */
-  const FeatureAddressType* client_address;  /**< "clientAddress" */
-  const FeatureAddressType* server_address;  /**< "serverAddress" */
+    const SubscriptionIdType* subscription_id; /**< "subscriptionId" */
+    const FeatureAddressType* client_address;  /**< "clientAddress" */
+    const FeatureAddressType* server_address;  /**< "serverAddress" */
 };
 
 typedef struct SubscriptionManagementRequestCallType SubscriptionManagementRequestCallType;
 
 struct SubscriptionManagementRequestCallType {
-  const FeatureAddressType* client_address;   /**< "clientAddress" */
-  const FeatureAddressType* server_address;   /**< "serverAddress" */
-  const FeatureTypeType* server_feature_type; /**< "serverFeatureType" */
+    const FeatureAddressType* client_address;   /**< "clientAddress" */
+    const FeatureAddressType* server_address;   /**< "serverAddress" */
+    const FeatureTypeType* server_feature_type; /**< "serverFeatureType" */
 };
 
 typedef struct SubscriptionManagementRequestCallElementsType SubscriptionManagementRequestCallElementsType;
 
 struct SubscriptionManagementRequestCallElementsType {
-  const FeatureAddressElementsType* client_address; /**< "clientAddress" */
-  const FeatureAddressElementsType* server_address; /**< "serverAddress" */
-  ElementTagType server_feature_type;               /**< "serverFeatureType" */
+    const FeatureAddressElementsType* client_address; /**< "clientAddress" */
+    const FeatureAddressElementsType* server_address; /**< "serverAddress" */
+    ElementTagType server_feature_type;               /**< "serverFeatureType" */
 };
 
 typedef struct SubscriptionManagementDeleteCallType SubscriptionManagementDeleteCallType;
 
 struct SubscriptionManagementDeleteCallType {
-  const SubscriptionIdType* subscription_id; /**< "subscriptionId" */
-  const FeatureAddressType* client_address;  /**< "clientAddress" */
-  const FeatureAddressType* server_address;  /**< "serverAddress" */
+    const SubscriptionIdType* subscription_id; /**< "subscriptionId" */
+    const FeatureAddressType* client_address;  /**< "clientAddress" */
+    const FeatureAddressType* server_address;  /**< "serverAddress" */
 };
 
 typedef struct SubscriptionManagementDeleteCallElementsType SubscriptionManagementDeleteCallElementsType;
 
 struct SubscriptionManagementDeleteCallElementsType {
-  ElementTagType subscription_id;                   /**< "subscriptionId" */
-  const FeatureAddressElementsType* client_address; /**< "clientAddress" */
-  const FeatureAddressElementsType* server_address; /**< "serverAddress" */
+    ElementTagType subscription_id;                   /**< "subscriptionId" */
+    const FeatureAddressElementsType* client_address; /**< "clientAddress" */
+    const FeatureAddressElementsType* server_address; /**< "serverAddress" */
 };
 
 SubscriptionManagementEntryDataType* SubscriptionManagementEntryDataCreate(

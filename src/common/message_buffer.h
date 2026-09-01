@@ -20,8 +20,8 @@
 #ifndef SRC_COMMON_MESSAGE_BUFFER_H_
 #define SRC_COMMON_MESSAGE_BUFFER_H_
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,9 +32,9 @@ typedef void (*MessageBufferDeallocator)(void*);
 typedef struct MessageBuffer MessageBuffer;
 
 struct MessageBuffer {
-  uint8_t* data;
-  size_t data_size;
-  MessageBufferDeallocator deallocator;
+    uint8_t* data;
+    size_t data_size;
+    MessageBufferDeallocator deallocator;
 };
 
 /**
@@ -57,7 +57,11 @@ void MessageBufferInit(MessageBuffer* msg_buf, uint8_t* data, size_t data_size);
  * Message Buffer release procedure
  */
 void MessageBufferInitWithDeallocator(
-    MessageBuffer* msg_buf, uint8_t* data, size_t data_size, MessageBufferDeallocator deallocator);
+    MessageBuffer* msg_buf,
+    uint8_t* data,
+    size_t data_size,
+    MessageBufferDeallocator deallocator
+);
 
 /**
  * @brief Release the Message Buffer instance

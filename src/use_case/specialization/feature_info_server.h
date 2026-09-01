@@ -32,12 +32,12 @@ extern "C" {
 typedef struct FeatureInfoServer FeatureInfoServer;
 
 struct FeatureInfoServer {
-  FeatureTypeType feature_type;
+    FeatureTypeType feature_type;
 
-  RoleType local_role;
-  DeviceLocalObject* local_device;
-  EntityLocalObject* local_entity;
-  FeatureLocalObject* local_feature;
+    RoleType local_role;
+    DeviceLocalObject* local_device;
+    EntityLocalObject* local_entity;
+    FeatureLocalObject* local_feature;
 };
 
 EebusError

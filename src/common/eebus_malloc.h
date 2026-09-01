@@ -26,7 +26,7 @@
 
 #define EEBUS_MALLOC(size) pvPortMalloc((size))
 #define EEBUS_FREE(size) vPortFree((size))
-#elif defined (MEMORY_LEAKS_TEST)
+#elif defined(MEMORY_LEAKS_TEST)
 #include <stdlib.h>
 
 #ifdef __cplusplus
