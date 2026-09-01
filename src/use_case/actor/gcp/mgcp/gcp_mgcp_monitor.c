@@ -40,13 +40,25 @@ EebusMonitorObject* GcpMgcpMonitorPowerCreate(const GcpMgcpMonitorPowerConfig* c
         return NULL;
     }
 
-    EebusMeasurementObject* const power_total = GcpMgcpMeasurementPowerTotalCreate(cfg->phases, &cfg->power_total_cfg);
+    EebusMeasurementObject* const power_total =
+        GcpMgcpMeasurementPowerTotalCreate(cfg->phases, &cfg->power_total_cfg);
     if (power_total == NULL) {
         EebusMonitorDelete(EEBUS_MONITOR_OBJECT(base));
         return NULL;
     }
 
     VectorPushBack(&base->measurements, power_total);
+
+    const EebusMonitorMeasurementParam phase_params[] = {
+        {kGcpPowerPhaseA, cfg->power_phase_a_cfg},
+        {kGcpPowerPhaseB, cfg->power_phase_b_cfg},
+        {kGcpPowerPhaseC, cfg->power_phase_c_cfg},
+    };
+    if (EebusMonitorBaseAddMeasurements(base, phase_params, ARRAY_SIZE(phase_params)) != kEebusErrorOk) {
+        EebusMonitorDelete(EEBUS_MONITOR_OBJECT(base));
+        return NULL;
+    }
+
     return EEBUS_MONITOR_OBJECT(base);
 }
 

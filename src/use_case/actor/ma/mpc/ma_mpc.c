@@ -42,6 +42,7 @@ static const UseCaseInterface mam_mpc_use_case_methods = {
 
 static const UseCaseActorType valid_actor_types[] = {kUseCaseActorTypeMonitoredUnit};
 static const EntityTypeType valid_entity_types[]  = {
+    kEntityTypeTypeBattery,
     kEntityTypeTypeCompressor,
     kEntityTypeTypeElectricalImmersionHeater,
     kEntityTypeTypeEVSE,

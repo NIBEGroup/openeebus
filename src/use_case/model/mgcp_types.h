@@ -39,6 +39,9 @@ typedef EebusMeasurementNameId GcpMeasurementNameId;
 
 /* Scenario 2 — momentary power */
 #define kGcpPowerTotal kMuPowerTotal /**< Total active power (W) */
+#define kGcpPowerPhaseA kMuPowerPhaseA /**< Phase A active power (W) */
+#define kGcpPowerPhaseB kMuPowerPhaseB /**< Phase B active power (W) */
+#define kGcpPowerPhaseC kMuPowerPhaseC /**< Phase C active power (W) */
 
 /* Scenario 3 — grid feed-in energy */
 #define kGcpEnergyFeedIn kMuEnergyFeedIn /**< Cumulative feed-in energy (Wh) */

@@ -28,6 +28,15 @@ static ScopeTypeType GetEnergyScopeType(GcpMeasurementNameId name) {
     }
 }
 
+static ElectricalConnectionPhaseNameType GetPowerPhase(GcpMeasurementNameId name) {
+    switch (name) {
+        case kGcpPowerPhaseA: return kElectricalConnectionPhaseNameTypeA;
+        case kGcpPowerPhaseB: return kElectricalConnectionPhaseNameTypeB;
+        case kGcpPowerPhaseC: return kElectricalConnectionPhaseNameTypeC;
+        default: return kElectricalConnectionPhaseNameTypeNone;
+    }
+}
+
 static ElectricalConnectionPhaseNameType GetCurrentPhase(GcpMeasurementNameId name) {
     switch (name) {
         case kGcpCurrentPhaseA: return kElectricalConnectionPhaseNameTypeA;
@@ -67,8 +76,12 @@ EebusMeasurementObject* GcpMgcpMeasurementCreate(GcpMeasurementNameId name, cons
     const int32_t measurement_group            = (int32_t)name & (int32_t)kGcpMonitorNameIdMask;
 
     if (measurement_group == kGcpMonitorPower) {
-        // kGcpPowerTotal is the only power measurement; use GcpMgcpMeasurementPowerTotalCreate() instead
-        return NULL;
+        if (name == kGcpPowerTotal) {
+            return NULL;
+        }
+        scope    = kScopeTypeTypeACPower;
+        phase    = GetPowerPhase(name);
+        strategy = EebusMeasurementBaseConfigurePower;
     } else if (measurement_group == kGcpMonitorEnergy) {
         scope    = GetEnergyScopeType(name);
         phase    = kElectricalConnectionPhaseNameTypeNone;

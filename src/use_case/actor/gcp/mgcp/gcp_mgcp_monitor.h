@@ -45,6 +45,9 @@ struct GcpMgcpMonitorPowerConfig {
     /** Phases connected to this meter (e.g. kElectricalConnectionPhaseNameTypeAbc for 3-phase) */
     ElectricalConnectionPhaseNameType phases;
     GcpMgcpMeasurementConfig power_total_cfg;
+    const GcpMgcpMeasurementConfig* power_phase_a_cfg;
+    const GcpMgcpMeasurementConfig* power_phase_b_cfg;
+    const GcpMgcpMeasurementConfig* power_phase_c_cfg;
 };
 
 /**
