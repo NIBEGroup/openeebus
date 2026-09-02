@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common/entity_address_list
+    ${EXECUTABLE_OUTPUT_PATH}/common/entity_address_list)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common/eebus_data
     ${EXECUTABLE_OUTPUT_PATH}/common/eebus_data)
 
