@@ -16,88 +16,47 @@
 #include <gtest/gtest.h>
 
 #include <string_view>
-
-#include "src/common/string_util.h"
-#include "tests/src/json.h"
 #include "tests/src/ship/ship_connection/ship_connection/ship_connection_test_suite.h"
 
 using std::literals::string_view_literals::operator""sv;
-using testing::_;
-using testing::Return;
+constexpr std::string_view kPinInitMessage{R"({"connectionPinState": [{"pinState": "none"}]})"sv};
 
-struct ShipSmePinCheckInitTestInput {
-  std::string_view description     = ""sv;
-  const char* close_error_msg      = "";
-  std::string_view msg             = R"({"connectionPinState": [{"pinState": "none"}]})"sv;
-  bool msg_send_successful         = false;
-  SmeState expected_sme_state      = kSmeStateError;
-};
-
-class ShipConnectionPinCheckInitTests : public ShipConnectionTestSuite,
-                                        public ::testing::WithParamInterface<ShipSmePinCheckInitTestInput> {};
-
-std::ostream& operator<<(std::ostream& os, const ShipSmePinCheckInitTestInput& input) {
-  return os << input.description;
-}
-
-TEST_P(ShipConnectionPinCheckInitTests, SmePinCheckInit) {
-  // Arrange:
-  // Set initial SME state
-  SetShipConnectionState(kSmePinStateCheckInit);
-  // Init message buffer
-  MessageBuffer msg_buf  = {0};
-  const EebusError error = MessageBufferInitHelper(&msg_buf, GetParam().msg);
-  ASSERT_EQ(error, kEebusErrorOk) << "Wrong test input!";
-  ShipConnectionWebsocketCallback(kWebsocketCallbackTypeRead, msg_buf.data, msg_buf.data_size, &sc);
-
-  // Calculate message length and expect message to be sent or not
-  const size_t msg_size      = msg_buf.data_size - 1;
-  const size_t ret_num_bytes = GetParam().msg_send_successful ? msg_size : 0;
-  EXPECT_CALL(*websocket_mock->gmock, Write(sc.websocket, _, msg_size))
-      .WillOnce(Return(static_cast<int32_t>(ret_num_bytes)));
-
-  // Expect timer function calls
-  if (GetParam().msg_send_successful) {
-    EXPECT_CALL(*wfr_timer_mock->gmock, Start(sc.wait_for_ready_timer, cmiTimeout, false));
-    EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer)).Times(2);
-    EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
-    EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer));
-  } else {
-    EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer));
-    EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
-    EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer));
+class PinCheckInitMessageSendTests : public ShipConnectionTestSuite {
+ protected:
+  void SetUp() override {
+    ShipConnectionTestSuite::SetUp();
+    SetShipConnectionState(kSmePinStateCheckInit);
+    ASSERT_EQ(MessageBufferInitHelper(&msg_buf, kPinInitMessage), kEebusErrorOk) << "Wrong test input!";
+    ShipConnectionWebsocketCallback(kWebsocketCallbackTypeRead, msg_buf.data, msg_buf.data_size, &sc);
   }
 
-  EXPECT_CALL(
-      *ifp_mock->gmock,
-      HandleShipStateUpdate(
-          sc.info_provider,
-          testing::StrCaseEq(TEST_REMOTE_SKI),
-          GetParam().expected_sme_state,
-          testing::StrCaseEq("")
-      )
-  );
-  ExpectCloseWithError(GetParam().close_error_msg, false);
+  MessageBuffer msg_buf{0};
+};
 
-  // Act: Receive and send PIN requirement
+TEST_F(PinCheckInitMessageSendTests, MessageSuccessfullySent) {
+  // Arrange: Expect PIN requirement message to be sent successfully
+  ExpectWebsocketWrite(msg_buf, true);
+  EXPECT_CALL(*wfr_timer_mock->gmock, Start(sc.wait_for_ready_timer, cmiTimeout, false));
+  EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer));
+  ExpectStateUpdate(kSmePinStateCheckOk);
+
+  // Act: Try to send PIN requirement
   SmePinStateCheckInit(&sc);
 
-  // Assert: SME state changed accordingly
-  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, NULL), GetParam().expected_sme_state);
+  // Assert: SME is in kSmePinStateCheckOk
+  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), kSmePinStateCheckOk);
+  ExpectConnectionClose("", false);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    ShipConnectionPinCheckInitTests,
-    ShipConnectionPinCheckInitTests,
-    ::testing::Values(
-        ShipSmePinCheckInitTestInput{
-            .description     = "Error sending PIN message"sv,
-            .close_error_msg = "Error sending PIN requirement message",
-        },
-        ShipSmePinCheckInitTestInput{
-            .description         = "PIN message successfully sent"sv,
-            .msg_send_successful = true,
-            .expected_sme_state  = kSmePinStateCheckOk,
-        }
-    )
-);
+TEST_F(PinCheckInitMessageSendTests, MessageFailedToSend) {
+  // Arrange: Expect PIN requirement message to fail to send and SME to enter error state
+  ExpectWebsocketWrite(msg_buf, false);
+  ExpectStateUpdate(kSmeStateError);
+  ExpectConnectionClose("Error sending PIN requirement message", false);
+
+  // Act: Try to send PIN requirement
+  SmePinStateCheckInit(&sc);
+
+  // Assert: SME is in kSmeStateError
+  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), kSmeStateError);
+}

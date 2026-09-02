@@ -21,6 +21,7 @@
 #ifndef SRC_USE_CASE_SPECIALIZATION_MEASUREMENT_MEASUREMENT_CLIENT_H_
 #define SRC_USE_CASE_SPECIALIZATION_MEASUREMENT_MEASUREMENT_CLIENT_H_
 
+#include "src/spine/api/feature_local_interface.h"
 #include "src/use_case/specialization/feature_info_client.h"
 #include "src/use_case/specialization/measurement/measurement_common.h"
 
@@ -101,7 +102,9 @@ EebusError MeasurementClientRequestConstraints(
 EebusError MeasurementClientRequestData(
     MeasurementClient* self,
     const MeasurementListDataSelectorsType* selector,
-    const MeasurementDataElementsType* elements
+    const MeasurementDataElementsType* elements,
+    ReplyMessageCallback cb,
+    void* ctx
 );
 
 #ifdef __cplusplus

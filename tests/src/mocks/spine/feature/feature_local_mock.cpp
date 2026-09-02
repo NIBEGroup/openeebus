@@ -28,9 +28,6 @@ static DeviceLocalObject* GetDevice(const FeatureLocalObject* self);
 static EntityLocalObject* GetEntity(const FeatureLocalObject* self);
 static const void* GetData(const FeatureLocalObject* self, FunctionType function_type);
 static void SetFunctionOperations(FeatureLocalObject* self, FunctionType type, bool read, bool write);
-static EebusError
-AddResponseCallback(FeatureLocalObject* self, MsgCounterType msg_counter_ref, ResponseMessageCallback cb, void* ctx);
-static void AddResultCallback(FeatureLocalObject* self, ResponseMessageCallback cb, void* ctx);
 static EebusError AddWriteApprovalCallback(FeatureLocalObject* self, WriteApprovalCallback cb, void* ctx);
 static EebusError TryApproveWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt);
 static EebusError DenyWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err);
@@ -44,20 +41,6 @@ static EebusError UpdateData(
     const FilterType* filter_delete
 );
 static void SetData(FeatureLocalObject* self, FunctionType function_type, void* data);
-static EebusError RequestRemoteData(
-    FeatureLocalObject* self,
-    FunctionType function_type,
-    const FilterType* filter_partial,
-    FeatureRemoteObject* dest_feature
-);
-static EebusError RequestRemoteDataBySenderAddress(
-    FeatureLocalObject* self,
-    const CmdType* cmd,
-    SenderObject* sender,
-    const char* dest_ski,
-    const FeatureAddressType* dest_addr,
-    uint32_t max_delay
-);
 static bool HasSubscriptionToRemote(const FeatureLocalObject* self, const FeatureAddressType* remote_addr);
 static EebusError SubscribeToRemote(FeatureLocalObject* self, const FeatureAddressType* remote_addr);
 static EebusError RemoveRemoteSubscription(FeatureLocalObject* self, const FeatureAddressType* remote_addr);
@@ -69,6 +52,25 @@ static void RemoveAllRemoteBindings(FeatureLocalObject* self);
 static EebusError HandleMessage(FeatureLocalObject* self, const Message* msg);
 static NodeManagementDetailedDiscoveryFeatureInformationType* CreateInformation(const FeatureLocalObject* self);
 static void Tick(FeatureLocalObject* self);
+static EebusError WriteToRemote(
+    FeatureLocalObject* self,
+    FeatureRemoteObject* dest_feature,
+    FunctionType fcn_type,
+    const void* data,
+    const FilterType* filter_partial,
+    const FilterType* filter_delete,
+    ResultMessageCallback cb,
+    void* ctx
+);
+static EebusError ReadFromRemote(
+    FeatureLocalObject* self,
+    FeatureRemoteObject* dest_feature,
+    FunctionType function_type,
+    const void* selectors,
+    const void* elements,
+    ReplyMessageCallback cb,
+    void* ctx
+);
 
 static const FeatureLocalInterface feature_local_methods = {
     .feature_interface = {
@@ -86,8 +88,6 @@ static const FeatureLocalInterface feature_local_methods = {
     .get_entity                            = GetEntity,
     .get_data                              = GetData,
     .set_function_operations               = SetFunctionOperations,
-    .add_response_callback                 = AddResponseCallback,
-    .add_result_callback                   = AddResultCallback,
     .add_write_approval_callback           = AddWriteApprovalCallback,
     .try_approve_write                     = TryApproveWrite,
     .deny_write                            = DenyWrite,
@@ -95,8 +95,6 @@ static const FeatureLocalInterface feature_local_methods = {
     .data_copy                             = DataCopy,
     .update_data                           = UpdateData,
     .set_data                              = SetData,
-    .request_remote_data                   = RequestRemoteData,
-    .request_remote_data_by_sender_address = RequestRemoteDataBySenderAddress,
     .has_subscription_to_remote            = HasSubscriptionToRemote,
     .subscribe_to_remote                   = SubscribeToRemote,
     .remove_remote_subscription            = RemoveRemoteSubscription,
@@ -108,6 +106,8 @@ static const FeatureLocalInterface feature_local_methods = {
     .handle_message                        = HandleMessage,
     .create_information                    = CreateInformation,
     .tick                                  = Tick,
+    .write_to_remote                       = WriteToRemote,
+    .read_from_remote                      = ReadFromRemote,
 };
 
 static EebusError FeatureLocalMockConstruct(FeatureLocalMock* self);
@@ -199,17 +199,6 @@ void SetFunctionOperations(FeatureLocalObject* self, FunctionType type, bool rea
   mock->gmock->SetFunctionOperations(self, type, read, write);
 }
 
-EebusError
-AddResponseCallback(FeatureLocalObject* self, MsgCounterType msg_counter_ref, ResponseMessageCallback cb, void* ctx) {
-  FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
-  return mock->gmock->AddResponseCallback(self, msg_counter_ref, cb, ctx);
-}
-
-void AddResultCallback(FeatureLocalObject* self, ResponseMessageCallback cb, void* ctx) {
-  FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
-  mock->gmock->AddResultCallback(self, cb, ctx);
-}
-
 EebusError AddWriteApprovalCallback(FeatureLocalObject* self, WriteApprovalCallback cb, void* ctx) {
   FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
   return mock->gmock->AddWriteApprovalCallback(self, cb, ctx);
@@ -249,28 +238,6 @@ EebusError UpdateData(
 void SetData(FeatureLocalObject* self, FunctionType function_type, void* data) {
   FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
   mock->gmock->SetData(self, function_type, data);
-}
-
-EebusError RequestRemoteData(
-    FeatureLocalObject* self,
-    FunctionType function_type,
-    const FilterType* filter_partial,
-    FeatureRemoteObject* dest_feature
-) {
-  FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
-  return mock->gmock->RequestRemoteData(self, function_type, filter_partial, dest_feature);
-}
-
-EebusError RequestRemoteDataBySenderAddress(
-    FeatureLocalObject* self,
-    const CmdType* cmd,
-    SenderObject* sender,
-    const char* dest_ski,
-    const FeatureAddressType* dest_addr,
-    uint32_t max_delay
-) {
-  FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
-  return mock->gmock->RequestRemoteDataBySenderAddress(self, cmd, sender, dest_ski, dest_addr, max_delay);
 }
 
 bool HasSubscriptionToRemote(const FeatureLocalObject* self, const FeatureAddressType* remote_addr) {
@@ -326,4 +293,31 @@ NodeManagementDetailedDiscoveryFeatureInformationType* CreateInformation(const F
 void Tick(FeatureLocalObject* self) {
   FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
   mock->gmock->Tick(self);
+}
+
+EebusError WriteToRemote(
+    FeatureLocalObject* self,
+    FeatureRemoteObject* dest_feature,
+    FunctionType fcn_type,
+    const void* data,
+    const FilterType* filter_partial,
+    const FilterType* filter_delete,
+    ResultMessageCallback cb,
+    void* ctx
+) {
+  FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
+  return mock->gmock->WriteToRemote(self, dest_feature, fcn_type, data, filter_partial, filter_delete, cb, ctx);
+}
+
+EebusError ReadFromRemote(
+    FeatureLocalObject* self,
+    FeatureRemoteObject* dest_feature,
+    FunctionType function_type,
+    const void* selectors,
+    const void* elements,
+    ReplyMessageCallback cb,
+    void* ctx
+) {
+  FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
+  return mock->gmock->ReadFromRemote(self, dest_feature, function_type, selectors, elements, cb, ctx);
 }

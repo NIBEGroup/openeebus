@@ -33,6 +33,8 @@
 #include "src/common/eebus_errors.h"
 #include "src/common/eebus_malloc.h"
 
+static const size_t kMaxElementsNum = EEBUS_DATA_LIST_MAX_ELEMENTS_NUM;
+
 static void* CreateEmpty(const EebusDataCfg* cfg, void* base_addr);
 static EebusError FromJsonObjectItem(const EebusDataCfg* cfg, void* base_addr, const JsonObject* json_item);
 static EebusError ToJsonObjectItem(const EebusDataCfg* cfg, const void* base_addr, JsonObject** json_item);
@@ -144,6 +146,10 @@ void* CreateEmpty(const EebusDataCfg* cfg, void* base_addr) {
 }
 
 void** CreateListBuffer(size_t n) {
+  if ((n > SIZE_MAX / sizeof(void*)) || (n > kMaxElementsNum)) {
+    return NULL;
+  }
+
   const size_t buf_size = n * sizeof(void*);
   void** const buf      = (void**)EEBUS_MALLOC(buf_size);
   if (buf != NULL) {

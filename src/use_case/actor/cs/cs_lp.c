@@ -382,13 +382,10 @@ EebusError AddElectricalConnection(CsLpUseCase* self, EntityLocalObject* entity)
     return err;
   }
 
-  static const ElectricalConnectionCharacteristicContextType characteristic_context
-      = kElectricalConnectionCharacteristicContextTypeEntity;
-
   const ElectricalConnectionCharacteristicDataType new_characteristic = {
       .electrical_connection_id = &(ElectricalConnectionIdType){cs_lp->electrical_connection_id},
       .parameter_id             = &(ElectricalConnectionParameterIdType){0},
-      .characteristic_context   = &(ElectricalConnectionCharacteristicContextType){characteristic_context},
+      .characteristic_context   = &kEccContextEntity,
       .characteristic_type      = &self->nominal_max_characteristic,
       .unit                     = &(UnitOfMeasurementType){kUnitOfMeasurementTypeW},
   };
@@ -436,6 +433,7 @@ EebusError CsLpUseCaseConstruct(
   self->electrical_connection_id   = electrical_connection_id;
   self->nominal_max_characteristic = (ElectricalConnectionCharacteristicTypeType)0;
   self->cs_lp_listener             = cs_lp_listener;
+  self->remote_eg_entity_addr      = NULL;
   self->heartbeat_diag_client      = NULL;
   self->heartbeat_keo_workaround   = false;
 
@@ -502,8 +500,10 @@ CsLpUseCaseObject* CsLpUseCaseCreate(
 void CsLpUseCaseDestruct(UseCaseObject* self) {
   CsLpUseCase* cs_lp = CS_LP_USE_CASE(self);
 
-  DeviceDiagnosisClientDelete(cs_lp->heartbeat_diag_client);
-  cs_lp->heartbeat_diag_client = NULL;
+  EntityAddressDelete(cs_lp->remote_eg_entity_addr);
+  cs_lp->remote_eg_entity_addr = NULL;
+
+  RemoveDeviceDiagnosisClient(cs_lp);
 
   UseCaseDestruct(self);
 }

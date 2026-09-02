@@ -43,6 +43,7 @@ static void UnregisterRemoteSki(EebusServiceObject* self, const char* ski);
 static void CancelPairingWithSki(EebusServiceObject* self, const char* ski);
 static void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible);
 static const char* GetLocalSki(EebusServiceObject* self);
+static const char* GetQrCodeString(EebusServiceObject* self);
 
 static const EebusServiceInterface eebus_service_methods = {
     .ship_node_reader_interface = {
@@ -67,6 +68,7 @@ static const EebusServiceInterface eebus_service_methods = {
     .cancel_pairing_with_ski             = CancelPairingWithSki,
     .set_pairing_possible                = SetPairingPossible,
     .get_local_ski                       = GetLocalSki,
+    .get_qr_code_string                  = GetQrCodeString,
 };
 
 static EebusError EebusServiceMockConstruct(EebusServiceMock* self);
@@ -191,4 +193,9 @@ void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible) {
 const char* GetLocalSki(EebusServiceObject* self) {
   EebusServiceMock* const mock = EEBUS_SERVICE_MOCK(self);
   return mock->gmock->GetLocalSki(self);
+}
+
+const char* GetQrCodeString(EebusServiceObject* self) {
+  EebusServiceMock* const mock = EEBUS_SERVICE_MOCK(self);
+  return mock->gmock->GetQrCodeString(self);
 }

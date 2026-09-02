@@ -36,7 +36,8 @@ class SenderGMockInterface {
       SenderObject* self,
       const FeatureAddressType* sender_addr,
       const FeatureAddressType* dest_addr,
-      const CmdType* cmd
+      const CmdType* cmd,
+      uint64_t* msg_cnt
   ) = 0;
   virtual EebusError
   Reply(SenderObject* self, const HeaderType* request_header, const FeatureAddressType* sender_addr, const CmdType* cmd)
@@ -51,7 +52,8 @@ class SenderGMockInterface {
       SenderObject* self,
       const FeatureAddressType* sender_addr,
       const FeatureAddressType* dest_addr,
-      const CmdType* cmd
+      const CmdType* cmd,
+      uint64_t* msg_cnt
   ) = 0;
   virtual EebusError CallSubscribe(
       SenderObject* self,
@@ -86,10 +88,16 @@ class SenderGMock : public SenderGMockInterface {
  public:
   virtual ~SenderGMock() {};
   MOCK_METHOD1(Destruct, void(SenderObject*));
-  MOCK_METHOD4(Read, EebusError(SenderObject*, const FeatureAddressType*, const FeatureAddressType*, const CmdType*));
+  MOCK_METHOD5(
+      Read,
+      EebusError(SenderObject*, const FeatureAddressType*, const FeatureAddressType*, const CmdType*, uint64_t*)
+  );
   MOCK_METHOD4(Reply, EebusError(SenderObject*, const HeaderType*, const FeatureAddressType*, const CmdType*));
   MOCK_METHOD4(Notify, EebusError(SenderObject*, const FeatureAddressType*, const FeatureAddressType*, const CmdType*));
-  MOCK_METHOD4(Write, EebusError(SenderObject*, const FeatureAddressType*, const FeatureAddressType*, const CmdType*));
+  MOCK_METHOD5(
+      Write,
+      EebusError(SenderObject*, const FeatureAddressType*, const FeatureAddressType*, const CmdType*, uint64_t*)
+  );
   MOCK_METHOD4(
       CallSubscribe,
       EebusError(SenderObject*, const FeatureAddressType*, const FeatureAddressType*, FeatureTypeType)

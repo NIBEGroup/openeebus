@@ -34,8 +34,8 @@ The source code in this repository implements the EEBUS protocol, based on the [
 
 | Use Case |  Actors  | Scenarios | Description                          |
 |----------|----------|-----------|--------------------------------------|
-| LPC      |  EG, CS  |  1, 2, 4  | Limitation of power consumption      |
-| LPP      |  EG, CS  |  1, 2, 4  | Limitation of power production       |
+| LPC      |  EG, CS  |   1 - 4   | Limitation of power consumption      |
+| LPP      |  EG, CS  |   1 - 4   | Limitation of power production       |
 | MPC      |  MA, MU  |   1 - 5   | Monitoring of power consumption      |
 | MGCP     |  MA, GCP |   1 - 7   | Monitoring of grid connection point  |
 
@@ -60,6 +60,14 @@ The current implementation of the OpenEEBUS by NIBE library supports a subset of
 * [Building on Linux](docs/build_linux.md)
 * [Building on macOS](docs/build_macos.md)
 * [Building on Windows](docs/build_windows.md)
+
+### Configuration
+
+* [Compile-Time Configuration](docs/configuration.md)
+
+### API Changes
+
+* [API Changes](docs/api_changes.md)
 
 ## Support
 

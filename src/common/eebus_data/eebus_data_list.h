@@ -25,6 +25,16 @@
 #include "src/common/eebus_data/eebus_data_simple.h"
 #include "src/common/struct_util.h"
 
+/*
+ * Upper bound for list elements accepted by JSON parsing and list growth APIs.
+ * The default cap limits memory usage and parsing work for unusually large
+ * inputs, which helps reduce denial-of-service risk. Products/builds with
+ * different resource constraints can override this value at compile time.
+ */
+#ifndef EEBUS_DATA_LIST_MAX_ELEMENTS_NUM
+#define EEBUS_DATA_LIST_MAX_ELEMENTS_NUM 10000
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus

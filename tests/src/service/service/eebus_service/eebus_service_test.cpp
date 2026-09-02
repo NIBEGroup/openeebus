@@ -24,6 +24,7 @@
 #include "src/common/eebus_arguments.h"
 #include "src/common/eebus_device_info.h"
 #include "src/common/eebus_malloc.h"
+#include "src/common/string_util.h"
 #include "src/common/vector.h"
 #include "src/ship/ship_node/ship_node.h"
 #include "src/spine/device/device_local.h"
@@ -174,4 +175,9 @@ TEST_F(EebusServiceTestSuite, eebus_service_start_stop) {
   EXPECT_CALL(*ship_node_mock->gmock, Stop(SHIP_NODE_OBJECT(ship_node_mock)));
   EXPECT_CALL(*device_local_mock->gmock, Stop(DEVICE_LOCAL_OBJECT(device_local_mock)));
   EEBUS_SERVICE_STOP(EEBUS_SERVICE_OBJECT(service_));
+}
+
+TEST_F(EebusServiceTestSuite, eebus_service_qr_code_string) {
+  const char* qr_code = EEBUS_SERVICE_GET_QR_CODE_STRING(service_);
+  EXPECT_STREQ(qr_code, "SHIP;SKI:TEST -SKI;ID:brand-serial;BRAND:brand;TYPE:EnergyManagementSystem;MODEL:model;");
 }

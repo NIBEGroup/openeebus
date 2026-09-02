@@ -51,7 +51,12 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
   ${MAIN_PROJ_SOURCES_PATH}/common/eebus_data/eebus_data_list.c
   ${MAIN_PROJ_SOURCES_PATH}/common/json_impl_cjson.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply_container.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request_container.c
 
   # Mocks sources
   ${MOCKS_SOURCES_PATH}/spine/device/device_local_mock.cpp
@@ -106,3 +111,275 @@ add_test(
 )
 
 gtest_discover_tests(${TEST_NAME})
+
+set(PENDING_RESULT_TEST_NAME pending_result_test)
+
+add_executable(${PENDING_RESULT_TEST_NAME})
+
+# Set proper runtime library for Windows to avoid LIBCMT conflicts
+if(WIN32)
+  set_property(TARGET ${PENDING_RESULT_TEST_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+endif()
+
+target_sources(
+  ${PENDING_RESULT_TEST_NAME}
+  PRIVATE
+  ${GTEST_SOURCES}
+
+  ${EEBUS_DATE_TIME_SOURCES}
+  ${EEBUS_DATA_SOURCES}
+  ${MAIN_PROJ_SOURCES_PATH}/common/json_impl_cjson.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result.c
+
+  pending_result_test.cpp
+)
+
+target_include_directories(
+  ${PENDING_RESULT_TEST_NAME}
+  PRIVATE
+  ${PROJECT_INCLUDES_PATH}
+)
+
+target_compile_options(
+  ${PENDING_RESULT_TEST_NAME}
+  PRIVATE
+  ${PROJECT_COMPILE_OPTIONS}
+)
+
+target_compile_definitions(
+  ${PENDING_RESULT_TEST_NAME}
+  PRIVATE
+  ${PROJECT_COMPILE_DEFINITIONS}
+  MEMORY_LEAKS_TEST
+)
+
+target_link_options(
+  ${PENDING_RESULT_TEST_NAME}
+  PRIVATE
+  ${PROJECT_LINK_OPTIONS}
+)
+
+target_link_libraries(
+  ${PENDING_RESULT_TEST_NAME}
+  PRIVATE
+  ${PROJECT_LINK_LIBRARIES}
+  cjson
+)
+
+add_test(
+  NAME
+  ${PENDING_RESULT_TEST_NAME}
+  COMMAND
+  ${EXECUTABLE_OUTPUT_PATH}/${PENDING_RESULT_TEST_NAME}
+)
+
+gtest_discover_tests(${PENDING_RESULT_TEST_NAME})
+
+set(PENDING_RESULT_CONTAINER_TEST_NAME pending_result_container_test)
+
+add_executable(${PENDING_RESULT_CONTAINER_TEST_NAME})
+
+# Set proper runtime library for Windows to avoid LIBCMT conflicts
+if(WIN32)
+  set_property(TARGET ${PENDING_RESULT_CONTAINER_TEST_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+endif()
+
+target_sources(
+  ${PENDING_RESULT_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${GTEST_SOURCES}
+
+  ${EEBUS_DATE_TIME_SOURCES}
+  ${EEBUS_DATA_SOURCES}
+  ${MAIN_PROJ_SOURCES_PATH}/common/json_impl_cjson.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/vector.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result_container.c
+
+  pending_result_container_test.cpp
+)
+
+target_include_directories(
+  ${PENDING_RESULT_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${PROJECT_INCLUDES_PATH}
+)
+
+target_compile_options(
+  ${PENDING_RESULT_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${PROJECT_COMPILE_OPTIONS}
+)
+
+target_compile_definitions(
+  ${PENDING_RESULT_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${PROJECT_COMPILE_DEFINITIONS}
+  MEMORY_LEAKS_TEST
+)
+
+target_link_options(
+  ${PENDING_RESULT_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${PROJECT_LINK_OPTIONS}
+)
+
+target_link_libraries(
+  ${PENDING_RESULT_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${PROJECT_LINK_LIBRARIES}
+  cjson
+)
+
+add_test(
+  NAME
+  ${PENDING_RESULT_CONTAINER_TEST_NAME}
+  COMMAND
+  ${EXECUTABLE_OUTPUT_PATH}/${PENDING_RESULT_CONTAINER_TEST_NAME}
+)
+
+gtest_discover_tests(${PENDING_RESULT_CONTAINER_TEST_NAME})
+
+set(PENDING_REPLY_TEST_NAME pending_reply_test)
+
+add_executable(${PENDING_REPLY_TEST_NAME})
+
+# Set proper runtime library for Windows to avoid LIBCMT conflicts
+if(WIN32)
+  set_property(TARGET ${PENDING_REPLY_TEST_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+endif()
+
+target_sources(
+  ${PENDING_REPLY_TEST_NAME}
+  PRIVATE
+  ${GTEST_SOURCES}
+
+  ${EEBUS_DATE_TIME_SOURCES}
+  ${EEBUS_DATA_SOURCES}
+  ${MAIN_PROJ_SOURCES_PATH}/common/json_impl_cjson.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply.c
+
+  pending_reply_test.cpp
+)
+
+target_include_directories(
+  ${PENDING_REPLY_TEST_NAME}
+  PRIVATE
+  ${PROJECT_INCLUDES_PATH}
+)
+
+target_compile_options(
+  ${PENDING_REPLY_TEST_NAME}
+  PRIVATE
+  ${PROJECT_COMPILE_OPTIONS}
+)
+
+target_compile_definitions(
+  ${PENDING_REPLY_TEST_NAME}
+  PRIVATE
+  ${PROJECT_COMPILE_DEFINITIONS}
+  MEMORY_LEAKS_TEST
+)
+
+target_link_options(
+  ${PENDING_REPLY_TEST_NAME}
+  PRIVATE
+  ${PROJECT_LINK_OPTIONS}
+)
+
+target_link_libraries(
+  ${PENDING_REPLY_TEST_NAME}
+  PRIVATE
+  ${PROJECT_LINK_LIBRARIES}
+  cjson
+)
+
+add_test(
+  NAME
+  ${PENDING_REPLY_TEST_NAME}
+  COMMAND
+  ${EXECUTABLE_OUTPUT_PATH}/${PENDING_REPLY_TEST_NAME}
+)
+
+gtest_discover_tests(${PENDING_REPLY_TEST_NAME})
+
+set(PENDING_REPLY_CONTAINER_TEST_NAME pending_reply_container_test)
+
+add_executable(${PENDING_REPLY_CONTAINER_TEST_NAME})
+
+# Set proper runtime library for Windows to avoid LIBCMT conflicts
+if(WIN32)
+  set_property(TARGET ${PENDING_REPLY_CONTAINER_TEST_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+endif()
+
+target_sources(
+  ${PENDING_REPLY_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${GTEST_SOURCES}
+
+  ${EEBUS_DATE_TIME_SOURCES}
+  ${EEBUS_DATA_SOURCES}
+  ${MAIN_PROJ_SOURCES_PATH}/common/json_impl_cjson.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/vector.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply_container.c
+
+  pending_reply_container_test.cpp
+)
+
+target_include_directories(
+  ${PENDING_REPLY_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${PROJECT_INCLUDES_PATH}
+)
+
+target_compile_options(
+  ${PENDING_REPLY_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${PROJECT_COMPILE_OPTIONS}
+)
+
+target_compile_definitions(
+  ${PENDING_REPLY_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${PROJECT_COMPILE_DEFINITIONS}
+  MEMORY_LEAKS_TEST
+)
+
+target_link_options(
+  ${PENDING_REPLY_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${PROJECT_LINK_OPTIONS}
+)
+
+target_link_libraries(
+  ${PENDING_REPLY_CONTAINER_TEST_NAME}
+  PRIVATE
+  ${PROJECT_LINK_LIBRARIES}
+  cjson
+)
+
+add_test(
+  NAME
+  ${PENDING_REPLY_CONTAINER_TEST_NAME}
+  COMMAND
+  ${EXECUTABLE_OUTPUT_PATH}/${PENDING_REPLY_CONTAINER_TEST_NAME}
+)
+
+gtest_discover_tests(${PENDING_REPLY_CONTAINER_TEST_NAME})

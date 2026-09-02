@@ -37,7 +37,9 @@ struct SenderReadTestInput {
   std::string_view msg                         = ""sv;
 };
 
-std::ostream& operator<<(std::ostream& os, SenderReadTestInput test_input) { return os << test_input.description; }
+std::ostream& operator<<(std::ostream& os, SenderReadTestInput test_input) {
+  return os << test_input.description;
+}
 
 class SenderReadTests : public SenderTestSuite, public ::testing::WithParamInterface<SenderReadTestInput> {};
 
@@ -45,9 +47,13 @@ TEST_P(SenderReadTests, SenderReadTests) {
   // Arrange: Initialize the sender address, destination address
   // and command with parameters from test input
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> sender_addr{
-      TestDataToFeatureAddress(GetParam().sender_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().sender_addr.get()),
+      FeatureAddressDelete
+  };
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> dest_addr{
-      TestDataToFeatureAddress(GetParam().dest_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().dest_addr.get()),
+      FeatureAddressDelete
+  };
 
   std::unique_ptr<void, std::function<void(void*)>> spine_data{
       ModelFunctionDataCreateEmpty(GetParam().data_type_id),
@@ -67,7 +73,7 @@ TEST_P(SenderReadTests, SenderReadTests) {
   ExpectMessageWrite(GetParam().msg);
 
   // Act: Run the Read()
-  const EebusError ret = SEND_READ(sender, sender_addr.get(), dest_addr.get(), &cmd);
+  const EebusError ret = SEND_READ(sender, sender_addr.get(), dest_addr.get(), &cmd, nullptr);
 
   // Assert: Verify with expected return value,
   // Note: output message checks are done within mock expectation call

@@ -39,7 +39,7 @@ static constexpr char device_diagnosis_heartbeat_reply[] = R"({
           ]
         },
         {
-          "msgCounter": 16
+          "msgCounter": 18
         },
         {
           "msgCounterReference": 32

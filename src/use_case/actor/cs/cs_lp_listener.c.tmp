@@ -1,5 +1,7 @@
 CsLpListener
 void Destruct()
+void OnRemoteEgAdded(const EntityAddressType* entity_addr)
+void OnRemoteEgRemoved(const EntityAddressType* entity_addr)
 void OnPowerLimitReceive(const ScaledValue* power_limit, const DurationType* duration, bool is_active)
 void OnFailsafePowerLimitReceive(const ScaledValue* power_limit)
 void OnFailsafeDurationReceive(const DurationType* duration)

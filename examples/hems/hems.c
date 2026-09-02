@@ -85,6 +85,7 @@ static const ServiceReaderInterface hpsrv_methods = {
 };
 
 static EebusError HemsConstruct(Hems* self);
+static EebusError AddMaMgcp(Hems* self, DeviceLocalObject* device_local, EntityLocalObject* entity_local);
 
 EebusError HemsConstruct(Hems* self) {
   // Override "virtual functions table"
@@ -372,15 +373,32 @@ void HemsSetEgLppRemoteEntity(HemsObject* self, const EntityAddressType* entity_
   EEBUS_CLI_SET_EG_LPP(hems->cli, eg_lpp, entity_addr);
 }
 
-void HemsSetMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
+void HemsAddMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
   Hems* const hems = HEMS(self);
 
-  if (hems->cli == NULL) {
+  if ((hems->cli == NULL) || (entity_addr == NULL)) {
     return;
   }
 
-  MaMpcUseCaseObject* const ma_mpc = (entity_addr == NULL) ? NULL : hems->ma_mpc;
-  EEBUS_CLI_SET_MA_MPC(hems->cli, ma_mpc, entity_addr);
+  // Simplified check to avoid dealing with the subentity
+  // (as there is OHPCF with optional MPC attached to subentity)
+  if (entity_addr->entity_size == 1) {
+    EEBUS_CLI_SET_MA_MPC(hems->cli, hems->ma_mpc, entity_addr);
+  }
+}
+
+void HemsRemoveMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
+  Hems* const hems = HEMS(self);
+
+  if ((hems->cli == NULL) || (entity_addr == NULL)) {
+    return;
+  }
+
+  // Simplified check to avoid dealing with the subentity
+  // (as there is OHPCF with optional MPC attached to subentity)
+  if (entity_addr->entity_size == 1) {
+    EEBUS_CLI_SET_MA_MPC(hems->cli, NULL, NULL);
+  }
 }
 
 void HemsSetMaMgcpRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {

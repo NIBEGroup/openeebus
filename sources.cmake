@@ -55,7 +55,12 @@ set(SOURCES
   src/spine/feature/feature.c
   src/spine/feature/feature_functions.c
   src/spine/feature/operations.c
+  src/spine/feature/pending_reply.c
+  src/spine/feature/pending_reply_container.c
+  src/spine/feature/pending_result.c
+  src/spine/feature/pending_result_container.c
   src/spine/feature/pending_write_request.c
+  src/spine/feature/pending_write_request_container.c
   src/spine/feature_link/feature_link.c
   src/spine/feature_link/feature_link_container.c
   src/spine/function/function.c
@@ -65,6 +70,7 @@ set(SOURCES
   src/spine/model/cmd.c
   src/spine/model/datagram.c
   src/spine/model/device_configuration_types.c
+  src/spine/model/electrical_connection_types.c
   src/spine/model/entity_types.c
   src/spine/model/feature_types.c
   src/spine/model/filter.c
@@ -89,7 +95,6 @@ set(SOURCES
   src/use_case/actor/common/eebus_monitor_base.c
   src/use_case/actor/common/eebus_monitor_container.c
   src/use_case/actor/common/eebus_monitor_features.c
-  src/use_case/actor/common/load_control.c
   src/use_case/actor/cs/lpc/cs_lpc.c
   src/use_case/actor/cs/lpp/cs_lpp.c
   src/use_case/actor/cs/cs_lp_events.c
@@ -107,6 +112,7 @@ set(SOURCES
   src/use_case/actor/ma/mpc/ma_mpc_measurement.c
   src/use_case/actor/ma/mpc/ma_mpc_public.c
   src/use_case/actor/mu/mpc/mu_mpc.c
+  src/use_case/actor/mu/mpc/mu_mpc_events.c
   src/use_case/actor/mu/mpc/mu_mpc_measurement.c
   src/use_case/actor/mu/mpc/mu_mpc_monitor.c
   src/use_case/actor/mu/mpc/mu_mpc_public.c
@@ -237,6 +243,11 @@ set(HEADERS
   src/spine/api/operations_interface.h
   src/spine/api/sender_interface.h
   src/spine/api/subscription_manager_interface.h
+  src/spine/api/pending_reply_container_interface.h
+  src/spine/api/pending_reply_interface.h
+  src/spine/api/pending_result_container_interface.h
+  src/spine/api/pending_result_interface.h
+  src/spine/api/pending_write_request_container_interface.h
   src/spine/api/pending_write_request_interface.h
   src/spine/binding/binding_manager.h
   src/spine/device/device_local.h
@@ -254,7 +265,12 @@ set(HEADERS
   src/spine/feature/feature.h
   src/spine/feature/feature_functions.h
   src/spine/feature/operations.h
+  src/spine/feature/pending_reply.h
+  src/spine/feature/pending_reply_container.h
+  src/spine/feature/pending_result.h
+  src/spine/feature/pending_result_container.h
   src/spine/feature/pending_write_request.h
+  src/spine/feature/pending_write_request_container.h
   src/spine/function/function.h
   src/spine/heartbeat/heartbeat_manager.h
   src/spine/model/actuator_level_types.h
@@ -364,7 +380,6 @@ set(HEADERS
   src/use_case/actor/common/eebus_monitor_base.h
   src/use_case/actor/common/eebus_monitor_container.h
   src/use_case/actor/common/eebus_monitor_features.h
-  src/use_case/actor/common/load_control.h
   src/use_case/actor/cs/cs_lp_events.h
   src/use_case/actor/cs/cs_lp_internal.h
   src/use_case/actor/cs/cs_lp.h
@@ -379,6 +394,7 @@ set(HEADERS
   src/use_case/actor/ma/ma_measurement_base.h
   src/use_case/actor/ma/mpc/ma_mpc.h
   src/use_case/actor/ma/mpc/ma_mpc_events.h
+  src/use_case/actor/mu/mpc/mu_mpc_events.h
   src/use_case/actor/ma/mpc/ma_mpc_internal.h
   src/use_case/actor/ma/mpc/ma_mpc_measurement.h
   src/use_case/actor/mu/mpc/mu_mpc.h

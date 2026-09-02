@@ -57,6 +57,7 @@
 #include "src/common/eebus_malloc.h"
 #include "src/spine/entity/entity_local.h"
 #include "src/use_case/actor/mu/mpc/mu_mpc_monitor.h"
+#include "src/use_case/api/mu_mpc_listener_interface.h"
 #include "src/use_case/api/use_case_interface.h"
 #include "src/use_case/use_case.h"
 
@@ -99,10 +100,15 @@ struct MuMpcUseCaseObject {
  * @param local_entity The local entity for which to construct an MPC instance
  * @param ec_id Electrical connection id to be used for the MPC use case
  * @param cfg MU MPC Scenario 1-5 configuration parameters
+ * @param listener Optional listener to receive remote MA added/removed notifications, may be NULL
  * @return Pointer to created MuMpcUseCaseObject instance
  */
-MuMpcUseCaseObject*
-MuMpcUseCaseCreate(EntityLocalObject* local_entity, ElectricalConnectionIdType ec_id, const MuMpcConfig* cfg);
+MuMpcUseCaseObject* MuMpcUseCaseCreate(
+    EntityLocalObject* local_entity,
+    ElectricalConnectionIdType ec_id,
+    const MuMpcConfig* cfg,
+    MuMpcListenerObject* listener
+);
 
 /**
  * @brief Deletes the MuMpcUseCaseObject instance and frees the memory

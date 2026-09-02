@@ -1,0 +1,6 @@
+PendingResult
+void Destruct()
+MsgCounterType GetMsgCntRef()
+bool HasExpired()
+void UpdateTime()
+void Fire(const ResultMessage* result_msg)

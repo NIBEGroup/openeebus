@@ -31,7 +31,9 @@
 class CsLpListenerGMockInterface {
  public:
   virtual ~CsLpListenerGMockInterface() {};
-  virtual void Destruct(CsLpListenerObject* self) = 0;
+  virtual void Destruct(CsLpListenerObject* self)                                                = 0;
+  virtual void OnRemoteEgAdded(CsLpListenerObject* self, const EntityAddressType* entity_addr)   = 0;
+  virtual void OnRemoteEgRemoved(CsLpListenerObject* self, const EntityAddressType* entity_addr) = 0;
   virtual void OnPowerLimitReceive(
       CsLpListenerObject* self,
       const ScaledValue* power_limit,
@@ -47,6 +49,8 @@ class CsLpListenerGMock : public CsLpListenerGMockInterface {
  public:
   virtual ~CsLpListenerGMock() {};
   MOCK_METHOD1(Destruct, void(CsLpListenerObject*));
+  MOCK_METHOD2(OnRemoteEgAdded, void(CsLpListenerObject*, const EntityAddressType*));
+  MOCK_METHOD2(OnRemoteEgRemoved, void(CsLpListenerObject*, const EntityAddressType*));
   MOCK_METHOD4(OnPowerLimitReceive, void(CsLpListenerObject*, const ScaledValue*, const DurationType*, bool));
   MOCK_METHOD2(OnFailsafePowerLimitReceive, void(CsLpListenerObject*, const ScaledValue*));
   MOCK_METHOD2(OnFailsafeDurationReceive, void(CsLpListenerObject*, const DurationType*));

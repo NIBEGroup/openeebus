@@ -23,16 +23,17 @@
 #include "src/use_case/actor/eg/eg_lp_internal.h"
 #include "src/use_case/specialization/device_configuration/device_configuration_client.h"
 #include "src/use_case/specialization/device_diagnosis/device_diagnosis_client.h"
+#include "src/use_case/specialization/electrical_connection/electrical_connection_client.h"
 #include "src/use_case/specialization/load_control/load_control_client.h"
 
 static void OnLoadControlLimitDataUpdate(EgLpUseCase* self, const EventPayload* payload);
 static void OnConfigurationDataUpdate(const EgLpUseCase* self, const EventPayload* payload);
 static void OnHeartbeat(const EgLpUseCase* self, const EventPayload* payload);
+static void OnElectricalConnectionCharacteristicDataUpdate(const EgLpUseCase* self, const EventPayload* payload);
 static void OnDataChange(EgLpUseCase* self, const EventPayload* payload);
-static void OnEntityAdded(const EgLpUseCase* self, const EventPayload* payload);
-static void OnEntityRemoved(const EgLpUseCase* self, const EventPayload* payload);
+static void OnRemoteCsChange(EgLpUseCase* self, const EventPayload* payload);
 
-void OnEntityAddedHandleLoadControl(const EgLpUseCase* self, EntityRemoteObject* entity) {
+void OnRemoteCsAddedHandleLoadControl(const EgLpUseCase* self, EntityRemoteObject* entity) {
   const UseCase* const use_case = USE_CASE(self);
 
   LoadControlClient load_control;
@@ -59,7 +60,7 @@ void OnEntityAddedHandleLoadControl(const EgLpUseCase* self, EntityRemoteObject*
   LoadControlClientRequestLimitDescriptions(&load_control, &selectors, NULL);
 }
 
-void OnEntityAddedHandleDeviceConfiguration(const EgLpUseCase* self, EntityRemoteObject* entity) {
+void OnRemoteCsAddedHandleDeviceConfiguration(const EgLpUseCase* self, EntityRemoteObject* entity) {
   const UseCase* const use_case = USE_CASE(self);
 
   DeviceConfigurationClient device_configuraton;
@@ -82,81 +83,68 @@ void OnEntityAddedHandleDeviceConfiguration(const EgLpUseCase* self, EntityRemot
   DeviceConfigurationClientRequestKeyValueDescription(&device_configuraton, NULL, NULL);
 }
 
-void OnEntityAddedHandleDeviceDiagnosis(const EgLpUseCase* self, EntityRemoteObject* entity) {
+void OnRemoteCsAddedHandleElectricalConnection(const EgLpUseCase* self, EntityRemoteObject* entity) {
   const UseCase* const use_case = USE_CASE(self);
 
-  DeviceDiagnosisClient device_diagnosis;
-  const EebusError err = DeviceDiagnosisClientConstruct(&device_diagnosis, use_case->local_entity, entity);
+  ElectricalConnectionClient electrical_connection;
+  const EebusError err = ElectricalConnectionClientConstruct(&electrical_connection, use_case->local_entity, entity);
   if (err != kEebusErrorOk) {
     return;
   }
 
-  FeatureInfoClient* feature_info = &device_diagnosis.feature_info_client;
+  FeatureInfoClient* feature_info = &electrical_connection.feature_info_client;
   if (!HasSubscription(feature_info)) {
     Subscribe(feature_info);
+  }
+
+  const ElectricalConnectionCharacteristicListDataSelectorsType selectors = {
+      .characteristic_context = &kEccContextEntity,
+  };
+
+  ElectricalConnectionClientRequestCharacteristics(&electrical_connection, &selectors, NULL, NULL, NULL);
+}
+
+void OnRemoteCsAddedHandleDeviceDiagnosis(const EgLpUseCase* self, EntityRemoteObject* entity) {
+  const UseCase* const use_case = USE_CASE(self);
+
+  DeviceDiagnosisClient device_diagnosis;
+  if (DeviceDiagnosisClientConstruct(&device_diagnosis, use_case->local_entity, entity) != kEebusErrorOk) {
+    return;
+  }
+
+  FeatureInfoClient* const f = &device_diagnosis.feature_info_client;
+  if (!HasSubscription(f)) {
+    Subscribe(f);
   }
 
   DeviceDiagnosisClientRequestHeartbeat(&device_diagnosis);
 }
 
-void OnEntityAdded(const EgLpUseCase* self, const EventPayload* payload) {
-  EntityRemoteObject* entity = payload->entity;
-
+void OnRemoteCsChange(EgLpUseCase* self, const EventPayload* payload) {
   if (!USE_CASE_IS_USE_CASE_COMPATIBLE(USE_CASE_OBJECT(self), payload->use_case_filter)) {
     return;
   }
 
-  // Initialise features, e.g. subscriptions, descriptions
-  OnEntityAddedHandleLoadControl(self, entity);
-  OnEntityAddedHandleDeviceConfiguration(self, entity);
-  OnEntityAddedHandleDeviceDiagnosis(self, entity);
+  const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
 
-  if (self->eg_lp_listener != NULL) {
-    const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(entity));
-    EG_LP_LISTENER_ON_REMOTE_ENTITY_CONNECT(self->eg_lp_listener, entity_addr);
-  }
-}
+  if (payload->change_type == kElementChangeAdd) {
+    OnRemoteCsAddedHandleLoadControl(self, payload->entity);
+    OnRemoteCsAddedHandleDeviceConfiguration(self, payload->entity);
+    OnRemoteCsAddedHandleDeviceDiagnosis(self, payload->entity);
+    OnRemoteCsAddedHandleElectricalConnection(self, payload->entity);
 
-void OnEntityRemoved(const EgLpUseCase* self, const EventPayload* payload) {
-  EntityRemoteObject* entity = payload->entity;
-
-  if (!USE_CASE_IS_USE_CASE_COMPATIBLE(USE_CASE_OBJECT(self), payload->use_case_filter)) {
-    return;
-  }
-
-  if (self->eg_lp_listener != NULL) {
-    const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(entity));
-    EG_LP_LISTENER_ON_REMOTE_ENTITY_DISCONNECT(self->eg_lp_listener, entity_addr);
+    if (self->eg_lp_listener != NULL) {
+      EG_LP_LISTENER_ON_REMOTE_CS_ADDED(self->eg_lp_listener, entity_addr);
+    }
+  } else if (payload->change_type == kElementChangeRemove) {
+    if (self->eg_lp_listener != NULL) {
+      EG_LP_LISTENER_ON_REMOTE_CS_REMOVED(self->eg_lp_listener, entity_addr);
+    }
   }
 }
 
 void OnLoadControlLimitDescriptionDataUpdate(const EgLpUseCase* self, const EventPayload* payload) {
-  const UseCase* const use_case = USE_CASE(self);
-
-  LoadControlClient lcc;
-  if (LoadControlClientConstruct(&lcc, use_case->local_entity, payload->entity) != kEebusErrorOk) {
-    return;
-  }
-
-  // Get values
-  const LoadControlLimitDescriptionDataType filter = {
-      .limit_type      = &(LoadControlLimitTypeType){kLoadControlLimitTypeTypeSignDependentAbsValueLimit},
-      .limit_direction = &self->energy_direction,
-      .scope_type      = &(ScopeTypeType){kScopeTypeTypeActivePowerLimit},
-  };
-
-  const LoadControlLimitDescriptionDataType* const description
-      = LoadControlCommonGetLimitDescriptionWithFilter(&lcc.load_control_common, &filter);
-
-  if ((description == NULL) || (description->limit_id == NULL)) {
-    return;
-  }
-
-  const LoadControlLimitListDataSelectorsType selectors = {
-      .limit_id = description->limit_id,
-  };
-
-  LoadControlClientRequestLimitData(&lcc, &selectors, NULL);
+  EgLpReadLoadControlLimit((EgLpUseCase*)self, payload->entity, NULL, NULL);
 }
 
 void OnLoadControlLimitDataUpdate(EgLpUseCase* self, const EventPayload* payload) {
@@ -196,7 +184,7 @@ void OnConfigurationDescriptionDataUpdate(const EgLpUseCase* self, const EventPa
   }
 
   // Key value descriptions received, now get the data
-  DeviceConfigurationClientRequestKeyValue(&dcc, NULL, NULL);
+  DeviceConfigurationClientRequestKeyValue(&dcc, NULL, NULL, NULL, NULL);
 }
 
 void OnConfigurationDataUpdate(const EgLpUseCase* self, const EventPayload* payload) {
@@ -240,8 +228,30 @@ void OnConfigurationDataUpdate(const EgLpUseCase* self, const EventPayload* payl
   }
 }
 
+void OnElectricalConnectionCharacteristicDataUpdate(const EgLpUseCase* self, const EventPayload* payload) {
+  if (self->eg_lp_listener == NULL) {
+    return;
+  }
+
+  const ElectricalConnectionCharacteristicDataType* const primary_filter     = EgLpNominalMaxPrimaryFilter(self);
+  const ElectricalConnectionCharacteristicDataType* const contractual_filter = EgLpNominalMaxContractualFilter(self);
+
+  if (ElectricalConnectionCommonCheckCharacteristicWithFilter(payload->function_data, primary_filter)
+      || ElectricalConnectionCommonCheckCharacteristicWithFilter(payload->function_data, contractual_filter)) {
+    const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
+
+    ScaledValue power_limit = {0};
+    const EebusError err    = EgLpGetPowerNominalMaxInternal(self, entity_addr, &power_limit);
+    if (err != kEebusErrorOk) {
+      return;
+    }
+
+    EG_LP_LISTENER_ON_POWER_NOMINAL_MAX_RECEIVE(self->eg_lp_listener, entity_addr, &power_limit);
+  }
+}
+
 void OnHeartbeat(const EgLpUseCase* self, const EventPayload* payload) {
-  if ((payload->cmd_classifier == NULL) && (*payload->cmd_classifier == kCommandClassifierTypeNotify)) {
+  if ((payload->cmd_classifier == NULL) || (*payload->cmd_classifier != kCommandClassifierTypeNotify)) {
     return;
   }
 
@@ -272,6 +282,10 @@ void OnDataChange(EgLpUseCase* self, const EventPayload* payload) {
 
     case kFunctionTypeDeviceDiagnosisHeartbeatData: OnHeartbeat(self, payload); break;
 
+    case kFunctionTypeElectricalConnectionCharacteristicListData:
+      OnElectricalConnectionCharacteristicDataUpdate(self, payload);
+      break;
+
     default: break;
   }
 }
@@ -284,11 +298,7 @@ void EgLpHandleEvent(const EventPayload* payload, void* ctx) {
   }
 
   if (payload->event_type == kEventTypeUseCaseChange) {
-    if (payload->change_type == kElementChangeAdd) {
-      OnEntityAdded(eg_lp_use_case, payload);
-    } else if (payload->change_type == kElementChangeRemove) {
-      OnEntityRemoved(eg_lp_use_case, payload);
-    }
+    OnRemoteCsChange(eg_lp_use_case, payload);
   } else if ((payload->event_type == kEventTypeDataChange) || (payload->change_type == kElementChangeUpdate)) {
     OnDataChange(eg_lp_use_case, payload);
   }

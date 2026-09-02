@@ -3,17 +3,13 @@ DeviceLocalObject* GetDevice() const
 EntityLocalObject* GetEntity() const
 const void* GetData(FunctionType function_type) const
 void SetFunctionOperations(FunctionType type, bool read, bool write)
-EebusError AddResponseCallback(MsgCounterType msg_counter_ref, ResponseMessageCallback cb, void* ctx)
-void AddResultCallback(ResponseMessageCallback cb, void* ctx)
 EebusError AddWriteApprovalCallback(WriteApprovalCallback cb, void* ctx)
 EebusError TryApproveWrite(const char* ski, MsgCounterType msg_cnt)
 EebusError DenyWrite(const char* ski, MsgCounterType msg_cnt, const ErrorType* err)
-void CleanRemoteDeviceCaches(const DeviceAddressType* remote_addr)
+void CleanRemoteDeviceCaches(const DeviceAddressType* remote_addr, const char* ski)
 void* DataCopy(FunctionType function_type) const
 EebusError UpdateData(FunctionType fcn_type, const void* data, const FilterType* filter_partial, const FilterType* filter_delete)
 void SetData(FunctionType function_type, void* data)
-EebusError RequestRemoteData(FunctionType function_type, const FilterType* filter_partial, FeatureRemoteObject* dest_feature)
-EebusError RequestRemoteDataBySenderAddress(const CmdType* cmd, SenderObject* sender, const char* dest_ski, const FeatureAddressType* dest_addr, uint32_t max_delay)
 bool HasSubscriptionToRemote(const FeatureAddressType* remote_addr) const
 EebusError SubscribeToRemote(const FeatureAddressType* remote_addr)
 EebusError RemoveRemoteSubscription(const FeatureAddressType* remote_addr)
@@ -25,3 +21,5 @@ void RemoveAllRemoteBindings()
 EebusError HandleMessage(const Message* msg)
 NodeManagementDetailedDiscoveryFeatureInformationType* CreateInformation() const
 void Tick()
+EebusError WriteToRemote(FeatureRemoteObject* dest_feature, FunctionType fcn_type, const void* data, const FilterType* filter_partial, const FilterType* filter_delete, ResultMessageCallback cb, void* ctx)
+EebusError ReadFromRemote(FeatureRemoteObject* dest_feature, FunctionType function_type, const void* selectors, const void* elements, ReplyMessageCallback cb, void* ctx)

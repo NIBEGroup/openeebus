@@ -58,6 +58,15 @@ static inline EebusError EgLpcGetActiveConsumptionPowerLimit(
   return EgLpGetActivePowerLimit(self, remote_entity_addr, limit);
 }
 
+static inline EebusError EgLpcReadActiveConsumptionPowerLimit(
+    const EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
+) {
+  return EgLpReadActivePowerLimit(self, remote_entity_addr, cb, ctx);
+}
+
 /**
  * @brief Send the new active power consumption limit
  *
@@ -69,9 +78,11 @@ static inline EebusError EgLpcGetActiveConsumptionPowerLimit(
 static inline EebusError EgLpcSetActiveConsumptionPowerLimit(
     EgLpUseCaseObject* self,
     const EntityAddressType* remote_entity_addr,
-    const LoadLimit* limit
+    const LoadLimit* limit,
+    ResultMessageCallback cb,
+    void* ctx
 ) {
-  return EgLpSetActivePowerLimit(self, remote_entity_addr, limit);
+  return EgLpSetActivePowerLimit(self, remote_entity_addr, limit, cb, ctx);
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -96,6 +107,15 @@ static inline EebusError EgLpcGetFailsafeConsumptionActivePowerLimit(
   return EgLpGetFailsafeActivePowerLimit(self, remote_entity_addr, power_limit);
 }
 
+static inline EebusError EgLpcReadFailsafeConsumptionActivePowerLimit(
+    const EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
+) {
+  return EgLpReadFailsafeActivePowerLimit(self, remote_entity_addr, cb, ctx);
+}
+
 /**
  * @brief Send new Failsafe Consumption Active Power Limit
  *
@@ -106,9 +126,11 @@ static inline EebusError EgLpcGetFailsafeConsumptionActivePowerLimit(
 static inline EebusError EgLpcSetFailsafeConsumptionActivePowerLimit(
     EgLpUseCaseObject* self,
     const EntityAddressType* remote_entity_addr,
-    const ScaledValue* power_limit
+    const ScaledValue* power_limit,
+    ResultMessageCallback cb,
+    void* ctx
 ) {
-  return EgLpSetFailsafeActivePowerLimit(self, remote_entity_addr, power_limit);
+  return EgLpSetFailsafeActivePowerLimit(self, remote_entity_addr, power_limit, cb, ctx);
 }
 
 /**
@@ -127,6 +149,15 @@ static inline EebusError EgLpcGetFailsafeDurationMinimum(
   return EgLpGetFailsafeDurationMinimum(self, remote_entity_addr, duration);
 }
 
+static inline EebusError EgLpcReadFailsafeDurationMinimum(
+    const EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
+) {
+  return EgLpReadFailsafeDurationMinimum(self, remote_entity_addr, cb, ctx);
+}
+
 /**
  * @brief Send the new Failsafe Duration Minimum
  *
@@ -137,9 +168,44 @@ static inline EebusError EgLpcGetFailsafeDurationMinimum(
 static inline EebusError EgLpcSetFailsafeDurationMinimum(
     EgLpUseCaseObject* self,
     const EntityAddressType* remote_entity_addr,
-    const EebusDuration* duration
+    const EebusDuration* duration,
+    ResultMessageCallback cb,
+    void* ctx
 ) {
-  return EgLpSetFailsafeDurationMinimum(self, remote_entity_addr, duration);
+  return EgLpSetFailsafeDurationMinimum(self, remote_entity_addr, duration, cb, ctx);
+}
+
+//-------------------------------------------------------------------------------------------//
+//
+// Scenario 4
+//
+//-------------------------------------------------------------------------------------------//
+
+/**
+ * @brief Get the power consumption nominal max from the Controllable System
+ *
+ * Returns powerConsumptionNominalMax for non-CEM CS or contractualConsumptionNominalMax for CEM CS.
+ *
+ * @param self EG LPC Use Case instance
+ * @param remote_entity_addr Remote entity address of the e.g. EVSE
+ * @param power_limit Output buffer for the nominal max value, shall not be NULL
+ * @return kEebusErrorOk on success, error code otherwise
+ */
+static inline EebusError EgLpcGetPowerConsumptionNominalMax(
+    const EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ScaledValue* power_limit
+) {
+  return EgLpGetPowerNominalMax(self, remote_entity_addr, power_limit);
+}
+
+static inline EebusError EgLpcReadPowerConsumptionNominalMax(
+    const EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
+) {
+  return EgLpReadPowerNominalMax(self, remote_entity_addr, cb, ctx);
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -182,10 +248,12 @@ static inline void EgLpcStopHeartbeat(EgLpUseCaseObject* self) {
  * @brief Check whether there was a heartbeat received within the last 2 minutes
  *
  * @param self EG LPC Use Case instance to check the heartbeat data with
+ * @param remote_entity_addr Remote entity address to check the heartbeat for
  * @return true if check is passed, false otherwise
  */
-static inline bool EgLpcIsHeartbeatWithinDuration(EgLpUseCaseObject* self) {
-  return EgLpIsHeartbeatWithinDuration(self);
+static inline bool
+EgLpcIsHeartbeatWithinDuration(EgLpUseCaseObject* self, const EntityAddressType* remote_entity_addr) {
+  return EgLpIsHeartbeatWithinDuration(self, remote_entity_addr);
 }
 
 #ifdef __cplusplus

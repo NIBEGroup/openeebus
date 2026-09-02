@@ -83,11 +83,18 @@ void HemsSetEgLpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_
 void HemsSetEgLppRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
 
 /**
- * @brief Set the MA MPC remote entity address to be used for sending the power limit
- * @param self HEMS instance to set the remote entity for
+ * @brief Add the MA MPC remote entity address to be used for sending the power limit
+ * @param self HEMS instance to add the remote entity for
  * @param entity_addr Pointer to the entity address
  */
-void HemsSetMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
+void HemsAddMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
+
+/**
+ * @brief Remove the MA MPC remote entity address
+ * @param self HEMS instance to remove the remote entity for
+ * @param entity_addr Pointer to the entity address
+ */
+void HemsRemoveMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
 
 /**
  * @brief Set the MA MGCP remote entity address

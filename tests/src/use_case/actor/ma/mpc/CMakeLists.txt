@@ -50,7 +50,12 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/feature.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/feature_functions.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/operations.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result_container.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature_link/feature_link.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature_link/feature_link_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/function/function.c

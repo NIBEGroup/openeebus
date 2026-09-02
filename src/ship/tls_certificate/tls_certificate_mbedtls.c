@@ -320,11 +320,19 @@ void Destruct(TlsCertificateObject* self) {
   TlsCertificate* const tls_cert = TLS_CERTIFICATE(self);
 
   if (tls_cert->pkey != NULL) {
+    if (tls_cert->pkey_size > 0) {
+      mbedtls_platform_zeroize((uint8_t*)tls_cert->pkey, tls_cert->pkey_size);
+    }
+
     EEBUS_FREE((uint8_t*)tls_cert->pkey);
     tls_cert->pkey = NULL;
   }
 
   if (tls_cert->cert != NULL) {
+    if (tls_cert->cert_size > 0) {
+      mbedtls_platform_zeroize((uint8_t*)tls_cert->cert, tls_cert->cert_size);
+    }
+
     EEBUS_FREE((uint8_t*)tls_cert->cert);
     tls_cert->cert = NULL;
   }

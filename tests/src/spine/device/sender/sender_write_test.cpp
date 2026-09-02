@@ -37,7 +37,9 @@ struct SenderWriteTestInput {
   std::string_view msg                         = ""sv;
 };
 
-std::ostream& operator<<(std::ostream& os, SenderWriteTestInput test_input) { return os << test_input.description; }
+std::ostream& operator<<(std::ostream& os, SenderWriteTestInput test_input) {
+  return os << test_input.description;
+}
 
 class SenderWriteTests : public SenderTestSuite, public ::testing::WithParamInterface<SenderWriteTestInput> {};
 
@@ -45,9 +47,13 @@ TEST_P(SenderWriteTests, SenderWriteTests) {
   // Arrange: Initialize the sender address, destination address
   // and command with parameters from test input
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> sender_addr{
-      TestDataToFeatureAddress(GetParam().sender_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().sender_addr.get()),
+      FeatureAddressDelete
+  };
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> dest_addr{
-      TestDataToFeatureAddress(GetParam().dest_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().dest_addr.get()),
+      FeatureAddressDelete
+  };
 
   std::unique_ptr<void, std::function<void(void*)>> spine_data{
       ModelFunctionDataCreateEmpty(GetParam().data_type_id),
@@ -67,11 +73,67 @@ TEST_P(SenderWriteTests, SenderWriteTests) {
   ExpectMessageWrite(GetParam().msg);
 
   // Act: Run the Write()
-  const EebusError ret = SEND_WRITE(sender, sender_addr.get(), dest_addr.get(), &cmd);
+  const EebusError ret = SEND_WRITE(sender, sender_addr.get(), dest_addr.get(), &cmd, NULL);
 
   // Assert: Verify with expected return value,
   // Note: output message checks are done within mock expectation call
   EXPECT_EQ(ret, kEebusErrorOk);
+}
+
+TEST_F(SenderWriteTests, WriteFillsOutMsgCnt) {
+  std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> sender_addr{
+      TestDataToFeatureAddress(FEATURE_ADDRESS_TEST_DATA("d:_i:Demo_EVSE-234567890", {5}, 5).get()),
+      FeatureAddressDelete
+  };
+  std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> dest_addr{
+      TestDataToFeatureAddress(FEATURE_ADDRESS_TEST_DATA("d:_i:36013_3019197057", {10}, 15).get()),
+      FeatureAddressDelete
+  };
+
+  std::unique_ptr<void, std::function<void(void*)>> spine_data{
+      ModelFunctionDataCreateEmpty(kFunctionTypeActuatorLevelData),
+      [](void* p) -> void { ModelFunctionDataDelete(kFunctionTypeActuatorLevelData, p); }
+  };
+
+  ASSERT_NE(spine_data, nullptr);
+
+  CmdType cmd = {
+      .data_choice         = spine_data.get(),
+      .data_choice_type_id = kFunctionTypeActuatorLevelData,
+  };
+
+  SenderObject* sender = GetSender();
+  SenderSetMsgCounter(sender, 4);
+
+  ExpectMessageWrite(R"({"datagram":[
+    {"header":[
+      {"specificationVersion":"1.3.0"},
+      {"addressSource":[
+        {"device":"d:_i:Demo_EVSE-234567890"},
+        {"entity":[5]},
+        {"feature":5}
+      ]},
+      {"addressDestination":[
+        {"device":"d:_i:36013_3019197057"},
+        {"entity":[10]},
+        {"feature":15}
+      ]},
+      {"msgCounter":5},
+      {"cmdClassifier":"write"},
+      {"ackRequest":true}
+    ]},
+    {"payload":[
+      {"cmd":[
+        [{"actuatorLevelData":[]}]
+      ]}
+    ]}
+  ]})"sv);
+
+  uint64_t msg_cnt     = 0;
+  const EebusError ret = SEND_WRITE(sender, sender_addr.get(), dest_addr.get(), &cmd, &msg_cnt);
+
+  EXPECT_EQ(ret, kEebusErrorOk);
+  EXPECT_EQ(msg_cnt, 5u);
 }
 
 INSTANTIATE_TEST_SUITE_P(

@@ -31,14 +31,10 @@
 class FeatureLocalGMockInterface : public FeatureGMockInterface {
  public:
   virtual ~FeatureLocalGMockInterface() {};
-  virtual DeviceLocalObject* GetDevice(const FeatureLocalObject* self)                                   = 0;
-  virtual EntityLocalObject* GetEntity(const FeatureLocalObject* self)                                   = 0;
-  virtual const void* GetData(const FeatureLocalObject* self, FunctionType function_type)                = 0;
-  virtual void SetFunctionOperations(FeatureLocalObject* self, FunctionType type, bool read, bool write) = 0;
-  virtual EebusError
-  AddResponseCallback(FeatureLocalObject* self, MsgCounterType msg_counter_ref, ResponseMessageCallback cb, void* ctx)
-      = 0;
-  virtual void AddResultCallback(FeatureLocalObject* self, ResponseMessageCallback cb, void* ctx)            = 0;
+  virtual DeviceLocalObject* GetDevice(const FeatureLocalObject* self)                                       = 0;
+  virtual EntityLocalObject* GetEntity(const FeatureLocalObject* self)                                       = 0;
+  virtual const void* GetData(const FeatureLocalObject* self, FunctionType function_type)                    = 0;
+  virtual void SetFunctionOperations(FeatureLocalObject* self, FunctionType type, bool read, bool write)     = 0;
   virtual EebusError AddWriteApprovalCallback(FeatureLocalObject* self, WriteApprovalCallback cb, void* ctx) = 0;
   virtual EebusError TryApproveWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt)      = 0;
   virtual EebusError DenyWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err)
@@ -51,22 +47,8 @@ class FeatureLocalGMockInterface : public FeatureGMockInterface {
       const void* data,
       const FilterType* filter_partial,
       const FilterType* filter_delete
-  )                                                                                      = 0;
-  virtual void SetData(FeatureLocalObject* self, FunctionType function_type, void* data) = 0;
-  virtual EebusError RequestRemoteData(
-      FeatureLocalObject* self,
-      FunctionType function_type,
-      const FilterType* filter_partial,
-      FeatureRemoteObject* dest_feature
-  ) = 0;
-  virtual EebusError RequestRemoteDataBySenderAddress(
-      FeatureLocalObject* self,
-      const CmdType* cmd,
-      SenderObject* sender,
-      const char* dest_ski,
-      const FeatureAddressType* dest_addr,
-      uint32_t max_delay
   )                                                                                                                = 0;
+  virtual void SetData(FeatureLocalObject* self, FunctionType function_type, void* data)                           = 0;
   virtual bool HasSubscriptionToRemote(const FeatureLocalObject* self, const FeatureAddressType* remote_addr)      = 0;
   virtual EebusError SubscribeToRemote(FeatureLocalObject* self, const FeatureAddressType* remote_addr)            = 0;
   virtual EebusError RemoveRemoteSubscription(FeatureLocalObject* self, const FeatureAddressType* remote_addr)     = 0;
@@ -78,6 +60,25 @@ class FeatureLocalGMockInterface : public FeatureGMockInterface {
   virtual EebusError HandleMessage(FeatureLocalObject* self, const Message* msg)                                   = 0;
   virtual NodeManagementDetailedDiscoveryFeatureInformationType* CreateInformation(const FeatureLocalObject* self) = 0;
   virtual void Tick(FeatureLocalObject* self)                                                                      = 0;
+  virtual EebusError WriteToRemote(
+      FeatureLocalObject* self,
+      FeatureRemoteObject* dest_feature,
+      FunctionType fcn_type,
+      const void* data,
+      const FilterType* filter_partial,
+      const FilterType* filter_delete,
+      ResultMessageCallback cb,
+      void* ctx
+  ) = 0;
+  virtual EebusError ReadFromRemote(
+      FeatureLocalObject* self,
+      FeatureRemoteObject* dest_feature,
+      FunctionType function_type,
+      const void* selectors,
+      const void* elements,
+      ReplyMessageCallback cb,
+      void* ctx
+  ) = 0;
 };
 
 class FeatureLocalGMock : public FeatureLocalGMockInterface {
@@ -95,8 +96,6 @@ class FeatureLocalGMock : public FeatureLocalGMockInterface {
   MOCK_METHOD1(GetEntity, EntityLocalObject*(const FeatureLocalObject*));
   MOCK_METHOD2(GetData, const void*(const FeatureLocalObject*, FunctionType));
   MOCK_METHOD4(SetFunctionOperations, void(FeatureLocalObject*, FunctionType, bool, bool));
-  MOCK_METHOD4(AddResponseCallback, EebusError(FeatureLocalObject*, MsgCounterType, ResponseMessageCallback, void*));
-  MOCK_METHOD3(AddResultCallback, void(FeatureLocalObject*, ResponseMessageCallback, void*));
   MOCK_METHOD3(AddWriteApprovalCallback, EebusError(FeatureLocalObject*, WriteApprovalCallback, void*));
   MOCK_METHOD3(TryApproveWrite, EebusError(FeatureLocalObject*, const char*, MsgCounterType));
   MOCK_METHOD4(DenyWrite, EebusError(FeatureLocalObject*, const char*, MsgCounterType, const ErrorType*));
@@ -107,14 +106,6 @@ class FeatureLocalGMock : public FeatureLocalGMockInterface {
       EebusError(FeatureLocalObject*, FunctionType, const void*, const FilterType*, const FilterType*)
   );
   MOCK_METHOD3(SetData, void(FeatureLocalObject*, FunctionType, void*));
-  MOCK_METHOD4(
-      RequestRemoteData,
-      EebusError(FeatureLocalObject*, FunctionType, const FilterType*, FeatureRemoteObject*)
-  );
-  MOCK_METHOD6(
-      RequestRemoteDataBySenderAddress,
-      EebusError(FeatureLocalObject*, const CmdType*, SenderObject*, const char*, const FeatureAddressType*, uint32_t)
-  );
   MOCK_METHOD2(HasSubscriptionToRemote, bool(const FeatureLocalObject*, const FeatureAddressType*));
   MOCK_METHOD2(SubscribeToRemote, EebusError(FeatureLocalObject*, const FeatureAddressType*));
   MOCK_METHOD2(RemoveRemoteSubscription, EebusError(FeatureLocalObject*, const FeatureAddressType*));
@@ -126,6 +117,14 @@ class FeatureLocalGMock : public FeatureLocalGMockInterface {
   MOCK_METHOD2(HandleMessage, EebusError(FeatureLocalObject*, const Message*));
   MOCK_METHOD1(CreateInformation, NodeManagementDetailedDiscoveryFeatureInformationType*(const FeatureLocalObject*));
   MOCK_METHOD1(Tick, void(FeatureLocalObject*));
+  MOCK_METHOD8(
+      WriteToRemote,
+      EebusError(FeatureLocalObject*, FeatureRemoteObject*, FunctionType, const void*, const FilterType*, const FilterType*, ResultMessageCallback, void*)
+  );
+  MOCK_METHOD7(
+      ReadFromRemote,
+      EebusError(FeatureLocalObject*, FeatureRemoteObject*, FunctionType, const void*, const void*, ReplyMessageCallback, void*)
+  );
 };
 
 typedef struct FeatureLocalMock {
