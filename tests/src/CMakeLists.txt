@@ -60,8 +60,11 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/node_management/node_manageme
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/device/sender
     ${EXECUTABLE_OUTPUT_PATH}/spine/device/sender)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node
-    ${EXECUTABLE_OUTPUT_PATH}/ship/ship_node)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node/node_connection
+    ${EXECUTABLE_OUTPUT_PATH}/ship/ship_node/node_connection)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node/node_connection_container
+    ${EXECUTABLE_OUTPUT_PATH}/ship/ship_node/node_connection_container)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cs/lpc
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cs/lpc)
