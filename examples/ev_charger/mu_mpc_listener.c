@@ -53,23 +53,29 @@ MuMpcListenerObject* MuMpcListenerCreate(void) {
   if (listener == NULL) {
     return NULL;
   }
+
   if (MuMpcListenerConstruct(listener) != kEebusErrorOk) {
     MuMpcListenerDelete(MU_MPC_LISTENER_OBJECT(listener));
     return NULL;
   }
+
   return MU_MPC_LISTENER_OBJECT(listener);
 }
 
-void Destruct(MuMpcListenerObject* self) { UNUSED(self); }
+void Destruct(MuMpcListenerObject* self) {
+  UNUSED(self);
+}
 
 void OnRemoteMaAdded(MuMpcListenerObject* self, const EntityAddressType* entity_addr) {
   UNUSED(self);
   UNUSED(entity_addr);
+
   printf("EV MU MPC: Remote MA added\n");
 }
 
 void OnRemoteMaRemoved(MuMpcListenerObject* self, const EntityAddressType* entity_addr) {
   UNUSED(self);
   UNUSED(entity_addr);
+
   printf("EV MU MPC: Remote MA removed\n");
 }

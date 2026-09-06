@@ -70,24 +70,30 @@ CsLpListenerObject* CsLppListenerCreate(void) {
   if (listener == NULL) {
     return NULL;
   }
+
   if (CsLppListenerConstruct(listener) != kEebusErrorOk) {
     CsLppListenerDelete(CS_LP_LISTENER_OBJECT(listener));
     return NULL;
   }
+
   return CS_LP_LISTENER_OBJECT(listener);
 }
 
-void Destruct(CsLpListenerObject* self) { UNUSED(self); }
+void Destruct(CsLpListenerObject* self) {
+  UNUSED(self);
+}
 
 void OnRemoteEgAdded(CsLpListenerObject* self, const EntityAddressType* entity_addr) {
   UNUSED(self);
   UNUSED(entity_addr);
+
   printf("EV CS LPP: Remote EG added\n");
 }
 
 void OnRemoteEgRemoved(CsLpListenerObject* self, const EntityAddressType* entity_addr) {
   UNUSED(self);
   UNUSED(entity_addr);
+
   printf("EV CS LPP: Remote EG removed\n");
 }
 
@@ -98,7 +104,8 @@ void OnPowerLimitReceive(
     bool is_active
 ) {
   UNUSED(self);
-  /* V2G production limit — this basic EV charger does not support V2G */
+
+  // V2G production limit — this basic EV charger does not support V2G
   ScaledValuePrint("EV CS LPP: Production limit received %sW (V2G not supported), ", power_limit);
   EebusDurationPrint("duration = %s, ", duration);
   printf("active = %s\n", is_active ? "true" : "false");
@@ -106,15 +113,18 @@ void OnPowerLimitReceive(
 
 void OnFailsafePowerLimitReceive(CsLpListenerObject* self, const ScaledValue* power_limit) {
   UNUSED(self);
+
   ScaledValuePrint("EV CS LPP: Failsafe power limit received %sW\n", power_limit);
 }
 
 void OnFailsafeDurationReceive(CsLpListenerObject* self, const DurationType* duration) {
   UNUSED(self);
+
   EebusDurationPrint("EV CS LPP: Failsafe duration received %s\n", duration);
 }
 
 void OnHeartbeatReceive(CsLpListenerObject* self, uint64_t heartbeat_counter) {
   UNUSED(self);
+
   printf("EV CS LPP: Heartbeat received, counter = %" PRIu64 "\n", heartbeat_counter);
 }
