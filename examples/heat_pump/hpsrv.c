@@ -458,14 +458,14 @@ HpsrvObject* HpsrvOpen(int32_t port, const char* role, TlsCertificateObject* tls
 void Destruct(ServiceReaderObject* self) {
   Hpsrv* const hpsrv = HPSRV(self);
 
-  EebusCliDelete(hpsrv->cli);
-  hpsrv->cli = NULL;
-
   if (hpsrv->service != NULL) {
     EEBUS_SERVICE_STOP(hpsrv->service);
     EebusServiceDelete(hpsrv->service);
     hpsrv->service = NULL;
   }
+
+  EebusCliDelete(hpsrv->cli);
+  hpsrv->cli = NULL;
 
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->mu_mpc));
   hpsrv->mu_mpc = NULL;

@@ -47,7 +47,8 @@ extern "C" {
 enum ShipConnectionQueueMsgType {
   kShipConnectionQueueMsgTypeDataReceived,
   kShipConnectionQueueMsgTypeSpineDataToSend,
-  kShipConnectionQueueMsgTypeTimeout,
+  kShipConnectionQueueMsgTypeTimeout,         // prolongation timers only
+  kShipConnectionQueueMsgTypeWaitReadyTimeout, // wait_for_ready_timer only
   kShipConnectionQueueMsgTypeWebsocketError,
   kShipConnectionQueueMsgTypeWebsocketClose,
   kShipConnectionQueueMsgTypeCancel,
@@ -78,6 +79,7 @@ typedef struct {
   SmeState sme_state;
   EebusError sme_error;
   bool is_access_methods_req_sent;
+  bool is_access_methods_done;
   EebusTimerObject* wait_for_ready_timer;
   EebusTimerObject* send_prolongation_request_timer;
   EebusTimerObject* prolongation_request_reply_timer;

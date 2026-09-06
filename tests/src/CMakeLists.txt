@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common/entity_address_list
+    ${EXECUTABLE_OUTPUT_PATH}/common/entity_address_list)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common/eebus_data
     ${EXECUTABLE_OUTPUT_PATH}/common/eebus_data)
 
@@ -60,8 +63,11 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/node_management/node_manageme
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/device/sender
     ${EXECUTABLE_OUTPUT_PATH}/spine/device/sender)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node
-    ${EXECUTABLE_OUTPUT_PATH}/ship/ship_node)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node/node_connection
+    ${EXECUTABLE_OUTPUT_PATH}/ship/ship_node/node_connection)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node/node_connection_container
+    ${EXECUTABLE_OUTPUT_PATH}/ship/ship_node/node_connection_container)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cs/lpc
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cs/lpc)
@@ -71,6 +77,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cs/lpp
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/eg/lpc
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/eg/lpc)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/eg/lpc/two_remote
+    ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/eg/lpc/two_remote)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/eg/lpp
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/eg/lpp)
@@ -83,6 +92,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/ma/mgcp
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/ma/mpc
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/ma/mpc)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/ma/two_remote
+    ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/ma/two_remote)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/mu/mpc
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/mu/mpc)

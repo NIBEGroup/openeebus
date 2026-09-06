@@ -15,18 +15,24 @@ CERTS_DIR = ROOT / "integration_tests" / "certificates"
 
 HP_BINARY   = str(BUILD_DIR / "heat_pump")
 HEMS_BINARY = str(BUILD_DIR / "hems")
+EV_BINARY   = str(BUILD_DIR / "ev_charger")
 
 # Each node is started with the OTHER node's certificate SKI as its trusted remote.
 # heat_pump registers hems.crt's SKI; hems registers heat_pump.crt's SKI.
+# ev_charger also trusts hems.crt, so its remote SKI equals HP_REMOTE_SKI.
 HP_REMOTE_SKI   = os.environ.get("EEBUS_HP_SKI",   "1bb991d59a94cc1925486be3addb07200b9d7680")
 HEMS_REMOTE_SKI = os.environ.get("EEBUS_HEMS_SKI", "40c61c3526f271e8e1547851c46f6ea20d4c6f83")
+EV_SKI          = os.environ.get("EEBUS_EV_SKI",   "5a139a8131d0b65b3078878bafd7ff71b84721a4")
 HP_CERT         = os.environ.get("EEBUS_HP_CERT",   str(CERTS_DIR / "heat_pump.crt"))
 HP_KEY          = os.environ.get("EEBUS_HP_KEY",    str(CERTS_DIR / "heat_pump.key"))
 HEMS_CERT       = os.environ.get("EEBUS_HEMS_CERT", str(CERTS_DIR / "hems.crt"))
 HEMS_KEY        = os.environ.get("EEBUS_HEMS_KEY",  str(CERTS_DIR / "hems.key"))
+EV_CERT         = os.environ.get("EEBUS_EV_CERT",   str(CERTS_DIR / "ev_charger.crt"))
+EV_KEY          = os.environ.get("EEBUS_EV_KEY",    str(CERTS_DIR / "ev_charger.key"))
 
 HP_PORT   = 4712
 HEMS_PORT = 4710
+EV_PORT   = 4714
 
 SHIP_CONNECTED_MARKER = "Remote SKI connected"
 NODES_CONNECT_TIMEOUT = 120.0
@@ -38,19 +44,20 @@ DEFAULT_SETTLE      = 2.0
 _STDBUF = shutil.which("stdbuf")
 
 
-def _cmd(binary: str, port: int, remote_ski: str, cert: str, key: str) -> list:
-    base = [binary, str(port), remote_ski, cert, key, "auto"]
+def _cmd(binary: str, port: int, remote_ski: str, cert: str, key: str, extra_args: tuple = ()) -> list:
+    base = [binary, str(port), remote_ski, cert, key, "auto", *extra_args]
     return ([_STDBUF, "-oL"] + base) if _STDBUF else base
 
 
 class NodeProcess:
-    """Manages a single heat_pump or hems process."""
+    """Manages a single heat_pump, hems, or ev_charger process."""
 
-    def __init__(self, binary: str, port: int, remote_ski: str, cert: str, key: str):
+    def __init__(self, binary: str, port: int, remote_ski: str, cert: str, key: str,
+                 extra_args: tuple = ()):
         fd, self.log_path = tempfile.mkstemp(suffix=".log")
         self._log_fd = os.fdopen(fd, "w")
         self.proc = subprocess.Popen(
-            _cmd(binary, port, remote_ski, cert, key),
+            _cmd(binary, port, remote_ski, cert, key, extra_args),
             stdin=subprocess.PIPE,
             stdout=self._log_fd,
             stderr=self._log_fd,
@@ -94,6 +101,15 @@ class NodeProcess:
     def count_occurrences(self, text: str) -> int:
         return sum(1 for line in self.log_lines() if text in line)
 
+    def wait_for_count(self, marker: str, count: int, timeout: float) -> bool:
+        """Return True once marker appears at least `count` times in total log."""
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if self.count_occurrences(marker) >= count:
+                return True
+            time.sleep(0.1)
+        return False
+
     def is_alive(self) -> bool:
         return self.proc.poll() is None
 
@@ -107,7 +123,7 @@ class NodeProcess:
     def stop(self, timeout: float = 5.0) -> None:
         try:
             self.send("exit")
-        except OSError:
+        except (OSError, ValueError):
             pass
         try:
             self.proc.stdin.close()
@@ -142,6 +158,20 @@ def make_node_pair():
     )
 
 
+def make_three_node_group():
+    """Create fresh heat_pump + hems + ev_charger NodeProcess triple.
+
+    HEMS is started with --remote EV_SKI so it accepts the EV connection.
+    ev_charger trusts the same HEMS cert as heat_pump (HP_REMOTE_SKI).
+    """
+    return (
+        NodeProcess(HP_BINARY,   HP_PORT,   HP_REMOTE_SKI,   HP_CERT,   HP_KEY),
+        NodeProcess(HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY,
+                    extra_args=("--remote", EV_SKI)),
+        NodeProcess(EV_BINARY,   EV_PORT,   HP_REMOTE_SKI,   EV_CERT,   EV_KEY),
+    )
+
+
 def await_uc_ready(nodes, ready_marker: str):
     """Wait for a use-case handshake marker on hems, then return (hp, hems)."""
     hp, hems = nodes
@@ -150,8 +180,8 @@ def await_uc_ready(nodes, ready_marker: str):
     return hp, hems
 
 
-def require_binaries():
-    missing = [b for b in (HP_BINARY, HEMS_BINARY) if not os.path.isfile(b)]
+def require_binaries(*extra: str):
+    missing = [b for b in (HP_BINARY, HEMS_BINARY, *extra) if not os.path.isfile(b)]
     if missing:
         pytest.skip(f"Binaries not found: {missing!r}  — build the project first")
 

@@ -34,8 +34,10 @@ static bool should_terminate = false;
 static HemsObject* hems = NULL;
 
 void PrintUsage() {
-  printf("General Usage:\n");
-  printf("hems <server_port> <remote_ski> <certificate_file> <private_key_file>\n");
+  printf("Usage:\n");
+  printf("  hems <port> <remote_ski> <cert> <pkey> [role] [--remote <ski>...]\n");
+  printf("  role: \"client\", \"server\", or \"auto\" (default: auto)\n");
+  printf("  --remote <ski>: register additional remote SKIs\n");
 }
 
 void GracefulTerminate(int signal) {
@@ -62,7 +64,7 @@ void MainLoop() {
 }
 
 int main(int argc, char** argv) {
-  if (argc < 5 || argc > 6) {
+  if (argc < 5) {
     PrintUsage();
     return -1;
   }
@@ -72,7 +74,14 @@ int main(int argc, char** argv) {
   const char* const remote_ski = argv[2];
   const char* const cert       = argv[3];
   const char* const pkey       = argv[4];
-  const char* const role       = (argc == 6) ? argv[5] : "auto";
+
+  // argv[5] is optional role — only if it doesn't look like a flag
+  int extra_start = 5;
+  const char* role = "auto";
+  if (argc > 5 && strncmp(argv[5], "--", 2) != 0) {
+    role        = argv[5];
+    extra_start = 6;
+  }
 
   TlsCertificateObject* const tls_cert = TlsCertificateLoadX509KeyPair(cert, pkey);
   if (tls_cert == NULL) {
@@ -87,6 +96,13 @@ int main(int argc, char** argv) {
   }
 
   HemsRegisterRemoteSki(hems, remote_ski);
+
+  // Register any additional remote SKIs passed as --remote <ski> pairs
+  for (int i = extra_start; i + 1 < argc; i += 2) {
+    if (strcmp(argv[i], "--remote") == 0) {
+      HemsRegisterRemoteSki(hems, argv[i + 1]);
+    }
+  }
 
   MainLoop();
 
