@@ -43,8 +43,10 @@
 #include "src/use_case/actor/cs/lpp/cs_lpp.h"
 #include "src/use_case/actor/mu/mpc/mu_mpc.h"
 
-static const int8_t kScaleDefault                                    = -2;
-static const uint32_t kHeartbeatTimeoutSeconds                       = 60;
+static const int8_t kScaleDefault = -2;
+
+static const uint32_t kHeartbeatTimeoutSeconds = 60;
+
 static const ElectricalConnectionIdType kEvsrvElectricalConnectionId = 0;
 
 typedef struct Evsrv Evsrv;
