@@ -28,7 +28,8 @@
 #include "src/ship/tls_certificate/tls_certificate.h"
 
 static bool should_terminate = false;
-static EvsrvObject* evsrv    = NULL;
+
+static EvsrvObject* evsrv = NULL;
 
 static void PrintUsage(void) {
   printf("Usage:\n");
