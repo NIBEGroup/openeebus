@@ -194,6 +194,7 @@ static void HandleCmdList(const EgLpCli* self) {
     printf("%s: no remotes connected\n", self->cmd_name);
     return;
   }
+
   printf("%s connected remotes (%zu):\n", self->cmd_name, count);
   for (size_t i = 0; i < count; i++) {
     char formatted[EEBUS_CLI_ENTITY_ADDR_STR_MAX];
@@ -551,6 +552,7 @@ static void HandleCmd(const EebusCliHandlerObject* self, const char* const* toke
     HandleCmdStart(eg_lp_cli, tokens, num_tokens);
     return;
   }
+
   if (strcmp(tokens[1], "stop") == 0) {
     HandleCmdStop(eg_lp_cli, tokens, num_tokens);
     return;
