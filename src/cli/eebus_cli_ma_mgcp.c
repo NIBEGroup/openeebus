@@ -101,6 +101,7 @@ static void HandleCmdList(const MaMgcpCli* self) {
     printf("ma_mgcp: no remotes connected\n");
     return;
   }
+
   printf("ma_mgcp connected remotes (%zu):\n", count);
   for (size_t i = 0; i < count; i++) {
     char formatted[EEBUS_CLI_ENTITY_ADDR_STR_MAX];
