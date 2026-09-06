@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
   const char* const cert       = argv[3];
   const char* const pkey       = argv[4];
 
-  /* argv[5] is optional role — only if it doesn't look like a flag */
+  // argv[5] is optional role — only if it doesn't look like a flag
   int extra_start = 5;
   const char* role = "auto";
   if (argc > 5 && strncmp(argv[5], "--", 2) != 0) {
@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
 
   HemsRegisterRemoteSki(hems, remote_ski);
 
-  /* Register any additional remote SKIs passed as --remote <ski> pairs */
+  // Register any additional remote SKIs passed as --remote <ski> pairs
   for (int i = extra_start; i + 1 < argc; i += 2) {
     if (strcmp(argv[i], "--remote") == 0) {
       HemsRegisterRemoteSki(hems, argv[i + 1]);
