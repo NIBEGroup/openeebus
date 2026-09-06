@@ -75,22 +75,14 @@ struct EebusCliInterface {
    * @param eg_lpc_use_case EG LPC use case instance to be used by the CLI handler
    * @param addr_list Connected remote entity address list; NULL to tear down the handler
    */
-  void (*set_eg_lpc)(
-      EebusCliObject* self,
-      EgLpUseCaseObject* eg_lpc_use_case,
-      EntityAddressList* addr_list
-  );
+  void (*set_eg_lpc)(EebusCliObject* self, EgLpUseCaseObject* eg_lpc_use_case, EntityAddressList* addr_list);
   /**
    * @brief Set the EG LPP use case instance to be used by the CLI handler
    * @param self Pointer to the EEBUS CLI handler instance
    * @param eg_lpp_use_case EG LPP use case instance to be used by the CLI handler
    * @param addr_list Connected remote entity address list; NULL to tear down the handler
    */
-  void (*set_eg_lpp)(
-      EebusCliObject* self,
-      EgLpUseCaseObject* eg_lpp_use_case,
-      EntityAddressList* addr_list
-  );
+  void (*set_eg_lpp)(EebusCliObject* self, EgLpUseCaseObject* eg_lpp_use_case, EntityAddressList* addr_list);
   /**
    * @brief Set the MU MPC use case instance to be used by the CLI handler
    * @param self Pointer to the EEBUS CLI handler instance
@@ -103,11 +95,7 @@ struct EebusCliInterface {
    * @param ma_mpc_use_case MA MPC use case instance to be used by the CLI handler
    * @param addr_list Connected remote entity address list; NULL to tear down the handler
    */
-  void (*set_ma_mpc)(
-      EebusCliObject* self,
-      MaMpcUseCaseObject* ma_mpc_use_case,
-      EntityAddressList* addr_list
-  );
+  void (*set_ma_mpc)(EebusCliObject* self, MaMpcUseCaseObject* ma_mpc_use_case, EntityAddressList* addr_list);
   /**
    * @brief Set the GCP MGCP use case instance to be used by the CLI handler
    * @param self Pointer to the EEBUS CLI handler instance
@@ -120,11 +108,7 @@ struct EebusCliInterface {
    * @param ma_mgcp_use_case MA MGCP use case instance to be used by the CLI handler
    * @param addr_list Connected remote entity address list; NULL to tear down the handler
    */
-  void (*set_ma_mgcp)(
-      EebusCliObject* self,
-      MaMgcpUseCaseObject* ma_mgcp_use_case,
-      EntityAddressList* addr_list
-  );
+  void (*set_ma_mgcp)(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_case, EntityAddressList* addr_list);
   /**
    * @brief Handle the command passed as a string
    * @param self Pointer to the EEBUS CLI handler instance
