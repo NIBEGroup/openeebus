@@ -70,24 +70,30 @@ CsLpListenerObject* CsLpcListenerCreate(void) {
   if (listener == NULL) {
     return NULL;
   }
+
   if (CsLpcListenerConstruct(listener) != kEebusErrorOk) {
     CsLpcListenerDelete(CS_LP_LISTENER_OBJECT(listener));
     return NULL;
   }
+
   return CS_LP_LISTENER_OBJECT(listener);
 }
 
-void Destruct(CsLpListenerObject* self) { UNUSED(self); }
+void Destruct(CsLpListenerObject* self) {
+  UNUSED(self);
+}
 
 void OnRemoteEgAdded(CsLpListenerObject* self, const EntityAddressType* entity_addr) {
   UNUSED(self);
   UNUSED(entity_addr);
+
   printf("EV CS LPC: Remote EG added\n");
 }
 
 void OnRemoteEgRemoved(CsLpListenerObject* self, const EntityAddressType* entity_addr) {
   UNUSED(self);
   UNUSED(entity_addr);
+
   printf("EV CS LPC: Remote EG removed\n");
 }
 
@@ -98,6 +104,7 @@ void OnPowerLimitReceive(
     bool is_active
 ) {
   UNUSED(self);
+
   ScaledValuePrint("EV CS LPC: Power limit received %sW, ", power_limit);
   EebusDurationPrint("duration = %s, ", duration);
   printf("active = %s\n", is_active ? "true" : "false");
@@ -105,15 +112,18 @@ void OnPowerLimitReceive(
 
 void OnFailsafePowerLimitReceive(CsLpListenerObject* self, const ScaledValue* power_limit) {
   UNUSED(self);
+
   ScaledValuePrint("EV CS LPC: Failsafe power limit received %sW\n", power_limit);
 }
 
 void OnFailsafeDurationReceive(CsLpListenerObject* self, const DurationType* duration) {
   UNUSED(self);
+
   EebusDurationPrint("EV CS LPC: Failsafe duration received %s\n", duration);
 }
 
 void OnHeartbeatReceive(CsLpListenerObject* self, uint64_t heartbeat_counter) {
   UNUSED(self);
+
   printf("EV CS LPC: Heartbeat received, counter = %" PRIu64 "\n", heartbeat_counter);
 }

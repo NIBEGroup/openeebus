@@ -43,8 +43,8 @@
 #include "src/use_case/actor/cs/lpp/cs_lpp.h"
 #include "src/use_case/actor/mu/mpc/mu_mpc.h"
 
-static const int8_t        kScaleDefault                  = -2;
-static const uint32_t      kHeartbeatTimeoutSeconds        = 60;
+static const int8_t kScaleDefault                                    = -2;
+static const uint32_t kHeartbeatTimeoutSeconds                       = 60;
 static const ElectricalConnectionIdType kEvsrvElectricalConnectionId = 0;
 
 typedef struct Evsrv Evsrv;
@@ -52,15 +52,15 @@ typedef struct Evsrv Evsrv;
 struct Evsrv {
   ServiceReaderObject service_reader;
 
-  EebusServiceConfig*  cfg;
-  EebusServiceObject*  service;
-  CsLpListenerObject*  cs_lpc_listener;
-  CsLpUseCaseObject*   cs_lpc;
-  CsLpListenerObject*  cs_lpp_listener;
-  CsLpUseCaseObject*   cs_lpp;
+  EebusServiceConfig* cfg;
+  EebusServiceObject* service;
+  CsLpListenerObject* cs_lpc_listener;
+  CsLpUseCaseObject* cs_lpc;
+  CsLpListenerObject* cs_lpp_listener;
+  CsLpUseCaseObject* cs_lpp;
   MuMpcListenerObject* mu_mpc_listener;
-  MuMpcUseCaseObject*  mu_mpc;
-  EebusCliObject*      cli;
+  MuMpcUseCaseObject* mu_mpc;
+  EebusCliObject* cli;
 };
 
 #define EVSRV(obj) ((Evsrv*)(obj))
@@ -93,15 +93,15 @@ static EebusError AddEvseEntity(Evsrv* self, DeviceLocalObject* device_local);
 static EebusError EvsrvConstruct(Evsrv* self) {
   SERVICE_READER_INTERFACE(self) = &evsrv_methods;
 
-  self->cfg              = NULL;
-  self->service          = NULL;
-  self->cs_lpc_listener  = NULL;
-  self->cs_lpc           = NULL;
-  self->cs_lpp_listener  = NULL;
-  self->cs_lpp           = NULL;
-  self->mu_mpc_listener  = NULL;
-  self->mu_mpc           = NULL;
-  self->cli              = NULL;
+  self->cfg             = NULL;
+  self->service         = NULL;
+  self->cs_lpc_listener = NULL;
+  self->cs_lpc          = NULL;
+  self->cs_lpp_listener = NULL;
+  self->cs_lpp          = NULL;
+  self->mu_mpc_listener = NULL;
+  self->mu_mpc          = NULL;
+  self->cli             = NULL;
 
   self->cli = EebusCliCreate();
   if (self->cli == NULL) {
@@ -152,7 +152,10 @@ static EebusError AddMpc(Evsrv* self, EntityLocalObject* entity_local) {
 
   static const MuMpcConfig cfg = {
       .power_cfg = {
-          .power_total_cfg = {.value_source = kMeasurementValueSourceTypeMeasuredValue},
+          .power_total_cfg   = {
+              .value_source = kMeasurementValueSourceTypeMeasuredValue,
+          },
+
           .power_phase_a_cfg = &measurement_default_cfg,
           .power_phase_b_cfg = &measurement_default_cfg,
           .power_phase_c_cfg = &measurement_default_cfg,
@@ -304,12 +307,14 @@ void Destruct(ServiceReaderObject* self) {
 void OnRemoteSkiConnected(ServiceReaderObject* self, EebusServiceObject* service, const char* ski) {
   UNUSED(self);
   UNUSED(service);
+
   printf("Remote SKI connected: %s\n", ski);
 }
 
 void OnRemoteSkiDisconnected(ServiceReaderObject* self, EebusServiceObject* service, const char* ski) {
   UNUSED(self);
   UNUSED(service);
+
   printf("Remote SKI disconnected: %s\n", ski);
 }
 
@@ -321,17 +326,20 @@ void OnRemoteServicesUpdate(ServiceReaderObject* self, EebusServiceObject* servi
 
 void OnShipIdUpdate(ServiceReaderObject* self, const char* ski, const char* ship_id) {
   UNUSED(self);
+
   printf("Ship ID update for SKI %s: %s\n", ski, ship_id);
 }
 
 void OnShipStateUpdate(ServiceReaderObject* self, const char* ski, SmeState state) {
   UNUSED(self);
+
   printf("Ship state update for SKI %s: %d\n", ski, state);
 }
 
 bool IsWaitingForTrustAllowed(const ServiceReaderObject* self, const char* ski) {
   UNUSED(self);
   UNUSED(ski);
+
   return true;
 }
 
@@ -345,14 +353,18 @@ void EvsrvUnregisterRemoteSki(EvsrvObject* self, const char* ski) {
 
 EebusError EvsrvSetPowerTotal(EvsrvObject* self, int32_t power_total) {
   Evsrv* const evsrv = EVSRV(self);
+
   if (evsrv->mu_mpc == NULL) {
     return kEebusErrorOther;
   }
+
   const ScaledValue power_val = {.value = power_total, .scale = kScaleDefault};
+
   EebusError err = MuMpcSetMeasurementDataCache(evsrv->mu_mpc, kMpcPowerTotal, &power_val, NULL, NULL);
   if (err != kEebusErrorOk) {
     return err;
   }
+
   return MuMpcUpdate(evsrv->mu_mpc);
 }
 

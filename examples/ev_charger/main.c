@@ -27,8 +27,8 @@
 #include "evsrv.h"
 #include "src/ship/tls_certificate/tls_certificate.h"
 
-static bool         should_terminate = false;
-static EvsrvObject* evsrv            = NULL;
+static bool should_terminate = false;
+static EvsrvObject* evsrv    = NULL;
 
 static void PrintUsage(void) {
   printf("Usage:\n");
@@ -63,11 +63,11 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  const int32_t port       = atoi(argv[1]);
-  const char*   remote_ski = argv[2];
-  const char*   cert       = argv[3];
-  const char*   pkey       = argv[4];
-  const char*   role       = (argc == 6) ? argv[5] : "auto";
+  const int32_t port     = atoi(argv[1]);
+  const char* remote_ski = argv[2];
+  const char* cert       = argv[3];
+  const char* pkey       = argv[4];
+  const char* role       = (argc == 6) ? argv[5] : "auto";
 
   TlsCertificateObject* const tls_cert = TlsCertificateLoadX509KeyPair(cert, pkey);
   if (tls_cert == NULL) {
