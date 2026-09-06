@@ -48,16 +48,11 @@ static const EebusCliHandlerInterface ma_mgcp_cli_methods = {
     .handle_cmd = HandleCmd,
 };
 
-static EebusError
-MaMgcpCliConstruct(MaMgcpCli* self, MaMgcpUseCaseObject* ma_mgcp, const EntityAddressList* addr_list);
+static EebusError MaMgcpCliConstruct(MaMgcpCli* self, MaMgcpUseCaseObject* ma_mgcp, const EntityAddressList* addr_list);
 
 static void HandleCmdList(const MaMgcpCli* self);
-static void HandleCmdGet(
-    const MaMgcpCli*         self,
-    const EntityAddressType* entity_addr,
-    const char* const*       tokens,
-    size_t                   num_tokens
-);
+static void
+HandleCmdGet(const MaMgcpCli* self, const EntityAddressType* entity_addr, const char* const* tokens, size_t num_tokens);
 
 static EebusError
 MaMgcpCliConstruct(MaMgcpCli* self, MaMgcpUseCaseObject* ma_mgcp, const EntityAddressList* addr_list) {
@@ -120,10 +115,10 @@ static void HandleCmdList(const MaMgcpCli* self) {
 //
 //-------------------------------------------------------------------------------------------//
 static void HandleCmdGet(
-    const MaMgcpCli*         self,
+    const MaMgcpCli* self,
     const EntityAddressType* entity_addr,
-    const char* const*       tokens,
-    size_t                   num_tokens
+    const char* const* tokens,
+    size_t num_tokens
 ) {
   if (num_tokens != 3) {
     printf("Insufficient arguments for ma_mgcp get command\n");
@@ -174,10 +169,9 @@ static void HandleCmd(const EebusCliHandlerObject* self, const char* const* toke
   }
 
   const char* adjusted[10];
-  size_t      adjusted_count                 = 0;
-  const EntityAddressType* const remote_addr = CliExtractRemoteArg(
-      tokens, num_tokens, ma_mgcp_cli->addr_list, "ma_mgcp", adjusted, &adjusted_count
-  );
+  size_t adjusted_count = 0;
+  const EntityAddressType* const remote_addr
+      = CliExtractRemoteArg(tokens, num_tokens, ma_mgcp_cli->addr_list, "ma_mgcp", adjusted, &adjusted_count);
   if (remote_addr == NULL) {
     return;
   }
