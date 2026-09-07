@@ -47,8 +47,7 @@ extern "C" {
 enum ShipConnectionQueueMsgType {
   kShipConnectionQueueMsgTypeDataReceived,
   kShipConnectionQueueMsgTypeSpineDataToSend,
-  kShipConnectionQueueMsgTypeTimeout,         // prolongation timers only
-  kShipConnectionQueueMsgTypeWaitReadyTimeout, // wait_for_ready_timer only
+  kShipConnectionQueueMsgTypeTimeout,
   kShipConnectionQueueMsgTypeWebsocketError,
   kShipConnectionQueueMsgTypeWebsocketClose,
   kShipConnectionQueueMsgTypeCancel,
