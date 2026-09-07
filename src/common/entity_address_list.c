@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * @file
+ * @brief Entity addresses list implementation
+ */
 
 #include "src/common/entity_address_list.h"
 
 #include <stddef.h>
 
-static void EntryDelete(void* entry) { EntityAddressDelete((EntityAddressType*)entry); }
+static void EntryDelete(void* entry) {
+  EntityAddressDelete((EntityAddressType*)entry);
+}
 
 void EntityAddressListInit(EntityAddressList* self) {
   VectorConstructWithDeallocator(&self->entries, EntryDelete);
@@ -33,15 +39,18 @@ EebusError EntityAddressListAdd(EntityAddressList* self, const EntityAddressType
   if (addr == NULL) {
     return kEebusErrorInputArgument;
   }
+
   for (size_t i = 0; i < VectorGetSize(&self->entries); ++i) {
     if (EntityAddressCompare((EntityAddressType*)VectorGetElement(&self->entries, i), addr)) {
       return kEebusErrorOk;
     }
   }
+
   EntityAddressType* copy = EntityAddressCopy(addr);
   if (copy == NULL) {
     return kEebusErrorMemoryAllocate;
   }
+
   VectorPushBack(&self->entries, copy);
   return kEebusErrorOk;
 }
@@ -50,6 +59,7 @@ void EntityAddressListRemove(EntityAddressList* self, const EntityAddressType* a
   if (addr == NULL) {
     return;
   }
+
   for (size_t i = 0; i < VectorGetSize(&self->entries); ++i) {
     EntityAddressType* entry = (EntityAddressType*)VectorGetElement(&self->entries, i);
     if (EntityAddressCompare(entry, addr)) {

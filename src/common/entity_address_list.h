@@ -37,11 +37,11 @@ struct EntityAddressList {
   Vector entries;
 };
 
-void                     EntityAddressListInit(EntityAddressList* self);
-void                     EntityAddressListRelease(EntityAddressList* self);
-EebusError               EntityAddressListAdd(EntityAddressList* self, const EntityAddressType* addr);
-void                     EntityAddressListRemove(EntityAddressList* self, const EntityAddressType* addr);
-size_t                   EntityAddressListGetSize(const EntityAddressList* self);
+void EntityAddressListInit(EntityAddressList* self);
+void EntityAddressListRelease(EntityAddressList* self);
+EebusError EntityAddressListAdd(EntityAddressList* self, const EntityAddressType* addr);
+void EntityAddressListRemove(EntityAddressList* self, const EntityAddressType* addr);
+size_t EntityAddressListGetSize(const EntityAddressList* self);
 const EntityAddressType* EntityAddressListGet(const EntityAddressList* self, size_t idx);
 
 #ifdef __cplusplus
