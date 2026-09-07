@@ -330,12 +330,12 @@ void DeviceLocalTick(DeviceLocalObject* self) {
 }
 
 static bool IsRemoteDeviceAlive(const DeviceLocal* dl, const DeviceRemoteObject* remote_device) {
-  const size_t n = StringLutGetSize(&dl->remote_devices);
-  for (size_t i = 0; i < n; ++i) {
+  for (size_t i = 0; i < StringLutGetSize(&dl->remote_devices); ++i) {
     if (StringLutGetElementValue(&dl->remote_devices, i) == (const void*)remote_device) {
       return true;
     }
   }
+
   return false;
 }
 
