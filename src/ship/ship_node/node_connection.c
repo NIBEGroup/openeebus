@@ -33,7 +33,7 @@ struct NodeConnection {
   /** Implements the Node Connection Interface */
   NodeConnectionObject obj;
 
-  char* ski;
+  const char* ski;
   ShipConnectionObject* connection;
   int attempt_cnt;
   bool is_attempt_running;
@@ -130,7 +130,7 @@ void Destruct(NodeConnectionObject* self) {
     nc->retry_timer = NULL;
   }
 
-  EEBUS_FREE(nc->ski);
+  StringDelete((char*)nc->ski);
 }
 
 const char* GetSki(const NodeConnectionObject* self) {
