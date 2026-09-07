@@ -118,12 +118,14 @@ class TwoRemoteTestFixture : public ::testing::Test {
  protected:
   std::unique_ptr<DataWriterMock, decltype(&DataWriterMockDelete)> hp_writer_{nullptr, DataWriterMockDelete};
   std::unique_ptr<DataWriterMock, decltype(&DataWriterMockDelete)> ev_writer_{nullptr, DataWriterMockDelete};
-  std::unique_ptr<DeviceLocalObject, decltype(&DeviceLocalDelete)>  device_local_{nullptr, DeviceLocalDelete};
+  std::unique_ptr<DeviceLocalObject, decltype(&DeviceLocalDelete)> device_local_{nullptr, DeviceLocalDelete};
   DataReaderObject* hp_reader_{nullptr};
   DataReaderObject* ev_reader_{nullptr};
 
   std::unique_ptr<MaMpcListenerMock, decltype(&MaMpcListenerMockDelete)> listener_mock_{
-      nullptr, MaMpcListenerMockDelete};
+      nullptr,
+      MaMpcListenerMockDelete
+  };
   std::unique_ptr<MaMpcUseCaseObject, decltype(&MaMpcUseCaseDelete)> use_case_{nullptr, MaMpcUseCaseDelete};
 
   void SetUp() override;
@@ -151,7 +153,11 @@ void TwoRemoteTestFixture::SetUp() {
 
   uint32_t entity_ids[1]{static_cast<uint32_t>(VectorGetSize(DEVICE_LOCAL_GET_ENTITIES(device_local_.get())))};
   EntityLocalObject* const entity = EntityLocalCreate(
-      device_local_.get(), kEntityTypeTypeCEM, entity_ids, ARRAY_SIZE(entity_ids), kHeartbeatTimeout
+      device_local_.get(),
+      kEntityTypeTypeCEM,
+      entity_ids,
+      ARRAY_SIZE(entity_ids),
+      kHeartbeatTimeout
   );
 
   listener_mock_.reset(MaMpcListenerMockCreate());
@@ -160,15 +166,11 @@ void TwoRemoteTestFixture::SetUp() {
 
   // Set up HP remote: triggers discovery_read to hp_writer_
   ExpectHpSend(ma_mpc_test::send::discovery_read);
-  hp_reader_ = DEVICE_LOCAL_SETUP_REMOTE_DEVICE(
-      device_local_.get(), kHpSki, DATA_WRITER_OBJECT(hp_writer_.get())
-  );
+  hp_reader_ = DEVICE_LOCAL_SETUP_REMOTE_DEVICE(device_local_.get(), kHpSki, DATA_WRITER_OBJECT(hp_writer_.get()));
 
   // Set up EV remote: triggers discovery_read to ev_writer_
   ExpectEvSend(two_remote_test::send::discovery_read);
-  ev_reader_ = DEVICE_LOCAL_SETUP_REMOTE_DEVICE(
-      device_local_.get(), kEvSki, DATA_WRITER_OBJECT(ev_writer_.get())
-  );
+  ev_reader_ = DEVICE_LOCAL_SETUP_REMOTE_DEVICE(device_local_.get(), kEvSki, DATA_WRITER_OBJECT(ev_writer_.get()));
 }
 
 void TwoRemoteTestFixture::TearDown() {
@@ -191,21 +193,17 @@ void TwoRemoteTestFixture::TearDown() {
 }
 
 void TwoRemoteTestFixture::ExpectHpSend(const char* expected_json) {
-  EXPECT_CALL(*hp_writer_->gmock, WriteMessage(_, _, _))
-      .With(Args<1, 2>(JsonMsgEq(expected_json)))
-      .WillOnce(Return());
+  EXPECT_CALL(*hp_writer_->gmock, WriteMessage(_, _, _)).With(Args<1, 2>(JsonMsgEq(expected_json))).WillOnce(Return());
 }
 
 void TwoRemoteTestFixture::ExpectEvSend(const char* expected_json) {
-  EXPECT_CALL(*ev_writer_->gmock, WriteMessage(_, _, _))
-      .With(Args<1, 2>(JsonMsgEq(expected_json)))
-      .WillOnce(Return());
+  EXPECT_CALL(*ev_writer_->gmock, WriteMessage(_, _, _)).With(Args<1, 2>(JsonMsgEq(expected_json))).WillOnce(Return());
 }
 
 void TwoRemoteTestFixture::HandleHpMessage(const char* msg_string) {
   MessageBuffer msg_buf;
-  const char* const s   = JsonUnformat(msg_string);
-  uint8_t* const    msg = reinterpret_cast<uint8_t*>(const_cast<char*>(s));
+  const char* const s = JsonUnformat(msg_string);
+  uint8_t* const msg  = reinterpret_cast<uint8_t*>(const_cast<char*>(s));
   MessageBufferInitWithDeallocator(&msg_buf, msg, strlen(s) + 1, JsonFree);
   DATA_READER_HANDLE_MESSAGE(hp_reader_, &msg_buf);
   MessageBufferRelease(&msg_buf);
@@ -214,8 +212,8 @@ void TwoRemoteTestFixture::HandleHpMessage(const char* msg_string) {
 
 void TwoRemoteTestFixture::HandleEvMessage(const char* msg_string) {
   MessageBuffer msg_buf;
-  const char* const s   = JsonUnformat(msg_string);
-  uint8_t* const    msg = reinterpret_cast<uint8_t*>(const_cast<char*>(s));
+  const char* const s = JsonUnformat(msg_string);
+  uint8_t* const msg  = reinterpret_cast<uint8_t*>(const_cast<char*>(s));
   MessageBufferInitWithDeallocator(&msg_buf, msg, strlen(s) + 1, JsonFree);
   DATA_READER_HANDLE_MESSAGE(ev_reader_, &msg_buf);
   MessageBufferRelease(&msg_buf);
@@ -342,15 +340,18 @@ TEST_F(TwoRemoteTestFixture, HpMeasurementRoutedToHpEntity) {
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseA, ScaledValueEq(1000, 0), EntityAddressDeviceEq("d:_n:HeatPump_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseB, ScaledValueEq(1100, 0), EntityAddressDeviceEq("d:_n:HeatPump_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseC, ScaledValueEq(1200, 0), EntityAddressDeviceEq("d:_n:HeatPump_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   HandleHpMessage(ma_mpc_test::receive::measurement_notify_power);
 
   // Teardown: both remotes will fire OnRemoteMuRemoved
@@ -365,15 +366,18 @@ TEST_F(TwoRemoteTestFixture, EvMeasurementRoutedToEvEntity) {
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseA, ScaledValueEq(1000, 0), EntityAddressDeviceEq("d:_n:EV_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseB, ScaledValueEq(1100, 0), EntityAddressDeviceEq("d:_n:EV_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseC, ScaledValueEq(1200, 0), EntityAddressDeviceEq("d:_n:EV_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   HandleEvMessage(two_remote_test::receive::measurement_notify_power);
 
   // Teardown: both remotes will fire OnRemoteMuRemoved
@@ -388,37 +392,44 @@ TEST_F(TwoRemoteTestFixture, BothMeasurementsRoutedIndependently) {
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseA, ScaledValueEq(1000, 0), EntityAddressDeviceEq("d:_n:HeatPump_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseB, ScaledValueEq(1100, 0), EntityAddressDeviceEq("d:_n:HeatPump_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseC, ScaledValueEq(1200, 0), EntityAddressDeviceEq("d:_n:HeatPump_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   HandleHpMessage(ma_mpc_test::receive::measurement_notify_power);
 
   // EV notify
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseA, ScaledValueEq(1000, 0), EntityAddressDeviceEq("d:_n:EV_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseB, ScaledValueEq(1100, 0), EntityAddressDeviceEq("d:_n:EV_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseC, ScaledValueEq(1200, 0), EntityAddressDeviceEq("d:_n:EV_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   HandleEvMessage(two_remote_test::receive::measurement_notify_power);
 
   // Verify stored data is independently accessible per entity address
-  static constexpr uint32_t                  remote_entity_id{1};
-  static constexpr const uint32_t* const     remote_entity_ids[]{&remote_entity_id};
-  const EntityAddressType hp_entity_addr = {"d:_n:HeatPump_123456789", remote_entity_ids, ARRAY_SIZE(remote_entity_ids)};
-  const EntityAddressType ev_entity_addr = {"d:_n:EV_123456789",      remote_entity_ids, ARRAY_SIZE(remote_entity_ids)};
+  static constexpr uint32_t remote_entity_id{1};
+  static constexpr const uint32_t* const remote_entity_ids[]{&remote_entity_id};
+  const EntityAddressType hp_entity_addr
+      = {"d:_n:HeatPump_123456789", remote_entity_ids, ARRAY_SIZE(remote_entity_ids)};
+  const EntityAddressType ev_entity_addr = {"d:_n:EV_123456789", remote_entity_ids, ARRAY_SIZE(remote_entity_ids)};
 
   ScaledValue value{};
   EXPECT_EQ(MaMpcGetMeasurementData(use_case_.get(), kMpcPowerPhaseA, &hp_entity_addr, &value), kEebusErrorOk);
@@ -445,15 +456,18 @@ TEST_F(TwoRemoteTestFixture, EvDisconnectHpMeasurementUnaffected) {
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseA, ScaledValueEq(1000, 0), EntityAddressDeviceEq("d:_n:HeatPump_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseB, ScaledValueEq(1100, 0), EntityAddressDeviceEq("d:_n:HeatPump_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseC, ScaledValueEq(1200, 0), EntityAddressDeviceEq("d:_n:HeatPump_123456789"))
-  ).WillOnce(Return());
+  )
+      .WillOnce(Return());
   HandleHpMessage(ma_mpc_test::receive::measurement_notify_power);
 
   // Teardown: only HP fires OnRemoteMuRemoved (EV was already disconnected above)

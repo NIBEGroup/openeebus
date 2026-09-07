@@ -126,24 +126,23 @@ namespace two_remote_eg_lpc_test {
 class TwoRemoteEgLpcTestFixture : public ::testing::Test {
  public:
   static constexpr uint32_t kHeartbeatTimeout = 60;
-  static constexpr char     kHpSki[]          = "0123456789abcdefedcb0123456789abcdefedcb";
-  static constexpr char     kEvSki[]          = "fedcba9876543210fedcba9876543210fedcba98";
+  static constexpr char kHpSki[]              = "0123456789abcdefedcb0123456789abcdefedcb";
+  static constexpr char kEvSki[]              = "fedcba9876543210fedcba9876543210fedcba98";
 
   // Remote entity addresses — entity [1] is the CS entity
-  static constexpr uint32_t        kRemoteEntityId        = 1;
-  static constexpr const uint32_t* kRemoteEntityIds[]     = {&kRemoteEntityId};
-  static const EntityAddressType   kHpEntityAddr;
-  static const EntityAddressType   kEvEntityAddr;
+  static constexpr uint32_t kRemoteEntityId           = 1;
+  static constexpr const uint32_t* kRemoteEntityIds[] = {&kRemoteEntityId};
+  static const EntityAddressType kHpEntityAddr;
+  static const EntityAddressType kEvEntityAddr;
 
  protected:
   std::unique_ptr<DataWriterMock, decltype(&DataWriterMockDelete)> hp_writer_{nullptr, DataWriterMockDelete};
   std::unique_ptr<DataWriterMock, decltype(&DataWriterMockDelete)> ev_writer_{nullptr, DataWriterMockDelete};
-  std::unique_ptr<DeviceLocalObject, decltype(&DeviceLocalDelete)>  device_local_{nullptr, DeviceLocalDelete};
+  std::unique_ptr<DeviceLocalObject, decltype(&DeviceLocalDelete)> device_local_{nullptr, DeviceLocalDelete};
   DataReaderObject* hp_reader_{nullptr};
   DataReaderObject* ev_reader_{nullptr};
 
-  std::unique_ptr<EgLpListenerMock, decltype(&EgLpListenerMockDelete)> listener_mock_{
-      nullptr, EgLpListenerMockDelete};
+  std::unique_ptr<EgLpListenerMock, decltype(&EgLpListenerMockDelete)> listener_mock_{nullptr, EgLpListenerMockDelete};
   std::unique_ptr<EgLpUseCaseObject, decltype(&EgLpUseCaseDelete)> use_case_{nullptr, EgLpUseCaseDelete};
 
   void SetUp() override;
@@ -185,7 +184,11 @@ void TwoRemoteEgLpcTestFixture::SetUp() {
 
   uint32_t entity_ids[1]{static_cast<uint32_t>(VectorGetSize(DEVICE_LOCAL_GET_ENTITIES(device_local_.get())))};
   EntityLocalObject* const entity = EntityLocalCreate(
-      device_local_.get(), kEntityTypeTypeGridGuard, entity_ids, ARRAY_SIZE(entity_ids), kHeartbeatTimeout
+      device_local_.get(),
+      kEntityTypeTypeGridGuard,
+      entity_ids,
+      ARRAY_SIZE(entity_ids),
+      kHeartbeatTimeout
   );
 
   listener_mock_.reset(EgLpListenerMockCreate());
@@ -194,15 +197,11 @@ void TwoRemoteEgLpcTestFixture::SetUp() {
 
   // Set up HP remote: triggers discovery_read to hp_writer_
   ExpectHpSend(eg_lpc_test::send::discovery_read);
-  hp_reader_ = DEVICE_LOCAL_SETUP_REMOTE_DEVICE(
-      device_local_.get(), kHpSki, DATA_WRITER_OBJECT(hp_writer_.get())
-  );
+  hp_reader_ = DEVICE_LOCAL_SETUP_REMOTE_DEVICE(device_local_.get(), kHpSki, DATA_WRITER_OBJECT(hp_writer_.get()));
 
   // Set up EV remote: triggers discovery_read to ev_writer_
   ExpectEvSend(two_remote_eg_lpc_test::send::discovery_read);
-  ev_reader_ = DEVICE_LOCAL_SETUP_REMOTE_DEVICE(
-      device_local_.get(), kEvSki, DATA_WRITER_OBJECT(ev_writer_.get())
-  );
+  ev_reader_ = DEVICE_LOCAL_SETUP_REMOTE_DEVICE(device_local_.get(), kEvSki, DATA_WRITER_OBJECT(ev_writer_.get()));
 }
 
 void TwoRemoteEgLpcTestFixture::TearDown() {
@@ -225,15 +224,11 @@ void TwoRemoteEgLpcTestFixture::TearDown() {
 }
 
 void TwoRemoteEgLpcTestFixture::ExpectHpSend(const char* expected_json) {
-  EXPECT_CALL(*hp_writer_->gmock, WriteMessage(_, _, _))
-      .With(Args<1, 2>(JsonMsgEq(expected_json)))
-      .WillOnce(Return());
+  EXPECT_CALL(*hp_writer_->gmock, WriteMessage(_, _, _)).With(Args<1, 2>(JsonMsgEq(expected_json))).WillOnce(Return());
 }
 
 void TwoRemoteEgLpcTestFixture::ExpectEvSend(const char* expected_json) {
-  EXPECT_CALL(*ev_writer_->gmock, WriteMessage(_, _, _))
-      .With(Args<1, 2>(JsonMsgEq(expected_json)))
-      .WillOnce(Return());
+  EXPECT_CALL(*ev_writer_->gmock, WriteMessage(_, _, _)).With(Args<1, 2>(JsonMsgEq(expected_json))).WillOnce(Return());
 }
 
 void TwoRemoteEgLpcTestFixture::ExpectHpHeartbeat(const char* expected_json) {
@@ -246,8 +241,8 @@ void TwoRemoteEgLpcTestFixture::ExpectEvHeartbeat(const char* expected_json) {
 
 void TwoRemoteEgLpcTestFixture::HandleHpMessage(const char* msg_string) {
   MessageBuffer msg_buf;
-  const char* const s   = JsonUnformat(msg_string);
-  uint8_t* const    msg = reinterpret_cast<uint8_t*>(const_cast<char*>(s));
+  const char* const s = JsonUnformat(msg_string);
+  uint8_t* const msg  = reinterpret_cast<uint8_t*>(const_cast<char*>(s));
   MessageBufferInitWithDeallocator(&msg_buf, msg, strlen(s) + 1, JsonFree);
   DATA_READER_HANDLE_MESSAGE(hp_reader_, &msg_buf);
   MessageBufferRelease(&msg_buf);
@@ -256,8 +251,8 @@ void TwoRemoteEgLpcTestFixture::HandleHpMessage(const char* msg_string) {
 
 void TwoRemoteEgLpcTestFixture::HandleEvMessage(const char* msg_string) {
   MessageBuffer msg_buf;
-  const char* const s   = JsonUnformat(msg_string);
-  uint8_t* const    msg = reinterpret_cast<uint8_t*>(const_cast<char*>(s));
+  const char* const s = JsonUnformat(msg_string);
+  uint8_t* const msg  = reinterpret_cast<uint8_t*>(const_cast<char*>(s));
   MessageBufferInitWithDeallocator(&msg_buf, msg, strlen(s) + 1, JsonFree);
   DATA_READER_HANDLE_MESSAGE(ev_reader_, &msg_buf);
   MessageBufferRelease(&msg_buf);
@@ -392,13 +387,15 @@ TEST_F(TwoRemoteEgLpcTestFixture, EgLpcWriteRoutedToHpOnly) {
   ExpectHpSend(eg_lpc_test::send::limits_write_with_duration);
 
   const LoadLimit limit = {
-      .value      = {.value = 3000, .scale = 0},
-      .duration   = {.hours = 1, .minutes = 2, .seconds = 3},
-      .is_active  = true,
+      .value           = {.value = 3000, .scale = 0},
+      .duration        = {.hours = 1, .minutes = 2, .seconds = 3},
+      .is_active       = true,
       .delete_duration = false,
   };
-  EXPECT_EQ(EgLpcSetActiveConsumptionPowerLimit(use_case_.get(), &kHpEntityAddr, &limit, nullptr, nullptr),
-            kEebusErrorOk);
+  EXPECT_EQ(
+      EgLpcSetActiveConsumptionPowerLimit(use_case_.get(), &kHpEntityAddr, &limit, nullptr, nullptr),
+      kEebusErrorOk
+  );
 
   // Teardown: both remotes fire OnRemoteCsRemoved
   EXPECT_CALL(*listener_mock_->gmock, OnRemoteCsRemoved(_, _)).Times(2);
@@ -413,13 +410,15 @@ TEST_F(TwoRemoteEgLpcTestFixture, EgLpcWriteRoutedToEvOnly) {
   ExpectEvSend(two_remote_eg_lpc_test::send::limits_write_with_duration);
 
   const LoadLimit limit = {
-      .value      = {.value = 3000, .scale = 0},
-      .duration   = {.hours = 1, .minutes = 2, .seconds = 3},
-      .is_active  = true,
+      .value           = {.value = 3000, .scale = 0},
+      .duration        = {.hours = 1, .minutes = 2, .seconds = 3},
+      .is_active       = true,
       .delete_duration = false,
   };
-  EXPECT_EQ(EgLpcSetActiveConsumptionPowerLimit(use_case_.get(), &kEvEntityAddr, &limit, nullptr, nullptr),
-            kEebusErrorOk);
+  EXPECT_EQ(
+      EgLpcSetActiveConsumptionPowerLimit(use_case_.get(), &kEvEntityAddr, &limit, nullptr, nullptr),
+      kEebusErrorOk
+  );
 
   // Teardown: both remotes fire OnRemoteCsRemoved
   EXPECT_CALL(*listener_mock_->gmock, OnRemoteCsRemoved(_, _)).Times(2);
@@ -438,17 +437,21 @@ TEST_F(TwoRemoteEgLpcTestFixture, EvDisconnectHpEgLpcRouting) {
   ExpectHpSend(eg_lpc_test::send::limits_write_with_duration);
 
   const LoadLimit limit = {
-      .value      = {.value = 3000, .scale = 0},
-      .duration   = {.hours = 1, .minutes = 2, .seconds = 3},
-      .is_active  = true,
+      .value           = {.value = 3000, .scale = 0},
+      .duration        = {.hours = 1, .minutes = 2, .seconds = 3},
+      .is_active       = true,
       .delete_duration = false,
   };
-  EXPECT_EQ(EgLpcSetActiveConsumptionPowerLimit(use_case_.get(), &kHpEntityAddr, &limit, nullptr, nullptr),
-            kEebusErrorOk);
+  EXPECT_EQ(
+      EgLpcSetActiveConsumptionPowerLimit(use_case_.get(), &kHpEntityAddr, &limit, nullptr, nullptr),
+      kEebusErrorOk
+  );
 
   // EV write returns NoChange — EV entity no longer registered
-  EXPECT_EQ(EgLpcSetActiveConsumptionPowerLimit(use_case_.get(), &kEvEntityAddr, &limit, nullptr, nullptr),
-            kEebusErrorNoChange);
+  EXPECT_EQ(
+      EgLpcSetActiveConsumptionPowerLimit(use_case_.get(), &kEvEntityAddr, &limit, nullptr, nullptr),
+      kEebusErrorNoChange
+  );
 
   // Teardown: only HP fires OnRemoteCsRemoved (EV was already removed)
   EXPECT_CALL(*listener_mock_->gmock, OnRemoteCsRemoved(_, _)).WillOnce(Return());
