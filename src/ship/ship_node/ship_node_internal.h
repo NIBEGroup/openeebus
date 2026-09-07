@@ -17,7 +17,6 @@
 #define SRC_SHIP_SHIP_NODE_SHIP_NODE_INTERNAL_H_
 
 #include <stdbool.h>
-#include <stddef.h>
 
 #include "node_connection_container.h"
 #include "src/common/api/eebus_mutex_interface.h"
