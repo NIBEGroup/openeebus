@@ -47,19 +47,17 @@ static const EebusCliHandlerInterface ma_mpc_cli_methods = {
     .handle_cmd = HandleCmd,
 };
 
-static EebusError
-MaMpcCliConstruct(MaMpcCli* self, MaMpcUseCaseObject* ma_mpc, const EntityAddressList* addr_list);
+static EebusError MaMpcCliConstruct(MaMpcCli* self, MaMpcUseCaseObject* ma_mpc, const EntityAddressList* addr_list);
 
 static void HandleCmdList(const MaMpcCli* self);
 static void HandleCmdMaMpcGet(
-    const MaMpcCli*          self,
+    const MaMpcCli* self,
     const EntityAddressType* entity_addr,
-    const char* const*       tokens,
-    size_t                   num_tokens
+    const char* const* tokens,
+    size_t num_tokens
 );
 
-static EebusError
-MaMpcCliConstruct(MaMpcCli* self, MaMpcUseCaseObject* ma_mpc, const EntityAddressList* addr_list) {
+static EebusError MaMpcCliConstruct(MaMpcCli* self, MaMpcUseCaseObject* ma_mpc, const EntityAddressList* addr_list) {
   EEBUS_CLI_HANDLER_INTERFACE(self) = &ma_mpc_cli_methods;
 
   self->ma_mpc    = NULL;
@@ -90,7 +88,7 @@ EebusCliHandlerObject* MaMpcCliCreate(MaMpcUseCaseObject* ma_mpc, const EntityAd
 }
 
 static void Destruct(EebusCliHandlerObject* self) {
-  MaMpcCli* ma_mpc_cli = MA_MPC_CLI(self);
+  MaMpcCli* ma_mpc_cli  = MA_MPC_CLI(self);
   ma_mpc_cli->addr_list = NULL;
 }
 
@@ -105,6 +103,7 @@ static void HandleCmdList(const MaMpcCli* self) {
     printf("ma_mpc: no remotes connected\n");
     return;
   }
+
   printf("ma_mpc connected remotes (%zu):\n", count);
   for (size_t i = 0; i < count; i++) {
     char formatted[EEBUS_CLI_ENTITY_ADDR_STR_MAX];
@@ -119,10 +118,10 @@ static void HandleCmdList(const MaMpcCli* self) {
 //
 //-------------------------------------------------------------------------------------------//
 static void HandleCmdMaMpcGet(
-    const MaMpcCli*          self,
+    const MaMpcCli* self,
     const EntityAddressType* entity_addr,
-    const char* const*       tokens,
-    size_t                   num_tokens
+    const char* const* tokens,
+    size_t num_tokens
 ) {
   if (num_tokens != 3) {
     printf("Insufficient arguments for ma_mpc get command\n");
@@ -161,10 +160,9 @@ static void HandleCmd(const EebusCliHandlerObject* self, const char* const* toke
   }
 
   const char* adjusted[10];
-  size_t      adjusted_count                  = 0;
-  const EntityAddressType* const remote_addr  = CliExtractRemoteArg(
-      tokens, num_tokens, ma_mpc_cli->addr_list, "ma_mpc", adjusted, &adjusted_count
-  );
+  size_t adjusted_count = 0;
+  const EntityAddressType* const remote_addr
+      = CliExtractRemoteArg(tokens, num_tokens, ma_mpc_cli->addr_list, "ma_mpc", adjusted, &adjusted_count);
   if (remote_addr == NULL) {
     return;
   }
