@@ -59,7 +59,7 @@ struct NodeConnectionInterface {
   bool (*is_attempt_running)(const NodeConnectionObject* self);
   bool (*owns_connection)(const NodeConnectionObject* self, const ShipConnectionObject* sc);
   ShipConnectionObject* (*release_ship_connection)(NodeConnectionObject* self);
-  int (*on_connection_closed)(NodeConnectionObject* self);
+  uint32_t (*on_connection_closed)(NodeConnectionObject* self);
   void (*stop_retry_timer)(NodeConnectionObject* self);
   void (*schedule_retry)(NodeConnectionObject* self, uint32_t delay_ms);
   bool (*on_handshake_complete)(NodeConnectionObject* self);

@@ -51,7 +51,7 @@ static struct ShipNode* GetOwner(const NodeConnectionObject* self);
 static bool IsAttemptRunning(const NodeConnectionObject* self);
 static bool OwnsConnection(const NodeConnectionObject* self, const ShipConnectionObject* sc);
 static ShipConnectionObject* ReleaseShipConnection(NodeConnectionObject* self);
-static int OnConnectionClosed(NodeConnectionObject* self);
+static uint32_t OnConnectionClosed(NodeConnectionObject* self);
 static void StopRetryTimer(NodeConnectionObject* self);
 static void ScheduleRetry(NodeConnectionObject* self, uint32_t delay_ms);
 static bool OnHandshakeComplete(NodeConnectionObject* self);
@@ -75,6 +75,7 @@ static const NodeConnectionInterface node_connection_methods = {
 
 static EebusError
 NodeConnectionConstruct(NodeConnection* nc, const char* ski, struct ShipNode* owner, NodeConnectionRetryFn retry_fn);
+static uint32_t RetryDelayMs(int attempt_cnt);
 
 EebusError
 NodeConnectionConstruct(NodeConnection* nc, const char* ski, struct ShipNode* owner, NodeConnectionRetryFn retry_fn) {
@@ -159,7 +160,19 @@ ShipConnectionObject* ReleaseShipConnection(NodeConnectionObject* self) {
   return sc;
 }
 
-int OnConnectionClosed(NodeConnectionObject* self) {
+static uint32_t RetryDelayMs(int attempt_cnt) {
+  if (attempt_cnt <= 1) {
+    return 0;
+  }
+
+  if (attempt_cnt == 2) {
+    return 3000;
+  }
+
+  return 10000;
+}
+
+uint32_t OnConnectionClosed(NodeConnectionObject* self) {
   NodeConnection* const nc = NODE_CONNECTION(self);
 
   nc->connection         = NULL;
@@ -168,7 +181,7 @@ int OnConnectionClosed(NodeConnectionObject* self) {
 
   nc->attempt_cnt++;
 
-  return nc->attempt_cnt;
+  return RetryDelayMs(nc->attempt_cnt);
 }
 
 void StopRetryTimer(NodeConnectionObject* self) {

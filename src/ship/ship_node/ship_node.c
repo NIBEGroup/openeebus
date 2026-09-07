@@ -127,7 +127,6 @@ static int
 ShipNodeOnWebsocketServerConnectionCallback(const char* ski, WebsocketCreatorObject* websocket_creator, void* ctx);
 static bool ShipNodeIsClientSupported(ShipNode* self);
 static bool ShipNodeIsServerSupported(ShipNode* self);
-static uint32_t ShipNodeRetryDelayMs(int attempt_cnt);
 static void ShipNodeRetryTimerCallback(void* ctx);
 
 static void ShipNodeQueueMsgDeallocator(void* msg) {
@@ -148,12 +147,6 @@ static void ShipNodePostConnectionClose(ShipNode* sn, ShipConnectionObject* sc, 
       .ski             = NULL,
   };
   EEBUS_QUEUE_SEND(sn->msg_queue, &queue_msg, kTimeoutInfinite);
-}
-
-static uint32_t ShipNodeRetryDelayMs(int attempt_cnt) {
-  if (attempt_cnt <= 1) return 0;
-  if (attempt_cnt == 2) return 3000;
-  return 10000;
 }
 
 static void ShipNodeRetryTimerCallback(void* ctx) {
@@ -341,9 +334,8 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
   uint32_t retry_delay     = 0;
   NodeConnectionObject* nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SHIP_CONNECTION(self->connections, sc);
   if (nc != NULL) {
-    const int attempt_cnt = NODE_CONNECTION_ON_CONNECTION_CLOSED(nc);
-    retry_delay           = ShipNodeRetryDelayMs(attempt_cnt);
-    ski                   = NODE_CONNECTION_GET_SKI(nc);
+    retry_delay = NODE_CONNECTION_ON_CONNECTION_CLOSED(nc);
+    ski         = NODE_CONNECTION_GET_SKI(nc);
     if (!self->cancel && (retry_delay > 0)) {
       NODE_CONNECTION_SCHEDULE_RETRY(nc, retry_delay);
     }
