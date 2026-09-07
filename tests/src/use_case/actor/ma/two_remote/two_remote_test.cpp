@@ -221,28 +221,28 @@ void TwoRemoteTestFixture::HandleEvMessage(const char* msg_string) {
 }
 
 void TwoRemoteTestFixture::RunHpDiscovery() {
-  // 1. HP sends discovery request → HEMS replies
+  // 1. HP sends discovery request -> HEMS replies
   ExpectHpSend(ma_mpc_test::send::discovery_reply);
   HandleHpMessage(ma_mpc_test::receive::discovery_request);
 
-  // 2. HP sends discovery response → HEMS sends subscriptions + use case read
+  // 2. HP sends discovery response -> HEMS sends subscriptions + use case read
   EXPECT_CALL(*listener_mock_->gmock, OnRemoteMuAdded(_, _)).WillOnce(Return());
   ExpectHpSend(ma_mpc_test::send::node_management_subscription_call);
   ExpectHpSend(ma_mpc_test::send::use_case_data_read);
   HandleHpMessage(ma_mpc_test::receive::discovery_response);
 
-  // 3. HP sends node management subscription request → HEMS replies result
+  // 3. HP sends node management subscription request -> HEMS replies result
   ExpectHpSend(ma_mpc_test::send::result_data_msg_cnt_ref_3);
   HandleHpMessage(ma_mpc_test::receive::node_management_subscription_request);
 
-  // 4. HP sends use case request → HEMS replies
+  // 4. HP sends use case request -> HEMS replies
   ExpectHpSend(ma_mpc_test::send::use_case_data_reply);
   HandleHpMessage(ma_mpc_test::receive::use_case_request);
 
   // 5. HP sends result ref 3
   HandleHpMessage(ma_mpc_test::receive::result_data_msg_cnt_ref_3);
 
-  // 6. HP sends use case reply → HEMS sends electrical connection + measurement subscriptions/reads
+  // 6. HP sends use case reply -> HEMS sends electrical connection + measurement subscriptions/reads
   ExpectHpSend(ma_mpc_test::send::electrical_connection_subscription_call);
   ExpectHpSend(ma_mpc_test::send::electrical_connection_description_read);
   ExpectHpSend(ma_mpc_test::send::electrical_connection_parameter_description_read);
@@ -263,42 +263,42 @@ void TwoRemoteTestFixture::RunHpDiscovery() {
   // 10. HP sends result ref 8
   HandleHpMessage(ma_mpc_test::receive::result_data_msg_cnt_ref_8);
 
-  // 11. HP sends measurement description reply → HEMS requests measurement read
+  // 11. HP sends measurement description reply -> HEMS requests measurement read
   ExpectHpSend(ma_mpc_test::send::measurement_read);
   HandleHpMessage(ma_mpc_test::receive::measurement_description_reply);
 
   // 12. HP sends measurement constraints reply
   HandleHpMessage(ma_mpc_test::receive::measurement_constraints_reply);
 
-  // 13. HP sends measurement reply → triggers initial OnMeasurementReceive
+  // 13. HP sends measurement reply -> triggers initial OnMeasurementReceive
   EXPECT_CALL(*listener_mock_->gmock, OnMeasurementReceive(_, kMpcPowerTotal, ScaledValueEq(33000, -1), _))
       .WillOnce(Return());
   HandleHpMessage(ma_mpc_test::receive::measurement_reply);
 }
 
 void TwoRemoteTestFixture::RunEvDiscovery() {
-  // 1. EV sends discovery request → HEMS replies
+  // 1. EV sends discovery request -> HEMS replies
   ExpectEvSend(two_remote_test::send::discovery_reply);
   HandleEvMessage(two_remote_test::receive::discovery_request);
 
-  // 2. EV sends discovery response → HEMS sends subscriptions + use case read
+  // 2. EV sends discovery response -> HEMS sends subscriptions + use case read
   EXPECT_CALL(*listener_mock_->gmock, OnRemoteMuAdded(_, _)).WillOnce(Return());
   ExpectEvSend(two_remote_test::send::node_management_subscription_call);
   ExpectEvSend(two_remote_test::send::use_case_data_read);
   HandleEvMessage(two_remote_test::receive::discovery_response);
 
-  // 3. EV sends node management subscription request → HEMS replies result
+  // 3. EV sends node management subscription request -> HEMS replies result
   ExpectEvSend(two_remote_test::send::result_data_msg_cnt_ref_3);
   HandleEvMessage(two_remote_test::receive::node_management_subscription_request);
 
-  // 4. EV sends use case request → HEMS replies
+  // 4. EV sends use case request -> HEMS replies
   ExpectEvSend(two_remote_test::send::use_case_data_reply);
   HandleEvMessage(two_remote_test::receive::use_case_request);
 
   // 5. EV sends result ref 3
   HandleEvMessage(two_remote_test::receive::result_data_msg_cnt_ref_3);
 
-  // 6. EV sends use case reply → HEMS sends electrical connection + measurement subscriptions/reads
+  // 6. EV sends use case reply -> HEMS sends electrical connection + measurement subscriptions/reads
   ExpectEvSend(two_remote_test::send::electrical_connection_subscription_call);
   ExpectEvSend(two_remote_test::send::electrical_connection_description_read);
   ExpectEvSend(two_remote_test::send::electrical_connection_parameter_description_read);
@@ -319,14 +319,14 @@ void TwoRemoteTestFixture::RunEvDiscovery() {
   // 10. EV sends result ref 8
   HandleEvMessage(two_remote_test::receive::result_data_msg_cnt_ref_8);
 
-  // 11. EV sends measurement description reply → HEMS requests measurement read
+  // 11. EV sends measurement description reply -> HEMS requests measurement read
   ExpectEvSend(two_remote_test::send::measurement_read);
   HandleEvMessage(two_remote_test::receive::measurement_description_reply);
 
   // 12. EV sends measurement constraints reply
   HandleEvMessage(two_remote_test::receive::measurement_constraints_reply);
 
-  // 13. EV sends measurement reply → triggers initial OnMeasurementReceive
+  // 13. EV sends measurement reply -> triggers initial OnMeasurementReceive
   EXPECT_CALL(*listener_mock_->gmock, OnMeasurementReceive(_, kMpcPowerTotal, ScaledValueEq(33000, -1), _))
       .WillOnce(Return());
   HandleEvMessage(two_remote_test::receive::measurement_reply);
@@ -336,7 +336,7 @@ TEST_F(TwoRemoteTestFixture, HpMeasurementRoutedToHpEntity) {
   RunHpDiscovery();
   RunEvDiscovery();
 
-  // HP sends measurement notify → callback fires with HP entity address
+  // HP sends measurement notify -> callback fires with HP entity address
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseA, ScaledValueEq(1000, 0), EntityAddressDeviceEq("d:_n:HeatPump_123456789"))
@@ -362,7 +362,7 @@ TEST_F(TwoRemoteTestFixture, EvMeasurementRoutedToEvEntity) {
   RunHpDiscovery();
   RunEvDiscovery();
 
-  // EV sends measurement notify → callback fires with EV entity address
+  // EV sends measurement notify -> callback fires with EV entity address
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnMeasurementReceive(_, kMpcPowerPhaseA, ScaledValueEq(1000, 0), EntityAddressDeviceEq("d:_n:EV_123456789"))

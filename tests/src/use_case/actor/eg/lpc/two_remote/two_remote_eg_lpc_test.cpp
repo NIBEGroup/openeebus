@@ -260,11 +260,11 @@ void TwoRemoteEgLpcTestFixture::HandleEvMessage(const char* msg_string) {
 }
 
 void TwoRemoteEgLpcTestFixture::RunHpEgLpcDiscovery() {
-  // 1. HP sends discovery request → HEMS replies
+  // 1. HP sends discovery request -> HEMS replies
   ExpectHpSend(eg_lpc_test::send::discovery_reply);
   HandleHpMessage(eg_lpc_test::receive::discovery_request);
 
-  // 2. HP sends discovery response → HEMS sends subscriptions + use case read
+  // 2. HP sends discovery response -> HEMS sends subscriptions + use case read
   EXPECT_CALL(*listener_mock_->gmock, OnRemoteCsAdded(_, _)).WillOnce(Return());
   ExpectHpSend(eg_lpc_test::send::node_management_subscription_call);
   ExpectHpSend(eg_lpc_test::send::use_case_data_read);
@@ -277,15 +277,15 @@ void TwoRemoteEgLpcTestFixture::RunHpEgLpcDiscovery() {
   HandleHpMessage(eg_lpc_test::receive::result_data_msg_cnt_ref_9);
   HandleHpMessage(eg_lpc_test::receive::result_data_msg_cnt_ref_11);
 
-  // 8. HP sends node management subscription request → HEMS replies result
+  // 8. HP sends node management subscription request -> HEMS replies result
   ExpectHpSend(eg_lpc_test::send::result_data_msg_cnt_ref_28);
   HandleHpMessage(eg_lpc_test::receive::node_management_subscription_request);
 
-  // 9. HP sends use case request → HEMS replies
+  // 9. HP sends use case request -> HEMS replies
   ExpectHpSend(eg_lpc_test::send::use_case_data_reply);
   HandleHpMessage(eg_lpc_test::receive::use_case_request);
 
-  // 10. HP sends use case reply → HEMS sends load control + device configuration +
+  // 10. HP sends use case reply -> HEMS sends load control + device configuration +
   //     device diagnosis + electrical connection subscriptions/reads
   ExpectHpSend(eg_lpc_test::send::load_control_subscription_call);
   ExpectHpSend(eg_lpc_test::send::load_control_binding_call);
@@ -299,32 +299,32 @@ void TwoRemoteEgLpcTestFixture::RunHpEgLpcDiscovery() {
   ExpectHpSend(eg_lpc_test::send::electrical_connection_characteristic_read);
   HandleHpMessage(eg_lpc_test::receive::use_case_reply);
 
-  // 11. HP sends device diagnosis subscription request → HEMS replies result
+  // 11. HP sends device diagnosis subscription request -> HEMS replies result
   ExpectHpSend(eg_lpc_test::send::result_data_msg_cnt_ref_31);
   HandleHpMessage(eg_lpc_test::receive::device_diagnosis_subscription_request);
 
-  // 12. HP sends device diagnosis heartbeat request → HEMS sends heartbeat reply
+  // 12. HP sends device diagnosis heartbeat request -> HEMS sends heartbeat reply
   ExpectHpHeartbeat(eg_lpc_test::send::device_diagnosis_heartbeat_reply);
   HandleHpMessage(eg_lpc_test::receive::device_diagnosis_heartbeat_request);
 
   // 13. HP sends result ref 3 (ack for heartbeat reply)
   HandleHpMessage(eg_lpc_test::receive::result_data_msg_cnt_ref_3);
 
-  // 14. HP sends limit description reply → HEMS reads limit list
+  // 14. HP sends limit description reply -> HEMS reads limit list
   ExpectHpSend(eg_lpc_test::send::load_control_limit_list_read);
   HandleHpMessage(eg_lpc_test::receive::limits_description_reply);
 
-  // 15. HP sends limits reply → OnPowerLimitReceive callback
+  // 15. HP sends limits reply -> OnPowerLimitReceive callback
   EXPECT_CALL(*listener_mock_->gmock, OnPowerLimitReceive(_, _, _, _)).WillOnce(Return());
   HandleHpMessage(eg_lpc_test::receive::limits_reply);
 }
 
 void TwoRemoteEgLpcTestFixture::RunEvEgLpcDiscovery() {
-  // 1. EV sends discovery request → HEMS replies
+  // 1. EV sends discovery request -> HEMS replies
   ExpectEvSend(two_remote_eg_lpc_test::send::discovery_reply);
   HandleEvMessage(two_remote_eg_lpc_test::receive::discovery_request);
 
-  // 2. EV sends discovery response → HEMS sends subscriptions + use case read
+  // 2. EV sends discovery response -> HEMS sends subscriptions + use case read
   EXPECT_CALL(*listener_mock_->gmock, OnRemoteCsAdded(_, _)).WillOnce(Return());
   ExpectEvSend(two_remote_eg_lpc_test::send::node_management_subscription_call);
   ExpectEvSend(two_remote_eg_lpc_test::send::use_case_data_read);
@@ -337,15 +337,15 @@ void TwoRemoteEgLpcTestFixture::RunEvEgLpcDiscovery() {
   HandleEvMessage(two_remote_eg_lpc_test::receive::result_data_msg_cnt_ref_9);
   HandleEvMessage(two_remote_eg_lpc_test::receive::result_data_msg_cnt_ref_11);
 
-  // 8. EV sends node management subscription request → HEMS replies result
+  // 8. EV sends node management subscription request -> HEMS replies result
   ExpectEvSend(two_remote_eg_lpc_test::send::result_data_msg_cnt_ref_28);
   HandleEvMessage(two_remote_eg_lpc_test::receive::node_management_subscription_request);
 
-  // 9. EV sends use case request → HEMS replies
+  // 9. EV sends use case request -> HEMS replies
   ExpectEvSend(two_remote_eg_lpc_test::send::use_case_data_reply);
   HandleEvMessage(two_remote_eg_lpc_test::receive::use_case_request);
 
-  // 10. EV sends use case reply → HEMS sends subscriptions/reads
+  // 10. EV sends use case reply -> HEMS sends subscriptions/reads
   ExpectEvSend(two_remote_eg_lpc_test::send::load_control_subscription_call);
   ExpectEvSend(two_remote_eg_lpc_test::send::load_control_binding_call);
   ExpectEvSend(two_remote_eg_lpc_test::send::load_control_limit_description_read);
@@ -358,22 +358,22 @@ void TwoRemoteEgLpcTestFixture::RunEvEgLpcDiscovery() {
   ExpectEvSend(two_remote_eg_lpc_test::send::electrical_connection_characteristic_read);
   HandleEvMessage(two_remote_eg_lpc_test::receive::use_case_reply);
 
-  // 11. EV sends device diagnosis subscription request → HEMS replies result
+  // 11. EV sends device diagnosis subscription request -> HEMS replies result
   ExpectEvSend(two_remote_eg_lpc_test::send::result_data_msg_cnt_ref_31);
   HandleEvMessage(two_remote_eg_lpc_test::receive::device_diagnosis_subscription_request);
 
-  // 12. EV sends device diagnosis heartbeat request → HEMS sends heartbeat reply
+  // 12. EV sends device diagnosis heartbeat request -> HEMS sends heartbeat reply
   ExpectEvHeartbeat(two_remote_eg_lpc_test::send::device_diagnosis_heartbeat_reply);
   HandleEvMessage(two_remote_eg_lpc_test::receive::device_diagnosis_heartbeat_request);
 
   // 13. EV sends result ref 3 (ack for heartbeat reply)
   HandleEvMessage(two_remote_eg_lpc_test::receive::result_data_msg_cnt_ref_3);
 
-  // 14. EV sends limit description reply → HEMS reads limit list
+  // 14. EV sends limit description reply -> HEMS reads limit list
   ExpectEvSend(two_remote_eg_lpc_test::send::load_control_limit_list_read);
   HandleEvMessage(two_remote_eg_lpc_test::receive::limits_description_reply);
 
-  // 15. EV sends limits reply → OnPowerLimitReceive callback
+  // 15. EV sends limits reply -> OnPowerLimitReceive callback
   EXPECT_CALL(*listener_mock_->gmock, OnPowerLimitReceive(_, _, _, _)).WillOnce(Return());
   HandleEvMessage(two_remote_eg_lpc_test::receive::limits_reply);
 }
@@ -383,7 +383,7 @@ TEST_F(TwoRemoteEgLpcTestFixture, EgLpcWriteRoutedToHpOnly) {
   RunHpEgLpcDiscovery();
   RunEvEgLpcDiscovery();
 
-  // Write to HP entity address → only hp_writer_ should receive it
+  // Write to HP entity address -> only hp_writer_ should receive it
   ExpectHpSend(eg_lpc_test::send::limits_write_with_duration);
 
   const LoadLimit limit = {
@@ -406,7 +406,7 @@ TEST_F(TwoRemoteEgLpcTestFixture, EgLpcWriteRoutedToEvOnly) {
   RunHpEgLpcDiscovery();
   RunEvEgLpcDiscovery();
 
-  // Write to EV entity address → only ev_writer_ should receive it
+  // Write to EV entity address -> only ev_writer_ should receive it
   ExpectEvSend(two_remote_eg_lpc_test::send::limits_write_with_duration);
 
   const LoadLimit limit = {
