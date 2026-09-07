@@ -96,8 +96,14 @@ typedef struct {
 
 #define SHIP_CONNECTION(obj) ((ShipConnection*)(obj))
 
-void ShipConnectionConstruct(ShipConnection* self, InfoProviderObject* info_provider, ShipRole role,
-    const char* local_ship_id, const char* remote_ski, const char* remote_ship_id);
+void ShipConnectionConstruct(
+    ShipConnection* self,
+    InfoProviderObject* info_provider,
+    ShipRole role,
+    const char* local_ship_id,
+    const char* remote_ski,
+    const char* remote_ship_id
+);
 
 void ShipConnectionSetSmeState(ShipConnection* self, SmeState state);
 
