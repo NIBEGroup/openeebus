@@ -151,7 +151,8 @@ static void ShipNodePostConnectionClose(ShipNode* sn, ShipConnectionObject* sc, 
 
 static void ShipNodeRetryTimerCallback(void* ctx) {
   NodeConnectionObject* const nc = (NodeConnectionObject*)ctx;
-  ShipNode* const sn             = NODE_CONNECTION_GET_OWNER(nc);
+
+  ShipNode* const sn = NODE_CONNECTION_GET_OWNER(nc);
   if (sn->cancel) {
     return;
   }
@@ -432,8 +433,8 @@ static bool ShipNodeFindServiceForSki(ShipNode* self, const char* ski, MdnsEntry
   return false;
 }
 
-/* Attempt a client connection for nc.  Must be called with mutex held;
- * nc must be non-NULL with no attempt already running. */
+// Attempt a client connection for nc.  Must be called with mutex held;
+// nc must be non-NULL with no attempt already running.
 static void ShipNodeConnectToPendingSkiInternal(ShipNode* self, NodeConnectionObject* nc) {
   const char* const ski = NODE_CONNECTION_GET_SKI(nc);
 
