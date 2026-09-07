@@ -37,14 +37,20 @@ struct NodeConnectionContainer {
 
 #define NODE_CONNECTION_CONTAINER(obj) ((NodeConnectionContainer*)(obj))
 
-static void                  Destruct(NodeConnectionContainerObject* self);
-static NodeConnectionObject* GetOrCreate(NodeConnectionContainerObject* self, const char* ski, struct ShipNode* owner, NodeConnectionRetryFn retry_fn);
+static void Destruct(NodeConnectionContainerObject* self);
+static NodeConnectionObject* GetOrCreate(
+    NodeConnectionContainerObject* self,
+    const char* ski,
+    struct ShipNode* owner,
+    NodeConnectionRetryFn retry_fn
+);
 static NodeConnectionObject* FindWithSki(NodeConnectionContainerObject* self, const char* ski);
-static NodeConnectionObject* FindWithShipConnection(NodeConnectionContainerObject* self, const ShipConnectionObject* sc);
-static void                  RemoveWithSki(NodeConnectionContainerObject* self, const char* ski);
-static bool                  IsSkiTrusted(const NodeConnectionContainerObject* self, const char* ski);
-static bool                  IsSkiConnected(const NodeConnectionContainerObject* self, const char* ski);
-static size_t                GetSize(const NodeConnectionContainerObject* self);
+static NodeConnectionObject*
+FindWithShipConnection(NodeConnectionContainerObject* self, const ShipConnectionObject* sc);
+static void RemoveWithSki(NodeConnectionContainerObject* self, const char* ski);
+static bool IsSkiTrusted(const NodeConnectionContainerObject* self, const char* ski);
+static bool IsSkiConnected(const NodeConnectionContainerObject* self, const char* ski);
+static size_t GetSize(const NodeConnectionContainerObject* self);
 static NodeConnectionObject* GetWithIndex(NodeConnectionContainerObject* self, size_t i);
 
 static const NodeConnectionContainerInterface node_connection_container_methods = {
@@ -96,9 +102,9 @@ void Destruct(NodeConnectionContainerObject* self) {
 
 NodeConnectionObject* GetOrCreate(
     NodeConnectionContainerObject* self,
-    const char*                    ski,
-    struct ShipNode*               owner,
-    NodeConnectionRetryFn          retry_fn
+    const char* ski,
+    struct ShipNode* owner,
+    NodeConnectionRetryFn retry_fn
 ) {
   NodeConnectionObject* nc = FindWithSki(self, ski);
   if (nc != NULL) {
@@ -128,9 +134,7 @@ NodeConnectionObject* FindWithSki(NodeConnectionContainerObject* self, const cha
   return NULL;
 }
 
-NodeConnectionObject* FindWithShipConnection(
-    NodeConnectionContainerObject* self, const ShipConnectionObject* sc
-) {
+NodeConnectionObject* FindWithShipConnection(NodeConnectionContainerObject* self, const ShipConnectionObject* sc) {
   NodeConnectionContainer* const ncc = NODE_CONNECTION_CONTAINER(self);
 
   for (size_t i = 0; i < VectorGetSize(&ncc->items); ++i) {
