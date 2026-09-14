@@ -39,7 +39,7 @@ static constexpr char electrical_connection_characteristic_notify[] = R"({
           ]
         },
         {
-          "msgCounter": 31
+          "msgCounter": 27
         },
         {
           "cmdClassifier": "notify"

@@ -32,12 +32,15 @@ The source code in this repository implements the EEBUS protocol, based on the [
 
 ### Supported Use Cases
 
-| Use Case |  Actors  | Scenarios | Description                          |
-|----------|----------|-----------|--------------------------------------|
-| LPC      |  EG, CS  |   1 - 4   | Limitation of power consumption      |
-| LPP      |  EG, CS  |   1 - 4   | Limitation of power production       |
-| MPC      |  MA, MU  |   1 - 5   | Monitoring of power consumption      |
-| MGCP     |  MA, GCP |   1 - 7   | Monitoring of grid connection point  |
+| Use Case |      Actors     | Scenarios | Description                                                          |
+|----------|-----------------|-----------|----------------------------------------------------------------------|
+| LPC      |  EG, CS         |   1 - 4   | Limitation of power consumption                                      |
+| LPP      |  EG, CS         |   1 - 4   | Limitation of power production                                       |
+| MPC      |  MA, MU         |   1 - 5   | Monitoring of power consumption                                      |
+| MGCP     |  MA, GCP        |   1 - 7   | Monitoring of grid connection point                                  |
+| OHPCF(*) | Compressor, CEM |   1 - 2   | Optimization of self consumption by heat pump compressor flexibility |
+
+\* Note: OHPCF is currently in draft state!
 
 ### Limitations
 

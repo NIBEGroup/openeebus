@@ -66,6 +66,12 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cs/lpc
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cs/lpc)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cem/ohpcf
+    ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cem/ohpcf)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/compressor/ohpcf
+    ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/compressor/ohpcf)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cs/lpp
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cs/lpp)
 

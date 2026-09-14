@@ -113,6 +113,7 @@ EebusError FeatureLocalReadFromRemote(
     ReplyMessageCallback cb,
     void* ctx
 );
+void FeatureLocalSetWriteExpiryCallback(FeatureLocalObject* fl, PendingWriteRequestExpiredCb cb, void* ctx);
 
 #ifdef __cplusplus
 }

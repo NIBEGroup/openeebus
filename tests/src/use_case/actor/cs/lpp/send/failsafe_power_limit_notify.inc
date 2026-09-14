@@ -39,7 +39,7 @@ static constexpr char failsafe_power_limit_notify[] = R"({
           ]
         },
         {
-          "msgCounter": 24
+          "msgCounter": 23
         },
         {
           "cmdClassifier": "notify"

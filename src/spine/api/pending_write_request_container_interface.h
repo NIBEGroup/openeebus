@@ -24,10 +24,16 @@
 #include <stddef.h>
 
 #include "src/spine/api/pending_write_request_interface.h"
+#include "src/spine/model/command_frame_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
+
+/**
+ * @brief Callback function type definition for handling expired pending write requests
+ */
+typedef void (*PendingWriteRequestExpiredCb)(const char* ski, MsgCounterType msg_cnt, void* ctx);
 
 /**
  * @brief Pending Write Request Container Interface
@@ -52,6 +58,7 @@ struct PendingWriteRequestContainerInterface {
   PendingWriteRequestObject* (*find)(PendingWriteRequestContainerObject* self, const char* ski, MsgCounterType msg_cnt);
   size_t (*get_size)(const PendingWriteRequestContainerObject* self);
   void (*tick)(PendingWriteRequestContainerObject* self, FeatureLocalObject* fl);
+  void (*set_expired_callback)(PendingWriteRequestContainerObject* self, PendingWriteRequestExpiredCb cb, void* ctx);
 };
 
 /**
@@ -102,6 +109,12 @@ struct PendingWriteRequestContainerObject {
  * @brief Pending Write Request Container Tick caller definition
  */
 #define PENDING_WRITE_REQUEST_CONTAINER_TICK(obj, fl) (PENDING_WRITE_REQUEST_CONTAINER_INTERFACE(obj)->tick(obj, fl))
+
+/**
+ * @brief Pending Write Request Container Set Expired Callback caller definition
+ */
+#define PENDING_WRITE_REQUEST_CONTAINER_SET_EXPIRED_CALLBACK(obj, cb, ctx) \
+  (PENDING_WRITE_REQUEST_CONTAINER_INTERFACE(obj)->set_expired_callback(obj, cb, ctx))
 
 #ifdef __cplusplus
 }

@@ -74,6 +74,8 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/node_management_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/possible_operations_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/specification_version.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/subscription_management_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/usecase_information_types.c
@@ -87,6 +89,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/subscription/subscription_manager.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/cs/lpp/cs_lpp.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/cs/cs_lp_events.c
+  ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/cs/cs_lp_write_approval_container.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/cs/cs_lp_public.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/cs/cs_lp.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/model/load_limit_types.c

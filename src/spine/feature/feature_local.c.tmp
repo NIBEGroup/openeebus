@@ -4,6 +4,7 @@ EntityLocalObject* GetEntity() const
 const void* GetData(FunctionType function_type) const
 void SetFunctionOperations(FunctionType type, bool read, bool write)
 EebusError AddWriteApprovalCallback(WriteApprovalCallback cb, void* ctx)
+void SetWriteExpiryCallback(PendingWriteRequestExpiredCb cb, void* ctx)
 EebusError TryApproveWrite(const char* ski, MsgCounterType msg_cnt)
 EebusError DenyWrite(const char* ski, MsgCounterType msg_cnt, const ErrorType* err)
 void CleanRemoteDeviceCaches(const DeviceAddressType* remote_addr, const char* ski)

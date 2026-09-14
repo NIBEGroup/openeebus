@@ -37,6 +37,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/function_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/possible_operations_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/usecase_information_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/specification_version.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/events/events.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/node_management/node_management.c
@@ -133,6 +134,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result.c
 
   pending_result_test.cpp
@@ -201,6 +203,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result_container.c
 
@@ -269,6 +272,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply.c
 
   pending_reply_test.cpp
@@ -337,6 +341,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply_container.c
 

@@ -6,4 +6,6 @@ void SetEgLpc(EgLpUseCaseObject* eg_lpc_use_case, const EntityAddressType* remot
 void SetEgLpp(EgLpUseCaseObject* eg_lpp_use_case, const EntityAddressType* remote_entity_address)
 void SetMuMpc(MuMpcUseCaseObject* mu_mpc_use_case)
 void SetMaMpc(MaMpcUseCaseObject* ma_mpc_use_case, const EntityAddressType* remote_entity_address)
+void SetCompressorOhpcf(CompressorOhpcfUseCaseObject* cp_ohpcf_use_case, MuMpcUseCaseObject* mu_mpc_use_case)
+void SetCemOhpcf(CemOhpcfUseCaseObject* cem_ohpcf_use_case, const EntityAddressType* remote_entity_address)
 void HandleCmd(char* cmd) const

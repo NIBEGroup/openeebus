@@ -26,7 +26,9 @@ target_sources(${PROJECT_NAME}
     main.c
     hpsrv.c
     cs_lpc_listener.c
+    cs_lpc_approver.c
     cs_lpp_listener.c
+    compressor_ohpcf_listener.c
     mu_mpc_listener.c
 )
 

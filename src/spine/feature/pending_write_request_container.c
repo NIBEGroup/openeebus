@@ -25,6 +25,7 @@
 #include "src/common/eebus_malloc.h"
 #include "src/common/vector.h"
 #include "src/spine/api/feature_interface.h"
+#include "src/spine/api/message.h"
 #include "src/spine/feature/pending_write_request.h"
 #include "src/spine/model/result_types.h"
 
@@ -35,6 +36,9 @@ struct PendingWriteRequestContainer {
   PendingWriteRequestContainerObject obj;
 
   Vector items;
+
+  PendingWriteRequestExpiredCb on_expired_cb;
+  void* on_expired_ctx;
 };
 
 #define PENDING_WRITE_REQUEST_CONTAINER(obj) ((PendingWriteRequestContainer*)(obj))
@@ -46,14 +50,16 @@ static PendingWriteRequestObject*
 Find(PendingWriteRequestContainerObject* self, const char* ski, MsgCounterType msg_cnt);
 static size_t GetSize(const PendingWriteRequestContainerObject* self);
 static void Tick(PendingWriteRequestContainerObject* self, FeatureLocalObject* fl);
+static void SetExpiredCallback(PendingWriteRequestContainerObject* self, PendingWriteRequestExpiredCb cb, void* ctx);
 
 static const PendingWriteRequestContainerInterface pending_write_request_container_methods = {
-    .destruct = Destruct,
-    .add      = Add,
-    .remove   = Remove,
-    .find     = Find,
-    .get_size = GetSize,
-    .tick     = Tick,
+    .destruct             = Destruct,
+    .add                  = Add,
+    .remove               = Remove,
+    .find                 = Find,
+    .get_size             = GetSize,
+    .tick                 = Tick,
+    .set_expired_callback = SetExpiredCallback,
 };
 
 static void DeletePendingWriteRequest(void* item) {
@@ -66,6 +72,15 @@ void PendingWriteRequestContainerConstruct(PendingWriteRequestContainer* self) {
   PENDING_WRITE_REQUEST_CONTAINER_INTERFACE(self) = &pending_write_request_container_methods;
 
   VectorConstructWithDeallocator(&self->items, DeletePendingWriteRequest);
+  self->on_expired_cb  = NULL;
+  self->on_expired_ctx = NULL;
+}
+
+void SetExpiredCallback(PendingWriteRequestContainerObject* self, PendingWriteRequestExpiredCb cb, void* ctx) {
+  PendingWriteRequestContainer* const pwrc = PENDING_WRITE_REQUEST_CONTAINER(self);
+
+  pwrc->on_expired_cb  = cb;
+  pwrc->on_expired_ctx = ctx;
 }
 
 PendingWriteRequestContainerObject* PendingWriteRequestContainerCreate(void) {
@@ -158,7 +173,14 @@ void Tick(PendingWriteRequestContainerObject* self, FeatureLocalObject* fl) {
         SEND_RESULT_ERROR(MessageGetSender(&msg), msg.request_header, FEATURE_GET_ADDRESS(FEATURE_OBJECT(fl)), &err);
       }
 
+      // Capture ski and msg_cnt before removal - ski is owned by the request
+      const char* const ski        = PENDING_WRITE_REQUEST_GET_SKI(item);
+      const MsgCounterType msg_cnt = PENDING_WRITE_REQUEST_GET_MESSAGE_COUNTER(item);
       VectorRemove(&pwrc->items, item);
+      if (pwrc->on_expired_cb != NULL) {
+        pwrc->on_expired_cb(ski, msg_cnt, pwrc->on_expired_ctx);
+      }
+
       PendingWriteRequestDelete(item);
     } else {
       PENDING_WRITE_REQUEST_UPDATE_REMAINING_TIME(item);

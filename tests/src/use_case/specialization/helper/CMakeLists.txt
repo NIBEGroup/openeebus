@@ -26,6 +26,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/specialization/helper.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
 
   # Test helpers
   ${CMAKE_SOURCE_DIR}/src/spine/function_data.c

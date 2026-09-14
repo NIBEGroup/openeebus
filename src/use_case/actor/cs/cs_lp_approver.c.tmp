@@ -1,0 +1,6 @@
+CsLpcApprover
+void Destruct()
+void OnPowerLimitApprovalRequested(const char* ski, MsgCounterType msg_cnt, const ScaledValue* limit, const DurationType* duration, bool is_active)
+void OnFailsafeValueApprovalRequested(const char* ski, MsgCounterType msg_cnt, const ScaledValue* value)
+void OnFailsafeDurationApprovalRequested(const char* ski, MsgCounterType msg_cnt, const DurationType* duration)
+void OnApprovalRequestExpired(const char* ski, MsgCounterType msg_cnt)

@@ -97,6 +97,14 @@ void HemsAddMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_
 void HemsRemoveMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
 
 /**
+ * @brief Set the CEM OHPCF remote entity address to be used for sending schedule
+ * optional power consumption commands
+ * @param self HEMS instance to set the remote entity for
+ * @param entity_addr Pointer to the entity address
+ */
+void HemsSetCemOhpcfRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr);
+
+/**
  * @brief Set the MA MGCP remote entity address
  * @param self HEMS instance to set the remote entity for
  * @param entity_addr Pointer to the entity address (NULL = disconnected)

@@ -39,7 +39,7 @@ static constexpr char result_data_msg_cnt_ref_27[] = R"({
           ]
         },
         {
-          "msgCounter": 33
+          "msgCounter": 29
         },
         {
           "msgCounterReference": 27

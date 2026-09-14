@@ -29,6 +29,7 @@ enum EebusError {
   /* Common error codes */
   kEebusErrorOk,         /**< Ok */
   kEebusErrorNoChange,   /**< No change */
+  kEebusErrorPending,    /**< Operation accepted but not yet finalized; more input still required */
   kEebusErrorInit,       /**< Functionality has not been initialized */
   kEebusErrorDeinit,     /**< Functionality has not been deinitialized */
   kEebusErrorActivate,   /**< Functionality has not been activated */

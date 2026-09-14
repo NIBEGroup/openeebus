@@ -24,7 +24,9 @@
 
 #include "src/spine/entity/entity_local.h"
 #include "src/spine/model/electrical_connection_types.h"
+#include "src/spine/model/error_types.h"
 #include "src/use_case/api/cs_lp_listener_interface.h"
+#include "src/use_case/api/cs_lpc_approver_interface.h"
 #include "src/use_case/model/load_limit_types.h"
 #include "src/use_case/use_case.h"
 
@@ -167,6 +169,60 @@ EebusError CsLpSetNominalMax(CsLpUseCaseObject* self, const ScaledValue* new_nom
  * @return Electrical connection characteristic type
  */
 ElectricalConnectionCharacteristicTypeType CsLpGetElectricalConnectionCharacteristicType(const CsLpUseCaseObject* self);
+
+/**
+ * @brief Set a write approver interface on the CS LP use case. Set NULL to remove.
+ * @param self CS LP Use Case instance
+ * @param approver Approver interface to set, or NULL to remove
+ */
+void CsLpSetWriteApprover(CsLpUseCaseObject* self, CsLpcApproverObject* approver);
+
+/**
+ * @brief Approve a pending write request identified by message counter.
+ *
+ * If the underlying feature requires approval from more than one registered
+ * write-approval callback for the same write, this records one vote and
+ * keeps the pending approval alive until all votes are collected.
+ * @param self CS LP Use Case instance
+ * @param ski SKI of the pending write to approve
+ * @param msg_cnt Message counter of the pending write to approve
+ * @return kEebusErrorOk if the write was applied, kEebusErrorPending if the
+ *         vote was recorded but other approvals are still outstanding,
+ *         kEebusErrorNoChange if not found
+ */
+EebusError CsLpApproveWrite(CsLpUseCaseObject* self, const char* ski, MsgCounterType msg_cnt);
+
+/**
+ * @brief Deny a pending write request identified by message counter.
+ * @param self CS LP Use Case instance
+ * @param ski SKI of the pending write to deny
+ * @param msg_cnt Message counter of the pending write to deny
+ * @param err Error to send in the result message
+ * @return kEebusErrorOk on success, kEebusErrorNoChange if not found
+ */
+EebusError CsLpDenyWrite(CsLpUseCaseObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err);
+
+/**
+ * @brief Check if a power limit value and its duration are valid.
+ * @param limit Limit value to validate
+ * @param duration Duration (in seconds) to validate
+ * @return true if limit is not negative and duration is not negative, false otherwise
+ */
+bool CsLpIsLimitValid(double limit, int32_t duration);
+
+/**
+ * @brief Check if a failsafe power limit value is valid.
+ * @param value Failsafe power limit value to validate
+ * @return true if value is not negative, false otherwise
+ */
+bool CsLpIsFailsafeValueValid(double value);
+
+/**
+ * @brief Check if a failsafe duration minimum value is valid.
+ * @param duration Duration (in seconds) to validate
+ * @return true if duration is between 2 hours and 24 hours (inclusive), false otherwise
+ */
+bool CsLpIsFailsafeDurationValid(int32_t duration);
 
 #ifdef __cplusplus
 }

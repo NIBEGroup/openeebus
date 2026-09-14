@@ -25,6 +25,7 @@ target_sources(${PROJECT_NAME}
     PRIVATE
     main.c
     hems.c
+    cem_ohpcf_listener.c
     eg_lpc_listener.c
     eg_lpp_listener.c
     ma_mgcp_listener.c

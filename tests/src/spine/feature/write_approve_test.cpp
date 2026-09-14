@@ -120,6 +120,11 @@ INSTANTIATE_TEST_SUITE_P(
             .description = "Second message deny attempt fails"sv,
             .send_err    = true,
             .cbs         = {DenyShouldPass, DenyShouldFail},
+        },
+        WriteApproveTestInput{
+            .description = "Write requiring two approvals only finalizes after both vote"sv,
+            .send_err    = false,
+            .cbs         = {TryApproveShouldBePending, TryApproveShouldFinalize},
         }
     )
 );

@@ -39,7 +39,7 @@ static constexpr char device_diagnosis_heartbeat_notify_second[] = R"({
           ]
         },
         {
-          "msgCounter": 34
+          "msgCounter": 30
         },
         {
           "cmdClassifier": "notify"

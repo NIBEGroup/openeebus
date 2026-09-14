@@ -1,0 +1,7 @@
+CemOhpcfListener
+void Destruct()
+void OnRemoteCompressorAdded(const EntityAddressType* entity_addr)
+void OnRemoteCompressorRemoved(const EntityAddressType* entity_addr)
+void OnAnnounce(const OptionalPowerConsumption* optional_power_consumption, const EntityAddressType* entity_addr)
+void OnStateReport(CompressorOhpcfState state, const EebusDuration* start_time, const EntityAddressType* entity_addr)
+void OnClearProcess(const EntityAddressType* entity_addr)

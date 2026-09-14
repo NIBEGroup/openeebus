@@ -31,6 +31,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/possible_operations_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/node_management_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/usecase_information_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/operations.c

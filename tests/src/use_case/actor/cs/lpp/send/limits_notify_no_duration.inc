@@ -39,7 +39,7 @@ static constexpr char limits_notify_no_duration[] = R"({
           ]
         },
         {
-          "msgCounter": 32
+          "msgCounter": 28
         },
         {
           "cmdClassifier": "notify"

@@ -99,6 +99,29 @@
  * // For power_total use e.g.:
  * ma_mpc get power_total
  *
+ * Compressor OHPCF
+ * # Announce a process with earliest start time in 1 hour, latest end time in 2 hours,
+ * # minimum active duration of 3 minutes, max power consumption of 2000W,
+ * # is stoppable but not pausable
+ * compressor_ohpcf announce 2000 PT1H PT2H PT3M true false
+ * # Report scheduled in 3 minutes from now
+ * compressor_ohpcf report_state scheduled PT3M
+ * compressor_ohpcf report_state running
+ * compressor_ohpcf report_state paused
+ * compressor_ohpcf report_state completed
+ * compressor_ohpcf report_state stopped
+ * compressor_ohpcf clear_process
+ * compressor_ohpcf get state
+ * compressor_ohpcf set power_total 1500.5
+ *
+ * CEM OHPCF
+ * cem_ohpcf get announced
+ * cem_ohpcf get state
+ * cem_ohpcf schedule PT10M
+ * cem_ohpcf write_command stop
+ * cem_ohpcf write_command pause
+ * cem_ohpcf write_command resume
+ *
  * GCP MGCP:
  * // GCP MGCP commands format:
  * // gcp_mgcp get <measurement_name>

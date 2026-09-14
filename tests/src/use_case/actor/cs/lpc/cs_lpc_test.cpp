@@ -28,6 +28,7 @@
 #include "mocks/common/eebus_timer/eebus_timer_mock.h"
 #include "mocks/ship/ship_connection/data_writer_mock.h"
 #include "mocks/use_case/api/cs_lp_listener_mock.h"
+#include "mocks/use_case/api/cs_lpc_approver_mock.h"
 #include "src/common/array_util.h"
 #include "src/common/eebus_malloc.h"
 #include "src/common/eebus_timer/eebus_timer.h"
@@ -35,6 +36,8 @@
 #include "src/spine/device/device_local.h"
 #include "src/spine/device/device_local_internal.h"
 #include "src/spine/entity/entity_local.h"
+#include "src/spine/model/error_types.h"
+#include "src/spine/model/result_types.h"
 #include "tests/src/json.h"
 #include "tests/src/use_case/actor/cs/lpc/receive/device_configuration_binding_request.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/device_configuration_description_request.inc"
@@ -51,10 +54,12 @@
 #include "tests/src/use_case/actor/cs/lpc/receive/failsafe_invalid_short_duration_write.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/failsafe_negative_power_limit_write.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/failsafe_power_limit_write.inc"
+#include "tests/src/use_case/actor/cs/lpc/receive/failsafe_value_and_duration_write.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/heartbeat_notify.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/limits_request.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/limits_write.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/limits_write_delete_duration.inc"
+#include "tests/src/use_case/actor/cs/lpc/receive/limits_write_multi_entry.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/load_control_binding_request.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/load_control_description_request.inc"
 #include "tests/src/use_case/actor/cs/lpc/receive/load_control_subscription_request.inc"
@@ -130,6 +135,16 @@ class CsLpcTestFixture : public UseCaseTestFixture {
     const ScaledValue limit{4200, 0};
     CsLpcSetActiveConsumptionPowerLimit(use_case_.get(), &limit, false, true);
 
+    cs_lpc_approver_mock_.reset(CsLpcApproverMockCreate());
+    CsLpSetWriteApprover(use_case_.get(), CS_LPC_APPROVER_OBJECT(cs_lpc_approver_mock_.get()));
+
+    ON_CALL(*cs_lpc_approver_mock_->gmock, OnPowerLimitApprovalRequested(_, _, _, _, _, _))
+        .WillByDefault(Invoke(this, &CsLpcTestFixture::ApprovePowerLimit));
+    ON_CALL(*cs_lpc_approver_mock_->gmock, OnFailsafeValueApprovalRequested(_, _, _, _))
+        .WillByDefault(Invoke(this, &CsLpcTestFixture::ApproveFailsafeValue));
+    ON_CALL(*cs_lpc_approver_mock_->gmock, OnFailsafeDurationApprovalRequested(_, _, _, _))
+        .WillByDefault(Invoke(this, &CsLpcTestFixture::ApproveFailsafeDuration));
+
     DEVICE_LOCAL_ADD_ENTITY(device_local_.get(), entity);
 
     ExpectSendMessage(send::discovery_read);
@@ -137,9 +152,62 @@ class CsLpcTestFixture : public UseCaseTestFixture {
 
   void TearDownUseCase() override {
     EXPECT_CALL(*cs_lpc_listener_mock_->gmock, Destruct(_)).WillOnce(Return());
+    EXPECT_CALL(*cs_lpc_approver_mock_->gmock, Destruct(_)).WillOnce(Return());
+    CsLpSetWriteApprover(use_case_.get(), nullptr);
     use_case_.reset();
     cs_lpc_listener_mock_.reset();
+    cs_lpc_approver_mock_.reset();
   };
+
+  void ApprovePowerLimit(
+      CsLpcApproverObject*,
+      const char* ski,
+      MsgCounterType msg_cnt,
+      const ScaledValue* limit,
+      const DurationType* duration,
+      bool
+  ) {
+    double limit_value = 0.0;
+    ScaledValueToDouble(limit, &limit_value);
+    const int32_t duration_seconds = static_cast<int32_t>(EebusDurationToSeconds(duration));
+
+    if (CsLpIsLimitValid(limit_value, duration_seconds)) {
+      CsLpApproveWrite(use_case_.get(), ski, msg_cnt);
+      return;
+    }
+
+    const ErrorType err{kErrorNumberTypeCommandRejected, "Negative limit values are not allowed"};
+    CsLpDenyWrite(use_case_.get(), ski, msg_cnt, &err);
+  }
+
+  void ApproveFailsafeValue(CsLpcApproverObject*, const char* ski, MsgCounterType msg_cnt, const ScaledValue* value) {
+    double failsafe_value = 0.0;
+    ScaledValueToDouble(value, &failsafe_value);
+
+    if (CsLpIsFailsafeValueValid(failsafe_value)) {
+      CsLpApproveWrite(use_case_.get(), ski, msg_cnt);
+      return;
+    }
+
+    const ErrorType err{kErrorNumberTypeCommandRejected, "Negative failsafe power limit values are not allowed"};
+    CsLpDenyWrite(use_case_.get(), ski, msg_cnt, &err);
+  }
+
+  void
+  ApproveFailsafeDuration(CsLpcApproverObject*, const char* ski, MsgCounterType msg_cnt, const DurationType* duration) {
+    const int32_t duration_seconds = static_cast<int32_t>(EebusDurationToSeconds(duration));
+
+    if (CsLpIsFailsafeDurationValid(duration_seconds)) {
+      CsLpApproveWrite(use_case_.get(), ski, msg_cnt);
+      return;
+    }
+
+    const ErrorType err{
+        kErrorNumberTypeCommandRejected,
+        "Invalid failsafe duration minimum value: should be between 2 hours and 24 hours"
+    };
+    CsLpDenyWrite(use_case_.get(), ski, msg_cnt, &err);
+  }
 
   void ExpectSendHeartbeat(const char* expected_json) {
     if (IsLogMessagesEnabled()) {
@@ -239,6 +307,10 @@ class CsLpcTestFixture : public UseCaseTestFixture {
     ExpectSendMessage(send::result_data_msg_cnt_ref_20);
 
     EXPECT_CALL(
+        *cs_lpc_approver_mock_->gmock,
+        OnPowerLimitApprovalRequested(_, _, _, ScaledValueEq(100, 0), DurationTypeEq(1, 2, 3), true)
+    );
+    EXPECT_CALL(
         *cs_lpc_listener_mock_->gmock,
         OnPowerLimitReceive(_, ScaledValueEq(100, 0), DurationTypeEq(1, 2, 3), true)
     );
@@ -250,8 +322,16 @@ class CsLpcTestFixture : public UseCaseTestFixture {
     EXPECT_THAT(&limit.value, ScaledValueEq(100, 0));
   }
 
-  void VerifyActivePowerLimitWriteInvalid() {
+  // Verify that a negative power limit write is rejected by the approver (via CsLpIsLimitValid)
+  // and that the previously stored valid limit is left unchanged.
+  void VerifyActivePowerLimitInvalid() {
     ExpectSendMessage(send::result_data_msg_cnt_ref_21);
+
+    EXPECT_CALL(
+        *cs_lpc_approver_mock_->gmock,
+        OnPowerLimitApprovalRequested(_, _, _, ScaledValueEq(-1, 0), DurationTypeEq(1, 2, 3), true)
+    );
+
     HandleMessage(receive::negative_limits_write);
 
     LoadLimit limit{{0}};
@@ -262,6 +342,7 @@ class CsLpcTestFixture : public UseCaseTestFixture {
   void VerifyFailsafePowerLimitWriteValid() {
     ExpectSendMessage(send::failsafe_power_limit_notify);
     ExpectSendMessage(send::result_data_msg_cnt_ref_22);
+    EXPECT_CALL(*cs_lpc_approver_mock_->gmock, OnFailsafeValueApprovalRequested(_, _, _, ScaledValueEq(14, 1)));
     EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnFailsafePowerLimitReceive(_, ScaledValueEq(14, 1)));
 
     HandleMessage(receive::failsafe_power_limit_write);
@@ -275,8 +356,11 @@ class CsLpcTestFixture : public UseCaseTestFixture {
     EXPECT_THAT(&failsafe_limit, ScaledValueEq(14, 1));
   }
 
-  void VerifyFailsafePowerLimitWriteInvalid() {
+  // Verify that a negative failsafe power limit write is rejected by the approver
+  // (via CsLpIsFailsafeValueValid) and that the previously stored valid value is left unchanged.
+  void VerifyFailsafePowerLimitInvalid() {
     ExpectSendMessage(send::result_data_msg_cnt_ref_23);
+    EXPECT_CALL(*cs_lpc_approver_mock_->gmock, OnFailsafeValueApprovalRequested(_, _, _, ScaledValueEq(-14, 1)));
 
     HandleMessage(receive::failsafe_negative_power_limit_write);
 
@@ -292,6 +376,7 @@ class CsLpcTestFixture : public UseCaseTestFixture {
   void VerifyFailsafeDurationWriteValid() {
     ExpectSendMessage(send::failsafe_duration_notify);
     ExpectSendMessage(send::result_data_msg_cnt_ref_24);
+    EXPECT_CALL(*cs_lpc_approver_mock_->gmock, OnFailsafeDurationApprovalRequested(_, _, _, DurationTypeEq(2, 2, 5)));
     EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnFailsafeDurationReceive(_, DurationTypeEq(2, 2, 5)));
 
     HandleMessage(receive::failsafe_duration_write);
@@ -302,9 +387,27 @@ class CsLpcTestFixture : public UseCaseTestFixture {
     EXPECT_THAT(&failsafe_duration, DurationTypeEq(2, 2, 5));
   }
 
-  void VerifyFailsafeDurationWriteInvalid(const char* datagram, const char* expected_result_msg) {
-    ExpectSendMessage(expected_result_msg);
-    HandleMessage(datagram);
+  // Verify that a failsafe duration minimum shorter than 2 hours is rejected by the approver
+  // (via CsLpIsFailsafeDurationValid) and that the previously stored valid duration is unchanged.
+  void VerifyFailsafeDurationInvalidShort() {
+    ExpectSendMessage(send::result_data_msg_cnt_ref_25);
+    EXPECT_CALL(*cs_lpc_approver_mock_->gmock, OnFailsafeDurationApprovalRequested(_, _, _, DurationTypeEq(1, 2, 5)));
+
+    HandleMessage(receive::failsafe_invalid_short_duration_write);
+
+    DurationType failsafe_duration{0};
+    bool is_changeable{false};
+    EXPECT_EQ(CsLpcGetFailsafeDurationMinimum(use_case_.get(), &failsafe_duration, &is_changeable), kEebusErrorOk);
+    EXPECT_THAT(&failsafe_duration, DurationTypeEq(2, 2, 5));
+  }
+
+  // Verify that a failsafe duration minimum longer than 24 hours is rejected by the approver
+  // (via CsLpIsFailsafeDurationValid) and that the previously stored valid duration is unchanged.
+  void VerifyFailsafeDurationInvalidLong() {
+    ExpectSendMessage(send::result_data_msg_cnt_ref_26);
+    EXPECT_CALL(*cs_lpc_approver_mock_->gmock, OnFailsafeDurationApprovalRequested(_, _, _, DurationTypeEq(25, 2, 5)));
+
+    HandleMessage(receive::failsafe_invalid_long_duration_write);
 
     DurationType failsafe_duration{0};
     bool is_changeable{false};
@@ -327,6 +430,10 @@ class CsLpcTestFixture : public UseCaseTestFixture {
     ExpectSendMessage(send::limits_notify_no_duration);
     ExpectSendMessage(send::result_data_msg_cnt_ref_27);
 
+    EXPECT_CALL(
+        *cs_lpc_approver_mock_->gmock,
+        OnPowerLimitApprovalRequested(_, _, _, ScaledValueEq(200, 0), testing::IsNull(), true)
+    );
     EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnPowerLimitReceive(_, ScaledValueEq(200, 0), testing::IsNull(), true));
 
     HandleMessage(receive::limits_write_delete_duration);
@@ -387,6 +494,11 @@ class CsLpcTestFixture : public UseCaseTestFixture {
       CsLpListenerMockDelete
   };
 
+  std::unique_ptr<CsLpcApproverMock, decltype(&CsLpcApproverMockDelete)> cs_lpc_approver_mock_{
+      nullptr,
+      CsLpcApproverMockDelete
+  };
+
   std::unique_ptr<CsLpUseCaseObject, decltype(&CsLpUseCaseDelete)> use_case_{nullptr, CsLpUseCaseDelete};
 };
 
@@ -406,26 +518,26 @@ TEST_F(CsLpcTestFixture, CsLpcTest) {
   // 1-20. Set up the remote connection by processing the incoming messages in the right order
   SetUpRemoteConnection();
 
-  // 21. Verify that the valid power limit write is processed correctly and updates the active power limit value
+  // 21. Verify that the valid power limit write is approved and updates the active power limit value
   VerifyActivePowerLimitWriteValid();
 
-  // 22. Verify that the negative power limit write was rejected and did not update the active power limit value
-  VerifyActivePowerLimitWriteInvalid();
+  // 22. Verify that a negative power limit write is denied by the approver and the value is unchanged
+  VerifyActivePowerLimitInvalid();
 
-  // 23. Verify that the valid failsafe power limit write is processed correctly
+  // 23. Verify that the valid failsafe power limit write is approved
   VerifyFailsafePowerLimitWriteValid();
 
-  // 24. Verify the negative power limit write was rejected and did not update the failsafe power limit value
-  VerifyFailsafePowerLimitWriteInvalid();
+  // 24. Verify that a negative failsafe power limit write is denied by the approver and the value is unchanged
+  VerifyFailsafePowerLimitInvalid();
 
-  // 25. Verify that the valid failsafe duration write is processed correctly
+  // 25. Verify that the valid failsafe duration write is approved
   VerifyFailsafeDurationWriteValid();
 
-  // 26. Verify that the too short failsafe duration write is rejected and does not update the failsafe duration
-  VerifyFailsafeDurationWriteInvalid(receive::failsafe_invalid_short_duration_write, send::result_data_msg_cnt_ref_25);
+  // 26. Verify that a too-short failsafe duration write is denied by the approver and the value is unchanged
+  VerifyFailsafeDurationInvalidShort();
 
-  // 27. Verify that the too long failsafe duration write is rejected and does not update the failsafe duration
-  VerifyFailsafeDurationWriteInvalid(receive::failsafe_invalid_long_duration_write, send::result_data_msg_cnt_ref_26);
+  // 27. Verify that a too-long failsafe duration write is denied by the approver and the value is unchanged
+  VerifyFailsafeDurationInvalidLong();
 
   // 28. Verify that the consumption nominal max can be set and read back correctly
   VerifyConsumptionNominalMax();
@@ -446,6 +558,76 @@ TEST_F(CsLpcTestFixture, CsLpcTest) {
   VerifyLocalSetFailsafeDuration();
 
   // 34. Expect the remote EG disconnect event while tearing down the use case
+  EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnRemoteEgRemoved(_, _));
+}
+
+// Regression test: a single write touching both the failsafe value and failsafe duration keys
+// requires one approval per key (two independent write-approval callbacks on the same feature).
+// An approver that answers asynchronously (i.e. does not call CsLpApproveWrite synchronously
+// from within the ON_..._REQUESTED callback) must still be able to approve the second key after
+// the first: previously, the pending-approval mapping was removed after the very first approval,
+// so the second CsLpApproveWrite call for the same write silently failed with kEebusErrorNoChange
+// and the write never applied.
+TEST_F(CsLpcTestFixture, ApproveWriteWithTwoKeysRequiresBothApprovals) {
+  SetUpRemoteConnection();
+
+  const char* captured_ski        = nullptr;
+  MsgCounterType captured_msg_cnt = 0;
+
+  // Defer both approvals instead of approving synchronously, to simulate a real async approver.
+  EXPECT_CALL(*cs_lpc_approver_mock_->gmock, OnFailsafeValueApprovalRequested(_, _, _, ScaledValueEq(20, 1)))
+      .WillOnce(Invoke([&](CsLpcApproverObject*, const char* ski, MsgCounterType msg_cnt, const ScaledValue*) {
+        captured_ski     = ski;
+        captured_msg_cnt = msg_cnt;
+      }));
+  EXPECT_CALL(*cs_lpc_approver_mock_->gmock, OnFailsafeDurationApprovalRequested(_, _, _, DurationTypeEq(3, 0, 0)))
+      .WillOnce(Return());
+
+  // The exact NOTIFY/RESULT wire content once the write finalizes isn't the point of this test.
+  EXPECT_CALL(*data_write_mock_->gmock, WriteMessage(_, _, _)).Times(testing::AnyNumber());
+
+  HandleMessage(receive::failsafe_value_and_duration_write);
+  ASSERT_NE(captured_ski, nullptr);
+
+  // First vote (failsafe value): one of two required approvals. The write must stay pending,
+  // and the pending-approval mapping must still exist for the second vote to find it.
+  EXPECT_EQ(CsLpApproveWrite(use_case_.get(), captured_ski, captured_msg_cnt), kEebusErrorPending);
+
+  // Second vote (failsafe duration): this is the last required approval, so the write applies now.
+  EXPECT_EQ(CsLpApproveWrite(use_case_.get(), captured_ski, captured_msg_cnt), kEebusErrorOk);
+
+  ScaledValue failsafe_limit{0};
+  bool is_changeable{false};
+  EXPECT_EQ(
+      CsLpcGetFailsafeConsumptionActivePowerLimit(use_case_.get(), &failsafe_limit, &is_changeable),
+      kEebusErrorOk
+  );
+  EXPECT_THAT(&failsafe_limit, ScaledValueEq(20, 1));
+
+  DurationType failsafe_duration{0};
+  EXPECT_EQ(CsLpcGetFailsafeDurationMinimum(use_case_.get(), &failsafe_duration, &is_changeable), kEebusErrorOk);
+  EXPECT_THAT(&failsafe_duration, DurationTypeEq(3, 0, 0));
+
+  EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnRemoteEgRemoved(_, _));
+}
+
+TEST_F(CsLpcTestFixture, WriteWithMultipleLimitEntriesIsRejectedWithoutConsultingApprover) {
+  SetUpRemoteConnection();
+
+  EXPECT_CALL(*cs_lpc_approver_mock_->gmock, OnPowerLimitApprovalRequested(_, _, _, _, _, _)).Times(0);
+  EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnPowerLimitReceive(_, _, _, _)).Times(0);
+
+  // The exact RESULT wire content isn't the point of this test.
+  EXPECT_CALL(*data_write_mock_->gmock, WriteMessage(_, _, _)).Times(testing::AnyNumber());
+
+  HandleMessage(receive::limits_write_multi_entry);
+
+  // Neither entry was applied: the known limit keeps its original value, and no new limit_id
+  // sneaked into the device's LoadControlLimitListData.
+  LoadLimit limit{{0}};
+  EXPECT_EQ(CsLpcGetActiveConsumptionPowerLimit(use_case_.get(), &limit), kEebusErrorOk);
+  EXPECT_THAT(&limit.value, ScaledValueEq(4200, 0));
+
   EXPECT_CALL(*cs_lpc_listener_mock_->gmock, OnRemoteEgRemoved(_, _));
 }
 
