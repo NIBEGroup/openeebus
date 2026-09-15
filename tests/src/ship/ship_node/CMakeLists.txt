@@ -147,3 +147,8 @@ target_link_libraries(
   ${LIBWEBSOCKETS_TARGET}
   ${OPEN_SSL_LIBRARIES}
 )
+
+add_test(
+  NAME ${TEST_NAME}
+  COMMAND ${TEST_NAME}
+)
