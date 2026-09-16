@@ -72,6 +72,7 @@
 #include "tests/src/use_case/actor/eg/lpc/send/device_configuration_key_value_list_read.inc"
 #include "tests/src/use_case/actor/eg/lpc/send/device_configuration_key_value_list_read_2.inc"
 #include "tests/src/use_case/actor/eg/lpc/send/device_configuration_key_value_list_read_3.inc"
+#include "tests/src/use_case/actor/eg/lpc/send/device_configuration_key_value_list_read_early.inc"
 #include "tests/src/use_case/actor/eg/lpc/send/device_configuration_subscription_call.inc"
 #include "tests/src/use_case/actor/eg/lpc/send/device_diagnosis_heartbeat_notify.inc"
 #include "tests/src/use_case/actor/eg/lpc/send/device_diagnosis_heartbeat_read.inc"
@@ -83,6 +84,7 @@
 #include "tests/src/use_case/actor/eg/lpc/send/electrical_connection_characteristic_read_2.inc"
 #include "tests/src/use_case/actor/eg/lpc/send/electrical_connection_subscription_call.inc"
 #include "tests/src/use_case/actor/eg/lpc/send/failsafe_duration_write.inc"
+#include "tests/src/use_case/actor/eg/lpc/send/failsafe_duration_write_early.inc"
 #include "tests/src/use_case/actor/eg/lpc/send/failsafe_power_limit_write.inc"
 #include "tests/src/use_case/actor/eg/lpc/send/limits_write_delete_duration.inc"
 #include "tests/src/use_case/actor/eg/lpc/send/limits_write_with_duration.inc"
@@ -396,6 +398,77 @@ TEST_F(EgLpcTestFixture, EgLpcTest) {
   HandleMessage(receive::electrical_connection_characteristic_reply_ref_29);
 
   // 46. Expect the remote entity disconnect event while tearing down the use case
+  EXPECT_CALL(*eg_lpc_listener_mock_->gmock, OnRemoteCsRemoved(_, _));
+}
+
+TEST_F(EgLpcTestFixture, SetFailsafeDurationMinimumWithoutValueData) {
+  const EntityAddressType* remote_entity_addr = nullptr;
+
+  // 1. Receive the detailed discovery request and send the response
+  ExpectSendMessage(send::discovery_reply);
+  HandleMessage(receive::discovery_request);
+
+  // 2. Receive the detailed discovery response
+  EXPECT_CALL(*eg_lpc_listener_mock_->gmock, OnRemoteCsAdded(_, _)).WillOnce(testing::SaveArg<1>(&remote_entity_addr));
+  ExpectSendMessage(send::node_management_subscription_call);
+  ExpectSendMessage(send::use_case_data_read);
+  HandleMessage(receive::discovery_response);
+
+  // 3-7. Receive result ACKs (no EG send)
+  HandleMessage(receive::result_data_msg_cnt_ref_5);
+  HandleMessage(receive::result_data_msg_cnt_ref_6);
+  HandleMessage(receive::result_data_msg_cnt_ref_8);
+  HandleMessage(receive::result_data_msg_cnt_ref_9);
+  HandleMessage(receive::result_data_msg_cnt_ref_11);
+
+  // 8. Receive the Node Management subscription request and send result
+  ExpectSendMessage(send::result_data_msg_cnt_ref_28);
+  HandleMessage(receive::node_management_subscription_request);
+
+  // 9. Receive the use case discovery request and send the reply
+  ExpectSendMessage(send::use_case_data_reply);
+  HandleMessage(receive::use_case_request);
+
+  // 10. Receive the Use Case reply and send subscriptions + reads
+  ExpectSendMessage(send::load_control_subscription_call);
+  ExpectSendMessage(send::load_control_binding_call);
+  ExpectSendMessage(send::load_control_limit_description_read);
+  ExpectSendMessage(send::device_configuration_subscription_call);
+  ExpectSendMessage(send::device_configuration_binding_call);
+  ExpectSendMessage(send::device_configuration_description_read);
+  ExpectSendMessage(send::device_diagnosis_subscription_call);
+  ExpectSendMessage(send::device_diagnosis_heartbeat_read);
+  ExpectSendMessage(send::electrical_connection_subscription_call);
+  ExpectSendMessage(send::electrical_connection_characteristic_read);
+  HandleMessage(receive::use_case_reply);
+
+  // 11. Receive the Device Diagnosis subscription request and send result
+  ExpectSendMessage(send::result_data_msg_cnt_ref_31);
+  HandleMessage(receive::device_diagnosis_subscription_request);
+
+  // 12. Receive the Heartbeat read request and send the reply
+  ExpectSendHeartbeat(send::device_diagnosis_heartbeat_reply);
+  HandleMessage(receive::device_diagnosis_heartbeat_request);
+
+  // 13. Receive the result ACK (no EG send)
+  HandleMessage(receive::result_data_msg_cnt_ref_3);
+
+  // 14. Receive the DC description reply — EG auto-sends key value list READ at msgCounter 19
+  // (load control writes and heartbeat from the full test are skipped, so counter is 4 lower than usual)
+  ExpectSendMessage(send::device_configuration_key_value_list_read_early);
+  HandleMessage(receive::device_configuration_description_reply);
+
+  // 15. Set the failsafe duration minimum WITHOUT having received key value list data yet.
+  // The fix: EG resolves the keyId from description data, not from value data.
+  // The old code (GetKeyValueWithFilter) would return kEebusErrorNotAvailable here.
+  ExpectSendMessage(send::failsafe_duration_write_early);
+  const EebusDuration duration{.hours = 3};
+  EXPECT_EQ(
+      EgLpcSetFailsafeDurationMinimum(use_case_.get(), remote_entity_addr, &duration, nullptr, nullptr),
+      kEebusErrorOk
+  );
+
+  // Expect the remote entity disconnect event while tearing down the use case
   EXPECT_CALL(*eg_lpc_listener_mock_->gmock, OnRemoteCsRemoved(_, _));
 }
 

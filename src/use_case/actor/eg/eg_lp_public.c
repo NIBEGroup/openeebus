@@ -584,16 +584,16 @@ EebusError EgLpSetFailsafeDurationMinimumInternal(
       .key_name = &kFailsafeDurationMinimumKeyName,
   };
 
-  const DeviceConfigurationKeyValueDataType* const key_value_tmp
-      = DeviceConfigurationCommonGetKeyValueWithFilter(&dcc.device_cfg_common, &filter);
+  const DeviceConfigurationKeyValueDescriptionDataType* const description
+      = DeviceConfigurationCommonGetKeyValueDescriptionWithFilter(&dcc.device_cfg_common, &filter);
 
-  if (key_value_tmp == NULL) {
+  if ((description == NULL) || (description->key_id == NULL)) {
     return kEebusErrorNotAvailable;
   }
 
   // clang-format off
-  const DeviceConfigurationKeyValueDataType* const key_value = &(DeviceConfigurationKeyValueDataType){
-      .key_id = key_value_tmp->key_id,
+  const DeviceConfigurationKeyValueDataType key_value = {
+      .key_id = description->key_id,
       .value  = &(DeviceConfigurationKeyValueValueType){
           .duration = duration,
       },
@@ -601,7 +601,7 @@ EebusError EgLpSetFailsafeDurationMinimumInternal(
   // clang-format on
 
   const DeviceConfigurationKeyValueListDataType key_value_list = {
-      .device_configuration_key_value_data      = &(const DeviceConfigurationKeyValueDataType*){key_value},
+      .device_configuration_key_value_data      = &(const DeviceConfigurationKeyValueDataType*){&key_value},
       .device_configuration_key_value_data_size = 1,
   };
 
