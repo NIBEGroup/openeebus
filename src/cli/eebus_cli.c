@@ -79,7 +79,7 @@ static void SetCompressorOhpcf(
 static void SetCemOhpcf(
     EebusCliObject* self,
     CemOhpcfUseCaseObject* cem_ohpcf_use_case,
-    const EntityAddressType* remote_entity_address
+    const EntityAddressList* addr_list
 );
 static void SetGcpMgcp(EebusCliObject* self, GcpMgcpUseCaseObject* gcp_mgcp_use_case);
 static void SetMaMgcp(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_case, EntityAddressList* addr_list);
@@ -246,17 +246,15 @@ void SetCompressorOhpcf(
 void SetCemOhpcf(
     EebusCliObject* self,
     CemOhpcfUseCaseObject* cem_ohpcf_use_case,
-    const EntityAddressType* remote_entity_address
+    const EntityAddressList* addr_list
 ) {
   EebusCli* const eebus_cli = EEBUS_CLI(self);
 
-  // Release the previously created CLI instance
   CemOhpcfCliDelete(eebus_cli->cem_ohpcf_cli);
   eebus_cli->cem_ohpcf_cli = NULL;
 
-  // Create a new CLI instance if remote entity address is not NULL
-  if (remote_entity_address != NULL) {
-    eebus_cli->cem_ohpcf_cli = CemOhpcfCliCreate(cem_ohpcf_use_case, remote_entity_address);
+  if (addr_list != NULL) {
+    eebus_cli->cem_ohpcf_cli = CemOhpcfCliCreate(cem_ohpcf_use_case, addr_list);
   }
 }
 

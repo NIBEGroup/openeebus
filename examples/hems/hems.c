@@ -69,6 +69,7 @@ struct Hems {
   EntityAddressList eg_lpc_remotes;
   EntityAddressList eg_lpp_remotes;
   EntityAddressList ma_mpc_remotes;
+  EntityAddressList cem_ohpcf_remotes;
   EntityAddressList ma_mgcp_remotes;
 };
 
@@ -124,6 +125,7 @@ EebusError HemsConstruct(Hems* self) {
   EntityAddressListInit(&self->eg_lpc_remotes);
   EntityAddressListInit(&self->eg_lpp_remotes);
   EntityAddressListInit(&self->ma_mpc_remotes);
+  EntityAddressListInit(&self->cem_ohpcf_remotes);
   EntityAddressListInit(&self->ma_mgcp_remotes);
 
   return kEebusErrorOk;
@@ -325,6 +327,7 @@ void Destruct(ServiceReaderObject* self) {
   EntityAddressListRelease(&hems->eg_lpc_remotes);
   EntityAddressListRelease(&hems->eg_lpp_remotes);
   EntityAddressListRelease(&hems->ma_mpc_remotes);
+  EntityAddressListRelease(&hems->cem_ohpcf_remotes);
   EntityAddressListRelease(&hems->ma_mgcp_remotes);
 
   UseCaseDelete(USE_CASE_OBJECT(hems->ma_mgcp));
@@ -490,13 +493,24 @@ void HemsRemoveMaMpcRemoteEntity(HemsObject* self, const EntityAddressType* enti
 
 void HemsSetCemOhpcfRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
   Hems* const hems = HEMS(self);
-
-  if (hems->cli == NULL) {
+  if ((hems->cli == NULL) || (entity_addr == NULL)) {
     return;
   }
+  EntityAddressListAdd(&hems->cem_ohpcf_remotes, entity_addr);
+  if (EntityAddressListGetSize(&hems->cem_ohpcf_remotes) == 1) {
+    EEBUS_CLI_SET_CEM_OHPCF(hems->cli, hems->cem_ohpcf, &hems->cem_ohpcf_remotes);
+  }
+}
 
-  CemOhpcfUseCaseObject* const cem_ohpcf = (entity_addr == NULL) ? NULL : hems->cem_ohpcf;
-  EEBUS_CLI_SET_CEM_OHPCF(hems->cli, cem_ohpcf, entity_addr);
+void HemsRemoveCemOhpcfRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {
+  Hems* const hems = HEMS(self);
+  if (entity_addr == NULL) {
+    return;
+  }
+  EntityAddressListRemove(&hems->cem_ohpcf_remotes, entity_addr);
+  if (EntityAddressListGetSize(&hems->cem_ohpcf_remotes) == 0) {
+    EEBUS_CLI_SET_CEM_OHPCF(hems->cli, NULL, NULL);
+  }
 }
 
 void HemsSetMaMgcpRemoteEntity(HemsObject* self, const EntityAddressType* entity_addr) {

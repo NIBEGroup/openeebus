@@ -112,12 +112,12 @@ struct EebusCliInterface {
    * @brief Set the CEM OHPCF use case instance to be used by the CLI handler
    * @param self Pointer to the EEBUS CLI handler instance
    * @param cem_ohpcf_use_case CEM OHPCF use case instance to be used by the CLI handler
-   * @param remote_entity_address CEM OHPCF remote entity address to be used by the CLI handler
+   * @param addr_list List of remote entity addresses to be used by the CLI handler
    */
   void (*set_cem_ohpcf)(
       EebusCliObject* self,
       CemOhpcfUseCaseObject* cem_ohpcf_use_case,
-      const EntityAddressType* remote_entity_address
+      const EntityAddressList* addr_list
   );
   /**
    * @brief Set the GCP MGCP use case instance to be used by the CLI handler
@@ -205,8 +205,8 @@ struct EebusCliObject {
 /**
  * @brief EEBUS CLI Set CEM OHPCF caller definition
  */
-#define EEBUS_CLI_SET_CEM_OHPCF(obj, cem_ohpcf_use_case, remote_entity_address) \
-  (EEBUS_CLI_INTERFACE(obj)->set_cem_ohpcf(obj, cem_ohpcf_use_case, remote_entity_address))
+#define EEBUS_CLI_SET_CEM_OHPCF(obj, cem_ohpcf_use_case, addr_list) \
+  (EEBUS_CLI_INTERFACE(obj)->set_cem_ohpcf(obj, cem_ohpcf_use_case, addr_list))
 
 /**
  * @brief EEBUS CLI Set GCP MGCP caller definition
