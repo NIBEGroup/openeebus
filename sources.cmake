@@ -213,6 +213,7 @@ set(HEADERS
   src/service/api/eebus_service_interface.h
   src/service/api/service_reader_interface.h
   src/service/service/eebus_service.h
+  src/service/service/eebus_service_internal.h
   src/ship/api/connection_state.h
   src/ship/api/data_reader_interface.h
   src/ship/api/data_writer_interface.h
@@ -233,6 +234,7 @@ set(HEADERS
   src/ship/model/model.h
   src/ship/model/types.h
   src/ship/ship_node/node_connection.h
+  src/ship/ship_node/node_connection_internal.h
   src/ship/ship_node/node_connection_container.h
   src/ship/ship_node/ship_node.h
   src/ship/ship_node/ship_node_internal.h

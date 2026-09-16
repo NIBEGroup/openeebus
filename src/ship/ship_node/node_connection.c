@@ -19,31 +19,13 @@
  */
 
 #include "node_connection.h"
+#include "node_connection_internal.h"
 
 #include "src/common/eebus_malloc.h"
 #include "src/common/eebus_timer/eebus_timer.h"
-#include "src/common/service_details.h"
 #include "src/common/string_util.h"
 #include "src/ship/api/info_provider_interface.h"
 #include "src/ship/ship_connection/ship_connection.h"
-
-typedef struct NodeConnection NodeConnection;
-
-struct NodeConnection {
-  /** Implements the Node Connection Interface */
-  NodeConnectionObject obj;
-
-  const char* ski;
-  ShipConnectionObject* connection;
-  int attempt_cnt;
-  bool is_attempt_running;
-  bool handshake_complete;
-  ServiceDetails* service_details;
-  struct ShipNode* owner;
-  EebusTimerObject* retry_timer;
-};
-
-#define NODE_CONNECTION(obj) ((NodeConnection*)(obj))
 
 static void Destruct(NodeConnectionObject* self);
 static const char* GetSki(const NodeConnectionObject* self);
