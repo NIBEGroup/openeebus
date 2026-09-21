@@ -311,10 +311,10 @@ void Destruct(ServiceReaderObject* self) {
 
   if (hems->service != NULL) {
     EEBUS_SERVICE_STOP(hems->service);
-    EebusServiceDelete(hems->service);
-    hems->service = NULL;
   }
 
+  // Use cases unsubscribe from the service owned device event manager during destruction,
+  // so they must be released before the service and its local device are deleted.
   CemOhpcfUseCaseDelete(hems->cem_ohpcf);
   hems->cem_ohpcf = NULL;
 
@@ -353,6 +353,9 @@ void Destruct(ServiceReaderObject* self) {
 
   EgLpcListenerDelete(hems->eg_lpc_listener);
   hems->eg_lpc_listener = NULL;
+
+  EebusServiceDelete(hems->service);
+  hems->service = NULL;
 
   EebusServiceConfigDelete(hems->cfg);
   hems->cfg = NULL;
