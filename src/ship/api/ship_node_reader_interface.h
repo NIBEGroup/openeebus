@@ -144,23 +144,6 @@ struct ShipNodeReaderObject {
 #define SHIP_NODE_READER_OBJECT(obj) ((ShipNodeReaderObject*)(obj))
 
 /**
- * @brief Reports a shippairing request that established trust
- *
- * A function rather than a macro, because the method is optional and has to be
- * checked for before it is called.
- */
-static inline void ShipNodeReaderOnShipPairingAccepted(
-    ShipNodeReaderObject* obj,
-    const char* trust_ship_id,
-    const char* trust_fingerprint,
-    const char* trust_curve
-) {
-  if ((obj != NULL) && (obj->interface_->on_ship_pairing_accepted != NULL)) {
-    obj->interface_->on_ship_pairing_accepted(obj, trust_ship_id, trust_fingerprint, trust_curve);
-  }
-}
-
-/**
  * @brief Ship Node Reader Interface class pointer typecast
  */
 #define SHIP_NODE_READER_INTERFACE(obj) (SHIP_NODE_READER_OBJECT(obj)->interface_)
@@ -211,6 +194,16 @@ static inline void ShipNodeReaderOnShipPairingAccepted(
  */
 #define SHIP_NODE_READER_IS_WAITING_FOR_TRUST_ALLOWED(obj, ski) \
   (SHIP_NODE_READER_INTERFACE(obj)->is_waiting_for_trust_allowed(obj, ski))
+
+/**
+ * @brief Ship Node Reader On Ship Pairing Accepted caller definition
+ *
+ * on_ship_pairing_accepted may be NULL (see the interface declaration above), so this checks for it before calling.
+ */
+#define SHIP_NODE_READER_ON_SHIP_PAIRING_ACCEPTED(obj, trust_ship_id, trust_fingerprint, trust_curve)                  \
+  ((SHIP_NODE_READER_INTERFACE(obj)->on_ship_pairing_accepted != NULL)                                                 \
+       ? SHIP_NODE_READER_INTERFACE(obj)->on_ship_pairing_accepted(obj, trust_ship_id, trust_fingerprint, trust_curve) \
+       : (void)0)
 
 #ifdef __cplusplus
 }

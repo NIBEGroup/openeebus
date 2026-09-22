@@ -146,41 +146,6 @@ struct ShipNodeObject {
 #define SHIP_NODE_OBJECT(obj) ((ShipNodeObject*)(obj))
 
 /**
- * @brief Sets the certificate fingerprint the trusted node is expected to present
- *
- * A function rather than a macro, because the method is optional and has to be
- * checked for before it is called.
- */
-/**
- * @brief Gets the evaluator for shippairing requests
- * @return The evaluator, or NULL if the node has none
- */
-static inline ShipPairingObject* ShipNodeGetShipPairing(ShipNodeObject* obj) {
-  const ShipNodeInterface* const iface = (const ShipNodeInterface*)obj->interface_;
-  return (iface->get_ship_pairing == NULL) ? NULL : iface->get_ship_pairing(obj);
-}
-
-/**
- * @brief Announces a shippairing request from this node
- * @return kEebusErrorNotSupported if the node does not implement it
- */
-static inline EebusError ShipNodeAnnounceShipPairingRequest(ShipNodeObject* obj, const ShipPairingEntry* entry) {
-  const ShipNodeInterface* const iface = (const ShipNodeInterface*)obj->interface_;
-  if (iface->announce_ship_pairing_request == NULL) {
-    return kEebusErrorNotSupported;
-  }
-
-  return iface->announce_ship_pairing_request(obj, entry);
-}
-
-static inline void ShipNodeRegisterRemoteFingerprint(ShipNodeObject* obj, const char* fingerprint) {
-  const ShipNodeInterface* const iface = (const ShipNodeInterface*)obj->interface_;
-  if (iface->register_remote_fingerprint != NULL) {
-    iface->register_remote_fingerprint(obj, fingerprint);
-  }
-}
-
-/**
  * @brief Ship Node Interface class pointer typecast
  */
 #define SHIP_NODE_INTERFACE(obj) (SHIP_NODE_OBJECT(obj)->interface_)
@@ -222,6 +187,36 @@ static inline void ShipNodeRegisterRemoteFingerprint(ShipNodeObject* obj, const 
  */
 #define SHIP_NODE_GET_PENDING_WAITING_MS_WITH_SKI(obj, ski) \
   (SHIP_NODE_INTERFACE(obj)->get_pending_waiting_ms_with_ski(obj, ski))
+
+/**
+ * @brief Ship Node Register Remote Fingerprint caller definition
+ *
+ * register_remote_fingerprint may be NULL (see the interface declaration above), so this checks for it before
+ * calling.
+ */
+#define SHIP_NODE_REGISTER_REMOTE_FINGERPRINT(obj, fingerprint)                  \
+  ((SHIP_NODE_INTERFACE(obj)->register_remote_fingerprint != NULL)               \
+       ? SHIP_NODE_INTERFACE(obj)->register_remote_fingerprint(obj, fingerprint) \
+       : (void)0)
+
+/**
+ * @brief Ship Node Get Ship Pairing caller definition
+ *
+ * get_ship_pairing may be NULL (see the interface declaration above), so this checks for it before calling.
+ */
+#define SHIP_NODE_GET_SHIP_PAIRING(obj) \
+  ((SHIP_NODE_INTERFACE(obj)->get_ship_pairing != NULL) ? SHIP_NODE_INTERFACE(obj)->get_ship_pairing(obj) : NULL)
+
+/**
+ * @brief Ship Node Announce Ship Pairing Request caller definition
+ *
+ * announce_ship_pairing_request may be NULL (see the interface declaration above), so this checks for it before
+ * calling.
+ */
+#define SHIP_NODE_ANNOUNCE_SHIP_PAIRING_REQUEST(obj, entry)                  \
+  ((SHIP_NODE_INTERFACE(obj)->announce_ship_pairing_request != NULL)         \
+       ? SHIP_NODE_INTERFACE(obj)->announce_ship_pairing_request(obj, entry) \
+       : kEebusErrorNotSupported)
 
 #ifdef __cplusplus
 }

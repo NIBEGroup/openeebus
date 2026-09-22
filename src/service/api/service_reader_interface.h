@@ -88,23 +88,6 @@ struct ServiceReaderObject {
 #define SERVICE_READER_OBJECT(obj) ((ServiceReaderObject*)(obj))
 
 /**
- * @brief Reports a shippairing request that established trust
- *
- * A function rather than a macro, because the method is optional and has to be
- * checked for before it is called.
- */
-static inline void ServiceReaderOnShipPairingAccepted(
-    ServiceReaderObject* obj,
-    const char* trust_ship_id,
-    const char* trust_fingerprint,
-    const char* trust_curve
-) {
-  if ((obj != NULL) && (obj->interface_->on_ship_pairing_accepted != NULL)) {
-    obj->interface_->on_ship_pairing_accepted(obj, trust_ship_id, trust_fingerprint, trust_curve);
-  }
-}
-
-/**
  * @brief Service Reader Interface class pointer typecast
  */
 #define SERVICE_READER_INTERFACE(obj) (SERVICE_READER_OBJECT(obj)->interface_)
@@ -149,6 +132,16 @@ static inline void ServiceReaderOnShipPairingAccepted(
  */
 #define SERVICE_READER_IS_WAITING_FOR_TRUST_ALLOWED(obj, ski) \
   (SERVICE_READER_INTERFACE(obj)->is_waiting_for_trust_allowed(obj, ski))
+
+/**
+ * @brief Service Reader On Ship Pairing Accepted caller definition
+ *
+ * on_ship_pairing_accepted may be NULL (see the interface declaration above), so this checks for it before calling.
+ */
+#define SERVICE_READER_ON_SHIP_PAIRING_ACCEPTED(obj, trust_ship_id, trust_fingerprint, trust_curve)                  \
+  ((SERVICE_READER_INTERFACE(obj)->on_ship_pairing_accepted != NULL)                                                 \
+       ? SERVICE_READER_INTERFACE(obj)->on_ship_pairing_accepted(obj, trust_ship_id, trust_fingerprint, trust_curve) \
+       : (void)0)
 
 #ifdef __cplusplus
 }

@@ -333,7 +333,7 @@ void OnShipPairingAccepted(
 ) {
   EebusService* const service = EEBUS_SERVICE(self);
 
-  ServiceReaderOnShipPairingAccepted(service->service_reader, trust_ship_id, trust_fingerprint, trust_curve);
+  SERVICE_READER_ON_SHIP_PAIRING_ACCEPTED(service->service_reader, trust_ship_id, trust_fingerprint, trust_curve);
 }
 
 ShipNodeObject* EebusServiceGetShipNode(EebusServiceObject* self) {

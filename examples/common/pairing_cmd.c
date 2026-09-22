@@ -82,7 +82,7 @@ static void PairingCmdInfo(const PairingCmd* self) {
 }
 
 static void PairingCmdSetSecret(const PairingCmd* self, const char* secret_hex) {
-  ShipPairingObject* const pairing = ShipNodeGetShipPairing(EebusServiceGetShipNode(self->service));
+  ShipPairingObject* const pairing = SHIP_NODE_GET_SHIP_PAIRING(EebusServiceGetShipNode(self->service));
   if (pairing == NULL) {
     printf("This node has no shippairing evaluator\n");
     return;
@@ -131,7 +131,7 @@ static void PairingCmdAnnounce(PairingCmd* self, const char* for_id, const char*
   self->request = request;
 
   const ShipPairingEntry* const entry = ShipPairingRequestGetEntry(request);
-  if (ShipNodeAnnounceShipPairingRequest(EebusServiceGetShipNode(self->service), entry) != kEebusErrorOk) {
+  if (SHIP_NODE_ANNOUNCE_SHIP_PAIRING_REQUEST(EebusServiceGetShipNode(self->service), entry) != kEebusErrorOk) {
     printf("Could not announce the request\n");
     return;
   }
@@ -146,12 +146,12 @@ static void PairingCmdStop(PairingCmd* self) {
     ShipPairingRequestStop(self->request);
   }
 
-  ShipNodeAnnounceShipPairingRequest(EebusServiceGetShipNode(self->service), NULL);
+  SHIP_NODE_ANNOUNCE_SHIP_PAIRING_REQUEST(EebusServiceGetShipNode(self->service), NULL);
   printf("Request withdrawn\n");
 }
 
 static void PairingCmdStatus(const PairingCmd* self) {
-  ShipPairingObject* const pairing = ShipNodeGetShipPairing(EebusServiceGetShipNode(self->service));
+  ShipPairingObject* const pairing = SHIP_NODE_GET_SHIP_PAIRING(EebusServiceGetShipNode(self->service));
 
   if (pairing != NULL) {
     printf("Processing addCu-requests: %s\n", SHIP_PAIRING_IS_ADD_CU_ACTIVATED(pairing) ? "yes" : "no");

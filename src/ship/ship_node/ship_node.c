@@ -192,9 +192,9 @@ void ShipNodeConstruct(
   self->remote_fingerprint         = NULL;
   self->connected_peer_fingerprint = NULL;
 
-  self->connections_table     = NULL;
-  self->ship_node_reader      = ship_node_reader;
-  self->tsl_certificate       = tsl_certificate;
+  self->connections_table = NULL;
+  self->ship_node_reader  = ship_node_reader;
+  self->tsl_certificate   = tsl_certificate;
 
   // Built from this node's own identity, which the request it evaluates has to
   // name to be addressed here. Created after the certificate is in place.
@@ -460,11 +460,11 @@ EebusError AnnounceShipPairingRequest(ShipNodeObject* self, const ShipPairingEnt
   }
 
   if (entry == NULL) {
-    ShipMdnsDeregisterPairingService(sn->mdns);
+    SHIP_MDNS_DEREGISTER_PAIRING_SERVICE(sn->mdns);
     return kEebusErrorOk;
   }
 
-  return ShipMdnsRegisterPairingService(sn->mdns, entry);
+  return SHIP_MDNS_REGISTER_PAIRING_SERVICE(sn->mdns, entry);
 }
 
 /**
@@ -483,9 +483,9 @@ void ShipNodeOnPairingEnabledCallback(bool enabled, void* ctx) {
   }
 
   if (enabled) {
-    ShipMdnsStartPairingBrowse(sn->mdns, ShipNodeOnPairingEntriesFoundCallback, sn);
+    SHIP_MDNS_START_PAIRING_BROWSE(sn->mdns, ShipNodeOnPairingEntriesFoundCallback, sn);
   } else {
-    ShipMdnsStopPairingBrowse(sn->mdns);
+    SHIP_MDNS_STOP_PAIRING_BROWSE(sn->mdns);
   }
 }
 
@@ -522,7 +522,12 @@ void ShipNodeOnPairingEntriesFoundCallback(Vector* found_entries, void* ctx) {
     // Section 10.4: the trust store is the integrator's, so it is told to
     // record the node. Section 10.3 requires any previously paired node to be
     // untrusted at the same time.
-    ShipNodeReaderOnShipPairingAccepted(sn->ship_node_reader, entry->trust_id, entry->trust_par, entry->trust_curve);
+    SHIP_NODE_READER_ON_SHIP_PAIRING_ACCEPTED(
+        sn->ship_node_reader,
+        entry->trust_id,
+        entry->trust_par,
+        entry->trust_curve
+    );
   }
 
   VectorFreeElements(found_entries);
@@ -887,7 +892,7 @@ void Start(ShipNodeObject* self) {
   // evaluator reports when that changes, but the secret may have been set
   // before the node was started, so the current answer is applied here too.
   if ((sn->ship_pairing != NULL) && SHIP_PAIRING_IS_ENABLED(sn->ship_pairing)) {
-    ShipMdnsStartPairingBrowse(sn->mdns, ShipNodeOnPairingEntriesFoundCallback, sn);
+    SHIP_MDNS_START_PAIRING_BROWSE(sn->mdns, ShipNodeOnPairingEntriesFoundCallback, sn);
   }
 
   SHIP_MDNS_START(sn->mdns);
