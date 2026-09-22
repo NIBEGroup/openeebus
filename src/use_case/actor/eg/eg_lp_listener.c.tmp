@@ -1,8 +1,9 @@
 EgLpListener
 void Destruct()
-void OnRemoteEntityConnect(const EntityAddressType* entity_addr)
-void OnRemoteEntityDisconnect(const EntityAddressType* entity_addr)
+void OnRemoteCsAdded(const EntityAddressType* entity_addr)
+void OnRemoteCsRemoved(const EntityAddressType* entity_addr)
 void OnPowerLimitReceive(const ScaledValue* power_limit, const DurationType* duration, bool is_active)
 void OnFailsafePowerLimitReceive(const ScaledValue* power_limit)
 void OnFailsafeDurationReceive(const DurationType* duration)
 void OnHeartbeatReceive(uint64_t heartbeat_counter)
+void OnPowerNominalMaxReceive(const ScaledValue* power_limit)

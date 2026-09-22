@@ -323,6 +323,9 @@ void CloseConnection(ShipConnectionObject* self, bool safe, int32_t code, const 
     };
 
     ShipConnectionSerializeAndSendMessage(sc, &sme_close, kSmeClose);
+    // TODO: Instead of sleeping unconditionally, dequeue messages here and wait
+    // for kConnectionClosePhaseTypeConfirm (via DataExchangeHandleClose) with a
+    // 500ms timeout, closing immediately on Confirm or on timeout expiry.
     EebusThreadUsleep(500000);  // Wait 0.5s for the message to be sent
     WEBSOCKET_CLOSE(sc->websocket, 4001, "close");
   } else {
@@ -1077,15 +1080,13 @@ bool SmeHandshakeAccessMethodsCheckMessageVal(ShipConnection* self, ShipMessageD
     return false;
   }
 
-  const size_t received_remote_ship_id_size = strlen(access_msg_val->id);
-
-  if (!StringIsEmpty(self->remote_ship_id)
-      && (strncmp(self->remote_ship_id, access_msg_val->id, received_remote_ship_id_size) != 0)) {
-    SHIP_CONNECTION_DEBUG_PRINTF("Saved remote id: %s, Received id: %s\n", self->remote_ship_id, access_msg_val->id);
-    return false;
-  }
-
-  if (StringIsEmpty(self->remote_ship_id)) {
+  if (!StringIsEmpty(self->remote_ship_id)) {
+    const size_t remote_ship_id_len = strlen(self->remote_ship_id);
+    if (!StringNCompare(self->remote_ship_id, access_msg_val->id, remote_ship_id_len)) {
+      SHIP_CONNECTION_DEBUG_PRINTF("Saved remote id: %s, Received id: %s\n", self->remote_ship_id, access_msg_val->id);
+      return false;
+    }
+  } else {
     StringDelete((char*)self->remote_ship_id);
     self->remote_ship_id = StringCopy(access_msg_val->id);
     SHIP_CONNECTION_DEBUG_PRINTF("Saved remote SHIP id: %s\n", self->remote_ship_id);
@@ -1129,6 +1130,14 @@ EebusError DataExchangeHandleClose(ShipConnection* self, const ConnectionClose* 
     WEBSOCKET_CLOSE(self->websocket, 4001, "close");
   }
 
+  // Mirror what CloseConnection does after WEBSOCKET_CLOSE: stop timers, set shutdown_once
+  // so that the subsequent CloseConnection call from Stop() is a no-op and does not send a
+  // duplicate kShipConnectionClosed message with a dangling sc pointer.
+  EEBUS_TIMER_STOP(self->wait_for_ready_timer);
+  EEBUS_TIMER_STOP(self->send_prolongation_request_timer);
+  EEBUS_TIMER_STOP(self->prolongation_request_reply_timer);
+  self->cancel        = true;
+  self->shutdown_once = true;
   INFO_PROVIDER_HANDLE_CONNECTION_CLOSED(self->info_provider, SHIP_CONNECTION_OBJECT(self), true);
   return kEebusErrorOk;
 }
@@ -1210,13 +1219,13 @@ EebusError DataExchangeHandle(ShipConnection* self) {
     return ret;
   } else if (queue_msg.type == kShipConnectionQueueMsgTypeCancel) {
     SHIP_CONNECTION_DEBUG_PRINTF("%s(), cancelled\n", __func__);
-    return kEebusErrorOk;
+    return kEebusErrorDeactivate;
   } else if (queue_msg.type == kShipConnectionQueueMsgTypeTimeout) {
     SHIP_CONNECTION_DEBUG_PRINTF("%s(), timed out\n", __func__);
     return kEebusErrorCommunication;
   } else if (queue_msg.type == kShipConnectionQueueMsgTypeWebsocketClose) {
     SHIP_CONNECTION_CLOSE_CONNECTION(self, true, 0, NULL);
-    return kEebusErrorOk;
+    return kEebusErrorCommunicationEnd;
   } else if (queue_msg.type == kShipConnectionQueueMsgTypeWebsocketError) {
     return kEebusErrorCommunication;
   } else {

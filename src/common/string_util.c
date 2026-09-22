@@ -15,6 +15,7 @@
  */
 #include "src/common/string_util.h"
 
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -49,6 +50,24 @@ char* StringNCopy(const char* src, size_t n) {
   }
 
   return dst;
+}
+
+bool StringNCompare(const char* a, const char* b, size_t n) {
+  if ((a == NULL) || (b == NULL)) {
+    return false;
+  }
+
+  for (size_t i = 0; i < n; ++i) {
+    if (a[i] != b[i]) {
+      return false;
+    }
+
+    if (a[i] == '\0') {
+      return true;
+    }
+  }
+
+  return a[n] == '\0' && b[n] == '\0';
 }
 
 const char* StringFmtSprintf(const char* format, ...) {
@@ -192,4 +211,52 @@ char* StringToken(char* s, const char* delimiters, char** p) {
   }
 
   return start;
+}
+
+char* StringToUpper(const char* s) {
+  if (s == NULL) {
+    return NULL;
+  }
+
+  const size_t len   = strlen(s);
+  char* const result = (char*)EEBUS_MALLOC(len + 1);
+  if (result == NULL) {
+    return NULL;
+  }
+
+  for (size_t i = 0; i < len; ++i) {
+    result[i] = (char)toupper((unsigned char)s[i]);
+  }
+
+  result[len] = '\0';
+
+  return result;
+}
+
+char* StringGroupByN(const char* s, size_t n) {
+  if (s == NULL || n == 0) {
+    return NULL;
+  }
+
+  const size_t len         = strlen(s);
+  const size_t num_spaces  = (len > 0) ? ((len - 1) / n) : 0;
+  const size_t grouped_len = len + num_spaces;
+
+  char* const result = (char*)EEBUS_MALLOC(grouped_len + 1);
+  if (result == NULL) {
+    return NULL;
+  }
+
+  size_t k = 0;
+  for (size_t i = 0; i < len; ++i) {
+    if (i > 0 && (i % n) == 0) {
+      result[k++] = ' ';
+    }
+
+    result[k++] = s[i];
+  }
+
+  result[k] = '\0';
+
+  return result;
 }

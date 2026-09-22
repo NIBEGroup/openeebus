@@ -79,14 +79,22 @@ EebusError EgLpUseCaseConstruct(
   // Override "virtual functions table"
   USE_CASE_INTERFACE(self) = &lp_use_case_methods;
 
-  self->energy_direction         = energy_direction;
-  self->failsafe_power_limit_key = (DeviceConfigurationKeyNameType)0;
-  self->eg_lp_listener           = eg_lp_listener;
+  self->energy_direction                       = energy_direction;
+  self->failsafe_power_limit_key               = (DeviceConfigurationKeyNameType)0;
+  self->nominal_max_characteristic             = (ElectricalConnectionCharacteristicTypeType)0;
+  self->contractual_nominal_max_characteristic = (ElectricalConnectionCharacteristicTypeType)0;
+  self->eg_lp_listener                         = eg_lp_listener;
 
   if (energy_direction == kEnergyDirectionTypeConsume) {
-    self->failsafe_power_limit_key = kDeviceConfigurationKeyNameTypeFailsafeConsumptionActivePowerLimit;
+    self->failsafe_power_limit_key   = kDeviceConfigurationKeyNameTypeFailsafeConsumptionActivePowerLimit;
+    self->nominal_max_characteristic = kElectricalConnectionCharacteristicTypeTypePowerConsumptionNominalMax;
+    self->contractual_nominal_max_characteristic
+        = kElectricalConnectionCharacteristicTypeTypeContractualConsumptionNominalMax;
   } else {
-    self->failsafe_power_limit_key = kDeviceConfigurationKeyNameTypeFailsafeProductionActivePowerLimit;
+    self->failsafe_power_limit_key   = kDeviceConfigurationKeyNameTypeFailsafeProductionActivePowerLimit;
+    self->nominal_max_characteristic = kElectricalConnectionCharacteristicTypeTypePowerProductionNominalMax;
+    self->contractual_nominal_max_characteristic
+        = kElectricalConnectionCharacteristicTypeTypeContractualProductionNominalMax;
   }
 
   return AddFeatures(local_entity);

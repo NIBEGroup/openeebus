@@ -360,6 +360,11 @@ struct ElectricalConnectionCharacteristicListDataSelectorsType {
   const ElectricalConnectionCharacteristicTypeType* characteristic_type;       /**< "characteristicType" */
 };
 
+/**
+ * @brief Shared constant for entity-context electrical connection characteristic filtering.
+ */
+extern const ElectricalConnectionCharacteristicContextType kEccContextEntity;
+
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

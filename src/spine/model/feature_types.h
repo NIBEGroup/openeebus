@@ -119,6 +119,8 @@ FeatureAddressType* FeatureAddressCreate(const EntityAddressType* entity_addr, u
 bool FeatureAddressIsValid(const FeatureAddressType* addr);
 FeatureAddressType* FeatureAddressCopy(const FeatureAddressType* self);
 bool FeatureAddressCompare(const FeatureAddressType* addr_a, const FeatureAddressType* addr_b);
+bool FeatureAddressMatchDevice(const FeatureAddressType* addr, const char* device);
+void FeatureAddressPrint(const char* fmt, const FeatureAddressType* addr);
 void FeatureAddressDelete(FeatureAddressType* addr);
 void FeatureAddressElementsDelete(FeatureAddressElementsType* self);
 

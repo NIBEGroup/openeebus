@@ -21,25 +21,14 @@
 #include "tests/src/ship/ship_connection/ship_connection/ship_connection_test_suite.h"
 
 TEST_F(ShipConnectionTestSuite, ProtHandshakeServerInitTest) {
-  // Arrange: Expect timer stop and connection close function calls
-  EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer)).Times(2);
-  EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
-  EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer));
-
-  EXPECT_CALL(
-      *ifp_mock->gmock,
-      HandleShipStateUpdate(
-          sc.info_provider,
-          testing::StrCaseEq(TEST_REMOTE_SKI),
-          kSmeProtHStateServerListenProposal,
-          testing::StrCaseEq("")
-      )
-  );
-  ExpectCloseWithError("", false);
+  // Arrange: Expect timer stop and state update function calls
+  EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer));
+  ExpectStateUpdate(kSmeProtHStateServerListenProposal);
 
   // Act: Stop timer and move to next state
   SmeProtHandshakeStateServerInit(&sc);
 
-  // Assert: SME state changed accordingly
-  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, NULL), kSmeProtHStateServerListenProposal);
+  // Assert: SME is in kSmeProtHStateServerListenProposal
+  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), kSmeProtHStateServerListenProposal);
+  ExpectConnectionClose("", false);
 }

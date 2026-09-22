@@ -128,7 +128,7 @@ static void OnDeviceConfigurationDescriptionDataUpdate(MaMgcpUseCase* self, cons
     return;
   }
 
-  DeviceConfigurationClientRequestKeyValue(&dcc, NULL, NULL);
+  DeviceConfigurationClientRequestKeyValue(&dcc, NULL, NULL, NULL, NULL);
 }
 
 static void OnDeviceConfigurationDataUpdate(MaMgcpUseCase* self, const EventPayload* payload) {

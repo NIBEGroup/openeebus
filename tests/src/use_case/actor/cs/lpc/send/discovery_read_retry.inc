@@ -1,0 +1,64 @@
+namespace cs_lpc_test {
+namespace send {
+
+static constexpr char discovery_read_retry[] = R"({
+  "datagram": [
+    {
+      "header": [
+        {
+          "specificationVersion": "1.3.0"
+        },
+        {
+          "addressSource": [
+            {
+              "device": "d:_n:HeatPump_123456789"
+            },
+            {
+              "entity": [
+                0
+              ]
+            },
+            {
+              "feature": 0
+            }
+          ]
+        },
+        {
+          "addressDestination": [
+            {
+              "entity": [
+                0
+              ]
+            },
+            {
+              "feature": 0
+            }
+          ]
+        },
+        {
+          "msgCounter": 2
+        },
+        {
+          "cmdClassifier": "read"
+        }
+      ]
+    },
+    {
+      "payload": [
+        {
+          "cmd": [
+            [
+              {
+                "nodeManagementDetailedDiscoveryData": []
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+})";
+
+}  // namespace send
+
+}  // namespace cs_lpc_test

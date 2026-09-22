@@ -28,8 +28,11 @@
 #include "src/common/eebus_malloc.h"
 
 #include "examples/common/pairing_cmd.h"
+#include "examples/heat_pump/compressor_ohpcf_listener.h"
+#include "examples/heat_pump/cs_lpc_approver.h"
 #include "examples/heat_pump/cs_lpc_listener.h"
 #include "examples/heat_pump/cs_lpp_listener.h"
+#include "examples/heat_pump/mu_mpc_listener.h"
 #include "src/cli/eebus_cli.h"
 #include "src/common/array_util.h"
 #include "src/common/eebus_arguments.h"
@@ -37,6 +40,7 @@
 #include "src/service/service/eebus_service.h"
 #include "src/ship/tls_certificate/tls_certificate.h"
 #include "src/spine/entity/entity_local.h"
+#include "src/use_case/actor/compressor/ohpcf/compressor_ohpcf.h"
 #include "src/use_case/actor/cs/lpc/cs_lpc.h"
 #include "src/use_case/actor/cs/lpp/cs_lpp.h"
 #include "src/use_case/actor/gcp/mgcp/gcp_mgcp.h"
@@ -56,9 +60,14 @@ struct Hpsrv {
   EebusServiceObject* service;
   CsLpListenerObject* cs_lpc_listener;
   CsLpUseCaseObject* cs_lpc;
+  CsLpcApproverObject* cs_lpc_approver;
   CsLpListenerObject* cs_lpp_listener;
   CsLpUseCaseObject* cs_lpp;
+  MuMpcListenerObject* mu_mpc_listener;
   MuMpcUseCaseObject* mu_mpc;
+  CompressorOhpcfListenerObject* cp_ohpcf_listener;
+  CompressorOhpcfUseCaseObject* cp_ohpcf;
+  MuMpcUseCaseObject* cp_ohpcf_mu_mpc;
   GcpMgcpUseCaseObject* gcp_mgcp;
   EebusCliObject* cli;
 
@@ -126,15 +135,20 @@ static EebusError HpsrvConstruct(Hpsrv* self) {
   // Override "virtual functions table"
   SERVICE_READER_INTERFACE(self) = &hpsrv_methods;
 
-  self->cfg             = NULL;
-  self->service         = NULL;
-  self->cs_lpc_listener = NULL;
-  self->cs_lpc          = NULL;
-  self->cs_lpp_listener = NULL;
-  self->cs_lpp          = NULL;
-  self->mu_mpc          = NULL;
-  self->gcp_mgcp        = NULL;
-  self->cli             = NULL;
+  self->cfg               = NULL;
+  self->service           = NULL;
+  self->cs_lpc_listener   = NULL;
+  self->cs_lpc            = NULL;
+  self->cs_lpc_approver   = NULL;
+  self->cs_lpp_listener   = NULL;
+  self->cs_lpp            = NULL;
+  self->mu_mpc_listener   = NULL;
+  self->mu_mpc            = NULL;
+  self->cp_ohpcf_listener = NULL;
+  self->cp_ohpcf          = NULL;
+  self->cp_ohpcf_mu_mpc   = NULL;
+  self->gcp_mgcp          = NULL;
+  self->cli               = NULL;
 
   self->cli = EebusCliCreate();
   if (self->cli == NULL) {
@@ -158,6 +172,17 @@ static EebusError AddLpc(Hpsrv* self, DeviceLocalObject* device_local, EntityLoc
     self->cs_lpc_listener = NULL;
     return kEebusErrorInit;
   }
+
+  self->cs_lpc_approver = CsLpcApproverCreate(self->cs_lpc);
+  if (self->cs_lpc_approver == NULL) {
+    UseCaseDelete(USE_CASE_OBJECT(self->cs_lpc));
+    self->cs_lpc = NULL;
+    CsLpcListenerDelete(self->cs_lpc_listener);
+    self->cs_lpc_listener = NULL;
+    return kEebusErrorMemoryAllocate;
+  }
+
+  CsLpSetWriteApprover(self->cs_lpc, self->cs_lpc_approver);
 
   EEBUS_CLI_SET_CS_LPC(self->cli, self->cs_lpc);
   return kEebusErrorOk;
@@ -227,8 +252,15 @@ static EebusError AddMpc(Hpsrv* self, DeviceLocalObject* device_local, EntityLoc
     .frequency_cfg = &frequency_cfg
   };
 
-  self->mu_mpc = MuMpcUseCaseCreate(entity_local, kHpsrvElectricalConnectionId, &cfg);
+  self->mu_mpc_listener = MuMpcListenerCreate();
+  if (self->mu_mpc_listener == NULL) {
+    return kEebusErrorInit;
+  }
+
+  self->mu_mpc = MuMpcUseCaseCreate(entity_local, kHpsrvElectricalConnectionId, &cfg, self->mu_mpc_listener);
   if (self->mu_mpc == NULL) {
+    MuMpcListenerDelete(self->mu_mpc_listener);
+    self->mu_mpc_listener = NULL;
     return kEebusErrorInit;
   }
 
@@ -272,6 +304,72 @@ static EebusError AddHeatPumpApplianceEntity(
   }
 
   DEVICE_LOCAL_ADD_ENTITY(device_local, entity);
+  return kEebusErrorOk;
+}
+
+EebusError AddOhpcf(Hpsrv* self, DeviceLocalObject* device_local, EntityLocalObject* entity_local) {
+  UNUSED(device_local);
+
+  self->cp_ohpcf_listener = CompressorOhpcfListenerCreate();
+  if (self->cp_ohpcf_listener == NULL) {
+    return kEebusErrorMemoryAllocate;
+  }
+
+  self->cp_ohpcf = CompressorOhpcfUseCaseCreate(entity_local, self->cp_ohpcf_listener);
+  if (self->cp_ohpcf == NULL) {
+    return kEebusErrorInit;
+  }
+
+  // clang-format off
+  static const MuMpcConfig cfg = {
+      .power_cfg = {
+          .power_total_cfg = {
+              .value_source = kMeasurementValueSourceTypeMeasuredValue,
+          },
+      },
+  };
+  // clang-format on
+
+  self->cp_ohpcf_mu_mpc = MuMpcUseCaseCreate(entity_local, kHpsrvElectricalConnectionId, &cfg, NULL);
+  if (self->cp_ohpcf_mu_mpc == NULL) {
+    return kEebusErrorInit;
+  }
+
+  const ScaledValue zero_power = {.value = 0, .scale = kScaleDefault};
+  EebusError err = MuMpcSetMeasurementDataCache(self->cp_ohpcf_mu_mpc, kMpcPowerTotal, &zero_power, NULL, NULL);
+  if (err != kEebusErrorOk) {
+    return err;
+  }
+
+  err = MuMpcUpdate(self->cp_ohpcf_mu_mpc);
+  if (err != kEebusErrorOk) {
+    return err;
+  }
+
+  EEBUS_CLI_SET_COMPRESSOR_OHPCF(self->cli, self->cp_ohpcf, self->cp_ohpcf_mu_mpc);
+  return kEebusErrorOk;
+}
+
+EebusError
+AddCompressorEntity(Hpsrv* self, DeviceLocalObject* device_local, const uint32_t* entity_ids, size_t entity_id_size) {
+  EntityLocalObject* const entity_ohpcf = EntityLocalCreate(
+      device_local,
+      kEntityTypeTypeCompressor,
+      entity_ids,
+      entity_id_size,
+      kHeartbeatTimeoutSeconds
+  );
+
+  if (entity_ohpcf == NULL) {
+    return kEebusErrorMemoryAllocate;
+  }
+
+  if (AddOhpcf(self, device_local, entity_ohpcf) != kEebusErrorOk) {
+    EntityLocalDelete(entity_ohpcf);
+    return kEebusErrorInit;
+  }
+
+  DEVICE_LOCAL_ADD_ENTITY(device_local, entity_ohpcf);
   return kEebusErrorOk;
 }
 
@@ -416,6 +514,12 @@ static EebusError HpsrvStart(Hpsrv* hpsrv, int32_t port, const char* role, TlsCe
     return kEebusErrorOther;
   }
 
+  uint32_t ohpcf_entity_ids[2] = {entity_ids[0], 1};
+
+  if (AddCompressorEntity(hpsrv, device_local, ohpcf_entity_ids, ARRAY_SIZE(ohpcf_entity_ids)) != kEebusErrorOk) {
+    return kEebusErrorOther;
+  }
+
   uint32_t inverter_entity_ids[1] = {VectorGetSize(DEVICE_LOCAL_GET_ENTITIES(device_local))};
   if (AddInverterEntity(hpsrv, device_local, inverter_entity_ids, ARRAY_SIZE(inverter_entity_ids)) != kEebusErrorOk) {
     return kEebusErrorOther;
@@ -466,17 +570,33 @@ void Destruct(ServiceReaderObject* self) {
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->mu_mpc));
   hpsrv->mu_mpc = NULL;
 
+  MuMpcListenerDelete(hpsrv->mu_mpc_listener);
+  hpsrv->mu_mpc_listener = NULL;
+
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->cs_lpp));
   hpsrv->cs_lpp = NULL;
 
   CsLppListenerDelete(hpsrv->cs_lpp_listener);
   hpsrv->cs_lpp_listener = NULL;
 
+  CsLpSetWriteApprover(hpsrv->cs_lpc, NULL);
+  CsLpcApproverDelete(hpsrv->cs_lpc_approver);
+  hpsrv->cs_lpc_approver = NULL;
+
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->cs_lpc));
   hpsrv->cs_lpc = NULL;
 
   CsLpcListenerDelete(hpsrv->cs_lpc_listener);
   hpsrv->cs_lpc_listener = NULL;
+
+  MuMpcUseCaseDelete(hpsrv->cp_ohpcf_mu_mpc);
+  hpsrv->cp_ohpcf_mu_mpc = NULL;
+
+  CompressorOhpcfUseCaseDelete(hpsrv->cp_ohpcf);
+  hpsrv->cp_ohpcf = NULL;
+
+  CompressorOhpcfListenerDelete(hpsrv->cp_ohpcf_listener);
+  hpsrv->cp_ohpcf_listener = NULL;
 
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->gcp_mgcp));
   hpsrv->gcp_mgcp = NULL;

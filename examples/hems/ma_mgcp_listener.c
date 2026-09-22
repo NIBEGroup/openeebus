@@ -97,6 +97,7 @@ void Destruct(MaMgcpListenerObject* self) {
 void OnRemoteEntityConnect(MaMgcpListenerObject* self, const EntityAddressType* entity_addr) {
   MaMgcpListener* const ma_mgcp_listener = MA_MGCP_LISTENER(self);
 
+  printf("MA MGCP remote entity connected\n");
   HemsSetMaMgcpRemoteEntity(ma_mgcp_listener->hems, entity_addr);
 }
 

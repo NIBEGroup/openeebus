@@ -21,6 +21,7 @@
 #ifndef SRC_USE_CASE_ACTOR_MA_MPC_MA_MPC_H_
 #define SRC_USE_CASE_ACTOR_MA_MPC_MA_MPC_H_
 
+#include "src/spine/api/feature_local_interface.h"
 #include "src/spine/entity/entity_local.h"
 #include "src/use_case/api/ma_mpc_listener_interface.h"
 #include "src/use_case/use_case.h"
@@ -66,6 +67,25 @@ EebusError MaMpcGetMeasurementData(
     MuMpcMeasurementNameId measurement_name_id,
     const EntityAddressType* remote_entity_addr,
     ScaledValue* measurement_value
+);
+
+/**
+ * @brief Request measurement data from the given remote entity
+ *
+ * Sends a READ request for all measurement list data from the remote entity.
+ * The reply is delivered asynchronously via @p cb.
+ *
+ * @param self MA MPC use case instance to send the read request with
+ * @param remote_entity_addr Remote entity address (device and entity ids)
+ * @param cb Optional callback invoked when the reply is received, may be NULL
+ * @param ctx Optional context pointer passed to @p cb, may be NULL
+ * @return kEebusErrorOk if the request was sent successfully, error code otherwise
+ */
+EebusError MaMpcReadMeasurementsData(
+    const MaMpcUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
 );
 
 #ifdef __cplusplus

@@ -52,6 +52,7 @@
 #include "tests/src/use_case/actor/ma/mpc/receive/measurement_notify_power_total_only.inc"
 #include "tests/src/use_case/actor/ma/mpc/receive/measurement_notify_voltage.inc"
 #include "tests/src/use_case/actor/ma/mpc/receive/measurement_reply.inc"
+#include "tests/src/use_case/actor/ma/mpc/receive/measurement_reply_ref_14.inc"
 #include "tests/src/use_case/actor/ma/mpc/receive/node_management_subscription_request.inc"
 #include "tests/src/use_case/actor/ma/mpc/receive/result_data_msg_cnt_ref_3.inc"
 #include "tests/src/use_case/actor/ma/mpc/receive/result_data_msg_cnt_ref_5.inc"
@@ -66,6 +67,7 @@
 #include "tests/src/use_case/actor/ma/mpc/send/measurement_constraints_read.inc"
 #include "tests/src/use_case/actor/ma/mpc/send/measurement_description_read.inc"
 #include "tests/src/use_case/actor/ma/mpc/send/measurement_read.inc"
+#include "tests/src/use_case/actor/ma/mpc/send/measurement_read_2.inc"
 #include "tests/src/use_case/actor/ma/mpc/send/measurement_subscription_call.inc"
 #include "tests/src/use_case/actor/ma/mpc/send/node_management_subscription_call.inc"
 #include "tests/src/use_case/actor/ma/mpc/send/result_data_msg_cnt_ref_3.inc"
@@ -131,7 +133,7 @@ TEST_F(MaMpcTestFixture, MaMpcTest) {
   HandleMessage(receive::discovery_request);
 
   // 2. Receive the detailed discovery response and send subscriptions + use case read
-  EXPECT_CALL(*ma_mpc_listener_mock_->gmock, OnRemoteEntityConnect(_, _)).WillOnce(Return());
+  EXPECT_CALL(*ma_mpc_listener_mock_->gmock, OnRemoteMuAdded(_, _)).WillOnce(Return());
   ExpectSendMessage(send::node_management_subscription_call);
   ExpectSendMessage(send::use_case_data_read);
   HandleMessage(receive::discovery_response);
@@ -290,8 +292,17 @@ TEST_F(MaMpcTestFixture, MaMpcTest) {
     EXPECT_THAT(&value, ScaledValueEq(scaled_value.value, scaled_value.scale));
   }
 
-  // 23. Expect the remote entity disconnect event while tearing down the use case
-  EXPECT_CALL(*ma_mpc_listener_mock_->gmock, OnRemoteEntityDisconnect(_, _));
+  // 20. Explicitly read measurements data → MA sends READ at msgCounter 14
+  ExpectSendMessage(send::measurement_read_2);
+  EXPECT_EQ(MaMpcReadMeasurementsData(use_case_.get(), &remote_entity_addr, nullptr, nullptr), kEebusErrorOk);
+
+  // 21. Receive the reply → OnMeasurementReceive with updated total power (3500.0W)
+  EXPECT_CALL(*ma_mpc_listener_mock_->gmock, OnMeasurementReceive(_, kMpcPowerTotal, ScaledValueEq(35000, -1), _))
+      .WillOnce(Return());
+  HandleMessage(receive::measurement_reply_ref_14);
+
+  // 22. Expect the remote entity disconnect event while tearing down the use case
+  EXPECT_CALL(*ma_mpc_listener_mock_->gmock, OnRemoteMuRemoved(_, _));
 }
 
 }  // namespace ma_mpc_test

@@ -27,6 +27,7 @@
 #include "src/spine/api/feature_remote_interface.h"
 #include "src/spine/model/command_frame_types.h"
 #include "src/spine/model/function_types.h"
+#include "src/spine/model/result_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,16 +48,29 @@ struct Message {
 
 typedef struct FeatureLocalObject FeatureLocalObject;
 
-typedef struct ResponseMessage ResponseMessage;
+typedef struct ReplyMessage ReplyMessage;
 
-struct ResponseMessage {
-  MsgCounterType msg_cnt_ref;           // Required
-  const void* function_data;            // Required
-  FunctionType function_type;           // Required
-  FeatureLocalObject* feature_local;    // Required
-  FeatureRemoteObject* feature_remote;  // Required
-  EntityRemoteObject* entity_remote;    // Required
-  DeviceRemoteObject* device_remote;    // Required
+struct ReplyMessage {
+  MsgCounterType msg_cnt_ref;
+  const void* function_data;
+  FunctionType function_type;
+  FeatureLocalObject* feature_local;
+  FeatureRemoteObject* feature_remote;
+  EntityRemoteObject* entity_remote;
+  DeviceRemoteObject* device_remote;
+  const char* ski;
+};
+
+typedef struct ResultMessage ResultMessage;
+
+struct ResultMessage {
+  MsgCounterType msg_cnt_ref;
+  FunctionType function_type;
+  const ResultDataType* result_data;
+  FeatureLocalObject* feature_local;
+  FeatureRemoteObject* feature_remote;
+  EntityRemoteObject* entity_remote;
+  DeviceRemoteObject* device_remote;
 };
 
 static inline SenderObject* MessageGetSender(const Message* msg) {

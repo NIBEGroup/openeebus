@@ -50,7 +50,12 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/feature.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/feature_functions.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/operations.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result_container.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature_link/feature_link.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature_link/feature_link_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/function/function.c
@@ -66,6 +71,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/function_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/measurement_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/node_management_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/possible_operations_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/specification_version.c

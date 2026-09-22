@@ -9,6 +9,7 @@
 #include <stdbool.h>
 
 #include "src/common/eebus_date_time/eebus_duration.h"
+#include "src/spine/model/entity_types.h"
 #include "src/use_case/model/scaled_value.h"
 
 #ifdef __cplusplus
@@ -33,6 +34,8 @@ typedef struct CsLpListenerObject CsLpListenerObject;
  */
 struct CsLpListenerInterface {
   void (*destruct)(CsLpListenerObject* self);
+  void (*on_remote_eg_added)(CsLpListenerObject* self, const EntityAddressType* entity_addr);
+  void (*on_remote_eg_removed)(CsLpListenerObject* self, const EntityAddressType* entity_addr);
   void (*on_power_limit_receive)(
       CsLpListenerObject* self,
       const ScaledValue* power_limit,
@@ -65,6 +68,18 @@ struct CsLpListenerObject {
  * @brief CS LP Listener Destruct caller definition
  */
 #define CS_LP_LISTENER_DESTRUCT(obj) (CS_LP_LISTENER_INTERFACE(obj)->destruct(obj))
+
+/**
+ * @brief CS LP Listener On Remote EG Added caller definition
+ */
+#define CS_LP_LISTENER_ON_REMOTE_EG_ADDED(obj, entity_addr) \
+  (CS_LP_LISTENER_INTERFACE(obj)->on_remote_eg_added(obj, entity_addr))
+
+/**
+ * @brief CS LP Listener On Remote EG Removed caller definition
+ */
+#define CS_LP_LISTENER_ON_REMOTE_EG_REMOVED(obj, entity_addr) \
+  (CS_LP_LISTENER_INTERFACE(obj)->on_remote_eg_removed(obj, entity_addr))
 
 /**
  * @brief CS LP Listener On Power Limit Receive caller definition

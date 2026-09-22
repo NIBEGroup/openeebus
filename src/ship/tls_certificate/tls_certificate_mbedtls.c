@@ -29,6 +29,11 @@
 #include <stdint.h>
 #include <string.h>
 
+#if defined(MBEDTLS_VERSION_MAJOR) && (MBEDTLS_VERSION_MAJOR >= 4)
+// mbedTLS 4.x provides hashing through PSA only
+#include <psa/crypto.h>
+#endif
+
 #include "src/common/array_util.h"
 #include "src/common/debug.h"
 #include "src/common/eebus_errors.h"
@@ -158,7 +163,13 @@ const char* CalcSubjectKeyIdStringWithBuf(const mbedtls_x509_crt* cert, unsigned
 
   // Calculate SHA1 hash of the remaining raw key data
   unsigned char sha1[20];
+#if MBEDTLS_VERSION_MAJOR >= 4
+  // mbedTLS 4.x removed the legacy hash API, use PSA
+  size_t sha1_len = 0;
+  int ret         = (int)psa_hash_compute(PSA_ALG_SHA_1, p, len, sha1, sizeof(sha1), &sha1_len);
+#else
   int ret = mbedtls_sha1(p, len, sha1);
+#endif
   if (ret != 0) {
     TLS_CERTIFICATE_MBEDTLS_DEBUG_PRINTF("mbedtls_sha1 failed: -0x%04X\n", -ret);
     return NULL;
@@ -250,7 +261,12 @@ EebusError ParseX509PrivateKey(TlsCertificate* self, const char* key_buf, size_t
 
   mbedtls_pk_context pk;
   mbedtls_pk_init(&pk);
+#if MBEDTLS_VERSION_MAJOR >= 4
+  // mbedTLS 4.x dropped the RNG arguments (PSA provides RNG)
+  int ret = mbedtls_pk_parse_key(&pk, (void*)pem_buf, key_buf_size + 1, NULL, 0);
+#else
   int ret = mbedtls_pk_parse_key(&pk, (void*)pem_buf, key_buf_size + 1, NULL, 0, NULL, NULL);
+#endif
   EEBUS_FREE(pem_buf);
 
   if (ret != 0) {
@@ -309,11 +325,19 @@ void Destruct(TlsCertificateObject* self) {
   TlsCertificate* const tls_cert = TLS_CERTIFICATE(self);
 
   if (tls_cert->pkey != NULL) {
+    if (tls_cert->pkey_size > 0) {
+      mbedtls_platform_zeroize((uint8_t*)tls_cert->pkey, tls_cert->pkey_size);
+    }
+
     EEBUS_FREE((uint8_t*)tls_cert->pkey);
     tls_cert->pkey = NULL;
   }
 
   if (tls_cert->cert != NULL) {
+    if (tls_cert->cert_size > 0) {
+      mbedtls_platform_zeroize((uint8_t*)tls_cert->cert, tls_cert->cert_size);
+    }
+
     EEBUS_FREE((uint8_t*)tls_cert->cert);
     tls_cert->cert = NULL;
   }

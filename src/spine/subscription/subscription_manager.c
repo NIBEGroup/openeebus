@@ -139,7 +139,7 @@ EebusError AddSubscription(
       .function_type = kFunctionTypeSubscriptionManagementRequestCall,
   };
 
-  EventPublish(&payload);
+  EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(sm->local_device), &payload);
   return kEebusErrorOk;
 }
 
@@ -195,7 +195,7 @@ EebusError RemoveSubscription(
       .function_type = kFunctionTypeSubscriptionManagementDeleteCall,
   };
 
-  EventPublish(&payload);
+  EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(sm->local_device), &payload);
   return kEebusErrorOk;
 }
 
@@ -236,7 +236,7 @@ void RemoveEntitySubscriptions(SubscriptionManagerObject* self, EntityRemoteObje
           .local_feature = DEVICE_LOCAL_GET_FEATURE_WITH_ADDRESS(sm->local_device, server_addr),
       };
 
-      EventPublish(&payload);
+      EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(sm->local_device), &payload);
       FeatureLinkContainerRemove(&sm->subscription_entries, subscription);
     } else {
       ++i;

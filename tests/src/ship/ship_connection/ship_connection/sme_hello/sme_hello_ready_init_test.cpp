@@ -17,33 +17,40 @@
 
 #include <string_view>
 
-#include "tests/src/json.h"
+#include "ship_hello_state_messages.inc"
 #include "tests/src/ship/ship_connection/ship_connection/ship_connection_test_suite.h"
 
-using std::literals::string_view_literals::operator""sv;
-using testing::_;
-using testing::Return;
+class SmeHelloStateReadyInitTests : public ShipConnectionTestSuite {};
 
-struct ShipSmeHelloReadyInitTestInput {
-  std::string_view description     = ""sv;
-  const char* close_error_msg      = "";
-  std::string_view msg             = R"({"connectionHello": [{"phase": "ready"}, {"waiting": 60000}]})"sv;
-  bool msg_send_successful         = false;
-  SmeState expected_sme_state      = kSmeHelloStateAbort;
-};
-
-class ShipConnectionHelloStateReadyInitTests : public ShipConnectionTestSuite,
-                                               public ::testing::WithParamInterface<ShipSmeHelloReadyInitTestInput> {};
-
-std::ostream& operator<<(std::ostream& os, const ShipSmeHelloReadyInitTestInput& input) {
-  return os << input.description;
-}
-
-TEST_P(ShipConnectionHelloStateReadyInitTests, SmeHelloReadyInitTest) {
+TEST_F(SmeHelloStateReadyInitTests, ReadyInitMessageSuccessfullySent) {
   // Arrange:
   // Unformat JSON message
-  std::unique_ptr<char[], decltype(&JsonFree)> s(JsonUnformat(GetParam().msg), JsonFree);
-  ASSERT_NE(s, nullptr) << "Wrong test input!";
+  MessageBuffer msg_buf{0};
+  ASSERT_EQ(MessageBufferInitHelper(&msg_buf, kSmeHelloReadyMsg), kEebusErrorOk) << "Wrong test input!";
+  ShipConnectionWebsocketCallback(kWebsocketCallbackTypeRead, msg_buf.data, msg_buf.data_size, &sc);
+
+  // Expect timer function calls
+  EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer));
+  EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
+
+  // Calculate message size
+  ExpectWebsocketWrite(msg_buf, true);
+  ExpectStateUpdate(kSmeHelloStateReadyListen);
+
+  // Act: Send ready message
+  SmeHelloStateReadyInit(&sc);
+
+  // Assert: SME state changed accordingly
+  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), kSmeHelloStateReadyListen);
+  ExpectConnectionClose("", false);
+}
+
+TEST_F(SmeHelloStateReadyInitTests, ReadyInitMessageFailedToSend) {
+  // Arrange:
+  // Unformat JSON message
+  MessageBuffer msg_buf{0};
+  ASSERT_EQ(MessageBufferInitHelper(&msg_buf, kSmeHelloReadyMsg), kEebusErrorOk) << "Wrong test input!";
+  ShipConnectionWebsocketCallback(kWebsocketCallbackTypeRead, msg_buf.data, msg_buf.data_size, &sc);
 
   // Expect timer function calls
   EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer));
@@ -51,39 +58,13 @@ TEST_P(ShipConnectionHelloStateReadyInitTests, SmeHelloReadyInitTest) {
   EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer)).Times(2);
 
   // Calculate message size
-  const size_t msg_size      = strlen(s.get()) + 1;
-  const size_t ret_num_bytes = GetParam().msg_send_successful ? msg_size : 0;
-  EXPECT_CALL(*websocket_mock->gmock, Write(sc.websocket, _, msg_size))
-      .WillOnce(Return(static_cast<int32_t>(ret_num_bytes)));
-  EXPECT_CALL(
-      *ifp_mock->gmock,
-      HandleShipStateUpdate(
-          sc.info_provider,
-          testing::StrCaseEq(TEST_REMOTE_SKI),
-          GetParam().expected_sme_state,
-          testing::StrCaseEq("")
-      )
-  );
-  ExpectCloseWithError(GetParam().close_error_msg, false);
+  ExpectWebsocketWrite(msg_buf, false);
+  ExpectStateUpdate(kSmeHelloStateAbort);
+  ExpectWebsocketClose("", false);
 
   // Act: Send ready message
   SmeHelloStateReadyInit(&sc);
 
   // Assert: SME state changed accordingly
-  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, NULL), GetParam().expected_sme_state);
+  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), kSmeHelloStateAbort);
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    ShipConnectionHelloStateReadyInitTests,
-    ShipConnectionHelloStateReadyInitTests,
-    ::testing::Values(
-        ShipSmeHelloReadyInitTestInput{
-            .description = "Init message failed to send"sv,
-        },
-        ShipSmeHelloReadyInitTestInput{
-            .description         = "Init message successfully sent"sv,
-            .msg_send_successful = true,
-            .expected_sme_state  = kSmeHelloStateReadyListen,
-        }
-    )
-);

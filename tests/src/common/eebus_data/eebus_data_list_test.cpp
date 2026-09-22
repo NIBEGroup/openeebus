@@ -13,49 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/common/eebus_data/eebus_data_list.h"
-#include "src/common/eebus_malloc.h"
+#include "tests/src/common/eebus_data/eebus_list_wrapper.h"
 
-#include <stddef.h>
 #include <stdint.h>
 
 #include <gtest/gtest.h>
 
-template <class T>
-class EebusListWrapper {
- public:
-  ~EebusListWrapper() {
-    EEBUS_FREE(array);
-  }
-
-  EebusError Append(T* element) {
-    return EebusDataListDataAppend(&array, &size, reinterpret_cast<void*>(element));
-  }
-
-  EebusError Remove(T* element) {
-    return EebusDataListDataRemove(&array, &size, reinterpret_cast<void*>(element));
-  }
-
-  T* operator[](size_t index) {
-    if (index >= size) {
-      return nullptr;
-    }
-
-    return reinterpret_cast<T*>(array[index]);
-  }
-
-  T** Get() {
-    return reinterpret_cast<T**>(array);
-  }
-
-  size_t Size() const {
-    return size;
-  }
-
- private:
-  void** array{nullptr};
-  size_t size{0};
-};
+#include <memory>
 
 TEST(EebusDataListTests, DataAppendTest) {
   // Arrange

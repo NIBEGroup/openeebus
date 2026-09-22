@@ -25,6 +25,8 @@
 #include "src/use_case/specialization/device_diagnosis/device_diagnosis_client.h"
 #include "src/use_case/specialization/load_control/load_control_server.h"
 
+static void OnRemoteEgAdded(CsLpUseCase* self, EntityRemoteObject* entity);
+static void OnRemoteEgRemoved(CsLpUseCase* self, const EventPayload* payload);
 static void OnUseCaseDataUpdate(CsLpUseCase* self, const EventPayload* payload);
 static void OnLoadControlLimitDataUpdate(CsLpUseCase* self, const EventPayload* payload);
 static void OnConfigurationDataUpdate(const CsLpUseCase* self, const EventPayload* payload);
@@ -34,11 +36,7 @@ static void OnDataChange(CsLpUseCase* self, const EventPayload* payload);
 void AddDeviceDiagnosisClient(CsLpUseCase* self, EntityRemoteObject* remote_entity) {
   EntityLocalObject* const local_entity = USE_CASE(self)->local_entity;
 
-  // Delete heartbeat the Device Diagnosis Client instance if was previously created
-  if (self->heartbeat_diag_client != NULL) {
-    DeviceDiagnosisClientDelete(self->heartbeat_diag_client);
-    self->heartbeat_diag_client = NULL;
-  }
+  RemoveDeviceDiagnosisClient(self);
 
   self->heartbeat_diag_client = DeviceDiagnosisClientCreate(local_entity, remote_entity);
   if (self->heartbeat_diag_client != NULL) {
@@ -48,6 +46,44 @@ void AddDeviceDiagnosisClient(CsLpUseCase* self, EntityRemoteObject* remote_enti
     }
 
     DeviceDiagnosisClientRequestHeartbeat(self->heartbeat_diag_client);
+  }
+}
+
+void RemoveDeviceDiagnosisClient(CsLpUseCase* self) {
+  DeviceDiagnosisClientDelete(self->heartbeat_diag_client);
+  self->heartbeat_diag_client = NULL;
+}
+
+void OnRemoteEgAdded(CsLpUseCase* self, EntityRemoteObject* entity) {
+  AddDeviceDiagnosisClient(self, entity);
+
+  EntityAddressDelete(self->remote_eg_entity_addr);
+  self->remote_eg_entity_addr = EntityAddressCopy(ENTITY_GET_ADDRESS(ENTITY_OBJECT(entity)));
+
+  if (self->cs_lp_listener != NULL) {
+    CS_LP_LISTENER_ON_REMOTE_EG_ADDED(self->cs_lp_listener, self->remote_eg_entity_addr);
+  }
+}
+
+void OnRemoteEgRemoved(CsLpUseCase* self, const EventPayload* payload) {
+  if (payload->change_type != kElementChangeRemove) {
+    return;
+  }
+
+  const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
+  if ((self->remote_eg_entity_addr == NULL) || !EntityAddressCompare(entity_addr, self->remote_eg_entity_addr)) {
+    return;
+  }
+
+  EntityAddressDelete(self->remote_eg_entity_addr);
+  self->remote_eg_entity_addr = NULL;
+
+  RemoveDeviceDiagnosisClient(self);
+
+  self->heartbeat_keo_workaround = false;
+
+  if (self->cs_lp_listener != NULL) {
+    CS_LP_LISTENER_ON_REMOTE_EG_REMOVED(self->cs_lp_listener, entity_addr);
   }
 }
 
@@ -92,14 +128,7 @@ void OnUseCaseDataUpdate(CsLpUseCase* self, const EventPayload* payload) {
   }
 
   // Single matching entity has been found, as it should be, subscribe
-  AddDeviceDiagnosisClient(self, device_diag_entity);
-}
-
-// Subscribe to the DeviceDiagnosis Server of the entity that created a binding
-void SubscribeHeartbeatWorkaround(CsLpUseCase* self, const EventPayload* payload) {
-  if (self->heartbeat_keo_workaround) {
-    AddDeviceDiagnosisClient(self, payload->entity);
-  }
+  OnRemoteEgAdded(self, device_diag_entity);
 }
 
 void OnBindingAdded(CsLpUseCase* self, const EventPayload* payload) {
@@ -109,7 +138,9 @@ void OnBindingAdded(CsLpUseCase* self, const EventPayload* payload) {
 
   const FeatureObject* const f = FEATURE_OBJECT(payload->local_feature);
   if ((FEATURE_GET_TYPE(f) == kFeatureTypeTypeLoadControl) && (FEATURE_GET_ROLE(f) == kRoleTypeServer)) {
-    SubscribeHeartbeatWorkaround(self, payload);
+    if (self->heartbeat_keo_workaround) {
+      OnRemoteEgAdded(self, payload->entity);
+    }
   }
 }
 
@@ -149,7 +180,7 @@ void OnLoadControlLimitDataUpdate(CsLpUseCase* self, const EventPayload* payload
   LoadLimit limit;
   EebusError ret = CsLpGetActivePowerLimitInternal(CS_LP_USE_CASE(self), &limit);
   if (ret == kEebusErrorOk) {
-    const DurationType* duration = limit.delete_duration ? NULL : &limit.duration;
+    const DurationType* const duration = limit.delete_duration ? NULL : &limit.duration;
     CS_LP_LISTENER_ON_POWER_LIMIT_RECEIVE(self->cs_lp_listener, &limit.value, duration, limit.is_active);
   }
 }
@@ -208,6 +239,11 @@ void OnHeartbeat(const CsLpUseCase* self, const EventPayload* payload) {
     return;
   }
 
+  if ((self->heartbeat_diag_client == NULL)
+      || (payload->local_feature != self->heartbeat_diag_client->feature_info_client.local_feature)) {
+    return;
+  }
+
   const DeviceDiagnosisHeartbeatDataType* const data = payload->function_data;
   if ((data == NULL) || (data->heartbeat_counter == NULL)) {
     return;
@@ -248,6 +284,8 @@ void CsLpHandleEvent(const EventPayload* payload, void* ctx) {
 
   if ((payload->event_type == kEventTypeBindingChange) && (payload->change_type == kElementChangeAdd)) {
     OnBindingAdded(cs_lpc_use_case, payload);
+  } else if (payload->event_type == kEventTypeUseCaseChange) {
+    OnRemoteEgRemoved(cs_lpc_use_case, payload);
   } else if ((payload->event_type == kEventTypeDataChange) || (payload->change_type == kElementChangeUpdate)) {
     OnDataChange(cs_lpc_use_case, payload);
   }

@@ -45,12 +45,16 @@ static void OnPowerLimitReceive(
     const DurationType* duration,
     bool is_active
 );
+static void OnRemoteEgAdded(CsLpListenerObject* self, const EntityAddressType* entity_addr);
+static void OnRemoteEgRemoved(CsLpListenerObject* self, const EntityAddressType* entity_addr);
 static void OnFailsafePowerLimitReceive(CsLpListenerObject* self, const ScaledValue* power_limit);
 static void OnFailsafeDurationReceive(CsLpListenerObject* self, const DurationType* duration);
 static void OnHeartbeatReceive(CsLpListenerObject* self, uint64_t heartbeat_counter);
 
 static const CsLpListenerInterface cs_lpp_listener_methods = {
     .destruct                        = Destruct,
+    .on_remote_eg_added              = OnRemoteEgAdded,
+    .on_remote_eg_removed            = OnRemoteEgRemoved,
     .on_power_limit_receive          = OnPowerLimitReceive,
     .on_failsafe_power_limit_receive = OnFailsafePowerLimitReceive,
     .on_failsafe_duration_receive    = OnFailsafeDurationReceive,
@@ -109,6 +113,20 @@ void OnFailsafeDurationReceive(CsLpListenerObject* self, const DurationType* dur
   UNUSED(self);
 
   EebusDurationPrint("CS LPP Failsafe Duration Minimum received: %s\n", duration);
+}
+
+void OnRemoteEgAdded(CsLpListenerObject* self, const EntityAddressType* entity_addr) {
+  UNUSED(self);
+  UNUSED(entity_addr);
+
+  printf("CS LPP Remote EG added\n");
+}
+
+void OnRemoteEgRemoved(CsLpListenerObject* self, const EntityAddressType* entity_addr) {
+  UNUSED(self);
+  UNUSED(entity_addr);
+
+  printf("CS LPP Remote EG removed\n");
 }
 
 void OnHeartbeatReceive(CsLpListenerObject* self, uint64_t heartbeat_counter) {

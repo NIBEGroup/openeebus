@@ -45,11 +45,14 @@ EebusError ElectricalConnectionClientRequestDescriptions(
     const ElectricalConnectionDescriptionListDataSelectorsType* selectors,
     const ElectricalConnectionDescriptionDataElementsType* elements
 ) {
-  return RequestData(
-      &self->feature_info_client,
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
       kFunctionTypeElectricalConnectionDescriptionListData,
       selectors,
-      elements
+      elements,
+      NULL,
+      NULL
   );
 }
 
@@ -58,11 +61,14 @@ EebusError ElectricalConnectionClientRequestParameterDescriptions(
     const ElectricalConnectionDescriptionListDataSelectorsType* selectors,
     const ElectricalConnectionDescriptionDataElementsType* elements
 ) {
-  return RequestData(
-      &self->feature_info_client,
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
       kFunctionTypeElectricalConnectionParameterDescriptionListData,
       selectors,
-      elements
+      elements,
+      NULL,
+      NULL
   );
 }
 
@@ -71,23 +77,31 @@ EebusError ElectricalConnectionClientRequestPermittedValueSets(
     const ElectricalConnectionPermittedValueSetListDataSelectorsType* selectors,
     const ElectricalConnectionPermittedValueSetDataElementsType* elements
 ) {
-  return RequestData(
-      &self->feature_info_client,
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
       kFunctionTypeElectricalConnectionPermittedValueSetListData,
       selectors,
-      elements
+      elements,
+      NULL,
+      NULL
   );
 }
 
 EebusError ElectricalConnectionClientRequestCharacteristics(
     ElectricalConnectionClient* self,
     const ElectricalConnectionCharacteristicListDataSelectorsType* selectors,
-    const ElectricalConnectionCharacteristicDataElementsType* elements
+    const ElectricalConnectionCharacteristicDataElementsType* elements,
+    ReplyMessageCallback cb,
+    void* ctx
 ) {
-  return RequestData(
-      &self->feature_info_client,
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
       kFunctionTypeElectricalConnectionCharacteristicListData,
       selectors,
-      elements
+      elements,
+      cb,
+      ctx
   );
 }

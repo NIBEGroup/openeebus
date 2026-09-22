@@ -50,26 +50,65 @@ typedef struct SenderObject SenderObject;
  */
 struct SenderInterface {
   void (*destruct)(SenderObject* self);
-  EebusError (*read)(SenderObject* self, const FeatureAddressType* sender_addr, const FeatureAddressType* dest_addr,
-      const CmdType* cmd);
+  EebusError (*read)(
+      SenderObject* self,
+      const FeatureAddressType* sender_addr,
+      const FeatureAddressType* dest_addr,
+      const CmdType* cmd,
+      uint64_t* msg_cnt
+  );
   EebusError (*reply)(
-      SenderObject* self, const HeaderType* request_header, const FeatureAddressType* sender_addr, const CmdType* cmd);
-  EebusError (*notify)(SenderObject* self, const FeatureAddressType* sender_addr, const FeatureAddressType* dest_addr,
-      const CmdType* cmd);
-  EebusError (*write)(SenderObject* self, const FeatureAddressType* sender_addr, const FeatureAddressType* dest_addr,
-      const CmdType* cmd);
-  EebusError (*call_subscribe)(SenderObject* self, const FeatureAddressType* sender_addr,
-      const FeatureAddressType* dest_addr, FeatureTypeType server_feature_type);
+      SenderObject* self,
+      const HeaderType* request_header,
+      const FeatureAddressType* sender_addr,
+      const CmdType* cmd
+  );
+  EebusError (*notify)(
+      SenderObject* self,
+      const FeatureAddressType* sender_addr,
+      const FeatureAddressType* dest_addr,
+      const CmdType* cmd
+  );
+  EebusError (*write)(
+      SenderObject* self,
+      const FeatureAddressType* sender_addr,
+      const FeatureAddressType* dest_addr,
+      const CmdType* cmd,
+      uint64_t* msg_cnt
+  );
+  EebusError (*call_subscribe)(
+      SenderObject* self,
+      const FeatureAddressType* sender_addr,
+      const FeatureAddressType* dest_addr,
+      FeatureTypeType server_feature_type
+  );
   EebusError (*call_unsubscribe)(
-      SenderObject* self, const FeatureAddressType* sender_addr, const FeatureAddressType* dest_addr);
-  EebusError (*call_bind)(SenderObject* self, const FeatureAddressType* sender_addr,
-      const FeatureAddressType* dest_addr, FeatureTypeType server_feature_type);
+      SenderObject* self,
+      const FeatureAddressType* sender_addr,
+      const FeatureAddressType* dest_addr
+  );
+  EebusError (*call_bind)(
+      SenderObject* self,
+      const FeatureAddressType* sender_addr,
+      const FeatureAddressType* dest_addr,
+      FeatureTypeType server_feature_type
+  );
   EebusError (*call_unbind)(
-      SenderObject* self, const FeatureAddressType* sender_addr, const FeatureAddressType* dest_addr);
+      SenderObject* self,
+      const FeatureAddressType* sender_addr,
+      const FeatureAddressType* dest_addr
+  );
   EebusError (*result_success)(
-      SenderObject* self, const HeaderType* request_header, const FeatureAddressType* sender_addr);
-  EebusError (*result_error)(SenderObject* self, const HeaderType* request_header,
-      const FeatureAddressType* sender_addr, const ErrorType* err);
+      SenderObject* self,
+      const HeaderType* request_header,
+      const FeatureAddressType* sender_addr
+  );
+  EebusError (*result_error)(
+      SenderObject* self,
+      const HeaderType* request_header,
+      const FeatureAddressType* sender_addr,
+      const ErrorType* err
+  );
 };
 
 /**
@@ -97,7 +136,8 @@ struct SenderObject {
 /**
  * @brief Sender Read caller definition
  */
-#define SEND_READ(obj, sender_addr, dest_addr, cmd) (SENDER_INTERFACE(obj)->read(obj, sender_addr, dest_addr, cmd))
+#define SEND_READ(obj, sender_addr, dest_addr, cmd, msg_cnt) \
+  (SENDER_INTERFACE(obj)->read(obj, sender_addr, dest_addr, cmd, msg_cnt))
 
 /**
  * @brief Sender Reply caller definition
@@ -113,7 +153,8 @@ struct SenderObject {
 /**
  * @brief Sender Write caller definition
  */
-#define SEND_WRITE(obj, sender_addr, dest_addr, cmd) (SENDER_INTERFACE(obj)->write(obj, sender_addr, dest_addr, cmd))
+#define SEND_WRITE(obj, sender_addr, dest_addr, cmd, msg_cnt) \
+  (SENDER_INTERFACE(obj)->write(obj, sender_addr, dest_addr, cmd, msg_cnt))
 
 /**
  * @brief Sender Call Subscribe caller definition

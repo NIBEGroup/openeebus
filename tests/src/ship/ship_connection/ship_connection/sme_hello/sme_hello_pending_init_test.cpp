@@ -17,72 +17,47 @@
 
 #include <string_view>
 
-#include "tests/src/json.h"
+#include "ship_hello_state_messages.inc"
 #include "tests/src/ship/ship_connection/ship_connection/ship_connection_test_suite.h"
 
-using std::literals::string_view_literals::operator""sv;
-using testing::_;
-using testing::Return;
+class SmeHelloPendingInitTests : public ShipConnectionTestSuite {
+ protected:
+  void SetUp() override {
+    ShipConnectionTestSuite::SetUp();
+    ASSERT_EQ(MessageBufferInitHelper(&msg_buf, kSmeHelloPendingInitMsg), kEebusErrorOk) << "Wrong test input!";
+    ShipConnectionWebsocketCallback(kWebsocketCallbackTypeRead, msg_buf.data, msg_buf.data_size, &sc);
+  }
 
-struct ShipSmeHelloPendingInitTestInput {
-  std::string_view description     = ""sv;
-  const char* close_error_msg      = "";
-  std::string_view msg             = R"({"connectionHello": [{"phase": "pending"}, {"waiting": 60000}]})"sv;
-  bool msg_send_successful         = false;
-  SmeState expected_sme_state      = kSmeHelloStateAbort;
+  MessageBuffer msg_buf{0};
 };
 
-class ShipConnectionHelloStatePendingInitTests
-    : public ShipConnectionTestSuite,
-      public ::testing::WithParamInterface<ShipSmeHelloPendingInitTestInput> {};
+TEST_F(SmeHelloPendingInitTests, PendingInitMessageSentSuccessfully) {
+  // Arrange: Expect pending init message to be sent successfully
+  ExpectWebsocketWrite(msg_buf, true);
+  ExpectStateUpdate(kSmeHelloStatePendingListen);
+  EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
+  EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer));
 
-std::ostream& operator<<(std::ostream& os, const ShipSmeHelloPendingInitTestInput& input) {
-  return os << input.description;
+  // Act: Try to send pending init message
+  SmeHelloStatePendingInit(&sc);
+
+  // Assert: SME is in kSmeHelloStatePendingListen
+  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), kSmeHelloStatePendingListen);
+  ExpectConnectionClose("", false);
 }
 
-TEST_P(ShipConnectionHelloStatePendingInitTests, SmeHelloPendingInitTest) {
-  // Arrange:
-  // Unformat JSON message
-  std::unique_ptr<char[], decltype(&JsonFree)> s(JsonUnformat(GetParam().msg), JsonFree);
-  ASSERT_NE(s, nullptr) << "Wrong test input!";
-
-  // Calculate message size and expect function calls
-  const size_t msg_size      = strlen(s.get()) + 1;
-  const size_t ret_num_bytes = GetParam().msg_send_successful ? msg_size : 0;
-  EXPECT_CALL(*websocket_mock->gmock, Write(sc.websocket, _, msg_size))
-      .WillOnce(Return(static_cast<int32_t>(ret_num_bytes)));
+TEST_F(SmeHelloPendingInitTests, PendingInitMessageFailedToSend) {
+  // Arrange: Expect pending init message to fail to send
+  ExpectWebsocketWrite(msg_buf, false);
   EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer));
   EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer)).Times(2);
   EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer)).Times(2);
-  EXPECT_CALL(
-      *ifp_mock->gmock,
-      HandleShipStateUpdate(
-          sc.info_provider,
-          testing::StrCaseEq(TEST_REMOTE_SKI),
-          GetParam().expected_sme_state,
-          testing::StrCaseEq("")
-      )
-  );
-  ExpectCloseWithError(GetParam().close_error_msg, false);
+  ExpectStateUpdate(kSmeHelloStateAbort);
+  ExpectWebsocketClose("", false);
 
   // Act: Send pending init message
   SmeHelloStatePendingInit(&sc);
 
   // Assert: SME state changed accordingly
-  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, NULL), GetParam().expected_sme_state);
+  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), kSmeHelloStateAbort);
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    ShipConnectionHelloStatePendingInitTests,
-    ShipConnectionHelloStatePendingInitTests,
-    ::testing::Values(
-        ShipSmeHelloPendingInitTestInput{
-            .description         = "Pending init message sent successfully"sv,
-            .msg_send_successful = true,
-            .expected_sme_state  = kSmeHelloStatePendingListen,
-        },
-        ShipSmeHelloPendingInitTestInput{
-            .description = "Pending init message failed to send"sv,
-        }
-    )
-);

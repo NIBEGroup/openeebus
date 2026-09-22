@@ -64,7 +64,8 @@ static EebusError Read(
     SenderObject* self,
     const FeatureAddressType* sender_addr,
     const FeatureAddressType* dest_addr,
-    const CmdType* cmd
+    const CmdType* cmd,
+    uint64_t* msg_cnt
 );
 static EebusError
 Reply(SenderObject* self, const HeaderType* request_header, const FeatureAddressType* sender_addr, const CmdType* cmd);
@@ -78,7 +79,8 @@ static EebusError Write(
     SenderObject* self,
     const FeatureAddressType* sender_addr,
     const FeatureAddressType* dest_addr,
-    const CmdType* cmd
+    const CmdType* cmd,
+    uint64_t* msg_cnt
 );
 static EebusError CallSubscribe(
     SenderObject* self,
@@ -128,7 +130,8 @@ static EebusError SendSpineMessage(
     const uint64_t* msg_counter_ref,
     bool request_ack,
     const CmdType* cmd,
-    size_t cmd_size
+    size_t cmd_size,
+    uint64_t* msg_cnt
 );
 static uint64_t SenderGetNextMsgCounter(Sender* self);
 static FeatureAddressType NodeManagementAddress(const char* device_addr);
@@ -171,7 +174,8 @@ EebusError SendSpineMessage(
     const uint64_t* msg_counter_ref,
     bool request_ack,
     const CmdType* cmd,
-    size_t cmd_size
+    size_t cmd_size,
+    uint64_t* msg_cnt
 ) {
   if ((src_addr == NULL) || (dst_addr == NULL) || (cmd == NULL) || (cmd_size == 0)) {
     return kEebusErrorInputArgumentNull;
@@ -182,6 +186,10 @@ EebusError SendSpineMessage(
   }
 
   const uint64_t msg_counter = SenderGetNextMsgCounter(self);
+
+  if (msg_cnt != NULL) {
+    *msg_cnt = msg_counter;
+  }
 
   const HeaderType header = {
       .spec_version   = specification_version,
@@ -203,6 +211,7 @@ EebusError SendSpineMessage(
     p_cmd[i] = &cmd[i];
   }
 
+  // clang-format off
   const DatagramType datagram = {
       .header  = &header,
       .payload = &(PayloadType){
@@ -210,6 +219,7 @@ EebusError SendSpineMessage(
           .cmd_size = cmd_size,
       },
   };
+  // clang-format on
 
   const char* const msg = DatagramPrintUnformatted(&datagram);
   if (msg == NULL) {
@@ -240,9 +250,20 @@ EebusError Read(
     SenderObject* self,
     const FeatureAddressType* sender_addr,
     const FeatureAddressType* dest_addr,
-    const CmdType* cmd
+    const CmdType* cmd,
+    uint64_t* msg_cnt
 ) {
-  return SendSpineMessage(SENDER(self), kCommandClassifierTypeRead, sender_addr, dest_addr, NULL, false, cmd, 1);
+  return SendSpineMessage(
+      SENDER(self),
+      kCommandClassifierTypeRead,
+      sender_addr,
+      dest_addr,
+      NULL,
+      false,
+      cmd,
+      1,
+      msg_cnt
+  );
 }
 
 EebusError
@@ -267,7 +288,8 @@ Reply(SenderObject* self, const HeaderType* request_header, const FeatureAddress
       request_header->msg_cnt,
       false,
       cmd,
-      1
+      1,
+      NULL
   );
 }
 
@@ -277,16 +299,19 @@ EebusError Notify(
     const FeatureAddressType* dest_addr,
     const CmdType* cmd
 ) {
-  return SendSpineMessage(SENDER(self), kCommandClassifierTypeNotify, sender_addr, dest_addr, NULL, false, cmd, 1);
+  static const CommandClassifierType cmd_classifier = kCommandClassifierTypeNotify;
+  return SendSpineMessage(SENDER(self), cmd_classifier, sender_addr, dest_addr, NULL, false, cmd, 1, NULL);
 }
 
 EebusError Write(
     SenderObject* self,
     const FeatureAddressType* sender_addr,
     const FeatureAddressType* dest_addr,
-    const CmdType* cmd
+    const CmdType* cmd,
+    uint64_t* msg_cnt
 ) {
-  return SendSpineMessage(SENDER(self), kCommandClassifierTypeWrite, sender_addr, dest_addr, NULL, true, cmd, 1);
+  static const CommandClassifierType cmd_classifier = kCommandClassifierTypeWrite;
+  return SendSpineMessage(SENDER(self), cmd_classifier, sender_addr, dest_addr, NULL, true, cmd, 1, msg_cnt);
 }
 
 FeatureAddressType NodeManagementAddress(const char* device_addr) {
@@ -318,7 +343,7 @@ EebusError SendNodeManagmentCall(
   const FeatureAddressType local_addr  = NodeManagementAddress(local_device);
   const FeatureAddressType remote_addr = NodeManagementAddress(remote_device);
 
-  return SendSpineMessage(self, kCommandClassifierTypeCall, &local_addr, &remote_addr, NULL, true, &cmd, 1);
+  return SendSpineMessage(self, kCommandClassifierTypeCall, &local_addr, &remote_addr, NULL, true, &cmd, 1, NULL);
 }
 
 EebusError CallSubscribe(
@@ -331,6 +356,7 @@ EebusError CallSubscribe(
     return kEebusErrorInputArgumentNull;
   }
 
+  // clang-format off
   const NodeManagementSubscriptionRequestCallType node_management_subscription_request = {
       .subscription_request = &(SubscriptionManagementRequestCallType){
           .client_address      = sender_addr,
@@ -338,6 +364,7 @@ EebusError CallSubscribe(
           .server_feature_type = &server_feature_type,
       },
   };
+  // clang-format on
 
   return SendNodeManagmentCall(
       SENDER(self),
@@ -354,6 +381,7 @@ CallUnsubscribe(SenderObject* self, const FeatureAddressType* sender_addr, const
     return kEebusErrorInputArgumentNull;
   }
 
+  // clang-format off
   const NodeManagementSubscriptionDeleteCallType node_managment_subscription_delete_call = {
       .subscription_delete = &(SubscriptionManagementDeleteCallType){
           .subscription_id = NULL,
@@ -361,6 +389,7 @@ CallUnsubscribe(SenderObject* self, const FeatureAddressType* sender_addr, const
           .server_address  = dest_addr,
       },
   };
+  // clang-format on
 
   return SendNodeManagmentCall(
       SENDER(self),
@@ -381,6 +410,7 @@ EebusError CallBind(
     return kEebusErrorInputArgumentNull;
   }
 
+  // clang-format off
   const NodeManagementBindingRequestCallType node_management_binding_request_call = {
       .binding_request = &(BindingManagementRequestCallType){
           .client_address      = sender_addr,
@@ -388,6 +418,7 @@ EebusError CallBind(
           .server_feature_type = &server_feature_type,
       },
   };
+  // clang-format on
 
   return SendNodeManagmentCall(
       SENDER(self),
@@ -403,6 +434,7 @@ EebusError CallUnbind(SenderObject* self, const FeatureAddressType* sender_addr,
     return kEebusErrorInputArgumentNull;
   }
 
+  // clang-format off
   const NodeManagementBindingDeleteCallType node_management_binding_delete_call = {
       .binding_delete = &(BindingManagementDeleteCallType){
           .binding_id     = NULL,
@@ -410,6 +442,7 @@ EebusError CallUnbind(SenderObject* self, const FeatureAddressType* sender_addr,
           .server_address = dest_addr,
       },
   };
+  // clang-format on
 
   return SendNodeManagmentCall(
       SENDER(self),
@@ -460,7 +493,8 @@ EebusError SendResult(
       request_header->msg_cnt,
       false,
       &cmd,
-      1
+      1,
+      NULL
   );
 }
 

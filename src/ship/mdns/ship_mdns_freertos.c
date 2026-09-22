@@ -80,19 +80,13 @@ struct Mdns {
   Vector* found_entries;
   EebusThreadObject* thread;
   SemaphoreHandle_t semaphore;
+  bool service_registered;
 
   /** @brief SHIP Pairing Service, browsed in the same loop as SHIP itself */
   OnShipPairingEntriesFoundCallback on_pairing_entries_found_cb;
   void* pairing_context;
   bool pairing_service_registered;
 };
-
-/**
- * @brief Currently only single mDNS instance is supported,
- * pointer to be used within the MdnsQueryNotifyCallback()
- * as there is no possibility to assign context to the query
- */
-static Mdns* mdns_inst = NULL;
 
 #define MDNS(obj) ((Mdns*)(obj))
 
@@ -154,13 +148,16 @@ EebusError MdnsConstruct(
   self->port                = port;
   self->autoaccept          = false;
   self->found_entries       = VectorCreateWithDeallocator(MdnsEntryDeallocator);
+  self->thread              = NULL;
   self->semaphore           = xSemaphoreCreateBinary();
+  self->service_registered  = false;
+  if (self->semaphore == NULL) {
+    return kEebusErrorMemoryAllocate;
+  }
 
   self->on_pairing_entries_found_cb = NULL;
   self->pairing_context             = NULL;
   self->pairing_service_registered  = false;
-
-  mdns_inst = self;
 
   return kEebusErrorOk;
 }
@@ -193,8 +190,6 @@ void Destruct(ShipMdnsObject* self) {
 
   DeregisterPairingService(self);
 
-  mdns_inst = NULL;
-
   SHIP_MDNS_STOP(self);
 
   if (mdns->found_entries != NULL) {
@@ -202,6 +197,11 @@ void Destruct(ShipMdnsObject* self) {
     VectorDestruct(mdns->found_entries);
     EEBUS_FREE(mdns->found_entries);
     mdns->found_entries = NULL;
+  }
+
+  if (mdns->semaphore != NULL) {
+    vSemaphoreDelete(mdns->semaphore);
+    mdns->semaphore = NULL;
   }
 
   EebusDeviceInfoDelete(mdns->device_info);
@@ -243,12 +243,6 @@ MdnsEntry* MdnsEntryCreateWithMdnsResult(mdns_result_t* result) {
   return entry;
 }
 
-void MdnsQueryNotifyCallback(mdns_search_once_t* search) {
-  Mdns* mdns = mdns_inst;
-
-  xSemaphoreGive(mdns->semaphore);
-}
-
 static void MdnsNotifyFoundEntries(Mdns* mdns) {
   const size_t found_count = VectorGetSize(mdns->found_entries);
   Vector* const copy       = VectorCreateWithDeallocator(MdnsEntryDeallocator);
@@ -263,17 +257,9 @@ static void MdnsNotifyFoundEntries(Mdns* mdns) {
   mdns->on_entries_found_cb(copy, mdns->context);
 }
 
-void MdnsProcessSearchResult(Mdns* mdns, mdns_search_once_t* search) {
-  mdns_result_t* results = NULL;
-
-  bool finished = mdns_query_async_get_results(search, 0, &results, NULL);
-  if (!finished) {
-    MDNS_DEBUG_PRINTF("mdns_query_async_get_results() not finished\n");
-    return;
-  }
-
+void MdnsProcessSearchResult(Mdns* mdns, mdns_result_t* results) {
   if (results == NULL) {
-    MDNS_DEBUG_PRINTF("mdns_query_async_get_results() returned no results\n");
+    MDNS_DEBUG_PRINTF("mDNS query returned no results\n");
     return;
   }
 
@@ -419,83 +405,66 @@ static ShipPairingEntry* ShipPairingEntryCreateWithMdnsResult(const mdns_result_
 /**
  * @brief Runs one query for shippairing service instances
  *
- * Issued from the same loop as the SHIP query, one at a time. The query
- * completion callback has no context of its own and finds its instance through
- * a file scope pointer, so two queries in flight at once could not be told
- * apart. Neither specification asks for discovery to be prompt, so taking turns
- * costs nothing that matters.
+ * Issued from the same loop as the SHIP query, one at a time. Neither
+ * specification asks for discovery to be prompt, so taking turns costs
+ * nothing that matters.
  */
 void MdnsQueryPairingServices(Mdns* mdns) {
   if (mdns->on_pairing_entries_found_cb == NULL) {
     return;
   }
 
-  mdns_search_once_t* const search = mdns_query_async_new(
-      NULL,
-      kShipPairingServiceType,
-      kShipPairingServiceProtocol,
-      MDNS_TYPE_PTR,
-      kMdnsQueryTimeoutMs,
-      kMdnsQueryMaxResults,
-      MdnsQueryNotifyCallback
+  mdns_result_t* results = NULL;
+  const esp_err_t err = mdns_query_ptr(
+      kShipPairingServiceType, kShipPairingServiceProtocol, kMdnsQueryTimeoutMs, kMdnsQueryMaxResults, &results
   );
 
-  if (search == NULL) {
+  if (err != ESP_OK) {
+    MDNS_DEBUG_PRINTF("mdns_query_ptr() for shippairing failed: %d\n", err);
     return;
   }
 
-  xSemaphoreTake(mdns->semaphore, portMAX_DELAY);
+  if (results == NULL) {
+    return;
+  }
 
-  mdns_result_t* results = NULL;
-  if (mdns_query_async_get_results(search, 0, &results, NULL) && (results != NULL)) {
-    Vector* const found = VectorCreateWithDeallocator(ShipPairingEntryDeallocator);
+  Vector* const found = VectorCreateWithDeallocator(ShipPairingEntryDeallocator);
 
-    for (const mdns_result_t* r = results; r != NULL; r = r->next) {
-      ShipPairingEntry* const entry = ShipPairingEntryCreateWithMdnsResult(r);
-      if (entry != NULL) {
-        VectorPushBack(found, entry);
-      }
-    }
-
-    mdns_query_results_free(results);
-
-    // Whether a request is valid, addressed here and genuine is decided by the
-    // evaluator, which is the only thing holding the secret.
-    if (VectorGetSize(found) > 0) {
-      mdns->on_pairing_entries_found_cb(found, mdns->pairing_context);
-    } else {
-      VectorFreeElements(found);
-      VectorDestruct(found);
-      EEBUS_FREE(found);
+  for (const mdns_result_t* r = results; r != NULL; r = r->next) {
+    ShipPairingEntry* const entry = ShipPairingEntryCreateWithMdnsResult(r);
+    if (entry != NULL) {
+      VectorPushBack(found, entry);
     }
   }
 
-  mdns_query_async_delete(search);
+  mdns_query_results_free(results);
+
+  // Whether a request is valid, addressed here and genuine is decided by the
+  // evaluator, which is the only thing holding the secret.
+  if (VectorGetSize(found) > 0) {
+    mdns->on_pairing_entries_found_cb(found, mdns->pairing_context);
+  } else {
+    VectorFreeElements(found);
+    VectorDestruct(found);
+    EEBUS_FREE(found);
+  }
 }
 
 void* MdnsBrowserLoop(void* parameters) {
   Mdns* const mdns = (Mdns*)parameters;
 
-  mdns_search_once_t* search = NULL;
-
   while (!mdns->cancel) {
     VectorFreeElements(mdns->found_entries);
 
-    search = mdns_query_async_new(
-        NULL,
-        kShipServiceType,
-        kShipServiceProtocol,
-        MDNS_TYPE_PTR,
-        kMdnsQueryTimeoutMs,
-        kMdnsQueryMaxResults,
-        MdnsQueryNotifyCallback
-    );
+    mdns_result_t* results = NULL;
+    const esp_err_t err
+        = mdns_query_ptr(kShipServiceType, kShipServiceProtocol, kMdnsQueryTimeoutMs, kMdnsQueryMaxResults, &results);
 
-    xSemaphoreTake(mdns->semaphore, portMAX_DELAY);
-
-    MdnsProcessSearchResult(mdns, search);
-    mdns_query_async_delete(search);
-    search = NULL;
+    if (err == ESP_OK) {
+      MdnsProcessSearchResult(mdns, results);
+    } else {
+      MDNS_DEBUG_PRINTF("mdns_query_ptr() failed: %d\n", err);
+    }
 
     if (!mdns->cancel) {
       MdnsQueryPairingServices(mdns);
@@ -513,12 +482,6 @@ void* MdnsBrowserLoop(void* parameters) {
 EebusError RegisterService(ShipMdnsObject* self) {
   Mdns* const mdns = MDNS(self);
 
-  esp_err_t err = mdns_instance_name_set(mdns->service_name);
-  if (err != ESP_OK) {
-    MDNS_DEBUG_PRINTF("mdns_instance_name_set() failed: %d\n", err);
-    return kEebusErrorInit;
-  }
-
   const char* register_str = mdns->autoaccept ? "true" : "false";
 
   // Structure with TXT records
@@ -534,7 +497,7 @@ EebusError RegisterService(ShipMdnsObject* self) {
   };
 
   // Initialize service
-  err = mdns_service_add(
+  const esp_err_t err = mdns_service_add(
       mdns->service_name,
       kShipServiceType,
       kShipServiceProtocol,
@@ -548,6 +511,7 @@ EebusError RegisterService(ShipMdnsObject* self) {
     return kEebusErrorInit;
   }
 
+  mdns->service_registered = true;
   return kEebusErrorOk;
 }
 
@@ -585,6 +549,8 @@ static esp_netif_t* MdnsGetEspNetif(Mdns* self) {
 EebusError Start(ShipMdnsObject* self) {
   Mdns* const mdns = MDNS(self);
 
+  mdns->cancel = false;
+
   // mdns_init() may return ESP_ERR_INVALID_STATE when the host framework has
   // already initialized mDNS — that is fine, reuse it.
   esp_err_t err = mdns_init();
@@ -618,6 +584,7 @@ EebusError Start(ShipMdnsObject* self) {
   mdns->thread = EebusThreadCreate(MdnsBrowserLoop, mdns, 4096);
   if (mdns->thread == NULL) {
     MDNS_DEBUG_PRINTF("EebusThreadCreate() failed\n");
+    DeregisterService(self);
     return kEebusErrorThread;
   }
 
@@ -636,7 +603,14 @@ void DeregisterService(ShipMdnsObject* self) {
     mdns->thread = NULL;
   }
 
-  mdns_free();
+  if (mdns->service_registered) {
+    const esp_err_t err
+        = mdns_service_remove_for_host(mdns->service_name, kShipServiceType, kShipServiceProtocol, NULL);
+    if (err != ESP_OK && err != ESP_ERR_NOT_FOUND) {
+      MDNS_DEBUG_PRINTF("mdns_service_remove_for_host() failed: %d\n", err);
+    }
+    mdns->service_registered = false;
+  }
 }
 
 void Stop(ShipMdnsObject* self) {

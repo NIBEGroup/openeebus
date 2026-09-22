@@ -1,5 +1,5 @@
 MaMpcListener
 void Destruct()
-void OnRemoteEntityConnect(const EntityAddressType* entity_addr)
-void OnRemoteEntityDisconnect(const EntityAddressType* entity_addr)
+void OnRemoteMuAdded(const EntityAddressType* entity_addr)
+void OnRemoteMuRemoved(const EntityAddressType* entity_addr)
 void OnMeasurementReceive(MpcMeasurementNameId name_id, const ScaledValue* measurement_value, EntityAddressType* remote_entity_addr)

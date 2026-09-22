@@ -11,8 +11,8 @@
 #include "src/use_case/api/eg_lp_listener_interface.h"
 
 static void Destruct(EgLpListenerObject* self);
-static void OnRemoteEntityConnect(EgLpListenerObject* self, const EntityAddressType* entity_addr);
-static void OnRemoteEntityDisconnect(EgLpListenerObject* self, const EntityAddressType* entity_addr);
+static void OnRemoteCsAdded(EgLpListenerObject* self, const EntityAddressType* entity_addr);
+static void OnRemoteCsRemoved(EgLpListenerObject* self, const EntityAddressType* entity_addr);
 static void OnPowerLimitReceive(
     EgLpListenerObject* self,
     const EntityAddressType* entity_addr,
@@ -29,15 +29,21 @@ static void
 OnFailsafeDurationReceive(EgLpListenerObject* self, const EntityAddressType* entity_addr, const DurationType* duration);
 static void
 OnHeartbeatReceive(EgLpListenerObject* self, const EntityAddressType* entity_addr, uint64_t heartbeat_counter);
+static void OnPowerNominalMaxReceive(
+    EgLpListenerObject* self,
+    const EntityAddressType* entity_addr,
+    const ScaledValue* power_limit
+);
 
 static const EgLpListenerInterface eg_lp_listener_methods = {
     .destruct                        = Destruct,
-    .on_remote_entity_connect        = OnRemoteEntityConnect,
-    .on_remote_entity_disconnect     = OnRemoteEntityDisconnect,
+    .on_remote_cs_added              = OnRemoteCsAdded,
+    .on_remote_cs_removed            = OnRemoteCsRemoved,
     .on_power_limit_receive          = OnPowerLimitReceive,
     .on_failsafe_power_limit_receive = OnFailsafePowerLimitReceive,
     .on_failsafe_duration_receive    = OnFailsafeDurationReceive,
     .on_heartbeat_receive            = OnHeartbeatReceive,
+    .on_power_nominal_max_receive    = OnPowerNominalMaxReceive,
 };
 
 static EebusError EgLpListenerMockConstruct(EgLpListenerMock* self);
@@ -74,14 +80,14 @@ void Destruct(EgLpListenerObject* self) {
   delete mock->gmock;
 }
 
-void OnRemoteEntityConnect(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
+void OnRemoteCsAdded(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
   EgLpListenerMock* const mock = EG_LP_LISTENER_MOCK(self);
-  mock->gmock->OnRemoteEntityConnect(self, entity_addr);
+  mock->gmock->OnRemoteCsAdded(self, entity_addr);
 }
 
-void OnRemoteEntityDisconnect(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
+void OnRemoteCsRemoved(EgLpListenerObject* self, const EntityAddressType* entity_addr) {
   EgLpListenerMock* const mock = EG_LP_LISTENER_MOCK(self);
-  mock->gmock->OnRemoteEntityDisconnect(self, entity_addr);
+  mock->gmock->OnRemoteCsRemoved(self, entity_addr);
 }
 
 void OnPowerLimitReceive(
@@ -120,4 +126,15 @@ void OnHeartbeatReceive(EgLpListenerObject* self, const EntityAddressType* entit
   UNUSED(entity_addr);
   EgLpListenerMock* const mock = EG_LP_LISTENER_MOCK(self);
   mock->gmock->OnHeartbeatReceive(self, heartbeat_counter);
+}
+
+void OnPowerNominalMaxReceive(
+    EgLpListenerObject* self,
+    const EntityAddressType* entity_addr,
+    const ScaledValue* power_limit
+) {
+  UNUSED(entity_addr);
+
+  EgLpListenerMock* const mock = EG_LP_LISTENER_MOCK(self);
+  mock->gmock->OnPowerNominalMaxReceive(self, power_limit);
 }

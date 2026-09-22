@@ -17,16 +17,21 @@
 #ifndef SRC_EEBUS_SRC_SPINE_EVENTS_EVENTS_H_
 #define SRC_EEBUS_SRC_SPINE_EVENTS_EVENTS_H_
 
-#include "src/common/eebus_errors.h"
-#include "src/spine/api/events.h"
+#include "src/common/eebus_malloc.h"
+#include "src/spine/api/events_manager_interface.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
 
-EebusError EventSubscribe(EventHandlerLevel level, EventHandler handler, void* ctx);
-EebusError EventUnsubscribe(EventHandlerLevel level, EventHandler handler, void* ctx);
-void EventPublish(const EventPayload* payload);
+EventsManagerObject* EventsManagerCreate(void);
+
+static inline void EventsManagerDelete(EventsManagerObject* events_manager) {
+  if (events_manager != NULL) {
+    EVENTS_DESTRUCT(events_manager);
+    EEBUS_FREE(events_manager);
+  }
+}
 
 #ifdef __cplusplus
 }  // extern "C"

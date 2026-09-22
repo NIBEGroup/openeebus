@@ -21,6 +21,8 @@
 #include <stdio.h>
 
 #include "src/cli/eebus_cli.h"
+#include "src/cli/eebus_cli_cem_ohpcf.h"
+#include "src/cli/eebus_cli_compressor_ohpcf.h"
 #include "src/cli/eebus_cli_cs_lp.h"
 #include "src/cli/eebus_cli_eg_lp.h"
 #include "src/cli/eebus_cli_gcp_mgcp.h"
@@ -50,6 +52,10 @@ struct EebusCli {
   EebusCliHandlerObject* ma_mpc_cli;
   /** MU MPC CLI instance to deal with */
   EebusCliHandlerObject* mu_mpc_cli;
+  /** Compressor OHPCF instance to deal with */
+  EebusCliHandlerObject* compressor_ohpcf_cli;
+  /** CEM OHPCF CLI instance to deal with */
+  EebusCliHandlerObject* cem_ohpcf_cli;
   /** GCP MGCP CLI instance to deal with */
   EebusCliHandlerObject* gcp_mgcp_cli;
   /** MA MGCP CLI instance to deal with */
@@ -68,22 +74,34 @@ static void
 SetEgLpp(EebusCliObject* self, EgLpUseCaseObject* eg_lpp_use_case, const EntityAddressType* remote_entity_address);
 static void
 SetMaMpc(EebusCliObject* self, MaMpcUseCaseObject* ma_mpc_use_case, const EntityAddressType* remote_entity_address);
+static void SetCompressorOhpcf(
+    EebusCliObject* self,
+    CompressorOhpcfUseCaseObject* cp_ohpcf_use_case,
+    MuMpcUseCaseObject* mu_mpc_use_case
+);
+static void SetCemOhpcf(
+    EebusCliObject* self,
+    CemOhpcfUseCaseObject* cem_ohpcf_use_case,
+    const EntityAddressType* remote_entity_address
+);
 static void SetGcpMgcp(EebusCliObject* self, GcpMgcpUseCaseObject* gcp_mgcp_use_case);
 static void
 SetMaMgcp(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_case, const EntityAddressType* remote_entity_address);
 static void HandleCmd(const EebusCliObject* self, char* cmd);
 
 static const EebusCliInterface eebus_cli_methods = {
-    .destruct     = Destruct,
-    .set_cs_lpc   = SetCsLpc,
-    .set_cs_lpp   = SetCsLpp,
-    .set_eg_lpc   = SetEgLpc,
-    .set_eg_lpp   = SetEgLpp,
-    .set_mu_mpc   = SetMuMpc,
-    .set_ma_mpc   = SetMaMpc,
-    .set_gcp_mgcp = SetGcpMgcp,
-    .set_ma_mgcp  = SetMaMgcp,
-    .handle_cmd   = HandleCmd,
+    .destruct             = Destruct,
+    .set_cs_lpc           = SetCsLpc,
+    .set_cs_lpp           = SetCsLpp,
+    .set_eg_lpc           = SetEgLpc,
+    .set_eg_lpp           = SetEgLpp,
+    .set_mu_mpc           = SetMuMpc,
+    .set_ma_mpc           = SetMaMpc,
+    .set_compressor_ohpcf = SetCompressorOhpcf,
+    .set_cem_ohpcf        = SetCemOhpcf,
+    .set_gcp_mgcp         = SetGcpMgcp,
+    .set_ma_mgcp          = SetMaMgcp,
+    .handle_cmd           = HandleCmd,
 };
 
 static EebusError EebusCliConstruct(EebusCli* self);
@@ -92,14 +110,16 @@ EebusError EebusCliConstruct(EebusCli* self) {
   // Override "virtual functions table"
   EEBUS_CLI_INTERFACE(self) = &eebus_cli_methods;
 
-  self->cs_lpc_cli   = NULL;
-  self->cs_lpp_cli   = NULL;
-  self->eg_lpc_cli   = NULL;
-  self->eg_lpp_cli   = NULL;
-  self->mu_mpc_cli   = NULL;
-  self->ma_mpc_cli   = NULL;
-  self->gcp_mgcp_cli = NULL;
-  self->ma_mgcp_cli  = NULL;
+  self->cs_lpc_cli           = NULL;
+  self->cs_lpp_cli           = NULL;
+  self->eg_lpc_cli           = NULL;
+  self->eg_lpp_cli           = NULL;
+  self->mu_mpc_cli           = NULL;
+  self->ma_mpc_cli           = NULL;
+  self->compressor_ohpcf_cli = NULL;
+  self->cem_ohpcf_cli        = NULL;
+  self->gcp_mgcp_cli         = NULL;
+  self->ma_mgcp_cli          = NULL;
 
   return kEebusErrorOk;
 }
@@ -120,6 +140,12 @@ EebusCliObject* EebusCliCreate(void) {
 
 void Destruct(EebusCliObject* self) {
   EebusCli* const eebus_cli = EEBUS_CLI(self);
+
+  CompressorOhpcfCliDelete(eebus_cli->compressor_ohpcf_cli);
+  eebus_cli->compressor_ohpcf_cli = NULL;
+
+  CemOhpcfCliDelete(eebus_cli->cem_ohpcf_cli);
+  eebus_cli->cem_ohpcf_cli = NULL;
 
   MaMgcpCliDelete(eebus_cli->ma_mgcp_cli);
   eebus_cli->ma_mgcp_cli = NULL;
@@ -236,6 +262,35 @@ void SetMaMpc(
   }
 }
 
+void SetCompressorOhpcf(
+    EebusCliObject* self,
+    CompressorOhpcfUseCaseObject* cp_ohpcf_use_case,
+    MuMpcUseCaseObject* mu_mpc_use_case
+) {
+  EebusCli* const eebus_cli = EEBUS_CLI(self);
+
+  // Release the previously created CLI instance and create a new one
+  CompressorOhpcfCliDelete(eebus_cli->compressor_ohpcf_cli);
+  eebus_cli->compressor_ohpcf_cli = CompressorOhpcfCliCreate(cp_ohpcf_use_case, mu_mpc_use_case);
+}
+
+void SetCemOhpcf(
+    EebusCliObject* self,
+    CemOhpcfUseCaseObject* cem_ohpcf_use_case,
+    const EntityAddressType* remote_entity_address
+) {
+  EebusCli* const eebus_cli = EEBUS_CLI(self);
+
+  // Release the previously created CLI instance
+  CemOhpcfCliDelete(eebus_cli->cem_ohpcf_cli);
+  eebus_cli->cem_ohpcf_cli = NULL;
+
+  // Create a new CLI instance if remote entity address is not NULL
+  if (remote_entity_address != NULL) {
+    eebus_cli->cem_ohpcf_cli = CemOhpcfCliCreate(cem_ohpcf_use_case, remote_entity_address);
+  }
+}
+
 static void SetGcpMgcp(EebusCliObject* self, GcpMgcpUseCaseObject* gcp_mgcp_use_case) {
   EebusCli* const eebus_cli = EEBUS_CLI(self);
 
@@ -298,6 +353,10 @@ void HandleCmd(const EebusCliObject* self, char* cmd) {
     handler = eebus_cli->mu_mpc_cli;
   } else if (strcmp(tokens[0], "ma_mpc") == 0) {
     handler = eebus_cli->ma_mpc_cli;
+  } else if (strcmp(tokens[0], "compressor_ohpcf") == 0) {
+    handler = eebus_cli->compressor_ohpcf_cli;
+  } else if (strcmp(tokens[0], "cem_ohpcf") == 0) {
+    handler = eebus_cli->cem_ohpcf_cli;
   } else if (strcmp(tokens[0], "gcp_mgcp") == 0) {
     handler = eebus_cli->gcp_mgcp_cli;
   } else if (strcmp(tokens[0], "ma_mgcp") == 0) {

@@ -15,6 +15,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common/eebus_timer
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common/string_lut
     ${EXECUTABLE_OUTPUT_PATH}/common/string_lut)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common/string_util
+    ${EXECUTABLE_OUTPUT_PATH}/common/string_util)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_connection/ship_connection
     ${EXECUTABLE_OUTPUT_PATH}/ship/ship_connection/ship_connection)
 
@@ -51,6 +54,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/model/function_data
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/feature
     ${EXECUTABLE_OUTPUT_PATH}/spine/feature)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/events
+    ${EXECUTABLE_OUTPUT_PATH}/spine/events)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/function
     ${EXECUTABLE_OUTPUT_PATH}/spine/function)
 
@@ -68,6 +74,12 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node/peer_recognition
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cs/lpc
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cs/lpc)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cem/ohpcf
+    ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cem/ohpcf)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/compressor/ohpcf
+    ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/compressor/ohpcf)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cs/lpp
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cs/lpp)

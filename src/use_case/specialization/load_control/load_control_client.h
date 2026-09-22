@@ -21,6 +21,7 @@
 #ifndef SRC_USE_CASE_ENERGY_GUARD_LOAD_CONTROL_CLIENT_H_
 #define SRC_USE_CASE_ENERGY_GUARD_LOAD_CONTROL_CLIENT_H_
 
+#include "src/spine/api/feature_local_interface.h"
 #include "src/spine/model/loadcontrol_types.h"
 #include "src/use_case/specialization/feature_info_client.h"
 #include "src/use_case/specialization/load_control/load_control_common.h"
@@ -99,26 +100,11 @@ EebusError LoadControlClientRequestLimitConstraints(
     const LoadControlLimitConstraintsDataElementsType* elements
 );
 
-/**
- * @brief Requests limit data from a remote device.
- *
- * This function sends a request to a remote device to retrieve limit data
- * (FunctionTypeLoadControlLimitListData) based on the specified selectors and elements.
- * The response will contain the matching limit data entries.
- *
- * @param self A pointer to the LoadControlClient instance making the request.
- * @param selectors A pointer to the LoadControlLimitListDataSelectorsType structure
- *                  that specifies the criteria for selecting the limit data.
- * @param elements A pointer to the LoadControlLimitDataElementsType structure
- *                 that specifies the elements to be included in the response.
- * @return An EebusError indicating the success or failure of the operation.
- *         - kEebusErrorOk: If the request was successfully sent.
- *         - Other error codes: If the request failed.
- */
-EebusError LoadControlClientRequestLimitData(
+EebusError LoadControlClientReadLimit(
     LoadControlClient* self,
-    const LoadControlLimitListDataSelectorsType* selectors,
-    const LoadControlLimitDataElementsType* elements
+    const LoadControlLimitDescriptionDataType* filter,
+    ReplyMessageCallback cb,
+    void* ctx
 );
 
 /**
@@ -142,7 +128,9 @@ EebusError LoadControlClientWriteLimitList(
     LoadControlClient* self,
     const LoadControlLimitListDataType* limit_list,
     const LoadControlLimitListDataSelectorsType* delete_selectors,
-    const LoadControlLimitDataElementsType* deleteElements
+    const LoadControlLimitDataElementsType* delete_elements,
+    ResultMessageCallback cb,
+    void* ctx
 );
 
 #ifdef __cplusplus

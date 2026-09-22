@@ -29,6 +29,7 @@
 #include "src/spine/api/device_interface.h"
 #include "src/spine/api/device_remote_interface.h"
 #include "src/spine/api/entity_local_interface.h"
+#include "src/spine/api/events_manager_interface.h"
 #include "src/spine/api/feature_local_interface.h"
 #include "src/spine/api/heartbeat_manager_interface.h"
 #include "src/spine/api/subscription_manager_interface.h"
@@ -83,6 +84,7 @@ struct DeviceLocalInterface {
   NodeManagementObject* (*get_node_management)(const DeviceLocalObject* self);
   BindingManagerObject* (*get_binding_manager)(const DeviceLocalObject* self);
   SubscriptionManagerObject* (*get_subscription_manager)(const DeviceLocalObject* self);
+  EventsManagerObject* (*get_events_manager)(const DeviceLocalObject* self);
   void (*notify_subscribers)(const DeviceLocalObject* self, const FeatureAddressType* feature_addr, const CmdType* cmd);
   NodeManagementDetailedDiscoveryDeviceInformationType* (*create_information)(const DeviceLocalObject* self);
   void (*lock)(DeviceLocalObject* self);
@@ -210,6 +212,11 @@ struct DeviceLocalObject {
  * @brief Device Local Get Subscription Manager caller definition
  */
 #define DEVICE_LOCAL_GET_SUBSCRIPTION_MANAGER(obj) (DEVICE_LOCAL_INTERFACE(obj)->get_subscription_manager(obj))
+
+/**
+ * @brief Device Local Get Events Manager caller definition
+ */
+#define DEVICE_LOCAL_GET_EVENTS_MANAGER(obj) (DEVICE_LOCAL_INTERFACE(obj)->get_events_manager(obj))
 
 /**
  * @brief Device Local Notify Subscribers caller definition

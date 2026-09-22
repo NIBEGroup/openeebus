@@ -25,41 +25,73 @@
 #include "src/use_case/specialization/electrical_connection/electrical_connection_client.h"
 #include "src/use_case/specialization/measurement/measurement_client.h"
 
-static void OnEntityAdded(MaMpcUseCase* self, const EventPayload* payload);
-static void OnEntityRemoved(const MaMpcUseCase* self, const EventPayload* payload);
+static void OnRemoteMuAddedHandleElectricalConnection(const MaMpcUseCase* self, EntityRemoteObject* entity);
+static void OnRemoteMuAddedHandleMeasurement(const MaMpcUseCase* self, EntityRemoteObject* entity);
+static void OnRemoteMuChange(MaMpcUseCase* self, const EventPayload* payload);
 static void OnMeasurementDataUpdate(MaMpcUseCase* self, const EventPayload* payload);
 static void OnDataChange(MaMpcUseCase* self, const EventPayload* payload);
 
-static void OnEntityAdded(MaMpcUseCase* self, const EventPayload* payload) {
-  EntityRemoteObject* const entity = payload->entity;
+void OnRemoteMuAddedHandleElectricalConnection(const MaMpcUseCase* self, EntityRemoteObject* entity) {
+  const UseCase* const use_case = USE_CASE(self);
 
+  ElectricalConnectionClient electrical_connection;
+  if (ElectricalConnectionClientConstruct(&electrical_connection, use_case->local_entity, entity) != kEebusErrorOk) {
+    return;
+  }
+
+  FeatureInfoClient* feature_info = &electrical_connection.feature_info_client;
+  if (!HasSubscription(feature_info)) {
+    Subscribe(feature_info);
+  }
+
+  // Get descriptions
+  ElectricalConnectionClientRequestDescriptions(&electrical_connection, NULL, NULL);
+
+  // Get parameter descriptions
+  ElectricalConnectionClientRequestParameterDescriptions(&electrical_connection, NULL, NULL);
+}
+
+void OnRemoteMuAddedHandleMeasurement(const MaMpcUseCase* self, EntityRemoteObject* entity) {
+  const UseCase* const use_case = USE_CASE(self);
+
+  MeasurementClient measurement;
+  if (MeasurementClientConstruct(&measurement, use_case->local_entity, entity) != kEebusErrorOk) {
+    return;
+  }
+
+  FeatureInfoClient* feature_info = &measurement.feature_info_client;
+  if (!HasSubscription(feature_info)) {
+    Subscribe(feature_info);
+  }
+
+  // Get descriptions
+  MeasurementClientRequestDescriptions(&measurement, NULL, NULL);
+
+  // Get constraints
+  MeasurementClientRequestConstraints(&measurement, NULL, NULL);
+}
+
+void OnRemoteMuChange(MaMpcUseCase* self, const EventPayload* payload) {
   if (!USE_CASE_IS_USE_CASE_COMPATIBLE(USE_CASE_OBJECT(self), payload->use_case_filter)) {
     return;
   }
 
-  MaOnEntityAddedHandleElectricalConnection(USE_CASE(self), entity);
-  MaOnEntityAddedHandleMeasurement(USE_CASE(self), entity);
+  const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
 
-  if (self->ma_mpc_listener != NULL) {
-    const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(entity));
-    MA_MPC_LISTENER_ON_REMOTE_ENTITY_CONNECT(self->ma_mpc_listener, entity_addr);
+  if (payload->change_type == kElementChangeAdd) {
+    OnRemoteMuAddedHandleElectricalConnection(self, payload->entity);
+    OnRemoteMuAddedHandleMeasurement(self, payload->entity);
+    if (self->ma_mpc_listener != NULL) {
+      MA_MPC_LISTENER_ON_REMOTE_MU_ADDED(self->ma_mpc_listener, entity_addr);
+    }
+  } else if (payload->change_type == kElementChangeRemove) {
+    if (self->ma_mpc_listener != NULL) {
+      MA_MPC_LISTENER_ON_REMOTE_MU_REMOVED(self->ma_mpc_listener, entity_addr);
+    }
   }
 }
 
-static void OnEntityRemoved(const MaMpcUseCase* self, const EventPayload* payload) {
-  EntityRemoteObject* const entity = payload->entity;
-
-  if (!USE_CASE_IS_USE_CASE_COMPATIBLE(USE_CASE_OBJECT(self), payload->use_case_filter)) {
-    return;
-  }
-
-  if (self->ma_mpc_listener != NULL) {
-    const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(entity));
-    MA_MPC_LISTENER_ON_REMOTE_ENTITY_DISCONNECT(self->ma_mpc_listener, entity_addr);
-  }
-}
-
-static void OnMeasurementDataUpdate(MaMpcUseCase* self, const EventPayload* payload) {
+void OnMeasurementDataUpdate(MaMpcUseCase* self, const EventPayload* payload) {
   const UseCase* const use_case = USE_CASE(self);
 
   MeasurementClient mcl;
@@ -123,11 +155,7 @@ void MaMpcHandleEvent(const EventPayload* payload, void* ctx) {
   }
 
   if (payload->event_type == kEventTypeUseCaseChange) {
-    if (payload->change_type == kElementChangeAdd) {
-      OnEntityAdded(ma_mpc_use_case, payload);
-    } else if (payload->change_type == kElementChangeRemove) {
-      OnEntityRemoved(ma_mpc_use_case, payload);
-    }
+    OnRemoteMuChange(ma_mpc_use_case, payload);
   } else if ((payload->event_type == kEventTypeDataChange) || (payload->change_type == kElementChangeUpdate)) {
     OnDataChange(ma_mpc_use_case, payload);
   }

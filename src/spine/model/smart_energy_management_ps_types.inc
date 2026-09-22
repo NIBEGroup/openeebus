@@ -15,7 +15,7 @@
 #include "src/spine/model/smart_energy_management_ps_types.h"
 
 static const EebusDataCfg smart_energy_management_ps_power_time_slot_value_list_cfg[] = {
-    EEBUS_DATA_LIST("value", SmartEnergyManagementPsPowerTimeSlotValueListType, value, &value_element_data_cfg),
+    EEBUS_DATA_LIST_SIMPLE("value", SmartEnergyManagementPsPowerTimeSlotValueListType, value, &power_time_slot_value_data_element_data_cfg),
     EEBUS_DATA_END,
 };
 

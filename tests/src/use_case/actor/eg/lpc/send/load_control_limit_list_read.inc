@@ -39,7 +39,7 @@ static constexpr char load_control_limit_list_read[] = R"({
           ]
         },
         {
-          "msgCounter": 17
+          "msgCounter": 19
         },
         {
           "cmdClassifier": "read"

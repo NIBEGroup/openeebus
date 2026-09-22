@@ -22,6 +22,8 @@
 
 #include <gtest/gtest.h>
 
+#include <cstring>
+#include <string_view>
 #include "mocks/common/eebus_timer/eebus_timer_mock.h"
 #include "mocks/ship/api/info_provider_mock.h"
 #include "mocks/ship/tls_certificate/tls_certificate_mock.h"
@@ -30,7 +32,18 @@
 #include "src/ship/ship_connection/ship_connection.h"
 #include "src/ship/ship_connection/ship_connection_internal.h"
 
-#define TEST_REMOTE_SKI "RemoteSKI"
+constexpr std::string_view kShipRemoteSki{"RemoteSKI"};
+
+MATCHER_P2(MemEq, expected, size, "") {
+  return memcmp(arg, expected, size) == 0;
+}
+
+MATCHER_P(MsgBufEq, expected, "") {
+  const size_t cmp_size = expected.data_size - 1;
+  *result_listener << "\n  actual  : " << std::string_view(reinterpret_cast<const char*>(arg), cmp_size)
+                   << "\n  expected: " << std::string_view(reinterpret_cast<const char*>(expected.data), cmp_size);
+  return memcmp(arg, expected.data, cmp_size) == 0;
+}
 
 class ShipConnectionTestSuite : public testing::Test {
  public:
@@ -46,6 +59,7 @@ class ShipConnectionTestSuite : public testing::Test {
 
   /** Mock for the prolongation-request-reply timer */
   EebusTimerMock* prr_timer_mock;
+
   TlsCertificateMock* tls_cert_mock;
   InfoProviderMock* ifp_mock;
   WebsocketMock* websocket_mock;
@@ -54,7 +68,10 @@ class ShipConnectionTestSuite : public testing::Test {
 
  protected:
   EebusError MessageBufferInitHelper(MessageBuffer* msg_buf, const std::string_view& msg);
-  void ExpectCloseWithError(const char* error_msg, bool had_error);
+  void ExpectWebsocketWrite(const MessageBuffer& expected_msg, bool should_succeed);
+  void ExpectWebsocketClose(const char* error_msg, bool had_error);
+  void ExpectConnectionClose(const char* error_msg, bool had_error);
+  void ExpectStateUpdate(SmeState state);
   void SetShipConnectionState(SmeState state);
 };
 

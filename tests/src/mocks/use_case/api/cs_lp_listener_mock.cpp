@@ -25,6 +25,8 @@
 #include "src/use_case/api/cs_lp_listener_interface.h"
 
 static void Destruct(CsLpListenerObject* self);
+static void OnRemoteEgAdded(CsLpListenerObject* self, const EntityAddressType* entity_addr);
+static void OnRemoteEgRemoved(CsLpListenerObject* self, const EntityAddressType* entity_addr);
 static void OnPowerLimitReceive(
     CsLpListenerObject* self,
     const ScaledValue* power_limit,
@@ -37,6 +39,8 @@ static void OnHeartbeatReceive(CsLpListenerObject* self, uint64_t heartbeat_coun
 
 static const CsLpListenerInterface cs_lp_listener_methods = {
     .destruct                        = Destruct,
+    .on_remote_eg_added              = OnRemoteEgAdded,
+    .on_remote_eg_removed            = OnRemoteEgRemoved,
     .on_power_limit_receive          = OnPowerLimitReceive,
     .on_failsafe_power_limit_receive = OnFailsafePowerLimitReceive,
     .on_failsafe_duration_receive    = OnFailsafeDurationReceive,
@@ -75,6 +79,16 @@ void Destruct(CsLpListenerObject* self) {
   CsLpListenerMock* const mock = CS_LP_LISTENER_MOCK(self);
   mock->gmock->Destruct(self);
   delete mock->gmock;
+}
+
+void OnRemoteEgAdded(CsLpListenerObject* self, const EntityAddressType* entity_addr) {
+  CsLpListenerMock* const mock = CS_LP_LISTENER_MOCK(self);
+  mock->gmock->OnRemoteEgAdded(self, entity_addr);
+}
+
+void OnRemoteEgRemoved(CsLpListenerObject* self, const EntityAddressType* entity_addr) {
+  CsLpListenerMock* const mock = CS_LP_LISTENER_MOCK(self);
+  mock->gmock->OnRemoteEgRemoved(self, entity_addr);
 }
 
 void OnPowerLimitReceive(

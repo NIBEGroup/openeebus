@@ -23,6 +23,7 @@
 constexpr uint8_t kMaxResponseTimeSec = TIME_MS_TO_S(kDefaultMaxResponseDelayMs);
 
 void WriteApproveTestSuite::SetUp() {
+  events_manager_.reset(EventsManagerCreate());
   device_local_mock_.reset(DeviceLocalMockCreate());
   entity_local_mock_.reset(EntityLocalMockCreate());
   device_remote_mock_.reset(DeviceRemoteMockCreate());
@@ -47,6 +48,9 @@ void WriteApproveTestSuite::SetUp() {
 
   EXPECT_CALL(*entity_local_mock_->gmock, GetDevice(ENTITY_LOCAL_OBJECT(entity_local_mock_.get())))
       .WillRepeatedly(::testing::Return(DEVICE_LOCAL_OBJECT(device_local_mock_.get())));
+
+  EXPECT_CALL(*device_local_mock_->gmock, GetEventsManager(DEVICE_LOCAL_OBJECT(device_local_mock_.get())))
+      .WillRepeatedly(::testing::Return(events_manager_.get()));
 
   EXPECT_CALL(*device_local_mock_->gmock, NotifySubscribers(::testing::_, ::testing::_, ::testing::_))
       .WillRepeatedly(::testing::Return());
@@ -79,6 +83,7 @@ void WriteApproveTestSuite::TearDown() {
   sender_mock_.reset();
 
   feature_local_object_.reset();
+  events_manager_.reset();
   entity_address_.reset();
   spine_data_.reset();
   cmd_mock_.reset();
@@ -135,7 +140,7 @@ void TryApproveWriteRequestBeforeTimeoutCallback(const Message* msg, void* ctx) 
   MsgCounterType msg_cnt = *msg->request_header->msg_cnt;
 
   // There should be one pending write request
-  EXPECT_EQ(VectorGetSize(&feature_local->pending_write_requests), 1);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 1);
 
   // User waits just before the maximum response time to pass
   for (int i = 0; i < (kMaxResponseTimeSec - 1); ++i) {
@@ -143,14 +148,13 @@ void TryApproveWriteRequestBeforeTimeoutCallback(const Message* msg, void* ctx) 
   }
 
   // Check that all pending write requests are not expired yet
-  EXPECT_EQ(VectorGetSize(&feature_local->pending_write_requests), 1);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 1);
 
-  // Check remaining time for all pending write requests
-  for (size_t i = 0; i < VectorGetSize(&feature_local->pending_write_requests); ++i) {
-    PendingWriteRequestObject* pwr
-        = (PendingWriteRequestObject*)VectorGetElement(&feature_local->pending_write_requests, i);
-    EXPECT_EQ(PENDING_WRITE_REQUEST_GET_REMAINING_TIME(pwr), 1);
-  }
+  // Check remaining time for the pending write request
+  PendingWriteRequestObject* pwr_before
+      = PENDING_WRITE_REQUEST_CONTAINER_FIND(feature_local->pending_write_requests, ski, msg_cnt);
+  ASSERT_NE(pwr_before, nullptr);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_GET_REMAINING_TIME(pwr_before), 1);
 
   // Approve write request before timeout
   EebusError ret = FEATURE_LOCAL_TRY_APPROVE_WRITE(FEATURE_LOCAL_OBJECT(ctx), ski, msg_cnt);
@@ -166,16 +170,15 @@ void TryApproveWriteRequestAfterTimeoutCallback(const Message* msg, void* ctx) {
   // Get the message counter from the request header
   MsgCounterType msg_cnt = *msg->request_header->msg_cnt;
 
-  // Check that all pending write requests are not expired yet
-  for (size_t i = 0; i < VectorGetSize(&feature_local->pending_write_requests); ++i) {
-    PendingWriteRequestObject* pwr
-        = (PendingWriteRequestObject*)VectorGetElement(&feature_local->pending_write_requests, i);
-    EXPECT_EQ(PENDING_WRITE_REQUEST_HAS_EXPIRED(pwr), false);
-    EXPECT_EQ(PENDING_WRITE_REQUEST_GET_REMAINING_TIME(pwr), kMaxResponseTimeSec);
-  }
+  // Check that the pending write request is not expired yet
+  PendingWriteRequestObject* pwr_after
+      = PENDING_WRITE_REQUEST_CONTAINER_FIND(feature_local->pending_write_requests, ski, msg_cnt);
+  ASSERT_NE(pwr_after, nullptr);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_HAS_EXPIRED(pwr_after), false);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_GET_REMAINING_TIME(pwr_after), kMaxResponseTimeSec);
 
   // There should be one pending write request
-  EXPECT_EQ(VectorGetSize(&feature_local->pending_write_requests), 1);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 1);
 
   // User waits for the maximum response time to pass
   for (int i = 0; i < (kMaxResponseTimeSec + 1); ++i) {
@@ -197,7 +200,7 @@ void DenyWriteRequestCallback(const Message* msg, void* ctx) {
   MsgCounterType msg_cnt = *msg->request_header->msg_cnt;
 
   // Verify that there is one pending write request
-  EXPECT_EQ(VectorGetSize(&feature_local->pending_write_requests), 1);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 1);
 
   // Deny write request
   const ErrorType err = {
@@ -213,8 +216,11 @@ void TryApproveShouldPass(const Message* msg, void* ctx) {
 
   MsgCounterType msg_cnt = *msg->request_header->msg_cnt;
 
+  // The vote is accepted whether or not it is the last one needed: kEebusErrorOk means the
+  // write was finalized, kEebusErrorPending means more approvals from other callbacks are
+  // still outstanding.
   EebusError ret = FEATURE_LOCAL_TRY_APPROVE_WRITE(FEATURE_LOCAL_OBJECT(ctx), ski, msg_cnt);
-  EXPECT_EQ(ret, kEebusErrorOk);
+  EXPECT_THAT(ret, ::testing::AnyOf(kEebusErrorOk, kEebusErrorPending));
 }
 
 void TryApproveShouldFail(const Message* msg, void* ctx) {
@@ -237,6 +243,28 @@ void DenyShouldPass(const Message* msg, void* ctx) {
   };
   EebusError ret = FEATURE_LOCAL_DENY_WRITE(FEATURE_LOCAL_OBJECT(ctx), ski, msg_cnt, &err);
   EXPECT_EQ(ret, kEebusErrorOk);
+}
+
+void TryApproveShouldBePending(const Message* msg, void* ctx) {
+  FeatureLocal* feature_local = FEATURE_LOCAL(ctx);
+  const char* ski             = DEVICE_REMOTE_GET_SKI(msg->device_remote);
+  MsgCounterType msg_cnt      = *msg->request_header->msg_cnt;
+
+  // Only one of the two registered callbacks has voted so far: the write must stay pending.
+  EebusError ret = FEATURE_LOCAL_TRY_APPROVE_WRITE(FEATURE_LOCAL_OBJECT(ctx), ski, msg_cnt);
+  EXPECT_EQ(ret, kEebusErrorPending);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 1);
+}
+
+void TryApproveShouldFinalize(const Message* msg, void* ctx) {
+  FeatureLocal* feature_local = FEATURE_LOCAL(ctx);
+  const char* ski             = DEVICE_REMOTE_GET_SKI(msg->device_remote);
+  MsgCounterType msg_cnt      = *msg->request_header->msg_cnt;
+
+  // This is the second of two registered callbacks voting: the write must now be applied.
+  EebusError ret = FEATURE_LOCAL_TRY_APPROVE_WRITE(FEATURE_LOCAL_OBJECT(ctx), ski, msg_cnt);
+  EXPECT_EQ(ret, kEebusErrorOk);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 0);
 }
 
 void DenyShouldFail(const Message* msg, void* ctx) {

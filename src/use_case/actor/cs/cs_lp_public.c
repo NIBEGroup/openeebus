@@ -21,11 +21,12 @@
 #include "src/common/array_util.h"
 #include "src/common/eebus_data/eebus_data_list.h"
 #include "src/common/eebus_errors.h"
+#include "src/spine/api/feature_local_interface.h"
 #include "src/spine/model/loadcontrol_types.h"
 #include "src/spine/model/model.h"
-#include "src/use_case/actor/common/load_control.h"
 #include "src/use_case/actor/cs/cs_lp.h"
 #include "src/use_case/actor/cs/cs_lp_internal.h"
+#include "src/use_case/api/cs_lp_write_approval_container_interface.h"
 #include "src/use_case/model/load_limit_types.h"
 #include "src/use_case/specialization/device_configuration/device_configuration_server.h"
 #include "src/use_case/specialization/electrical_connection/electrical_connection_server.h"
@@ -134,7 +135,54 @@ CsLpSetActivePowerLimit(CsLpUseCaseObject* self, const ScaledValue* limit, bool 
   return ret;
 }
 
-// TODO: add pending requests handling API
+void CsLpSetWriteApprover(CsLpUseCaseObject* self, CsLpcApproverObject* approver) {
+  CS_LP_USE_CASE(self)->cs_lpc_approver = approver;
+}
+
+EebusError CsLpApproveWrite(CsLpUseCaseObject* self, const char* ski, MsgCounterType msg_cnt) {
+  if (self == NULL || ski == NULL) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  UseCase* const use_case = USE_CASE(self);
+  DEVICE_LOCAL_LOCK(use_case->local_device);
+  CsLpPendingApproval* entry
+      = CS_LP_WRITE_APPROVAL_CONTAINER_FIND(CS_LP_PENDING_APPROVAL_CONTAINER(self), ski, msg_cnt);
+  if (entry == NULL) {
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    return kEebusErrorNoChange;
+  }
+
+  EebusError result = FEATURE_LOCAL_TRY_APPROVE_WRITE(entry->feature, entry->ski, msg_cnt);
+  if (result != kEebusErrorPending) {
+    CS_LP_WRITE_APPROVAL_CONTAINER_REMOVE(CS_LP_PENDING_APPROVAL_CONTAINER(self), ski, msg_cnt);
+  }
+
+  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+
+  return result;
+}
+
+EebusError CsLpDenyWrite(CsLpUseCaseObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err) {
+  if (self == NULL || ski == NULL) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  UseCase* const use_case = USE_CASE(self);
+  DEVICE_LOCAL_LOCK(use_case->local_device);
+  CsLpPendingApproval* entry
+      = CS_LP_WRITE_APPROVAL_CONTAINER_FIND(CS_LP_PENDING_APPROVAL_CONTAINER(self), ski, msg_cnt);
+  if (entry == NULL) {
+    DEVICE_LOCAL_UNLOCK(use_case->local_device);
+    return kEebusErrorNoChange;
+  }
+
+  EebusError result = FEATURE_LOCAL_DENY_WRITE(entry->feature, entry->ski, msg_cnt, err);
+  CS_LP_WRITE_APPROVAL_CONTAINER_REMOVE(CS_LP_PENDING_APPROVAL_CONTAINER(self), ski, msg_cnt);
+  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+
+  return result;
+}
 
 //-------------------------------------------------------------------------------------------//
 //
@@ -355,13 +403,10 @@ bool CsLpIsHeartbeatWithinDuration(CsLpUseCaseObject* self) {
 //-------------------------------------------------------------------------------------------//
 const ElectricalConnectionCharacteristicDataType*
 CsLpGetElectricalConnectionCharacteristics(const CsLpUseCase* self, const ElectricalConnectionServer* ecs) {
-  ElectricalConnectionCharacteristicContextType characteristic_context
-      = kElectricalConnectionCharacteristicContextTypeEntity;
-
   ElectricalConnectionCharacteristicDataType filter = {
       .electrical_connection_id = &self->electrical_connection_id,
       .parameter_id             = &(ElectricalConnectionParameterIdType){0},
-      .characteristic_context   = &characteristic_context,
+      .characteristic_context   = &kEccContextEntity,
       .characteristic_type      = &self->nominal_max_characteristic,
   };
 
@@ -384,7 +429,7 @@ EebusError CsLpGetNominalMaxInternal(const CsLpUseCase* self, ScaledValue* nomin
   const ElectricalConnectionCharacteristicDataType* const characteristic
       = CsLpGetElectricalConnectionCharacteristics(self, &ecs);
 
-  if ((characteristic->characteristic_id == NULL) || (characteristic->value == NULL)) {
+  if ((characteristic == NULL) || (characteristic->characteristic_id == NULL) || (characteristic->value == NULL)) {
     return kEebusErrorNoChange;
   }
 
@@ -416,7 +461,7 @@ EebusError CsLpSetNominalMaxInternal(CsLpUseCase* self, const ScaledValue* new_n
   const ElectricalConnectionCharacteristicDataType* const characteristic
       = CsLpGetElectricalConnectionCharacteristics(self, &ecs);
 
-  if (characteristic->characteristic_id == NULL) {
+  if ((characteristic == NULL) || (characteristic->characteristic_id == NULL)) {
     return kEebusErrorNoChange;
   }
 

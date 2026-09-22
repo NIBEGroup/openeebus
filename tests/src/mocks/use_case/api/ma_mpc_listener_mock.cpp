@@ -25,8 +25,8 @@
 #include "src/use_case/api/ma_mpc_listener_interface.h"
 
 static void Destruct(MaMpcListenerObject* self);
-static void OnRemoteEntityConnect(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
-static void OnRemoteEntityDisconnect(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
+static void OnRemoteMuAdded(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
+static void OnRemoteMuRemoved(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
 static void OnMeasurementReceive(
     MaMpcListenerObject* self,
     MuMpcMeasurementNameId name_id,
@@ -35,10 +35,10 @@ static void OnMeasurementReceive(
 );
 
 static const MaMpcListenerInterface ma_mpc_listener_methods = {
-    .destruct                    = Destruct,
-    .on_remote_entity_connect    = OnRemoteEntityConnect,
-    .on_remote_entity_disconnect = OnRemoteEntityDisconnect,
-    .on_measurement_receive      = OnMeasurementReceive,
+    .destruct               = Destruct,
+    .on_remote_mu_added     = OnRemoteMuAdded,
+    .on_remote_mu_removed   = OnRemoteMuRemoved,
+    .on_measurement_receive = OnMeasurementReceive,
 };
 
 static EebusError MaMpcListenerMockConstruct(MaMpcListenerMock* self);
@@ -75,14 +75,14 @@ void Destruct(MaMpcListenerObject* self) {
   delete mock->gmock;
 }
 
-void OnRemoteEntityConnect(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
+void OnRemoteMuAdded(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
   MaMpcListenerMock* const mock = MA_MPC_LISTENER_MOCK(self);
-  mock->gmock->OnRemoteEntityConnect(self, entity_addr);
+  mock->gmock->OnRemoteMuAdded(self, entity_addr);
 }
 
-void OnRemoteEntityDisconnect(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
+void OnRemoteMuRemoved(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
   MaMpcListenerMock* const mock = MA_MPC_LISTENER_MOCK(self);
-  mock->gmock->OnRemoteEntityDisconnect(self, entity_addr);
+  mock->gmock->OnRemoteMuRemoved(self, entity_addr);
 }
 
 void OnMeasurementReceive(

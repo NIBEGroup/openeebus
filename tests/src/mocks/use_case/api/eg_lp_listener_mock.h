@@ -31,9 +31,9 @@
 class EgLpListenerGMockInterface {
  public:
   virtual ~EgLpListenerGMockInterface() {};
-  virtual void Destruct(EgLpListenerObject* self)                                                       = 0;
-  virtual void OnRemoteEntityConnect(EgLpListenerObject* self, const EntityAddressType* entity_addr)    = 0;
-  virtual void OnRemoteEntityDisconnect(EgLpListenerObject* self, const EntityAddressType* entity_addr) = 0;
+  virtual void Destruct(EgLpListenerObject* self)                                                = 0;
+  virtual void OnRemoteCsAdded(EgLpListenerObject* self, const EntityAddressType* entity_addr)   = 0;
+  virtual void OnRemoteCsRemoved(EgLpListenerObject* self, const EntityAddressType* entity_addr) = 0;
   virtual void OnPowerLimitReceive(
       EgLpListenerObject* self,
       const ScaledValue* power_limit,
@@ -43,18 +43,20 @@ class EgLpListenerGMockInterface {
   virtual void OnFailsafePowerLimitReceive(EgLpListenerObject* self, const ScaledValue* power_limit) = 0;
   virtual void OnFailsafeDurationReceive(EgLpListenerObject* self, const DurationType* duration)     = 0;
   virtual void OnHeartbeatReceive(EgLpListenerObject* self, uint64_t heartbeat_counter)              = 0;
+  virtual void OnPowerNominalMaxReceive(EgLpListenerObject* self, const ScaledValue* power_limit)    = 0;
 };
 
 class EgLpListenerGMock : public EgLpListenerGMockInterface {
  public:
   virtual ~EgLpListenerGMock() {};
   MOCK_METHOD1(Destruct, void(EgLpListenerObject*));
-  MOCK_METHOD2(OnRemoteEntityConnect, void(EgLpListenerObject*, const EntityAddressType*));
-  MOCK_METHOD2(OnRemoteEntityDisconnect, void(EgLpListenerObject*, const EntityAddressType*));
+  MOCK_METHOD2(OnRemoteCsAdded, void(EgLpListenerObject*, const EntityAddressType*));
+  MOCK_METHOD2(OnRemoteCsRemoved, void(EgLpListenerObject*, const EntityAddressType*));
   MOCK_METHOD4(OnPowerLimitReceive, void(EgLpListenerObject*, const ScaledValue*, const DurationType*, bool));
   MOCK_METHOD2(OnFailsafePowerLimitReceive, void(EgLpListenerObject*, const ScaledValue*));
   MOCK_METHOD2(OnFailsafeDurationReceive, void(EgLpListenerObject*, const DurationType*));
   MOCK_METHOD2(OnHeartbeatReceive, void(EgLpListenerObject*, uint64_t));
+  MOCK_METHOD2(OnPowerNominalMaxReceive, void(EgLpListenerObject*, const ScaledValue*));
 };
 
 typedef struct EgLpListenerMock {

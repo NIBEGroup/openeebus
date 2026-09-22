@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <pthread.h>
-#include <signal.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -54,6 +52,8 @@ enum ShipNodeQueueMsgType {
   kShipNodeQueueMsgTypeShipConnectionClosed,
   kShipNodeQueueMsgTypeShipUnregisterSki,
   kShipNodeQueueMsgTypeShipRegisterSki,
+  kShipNodeQueueMsgTypeDiscardSuperseded,
+  kShipNodeQueueMsgTypeShipCancelPairingSki,
 };
 
 typedef enum ShipNodeQueueMsgType ShipNodeQueueMsgType;
@@ -65,6 +65,15 @@ struct ShipNodeQueueMessage {
   ShipConnectionObject* ship_connection;
   bool had_error;
   char* ski;
+};
+
+typedef struct ShipIncomingConnectionAction ShipIncomingConnectionAction;
+
+struct ShipIncomingConnectionAction {
+  /** Connection to pass to SHIP_CONNECTION_START */
+  ShipConnectionObject* connection_to_start;
+  /** Connection for DiscardSuperseded queue message, or NULL */
+  ShipConnectionObject* connection_to_discard;
 };
 
 static void Destruct(InfoProviderObject* self);
@@ -87,6 +96,7 @@ static void CancelPairingWithSki(ShipNodeObject* self, const char* ski);
 static void ApprovePendingHandshakeWithSki(ShipNodeObject* self, const char* ski);
 static uint32_t GetPendingWaitingMsWithSki(ShipNodeObject* self, const char* ski);
 static void ShipNodeUnregisterSki(ShipNodeObject* self, const char* ski);
+static void ShipNodeCancelPairingSki(ShipNodeObject* self, const char* ski);
 static void ShipNodeRegisterSki(ShipNodeObject* self, const char* ski, bool is_trusted);
 
 static const ShipNodeInterface ship_node_methods = {
@@ -132,6 +142,8 @@ static bool ShipNodeFindService(ShipNode* self, MdnsEntry* found_entry);
 static void ShipNodeConnectToService(ShipNode* self, const MdnsEntry* found_entry);
 static void ShipNodeConnectToRemoteSki(ShipNode* self);
 static void* ShipNodeConnectionLoop(void* ctx);
+static int ShipNodeDecideSimopen(ShipNode* sn, const char* ski, ShipIncomingConnectionAction* action);
+static int ShipNodeDecideIncomingConnection(ShipNode* sn, const char* ski, ShipIncomingConnectionAction* action);
 static int
 ShipNodeOnWebsocketServerConnectionCallback(const char* ski, WebsocketCreatorObject* websocket_creator, void* ctx);
 static bool ShipNodeIsClientSupported(ShipNode* self);
@@ -196,6 +208,8 @@ void ShipNodeConstruct(
 
   self->websocket_creator          = NULL;
   self->connection_attempt_running = false;
+  self->client_connection_running  = false;
+  self->superseded_connection      = NULL;
 
   if (strcmp(role, "server") == 0) {
     self->role = kShipRoleServer;
@@ -240,6 +254,8 @@ ShipNodeObject* ShipNodeCreate(
 void Destruct(InfoProviderObject* self) {
   ShipNode* const sn = SHIP_NODE(self);
 
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): begin\n", __func__);
+
   StringDelete(sn->remote_ski);
   sn->remote_ski = NULL;
 
@@ -273,6 +289,12 @@ void Destruct(InfoProviderObject* self) {
     sn->http_server = NULL;
   }
 
+  if (sn->superseded_connection != NULL) {
+    SHIP_CONNECTION_STOP(sn->superseded_connection);
+    ShipConnectionDelete(sn->superseded_connection);
+    sn->superseded_connection = NULL;
+  }
+
   if (sn->ship_connection != NULL) {
     SHIP_CONNECTION_STOP(sn->ship_connection);
     SHIP_CONNECTION_DESTRUCT(sn->ship_connection);
@@ -284,6 +306,7 @@ void Destruct(InfoProviderObject* self) {
   sn->msg_queue = NULL;
 
   sn->connection_attempt_running = false;
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): end\n", __func__);
 }
 
 void ShipNodeOnMdnsEntriesFoundCallback(Vector* found_entries, void* ctx) {
@@ -333,39 +356,60 @@ bool IsRemoteServiceForSkiPaired(InfoProviderObject* self, const char* ski) {
 void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_error) {
   UNUSED(had_error);
 
-  if ((sc == NULL) || (sc != self->ship_connection)) {
-    SHIP_NODE_DEBUG_PRINTF("%s(), invalid Ship Connection instance\n", __func__);
+  if (sc == NULL) {
     return;
   }
 
-  SHIP_CONNECTION_STOP(sc);
-  SHIP_NODE_DEBUG_PRINTF("%s(), connection closed\n", __func__);
-  SHIP_NODE_READER_ON_REMOTE_SKI_DISCONNECTED(self->ship_node_reader, SHIP_CONNECTION_GET_REMOTE_SKI(sc));
-
-  // SHIP 5.2 / SRIP A.3: an SKI accepted only provisionally must be discarded
-  // when the connection ends without it having been trusted, so that a refused
-  // peer is prompted for again rather than admitted on its next attempt.
+  // Determine the role of sc under the mutex and update shared state atomically.
+  // SHIP_CONNECTION_STOP is intentionally called outside the mutex — it blocks on
+  // a thread join and must not be held across that wait.
   EEBUS_MUTEX_LOCK(self->mutex);
-  if (!self->remote_ski_trusted && !StringIsEmpty(self->remote_ski)) {
-    SHIP_NODE_DEBUG_PRINTF("%s(), discarding untrusted SKI %s\n", __func__, self->remote_ski);
-    StringDelete(self->remote_ski);
-    self->remote_ski = NULL;
+
+  const bool is_superseded_connection = (sc == self->superseded_connection);
+  const bool is_current_connection    = (sc == self->ship_connection);
+  if (is_superseded_connection) {
+    self->superseded_connection = NULL;
+  } else if (is_current_connection) {
+    self->ship_connection            = NULL;
+    self->connection_attempt_running = false;
+    self->client_connection_running  = false;
+
+    // SHIP 5.2 / SRIP A.3: an SKI accepted only provisionally must be discarded
+    // when the connection ends without it having been trusted, so that a refused
+    // peer is prompted for again rather than admitted on its next attempt.
+    if (!self->remote_ski_trusted && !StringIsEmpty(self->remote_ski)) {
+      SHIP_NODE_DEBUG_PRINTF("%s(), discarding untrusted SKI %s\n", __func__, self->remote_ski);
+      StringDelete(self->remote_ski);
+      self->remote_ski = NULL;
+    }
+
+    // Belongs to the connection that has just ended. Keeping it would let a
+    // shippairing request accepted afterwards match a peer that is no longer
+    // there, and approve a handshake belonging to whoever connected next.
+    StringDelete((char*)self->connected_peer_fingerprint);
+    self->connected_peer_fingerprint = NULL;
   }
 
-  // Belongs to the connection that has just ended. Keeping it would let a
-  // shippairing request accepted afterwards match a peer that is no longer
-  // there, and approve a handshake belonging to whoever connected next.
-  StringDelete((char*)self->connected_peer_fingerprint);
-  self->connected_peer_fingerprint = NULL;
   EEBUS_MUTEX_UNLOCK(self->mutex);
-  ShipConnectionDelete(sc);
-  self->ship_connection = NULL;
 
-  self->connection_attempt_running = false;
+  if (is_superseded_connection) {
+    SHIP_NODE_DEBUG_PRINTF("[SHIP-SIMOPEN] %s(), superseded connection closed\n", __func__);
+    SHIP_CONNECTION_STOP(sc);
+    ShipConnectionDelete(sc);
+  } else if (is_current_connection) {
+    SHIP_CONNECTION_STOP(sc);
+    SHIP_NODE_DEBUG_PRINTF("%s(), connection closed\n", __func__);
+    SHIP_NODE_READER_ON_REMOTE_SKI_DISCONNECTED(self->ship_node_reader, SHIP_CONNECTION_GET_REMOTE_SKI(sc));
+    ShipConnectionDelete(sc);
+  }
 }
 
 void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, bool had_error) {
   ShipNode* const sn = SHIP_NODE(self);
+
+  if (sn->cancel) {
+    return;
+  }
 
   ShipNodeQueueMessage queue_msg = {
       .type            = kShipNodeQueueMsgTypeShipConnectionClosed,
@@ -603,6 +647,7 @@ static void ShipNodeConnectToService(ShipNode* self, const MdnsEntry* found_entr
     const EebusError err = SHIP_CONNECTION_START(self->ship_connection, self->websocket_creator);
 
     self->connection_attempt_running = (err == kEebusErrorOk);
+    self->client_connection_running  = self->connection_attempt_running;
   }
 
   if ((self->connection_attempt_running == false) && (self->ship_connection != NULL)) {
@@ -645,22 +690,96 @@ void* ShipNodeConnectionLoop(void* ctx) {
     } else if (queue_msg.type == kShipNodeQueueMsgTypeShipRegisterSki) {
       ShipNodeRegisterSki(SHIP_NODE_OBJECT(sn), queue_msg.ski, true);
       ShipNodeConnectToRemoteSki(sn);
+    } else if (queue_msg.type == kShipNodeQueueMsgTypeDiscardSuperseded) {
+      CloseShipConnection(sn, queue_msg.ship_connection, queue_msg.had_error);
+    } else if (queue_msg.type == kShipNodeQueueMsgTypeShipCancelPairingSki) {
+      ShipNodeCancelPairingSki(SHIP_NODE_OBJECT(sn), queue_msg.ski);
     }
+
     ShipNodeQueueMsgDeallocator(&queue_msg);
   }
 
   return NULL;
 }
 
-int ShipNodeOnWebsocketServerConnectionCallback(const char* ski, WebsocketCreatorObject* websocket_creator, void* ctx) {
-  ShipNode* const sn = (ShipNode*)ctx;
+int ShipNodeDecideSimopen(ShipNode* sn, const char* ski, ShipIncomingConnectionAction* action) {
+  const char* local_ski = sn->local_service_details->ski;
+  SHIP_NODE_DEBUG_PRINTF("[SHIP-SIMOPEN] %s(), local ski=%.8s, remote ski=%.8s\n", __func__, local_ski, ski);
 
-  if (sn->cancel || sn->connection_attempt_running) {
+  if (strcmp(local_ski, ski) <= 0) {
+    // Local SKI is lower — yield; our outgoing client connection will be
+    // accepted by the remote side.
+    SHIP_NODE_DEBUG_PRINTF("[SHIP-SIMOPEN] %s(), yielding to remote (local SKI <= remote SKI)\n", __func__);
     return -1;
   }
 
-  // Check the SKI, or the certificate the peer presented
+  // Local SKI is higher — switch to server role. Clear client_connection_running
+  // now that the outgoing client is being superseded; connection_attempt_running
+  // stays true so ShipNodeConnectToService cannot start a competing attempt
+  // while the new server connection is being set up.
+  SHIP_NODE_DEBUG_PRINTF("[SHIP-SIMOPEN] %s(), taking server role (local SKI > remote SKI)\n", __func__);
+  ShipConnectionObject* const old_client = sn->ship_connection;
+  sn->client_connection_running          = false;
+
+  sn->ship_connection
+      = ShipConnectionCreate(INFO_PROVIDER_OBJECT(sn), kShipRoleServer, sn->local_service_details->ship_id, ski, "");
+  if (sn->ship_connection == NULL) {
+    SHIP_NODE_DEBUG_PRINTF("%s(), creating server ship connection failed\n", __func__);
+    sn->ship_connection           = old_client;
+    sn->client_connection_running = true;
+    return -1;
+  }
+
+  // Store the superseded client so CloseShipConnection can identify and clean it
+  // up if it closes naturally before the DiscardSuperseded queue message is processed.
+  sn->superseded_connection = old_client;
+
+  action->connection_to_start   = sn->ship_connection;
+  action->connection_to_discard = old_client;
+
+  return 0;
+}
+
+int ShipNodeDecideIncomingConnection(ShipNode* sn, const char* ski, ShipIncomingConnectionAction* action) {
+  if (sn->client_connection_running) {
+    return ShipNodeDecideSimopen(sn, ski, action);
+  }
+
+  if (sn->connection_attempt_running) {
+    // An active server connection already exists — reject; the remote should
+    // retry after the existing connection is torn down.
+    SHIP_NODE_DEBUG_PRINTF("[SHIP] %s(), rejecting incoming: server connection already running\n", __func__);
+    return -1;
+  }
+
+  SHIP_NODE_DEBUG_PRINTF("[SHIP] server accept from %.8s... (no simultaneous open)\n", ski);
+  sn->ship_connection
+      = ShipConnectionCreate(INFO_PROVIDER_OBJECT(sn), kShipRoleServer, sn->local_service_details->ship_id, ski, "");
+  if (sn->ship_connection == NULL) {
+    SHIP_NODE_DEBUG_PRINTF("%s(), creating ship connection failed\n", __func__);
+    return -1;
+  }
+
+  sn->connection_attempt_running = true;
+
+  action->connection_to_start = sn->ship_connection;
+
+  return 0;
+}
+
+int ShipNodeOnWebsocketServerConnectionCallback(const char* ski, WebsocketCreatorObject* websocket_creator, void* ctx) {
+  ShipNode* const sn = (ShipNode*)ctx;
+
+  if (sn->cancel) {
+    return -1;
+  }
+
+  // SKI check and connection decision share one lock — no state-change window between them.
+  // Release before SHIP_CONNECTION_START (blocks on thread join)
+  // and before EEBUS_QUEUE_SEND (deadlock risk: websocket thread blocks on full queue
+  // while the connection loop thread waits for the mutex to drain it).
   EEBUS_MUTEX_LOCK(sn->mutex);
+
   // A peer paired by a shippairing request is recognised by the certificate it
   // presents, because the request names a fingerprint and never an SKI
   // (SHIP Pairing Service TS 1.0.0, section 10.2).
@@ -674,7 +793,7 @@ int ShipNodeOnWebsocketServerConnectionCallback(const char* ski, WebsocketCreato
   StringDelete((char*)sn->connected_peer_fingerprint);
   sn->connected_peer_fingerprint = StringCopy(peer_fingerprint);
 
-  bool is_ski_accepted = ShipNodeIsPeerRecognised(ski, sn->remote_ski, peer_fingerprint, sn->remote_fingerprint);
+  bool is_ski_trusted = ShipNodeIsPeerRecognised(ski, sn->remote_ski, peer_fingerprint, sn->remote_fingerprint);
 
   if (recognised_by_certificate) {
     // Trusted outright rather than held pending, whatever the trust mode would
@@ -694,7 +813,7 @@ int ShipNodeOnWebsocketServerConnectionCallback(const char* ski, WebsocketCreato
     }
   }
 
-  if (!is_ski_accepted && StringIsEmpty(sn->remote_ski)) {
+  if (!is_ski_trusted && StringIsEmpty(sn->remote_ski)) {
     // No remote SKI registered yet, so this is a registration rather than a
     // reconnection. When the SKI may be trusted is the trust mode's decision.
     if (sn->trust_mode == kEebusTrustModePostTrust) {
@@ -703,33 +822,49 @@ int ShipNodeOnWebsocketServerConnectionCallback(const char* ski, WebsocketCreato
       StringDelete(sn->remote_ski);
       sn->remote_ski         = StringCopy(ski);
       sn->remote_ski_trusted = false;
-      is_ski_accepted        = (sn->remote_ski != NULL);
+      is_ski_trusted         = (sn->remote_ski != NULL);
       SHIP_NODE_DEBUG_PRINTF("%s(), Post-trust: accepted SKI %s pending a decision\n", __func__, ski);
     } else if (INFO_PROVIDER_IS_WAITING_FOR_TRUST_ALLOWED(sn, ski)) {
       // Pairing mode ("auto accept", SHIP 12.3.1.1): trust it outright.
       StringDelete(sn->remote_ski);
       sn->remote_ski         = StringCopy(ski);
       sn->remote_ski_trusted = (sn->remote_ski != NULL);
-      is_ski_accepted        = sn->remote_ski_trusted;
+      is_ski_trusted         = sn->remote_ski_trusted;
       SHIP_NODE_DEBUG_PRINTF("%s(), Pairing mode: auto-trusting incoming SKI %s\n", __func__, ski);
     }
   }
-  EEBUS_MUTEX_UNLOCK(sn->mutex);
 
-  if (!is_ski_accepted) {
+  if (!is_ski_trusted) {
+    EEBUS_MUTEX_UNLOCK(sn->mutex);
     SHIP_NODE_DEBUG_PRINTF("%s(), Remote SKI is not trusted\n", __func__);
     return -1;
   }
 
-  sn->ship_connection
-      = ShipConnectionCreate(INFO_PROVIDER_OBJECT(sn), kShipRoleServer, sn->local_service_details->ship_id, ski, "");
-  if (sn->ship_connection == NULL) {
-    SHIP_NODE_DEBUG_PRINTF("%s(), creating ship connection failed\n", __func__);
-    return -1;
+  ShipIncomingConnectionAction action = {NULL, NULL};
+
+  const int err = ShipNodeDecideIncomingConnection(sn, ski, &action);
+
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
+  if (err) {
+    return err;
   }
 
-  sn->connection_attempt_running = true;
-  SHIP_CONNECTION_START(sn->ship_connection, websocket_creator);
+  if (action.connection_to_discard != NULL) {
+    const ShipNodeQueueMessage discard_msg = {
+        .type            = kShipNodeQueueMsgTypeDiscardSuperseded,
+        .ship_connection = action.connection_to_discard,
+        .had_error       = false,
+        .ski             = NULL,
+    };
+
+    EEBUS_QUEUE_SEND(sn->msg_queue, &discard_msg, kTimeoutInfinite);
+  }
+
+  if (action.connection_to_start != NULL) {
+    SHIP_CONNECTION_START(action.connection_to_start, websocket_creator);
+  }
+
   return 0;
 }
 
@@ -766,6 +901,7 @@ void Start(ShipNodeObject* self) {
 void Stop(ShipNodeObject* self) {
   ShipNode* const sn = SHIP_NODE(self);
 
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): begin\n", __func__);
   sn->cancel = true;
 
   if (sn->connection_thread != NULL) {
@@ -776,11 +912,29 @@ void Stop(ShipNodeObject* self) {
     sn->connection_thread = NULL;
   }
 
+  // ShipNodeConnectionLoop may have exited via kCancel before processing a
+  // kShipConnectionClosed that arrived during the concurrent close handshake
+  // (e.g. during the 500 ms wait in DataExchangeHandleClose). Stop and delete
+  // the connection here so Destruct never encounters a live ship_connection.
+  EEBUS_MUTEX_LOCK(sn->mutex);
+  ShipConnectionObject* const sc = sn->ship_connection;
+
+  sn->ship_connection = NULL;
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
+  if (sc != NULL) {
+    SHIP_CONNECTION_STOP(sc);
+    SHIP_NODE_READER_ON_REMOTE_SKI_DISCONNECTED(sn->ship_node_reader, SHIP_CONNECTION_GET_REMOTE_SKI(sc));
+    ShipConnectionDelete(sc);
+  }
+
   SHIP_MDNS_STOP(sn->mdns);
 
   if (ShipNodeIsServerSupported(sn)) {
     HTTP_SERVER_STOP(sn->http_server);
   }
+
+  SHIP_NODE_DEBUG_PRINTF("ShipNode::%s(): end\n", __func__);
 }
 
 void ShipNodeRegisterSki(ShipNodeObject* self, const char* ski, bool is_trusted) {
@@ -871,17 +1025,44 @@ uint32_t GetPendingWaitingMsWithSki(ShipNodeObject* self, const char* ski) {
   return SHIP_CONNECTION_GET_PENDING_WAITING_MS(sn->ship_connection);
 }
 
-void CancelPairingWithSki(ShipNodeObject* self, const char* ski) {
+// Runs on the connection loop thread (same context as ShipNodeUnregisterSki)
+void ShipNodeCancelPairingSki(ShipNodeObject* self, const char* ski) {
   ShipNode* const sn = SHIP_NODE(self);
 
+  if (StringIsEmpty(ski)) {
+    return;
+  }
+
+  EEBUS_MUTEX_LOCK(sn->mutex);
   if (!SkiMatches(ski, sn->remote_ski)) {
+    EEBUS_MUTEX_UNLOCK(sn->mutex);
     SHIP_NODE_DEBUG_PRINTF("%s(), SKI does not match\n", __func__);
     return;
   }
 
+  ShipConnectionObject* const sc = sn->ship_connection;
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
   // Only the handshake is aborted here. The refused SKI is discarded in
   // CloseShipConnection(), so that it goes however the connection ends.
-  if (sn->ship_connection != NULL) {
-    SHIP_CONNECTION_ABORT_PENDING_HANDSHAKE(sn->ship_connection);
+  if (sc != NULL) {
+    SHIP_CONNECTION_ABORT_PENDING_HANDSHAKE(sc);
   }
+}
+
+void CancelPairingWithSki(ShipNodeObject* self, const char* ski) {
+  ShipNode* const sn = SHIP_NODE(self);
+
+  if (StringIsEmpty(ski)) {
+    return;
+  }
+
+  ShipNodeQueueMessage queue_msg = {
+      .type            = kShipNodeQueueMsgTypeShipCancelPairingSki,
+      .ship_connection = NULL,
+      .had_error       = false,
+      .ski             = StringCopy(ski),
+  };
+
+  EEBUS_QUEUE_SEND(sn->msg_queue, &queue_msg, kTimeoutInfinite);
 }

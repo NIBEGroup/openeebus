@@ -215,6 +215,11 @@ const ElectricalConnectionCharacteristicDataType* ElectricalConnectionCommonGetC
     const ElectricalConnectionCharacteristicDataType* filter
 );
 
+bool ElectricalConnectionCommonCheckCharacteristicWithFilter(
+    const ElectricalConnectionCharacteristicListDataType* data,
+    const ElectricalConnectionCharacteristicDataType* filter
+);
+
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

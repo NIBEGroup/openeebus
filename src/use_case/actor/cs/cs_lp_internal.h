@@ -25,14 +25,24 @@
 
 #include "src/spine/model/device_configuration_types.h"
 #include "src/spine/model/electrical_connection_types.h"
+#include "src/use_case/actor/cs/cs_lp_pending_approval.h"
 #include "src/use_case/api/cs_lp_listener_interface.h"
+#include "src/use_case/api/cs_lp_write_approval_container_interface.h"
+#include "src/use_case/api/cs_lpc_approver_interface.h"
 #include "src/use_case/model/load_limit_types.h"
 #include "src/use_case/specialization/device_diagnosis/device_diagnosis_client.h"
+#include "src/use_case/specialization/load_control/load_control_server.h"
 #include "src/use_case/use_case.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
+
+// Per-feature context passed as ctx to WriteApprovalCallback
+typedef struct {
+  struct CsLpUseCase* use_case;
+  FeatureLocalObject* feature;
+} CsLpWriteApprovalCtx;
 
 typedef struct CsLpUseCase CsLpUseCase;
 struct CsLpUseCase {
@@ -48,6 +58,14 @@ struct CsLpUseCase {
 
   CsLpListenerObject* cs_lp_listener;
 
+  // NULL = no external approval
+  CsLpcApproverObject* cs_lpc_approver;
+  CsLpWriteApprovalContainerObject* pend;
+  CsLpWriteApprovalCtx lc_approval_ctx;
+  CsLpWriteApprovalCtx failsafe_value_approval_ctx;
+
+  EntityAddressType* remote_eg_entity_addr;
+
   DeviceDiagnosisClient* heartbeat_diag_client;
 
   // KEO Stack uses multiple identical entities for the same functionality,
@@ -56,6 +74,16 @@ struct CsLpUseCase {
 };
 
 #define CS_LP_USE_CASE(obj) ((CsLpUseCase*)(obj))
+
+/**
+ * @brief Accessor for the CS LP use case's write approval container object
+ */
+#define CS_LP_PENDING_APPROVAL_CONTAINER(obj) (CS_LP_USE_CASE(obj)->pend)
+
+void RemoveDeviceDiagnosisClient(CsLpUseCase* self);
+
+EebusError
+CsLpGetLimitId(const CsLpUseCase* self, LoadControlServer* load_control_server, LoadControlLimitIdType* limit_id);
 
 EebusError CsLpGetActivePowerLimitInternal(const CsLpUseCase* self, LoadLimit* limit);
 EebusError

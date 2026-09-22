@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 
+#include "mocks/spine/device/device_local_mock.h"
 #include "mocks/spine/device/device_remote_mock.h"
 #include "mocks/spine/entity/entity_remote_mock.h"
 #include "src/common/array_util.h"
@@ -102,6 +103,10 @@ class NodeManagementRemoteUpdateDataTests : public ::testing::TestWithParam<Node
       DeviceRemoteMockDelete
   };
 
+  std::unique_ptr<DeviceLocalMock, decltype(&DeviceLocalMockDelete)> device_local_mock_{nullptr, DeviceLocalMockDelete};
+
+  std::unique_ptr<EventsManagerObject, decltype(&EventsManagerDelete)> events_manager_{nullptr, EventsManagerDelete};
+
   std::unique_ptr<EntityRemoteMock, decltype(&EntityRemoteMockDelete)> entity_remote_mock_{
       nullptr,
       EntityRemoteMockDelete
@@ -113,7 +118,13 @@ class NodeManagementRemoteUpdateDataTests : public ::testing::TestWithParam<Node
   };
 
   void SetUp() override {
+    events_manager_.reset(EventsManagerCreate());
+    device_local_mock_.reset(DeviceLocalMockCreate());
+    EXPECT_CALL(*device_local_mock_->gmock, GetEventsManager(_)).WillRepeatedly(Return(events_manager_.get()));
+
     device_remote_mock_.reset(DeviceRemoteMockCreate());
+    EXPECT_CALL(*device_remote_mock_->gmock, GetLocalDevice(_))
+        .WillRepeatedly(Return(DEVICE_LOCAL_OBJECT(device_local_mock_.get())));
 
     EXPECT_CALL(*device_remote_mock_->gmock, GetSki(_))
         .WillRepeatedly(Return("0123456789abcdefedcb0123456789abcdefedcb"));
@@ -132,10 +143,13 @@ class NodeManagementRemoteUpdateDataTests : public ::testing::TestWithParam<Node
   void TearDown() override {
     EXPECT_CALL(*entity_remote_mock_->gmock, Destruct(ENTITY_OBJECT(entity_remote_mock_.get())));
     EXPECT_CALL(*device_remote_mock_->gmock, Destruct(DEVICE_OBJECT(device_remote_mock_.get())));
+    EXPECT_CALL(*device_local_mock_->gmock, Destruct(DEVICE_OBJECT(device_local_mock_.get())));
 
     node_management_remote_.reset();
     entity_remote_mock_.reset();
     device_remote_mock_.reset();
+    device_local_mock_.reset();
+    events_manager_.reset();
 
     CheckForMemoryLeaks();
   }
@@ -159,7 +173,7 @@ class NodeManagementRemoteUpdateDataTests : public ::testing::TestWithParam<Node
 TEST_P(NodeManagementRemoteUpdateDataTests, NodeManagementRemoteUpdateDataTests) {
   ASSERT_EQ(SetUseCaseData(GetParam().data_txt), kEebusErrorOk) << "Wrong Use Case Data input!";
 
-  EventHandlerMockInst event_handler_mock_inst;
+  EventHandlerMockInst event_handler_mock_inst(events_manager_.get());
 
   EXPECT_CALL(*event_handler_mock_inst, Handle(IsDeviceUpdatePayload(), _));
 
@@ -292,6 +306,10 @@ class NodeManagementRemoteNullEntityAddrTests : public ::testing::TestWithParam<
       DeviceRemoteMockDelete
   };
 
+  std::unique_ptr<DeviceLocalMock, decltype(&DeviceLocalMockDelete)> device_local_mock_{nullptr, DeviceLocalMockDelete};
+
+  std::unique_ptr<EventsManagerObject, decltype(&EventsManagerDelete)> events_manager_{nullptr, EventsManagerDelete};
+
   std::unique_ptr<EntityRemoteMock, decltype(&EntityRemoteMockDelete)> nm_entity_remote_mock_{
       nullptr,
       EntityRemoteMockDelete
@@ -315,7 +333,13 @@ class NodeManagementRemoteNullEntityAddrTests : public ::testing::TestWithParam<
   Vector entities_vector_{};
 
   void SetUp() override {
+    events_manager_.reset(EventsManagerCreate());
+    device_local_mock_.reset(DeviceLocalMockCreate());
+    EXPECT_CALL(*device_local_mock_->gmock, GetEventsManager(_)).WillRepeatedly(Return(events_manager_.get()));
+
     device_remote_mock_.reset(DeviceRemoteMockCreate());
+    EXPECT_CALL(*device_remote_mock_->gmock, GetLocalDevice(_))
+        .WillRepeatedly(Return(DEVICE_LOCAL_OBJECT(device_local_mock_.get())));
     EXPECT_CALL(*device_remote_mock_->gmock, GetSki(_))
         .WillRepeatedly(Return("0123456789abcdefedcb0123456789abcdefedcb"));
 
@@ -341,6 +365,7 @@ class NodeManagementRemoteNullEntityAddrTests : public ::testing::TestWithParam<
     EXPECT_CALL(*entity_remote_mock_1_->gmock, Destruct(ENTITY_OBJECT(entity_remote_mock_1_.get())));
     EXPECT_CALL(*entity_remote_mock_2_->gmock, Destruct(ENTITY_OBJECT(entity_remote_mock_2_.get())));
     EXPECT_CALL(*device_remote_mock_->gmock, Destruct(DEVICE_OBJECT(device_remote_mock_.get())));
+    EXPECT_CALL(*device_local_mock_->gmock, Destruct(DEVICE_OBJECT(device_local_mock_.get())));
 
     node_management_remote_.reset();
     VectorDestruct(&entities_vector_);
@@ -348,6 +373,8 @@ class NodeManagementRemoteNullEntityAddrTests : public ::testing::TestWithParam<
     entity_remote_mock_1_.reset();
     entity_remote_mock_2_.reset();
     device_remote_mock_.reset();
+    device_local_mock_.reset();
+    events_manager_.reset();
 
     CheckForMemoryLeaks();
   }
@@ -371,7 +398,7 @@ class NodeManagementRemoteNullEntityAddrTests : public ::testing::TestWithParam<
 TEST_P(NodeManagementRemoteNullEntityAddrTests, NullEntityAddrPublishesForEachEntity) {
   ASSERT_EQ(SetUseCaseData(GetParam().data_txt), kEebusErrorOk) << "Wrong Use Case Data input!";
 
-  EventHandlerMockInst event_handler_mock_inst;
+  EventHandlerMockInst event_handler_mock_inst(events_manager_.get());
 
   EXPECT_CALL(*event_handler_mock_inst, Handle(IsDeviceUpdatePayload(), _));
 

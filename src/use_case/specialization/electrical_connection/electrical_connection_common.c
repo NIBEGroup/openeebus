@@ -181,3 +181,16 @@ const ElectricalConnectionCharacteristicDataType* ElectricalConnectionCommonGetC
 
   return HelperGetListUniqueMatch(characteristic_fcn, characteristics_list, filter);
 }
+
+bool ElectricalConnectionCommonCheckCharacteristicWithFilter(
+    const ElectricalConnectionCharacteristicListDataType* data,
+    const ElectricalConnectionCharacteristicDataType* filter
+) {
+  if ((data == NULL) || (filter == NULL)) {
+    return false;
+  }
+
+  EebusDataListMatchIterator it = {0};
+  HelperListMatchFirst(characteristic_fcn, data, filter, &it);
+  return !EebusDataListMatchIteratorIsDone(&it);
+}

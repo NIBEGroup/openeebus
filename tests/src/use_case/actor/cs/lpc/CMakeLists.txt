@@ -50,7 +50,12 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/feature.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/feature_functions.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/operations.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_result_container.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_reply_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/feature/pending_write_request_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature_link/feature_link.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature_link/feature_link_container.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/function/function.c
@@ -60,6 +65,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/cmd.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/datagram.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/device_configuration_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/electrical_connection_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/filter.c
@@ -68,6 +74,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/node_management_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/possible_operations_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/specification_version.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/subscription_management_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/usecase_information_types.c
@@ -79,9 +86,9 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/node_management/node_management_subscription.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/node_management/node_management_usecase.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/subscription/subscription_manager.c
-  ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/common/load_control.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/cs/lpc/cs_lpc.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/cs/cs_lp_events.c
+  ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/cs/cs_lp_write_approval_container.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/cs/cs_lp_public.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/actor/cs/cs_lp.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/model/load_limit_types.c
@@ -104,6 +111,7 @@ target_sources(
   ${MOCKS_SOURCES_PATH}/ship/ship_connection/data_writer_mock.cpp
   ${MOCKS_SOURCES_PATH}/common/eebus_timer/eebus_timer_mock.cpp
   ${MOCKS_SOURCES_PATH}/use_case/api/cs_lp_listener_mock.cpp
+  ${MOCKS_SOURCES_PATH}/use_case/api/cs_lpc_approver_mock.cpp
 
   # Test helpers
   ${CMAKE_SOURCE_DIR}/src/spine/function_data.c

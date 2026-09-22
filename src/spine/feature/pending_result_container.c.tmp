@@ -1,0 +1,5 @@
+PendingResultContainer
+void Destruct()
+EebusError Add(MsgCounterType msg_cnt_ref, ResultMessageCallback cb, void* ctx)
+void Process(const ResultMessage* result_msg)
+void Tick()

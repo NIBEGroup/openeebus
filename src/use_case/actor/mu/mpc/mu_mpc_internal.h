@@ -23,7 +23,9 @@
 #include "src/use_case/actor/common/eebus_monitor_container.h"
 #include "src/use_case/actor/mu/mpc/mu_mpc_measurement.h"
 #include "src/use_case/actor/mu/mpc/mu_mpc_monitor.h"
+#include "src/use_case/api/mu_mpc_listener_interface.h"
 #include "src/use_case/model/load_limit_types.h"
+#include "src/use_case/use_case.h"
 
 typedef struct MuMpcUseCase MuMpcUseCase;
 
@@ -35,9 +37,11 @@ struct MuMpcUseCase {
 
   EebusMonitorContainer monitor_container;
 
-  UseCaseScenario use_case_scenarios[5];
+  MuMpcListenerObject* mu_mpc_listener;
 
-  size_t use_case_scenarios_size;
+  UseCaseScenario mu_mpc_scenarios[5];
+
+  size_t mu_mpc_scenarios_size;
   UseCaseInfo mu_mpc_use_case_info;
 };
 

@@ -27,7 +27,10 @@ target_sources(${PROJECT_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/../common/pairing_cmd.c
     hpsrv.c
     cs_lpc_listener.c
+    cs_lpc_approver.c
     cs_lpp_listener.c
+    compressor_ohpcf_listener.c
+    mu_mpc_listener.c
 )
 
 target_include_directories(${PROJECT_NAME}

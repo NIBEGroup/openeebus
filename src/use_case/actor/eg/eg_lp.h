@@ -22,6 +22,7 @@
 #ifndef SRC_USE_CASE_ACTOR_EG_EG_LP_H_
 #define SRC_USE_CASE_ACTOR_EG_EG_LP_H_
 
+#include "src/spine/api/feature_local_interface.h"
 #include "src/spine/entity/entity_local.h"
 #include "src/spine/model/common_data_types.h"
 #include "src/use_case/api/eg_lp_listener_interface.h"
@@ -72,6 +73,25 @@ EebusError
 EgLpGetActivePowerLimit(const EgLpUseCaseObject* self, const EntityAddressType* remote_entity_addr, LoadLimit* limit);
 
 /**
+ * @brief Request the active power limit from the Controllable System
+ *
+ * Sends a READ request for the active power limit matching the energy direction
+ * of this use case instance. The reply is delivered asynchronously via @p cb.
+ *
+ * @param self LP EG Use Case instance to send the read request with
+ * @param remote_entity_addr Remote entity address of the e.g. EVSE
+ * @param cb Optional callback invoked when the reply is received, may be NULL
+ * @param ctx Optional context pointer passed to @p cb, may be NULL
+ * @return kEebusErrorOk if the request was sent successfully, error code otherwise
+ */
+EebusError EgLpReadActivePowerLimit(
+    const EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
+);
+
+/**
  * @brief Send the new active power consumption limit
  *
  * @param self LP EG Use Case instance to send the active power consumption limit with
@@ -79,8 +99,13 @@ EgLpGetActivePowerLimit(const EgLpUseCaseObject* self, const EntityAddressType* 
  * @param limit The active power consumption limit to be sent
  * @return kEebusErrorOk on success, error code otherwise
  */
-EebusError
-EgLpSetActivePowerLimit(EgLpUseCaseObject* self, const EntityAddressType* remote_entity_addr, const LoadLimit* limit);
+EebusError EgLpSetActivePowerLimit(
+    EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    const LoadLimit* limit,
+    ResultMessageCallback cb,
+    void* ctx
+);
 
 //-------------------------------------------------------------------------------------------//
 //
@@ -103,6 +128,26 @@ EebusError EgLpGetFailsafeActivePowerLimit(
 );
 
 /**
+ * @brief Request the failsafe active power limit from the Controllable System
+ *
+ * Sends a READ request for the failsafe active power limit key matching the
+ * energy direction of this use case instance. The reply is delivered
+ * asynchronously via @p cb.
+ *
+ * @param self LP EG Use Case instance to send the read request with
+ * @param remote_entity_addr Remote entity address of the e.g. EVSE
+ * @param cb Optional callback invoked when the reply is received, may be NULL
+ * @param ctx Optional context pointer passed to @p cb, may be NULL
+ * @return kEebusErrorOk if the request was sent successfully, error code otherwise
+ */
+EebusError EgLpReadFailsafeActivePowerLimit(
+    const EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
+);
+
+/**
  * @brief Send new Failsafe  Active Power Limit
  *
  * @param remote_entity_addr Remote entity address of the e.g. EVSE
@@ -112,7 +157,9 @@ EebusError EgLpGetFailsafeActivePowerLimit(
 EebusError EgLpSetFailsafeActivePowerLimit(
     EgLpUseCaseObject* self,
     const EntityAddressType* remote_entity_addr,
-    const ScaledValue* power_limit
+    const ScaledValue* power_limit,
+    ResultMessageCallback cb,
+    void* ctx
 );
 
 /**
@@ -130,6 +177,25 @@ EebusError EgLpGetFailsafeDurationMinimum(
 );
 
 /**
+ * @brief Request the failsafe duration minimum from the Controllable System
+ *
+ * Sends a READ request for the failsafe duration minimum key. The reply is
+ * delivered asynchronously via @p cb.
+ *
+ * @param self LP EG Use Case instance to send the read request with
+ * @param remote_entity_addr Remote entity address of the e.g. EVSE
+ * @param cb Optional callback invoked when the reply is received, may be NULL
+ * @param ctx Optional context pointer passed to @p cb, may be NULL
+ * @return kEebusErrorOk if the request was sent successfully, error code otherwise
+ */
+EebusError EgLpReadFailsafeDurationMinimum(
+    const EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
+);
+
+/**
  * @brief Send the new Failsafe Duration Minimum
  *
  * @param remote_entity_addr Remote entity address of the e.g. EVSE
@@ -139,7 +205,52 @@ EebusError EgLpGetFailsafeDurationMinimum(
 EebusError EgLpSetFailsafeDurationMinimum(
     EgLpUseCaseObject* self,
     const EntityAddressType* remote_entity_addr,
-    const EebusDuration* duration
+    const EebusDuration* duration,
+    ResultMessageCallback cb,
+    void* ctx
+);
+
+//-------------------------------------------------------------------------------------------//
+//
+// Scenario 4
+//
+//-------------------------------------------------------------------------------------------//
+
+/**
+ * @brief Get the power nominal max from the Controllable System
+ *
+ * Returns powerConsumptionNominalMax / powerProductionNominalMax depending on the energy direction,
+ * or the contractual variant if the nominal max is not available.
+ *
+ * @param self LP EG Use Case instance
+ * @param remote_entity_addr Remote entity address
+ * @param power_limit Output buffer for the nominal max value, shall not be NULL
+ * @return kEebusErrorOk on success, error code otherwise
+ */
+EebusError EgLpGetPowerNominalMax(
+    const EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ScaledValue* power_limit
+);
+
+/**
+ * @brief Request the power nominal max from the Controllable System
+ *
+ * Sends a READ request for the power nominal max characteristic matching the
+ * energy direction of this use case instance. The reply is delivered
+ * asynchronously via @p cb.
+ *
+ * @param self LP EG Use Case instance to send the read request with
+ * @param remote_entity_addr Remote entity address of the e.g. EVSE
+ * @param cb Optional callback invoked when the reply is received, may be NULL
+ * @param ctx Optional context pointer passed to @p cb, may be NULL
+ * @return kEebusErrorOk if the request was sent successfully, error code otherwise
+ */
+EebusError EgLpReadPowerNominalMax(
+    const EgLpUseCaseObject* self,
+    const EntityAddressType* remote_entity_addr,
+    ReplyMessageCallback cb,
+    void* ctx
 );
 
 //-------------------------------------------------------------------------------------------//
@@ -168,9 +279,10 @@ void EgLpStopHeartbeat(EgLpUseCaseObject* self);
  * @brief Check whether there was a heartbeat received within the last 2 minutes
  *
  * @param self EG LP Use Case instance to check the heartbeat data with
+ * @param remote_entity_addr Remote entity address to check the heartbeat for
  * @return true if check is passed, false otherwise
  */
-bool EgLpIsHeartbeatWithinDuration(EgLpUseCaseObject* self);
+bool EgLpIsHeartbeatWithinDuration(EgLpUseCaseObject* self, const EntityAddressType* remote_entity_addr);
 
 #ifdef __cplusplus
 }

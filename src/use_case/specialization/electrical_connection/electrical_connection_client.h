@@ -116,7 +116,9 @@ EebusError ElectricalConnectionClientRequestPermittedValueSets(
 EebusError ElectricalConnectionClientRequestCharacteristics(
     ElectricalConnectionClient* self,
     const ElectricalConnectionCharacteristicListDataSelectorsType* selectors,
-    const ElectricalConnectionCharacteristicDataElementsType* elements
+    const ElectricalConnectionCharacteristicDataElementsType* elements,
+    ReplyMessageCallback cb,
+    void* ctx
 );
 
 #ifdef __cplusplus

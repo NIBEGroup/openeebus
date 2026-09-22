@@ -42,8 +42,8 @@ struct GcpMgcpUseCase {
   EebusMonitorContainer monitor_container;
 
   /** Dynamically built scenario array (scenarios 1–7, up to 7 entries) */
-  UseCaseScenario use_case_scenarios[7];
-  size_t use_case_scenarios_size;
+  UseCaseScenario gcp_mgcp_scenarios[7];
+  size_t gcp_mgcp_scenarios_size;
 
   bool has_scenario1;
 

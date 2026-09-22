@@ -25,6 +25,7 @@
 extern "C" {
 #endif  // __cplusplus
 
+#include "src/spine/api/feature_local_interface.h"
 #include "src/spine/model/device_configuration_types.h"
 #include "src/use_case/specialization/device_configuration/device_configuration_common.h"
 #include "src/use_case/specialization/feature_info_client.h"
@@ -98,7 +99,9 @@ EebusError DeviceConfigurationClientRequestKeyValueDescription(
 EebusError DeviceConfigurationClientRequestKeyValue(
     DeviceConfigurationClient* self,
     const DeviceConfigurationKeyValueListDataSelectorsType* selectors,
-    const DeviceConfigurationKeyValueDataElementsType* elements
+    const DeviceConfigurationKeyValueDataElementsType* elements,
+    ReplyMessageCallback cb,
+    void* ctx
 );
 
 /**
@@ -116,7 +119,9 @@ EebusError DeviceConfigurationClientRequestKeyValue(
  */
 EebusError DeviceConfigurationClientWriteKeyValueList(
     DeviceConfigurationClient* self,
-    const DeviceConfigurationKeyValueListDataType* key_value_list
+    const DeviceConfigurationKeyValueListDataType* key_value_list,
+    ResultMessageCallback cb,
+    void* ctx
 );
 
 #ifdef __cplusplus

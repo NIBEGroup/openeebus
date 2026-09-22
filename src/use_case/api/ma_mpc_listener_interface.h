@@ -47,8 +47,8 @@ typedef struct MaMpcListenerObject MaMpcListenerObject;
  */
 struct MaMpcListenerInterface {
   void (*destruct)(MaMpcListenerObject* self);
-  void (*on_remote_entity_connect)(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
-  void (*on_remote_entity_disconnect)(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
+  void (*on_remote_mu_added)(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
+  void (*on_remote_mu_removed)(MaMpcListenerObject* self, const EntityAddressType* entity_addr);
   void (*on_measurement_receive)(
       MaMpcListenerObject* self,
       MuMpcMeasurementNameId name_id,
@@ -80,16 +80,16 @@ struct MaMpcListenerObject {
 #define MA_MPC_LISTENER_DESTRUCT(obj) (MA_MPC_LISTENER_INTERFACE(obj)->destruct(obj))
 
 /**
- * @brief Ma Mpc Listener On Remote Entity Connect caller definition
+ * @brief Ma Mpc Listener On Remote MU Added caller definition
  */
-#define MA_MPC_LISTENER_ON_REMOTE_ENTITY_CONNECT(obj, entity_addr) \
-  (MA_MPC_LISTENER_INTERFACE(obj)->on_remote_entity_connect(obj, entity_addr))
+#define MA_MPC_LISTENER_ON_REMOTE_MU_ADDED(obj, entity_addr) \
+  (MA_MPC_LISTENER_INTERFACE(obj)->on_remote_mu_added(obj, entity_addr))
 
 /**
- * @brief Ma Mpc Listener On Remote Entity Disconnect caller definition
+ * @brief Ma Mpc Listener On Remote MU Removed caller definition
  */
-#define MA_MPC_LISTENER_ON_REMOTE_ENTITY_DISCONNECT(obj, entity_addr) \
-  (MA_MPC_LISTENER_INTERFACE(obj)->on_remote_entity_disconnect(obj, entity_addr))
+#define MA_MPC_LISTENER_ON_REMOTE_MU_REMOVED(obj, entity_addr) \
+  (MA_MPC_LISTENER_INTERFACE(obj)->on_remote_mu_removed(obj, entity_addr))
 
 /**
  * @brief Ma Mpc Listener On Measurement Receive caller definition

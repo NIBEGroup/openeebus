@@ -41,7 +41,8 @@
 #include "src/ship/tls_certificate/tls_certificate.h"
 #include "src/ship/websocket/websocket_debug.h"
 
-static const size_t kWriteQueueSize = 50;
+static const size_t kWriteQueueSize  = 50;
+static const size_t kMaxInputMsgSize = EEBUS_WEBSOCKET_MAX_INPUT_MSG_SIZE;
 
 typedef struct WriteMessage WriteMessage;
 
@@ -98,18 +99,19 @@ void WebsocketWrQueueMsgRelease(void* msg) {
 void WebsocketDestruct(WebsocketObject* self) {
   Websocket* const ws = WEBSOCKET(self);
 
-  ws->wsi = NULL;
+  ws->wsi       = NULL;
+  ws->is_closed = true;
+
+  if (ws->lws_ctx != NULL) {
+    lws_context_destroy(ws->lws_ctx);
+    ws->lws_ctx = NULL;
+  }
 
   EebusMutexDelete(ws->wr_mutex);
   ws->wr_mutex = NULL;
 
   EebusQueueDelete(ws->wr_queue);
   ws->wr_queue = NULL;
-
-  if (ws->lws_ctx != NULL) {
-    lws_context_destroy(ws->lws_ctx);
-    ws->lws_ctx = NULL;
-  }
 
   if (ws->buf_tmp != NULL) {
     EEBUS_FREE(ws->buf_tmp);
@@ -192,15 +194,23 @@ void WebsocketStaggerCallback(lws_sorted_usec_list_t* sul) {
     if (!WEBSOCKET_IS_CLOSED(WEBSOCKET_OBJECT(ws))) {
       WEBSOCKET_SCHEDULE_WRITE(WEBSOCKET_OBJECT(ws));
     }
-  }
 
-  lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
+    lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
+  }
 }
 
 // LWS event handlers
 
 int WebsocketOnWritable(WebsocketObject* self) {
   Websocket* const ws = (Websocket*)WEBSOCKET(self);
+
+  // Snapshot wsi once: WebsocketClose() can set ws->wsi = NULL from another thread.
+  // If wsi is non-NULL here the LWS wsi object is still alive — lws_context_destroy
+  // runs only after the LWS service thread exits.
+  struct lws* const wsi = ws->wsi;
+  if (wsi == NULL) {
+    return 0;
+  }
 
   WriteMessage wr_msg = {0};
 
@@ -213,7 +223,7 @@ int WebsocketOnWritable(WebsocketObject* self) {
   const size_t sz = wr_msg.data_size - LWS_PRE;
 
   WEBSOCKET_DEBUG_HEXDUMP(&wr_msg.data[LWS_PRE], sz);
-  const int n = lws_write(ws->wsi, &wr_msg.data[LWS_PRE], sz, LWS_WRITE_BINARY);
+  const int n = lws_write(wsi, &wr_msg.data[LWS_PRE], sz, LWS_WRITE_BINARY);
 
   EEBUS_FREE(wr_msg.data);
   if ((n < 0) || ((size_t)n != sz)) {
@@ -221,7 +231,7 @@ int WebsocketOnWritable(WebsocketObject* self) {
     return -1;
   }
 
-  lws_callback_on_writable(ws->wsi);
+  lws_callback_on_writable(wsi);
   return 0;
 }
 
@@ -257,10 +267,17 @@ void BufTmpRelease(Websocket* self) {
 
 int WebsocketOnReceive(WebsocketObject* self, void* in, size_t len) {
   Websocket* const ws = (Websocket*)WEBSOCKET(self);
-  WEBSOCKET_DEBUG_HEXDUMP(in, len);
   if (ws->wsi == NULL) {
     return -1;
   }
+
+  if ((len > kMaxInputMsgSize) || (ws->buf_tmp_size > kMaxInputMsgSize - len)) {
+    WEBSOCKET_DEBUG_PRINTF("%s(), input message exceeds maximum size (%zu), closing\n", __func__, kMaxInputMsgSize);
+    BufTmpRelease(ws);
+    return -1;
+  }
+
+  WEBSOCKET_DEBUG_HEXDUMP(in, len);
 
   if (lws_is_final_fragment(ws->wsi) && !lws_remaining_packet_payload(ws->wsi)) {
     if (ws->buf_tmp != NULL) {
@@ -291,6 +308,10 @@ int WebsocketOnClose(WebsocketObject* self) {
  * @return The identity, to be released with StringDelete(), or NULL
  */
 static const char* WebsocketGetPeerIdentity(struct lws* wsi, const char* (*calc)(const uint8_t*, size_t)) {
+  if (wsi == NULL) {
+    return NULL;
+  }
+
   static const size_t kMaxCertSize = 2048;
 
   char* const buf = (char*)EEBUS_MALLOC(kMaxCertSize);

@@ -59,5 +59,5 @@ void MaOnMeasurementDescriptionDataUpdate(const UseCase* use_case, const EventPa
     return;
   }
 
-  MeasurementClientRequestData(&mcl, NULL, NULL);
+  MeasurementClientRequestData(&mcl, NULL, NULL, NULL, NULL);
 }

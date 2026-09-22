@@ -23,10 +23,10 @@
 using std::literals::string_view_literals::operator""sv;
 
 struct ShipCmiServerWaitStateTestInput {
-  std::string_view description        = ""sv;
-  const char* close_error_msg         = "CMI server wait failed";
-  ShipConnectionQueueMsgType msg_type = kShipConnectionQueueMsgTypeDataReceived;
-  SmeState expected_sme_state         = kSmeStateError;
+  std::string_view description{""sv};
+  const char* close_error_msg{"CMI server wait failed"};
+  ShipConnectionQueueMsgType msg_type{kShipConnectionQueueMsgTypeDataReceived};
+  SmeState expected_sme_state{kSmeStateError};
 };
 
 class ShipConnectionServerCmiWaitStateTests : public ShipConnectionTestSuite,
@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& os, const ShipCmiServerWaitStateTestInput
 
 TEST_P(ShipConnectionServerCmiWaitStateTests, CmiServerWaitReceivedReplyTest) {
   // Arrange: Create message queue and add message to it
-  ShipConnectionQueueMessage queue_msg = {GetParam().msg_type, {NULL}};
+  ShipConnectionQueueMessage queue_msg{GetParam().msg_type, {nullptr}};
   EEBUS_QUEUE_SEND(sc.msg_queue, &queue_msg, sizeof(queue_msg));
 
   // Expect timer function calls
@@ -61,7 +61,7 @@ TEST_P(ShipConnectionServerCmiWaitStateTests, CmiServerWaitReceivedReplyTest) {
   CmiStateServerWait(&sc);
 
   // Assert: SME state changed accordingly
-  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, NULL), GetParam().expected_sme_state);
+  EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, nullptr), GetParam().expected_sme_state);
 }
 
 INSTANTIATE_TEST_SUITE_P(

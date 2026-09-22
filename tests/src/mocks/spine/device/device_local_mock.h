@@ -58,6 +58,7 @@ class DeviceLocalGMockInterface : public DeviceGMockInterface {
   virtual NodeManagementObject* GetNodeManagement(const DeviceLocalObject* self)                                   = 0;
   virtual BindingManagerObject* GetBindingManager(const DeviceLocalObject* self)                                   = 0;
   virtual SubscriptionManagerObject* GetSubscriptionManager(const DeviceLocalObject* self)                         = 0;
+  virtual EventsManagerObject* GetEventsManager(const DeviceLocalObject* self)                                     = 0;
   virtual void
   NotifySubscribers(const DeviceLocalObject* self, const FeatureAddressType* feature_addr, const CmdType* cmd)
       = 0;
@@ -93,6 +94,7 @@ class DeviceLocalGMock : public DeviceLocalGMockInterface {
   MOCK_METHOD1(GetNodeManagement, NodeManagementObject*(const DeviceLocalObject*));
   MOCK_METHOD1(GetBindingManager, BindingManagerObject*(const DeviceLocalObject*));
   MOCK_METHOD1(GetSubscriptionManager, SubscriptionManagerObject*(const DeviceLocalObject*));
+  MOCK_METHOD1(GetEventsManager, EventsManagerObject*(const DeviceLocalObject*));
   MOCK_METHOD3(NotifySubscribers, void(const DeviceLocalObject*, const FeatureAddressType*, const CmdType*));
   MOCK_METHOD1(CreateInformation, NodeManagementDetailedDiscoveryDeviceInformationType*(const DeviceLocalObject*));
   MOCK_METHOD1(Lock, void(DeviceLocalObject*));

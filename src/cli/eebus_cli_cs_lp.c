@@ -56,10 +56,12 @@ static EebusError CsLpCliConstruct(CsLpCli* self, EnergyDirectionType energy_dir
 static void HandleCmdGetPowerLimit(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
 static void HandleCmdGetFailsafeLimit(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
 static void HandleCmdGetFailsafeDuration(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
+static void HandleCmdGetNominalMax(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
 static void HandleCmdGet(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
 static void HandleCmdSetPowerLimit(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
 static void HandleCmdSetFailsafeLimit(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
 static void HandleCmdSetFailsafeDuration(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
+static void HandleCmdSetNominalMax(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
 static void HandleCmdSet(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
 static void HandleCmdStart(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
 static void HandleCmdStop(const CsLpCli* self, const char* const* tokens, size_t num_tokens);
@@ -159,6 +161,20 @@ void HandleCmdGetFailsafeDuration(const CsLpCli* self, const char* const* tokens
   printf("is changeable=%s\n", EebusBoolToString(is_changeable));
 }
 
+void HandleCmdGetNominalMax(const CsLpCli* self, const char* const* tokens, size_t num_tokens) {
+  UNUSED(tokens);
+  UNUSED(num_tokens);
+
+  ScaledValue nominal_max = {0};
+  if (CsLpGetNominalMax(self->cs_lp, &nominal_max) != kEebusErrorOk) {
+    printf("%s getting Nominal Max failed\n", self->cmd_name_caps);
+    return;
+  }
+
+  printf("%s ", self->cmd_name_caps);
+  ScaledValuePrint("Nominal Max: value=%s\n", &nominal_max);
+}
+
 void HandleCmdGet(const CsLpCli* self, const char* const* tokens, size_t num_tokens) {
   if (num_tokens != 3) {
     printf("Insufficient arguments for %s get command\n", self->cmd_name);
@@ -172,6 +188,8 @@ void HandleCmdGet(const CsLpCli* self, const char* const* tokens, size_t num_tok
     HandleCmdGetFailsafeLimit(self, tokens, num_tokens);
   } else if (strcmp(subcommand, "failsafe_duration") == 0) {
     HandleCmdGetFailsafeDuration(self, tokens, num_tokens);
+  } else if (strcmp(subcommand, "nominal_max") == 0) {
+    HandleCmdGetNominalMax(self, tokens, num_tokens);
   } else {
     printf("Unknown subcommand for %s get: %s\n", self->cmd_name, subcommand);
   }
@@ -266,6 +284,26 @@ void HandleCmdSetFailsafeDuration(const CsLpCli* self, const char* const* tokens
   printf("%s setting Failsafe Duration minimum succeeded\n", self->cmd_name_caps);
 }
 
+void HandleCmdSetNominalMax(const CsLpCli* self, const char* const* tokens, size_t num_tokens) {
+  if (num_tokens != 4) {
+    printf("Insufficient arguments for %s set nominal_max command\n", self->cmd_name);
+    return;
+  }
+
+  ScaledValue nominal_max = {0};
+  if (ScaledValueParse(tokens[3], &nominal_max) != kEebusErrorOk) {
+    printf("%s invalid value for Nominal Max: %s\n", self->cmd_name_caps, tokens[3]);
+    return;
+  }
+
+  if (CsLpSetNominalMax(self->cs_lp, &nominal_max) != kEebusErrorOk) {
+    printf("%s setting Nominal Max failed\n", self->cmd_name_caps);
+    return;
+  }
+
+  printf("%s setting Nominal Max succeeded\n", self->cmd_name_caps);
+}
+
 void HandleCmdSet(const CsLpCli* self, const char* const* tokens, size_t num_tokens) {
   if (num_tokens < 3) {
     printf("Insufficient arguments for %s set command\n", self->cmd_name);
@@ -279,6 +317,8 @@ void HandleCmdSet(const CsLpCli* self, const char* const* tokens, size_t num_tok
     HandleCmdSetFailsafeLimit(self, tokens, num_tokens);
   } else if (strcmp(subcommand, "failsafe_duration") == 0) {
     HandleCmdSetFailsafeDuration(self, tokens, num_tokens);
+  } else if (strcmp(subcommand, "nominal_max") == 0) {
+    HandleCmdSetNominalMax(self, tokens, num_tokens);
   } else {
     printf("Unknown subcommand for %s set: %s\n", self->cmd_name, subcommand);
   }

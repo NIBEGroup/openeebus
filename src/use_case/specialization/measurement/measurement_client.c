@@ -46,7 +46,15 @@ EebusError MeasurementClientRequestDescriptions(
     const MeasurementDescriptionListDataSelectorsType* selectors,
     const MeasurementDescriptionDataElementsType* elements
 ) {
-  return RequestData(&self->feature_info_client, kFunctionTypeMeasurementDescriptionListData, selectors, elements);
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      kFunctionTypeMeasurementDescriptionListData,
+      selectors,
+      elements,
+      NULL,
+      NULL
+  );
 }
 
 EebusError MeasurementClientRequestConstraints(
@@ -54,13 +62,31 @@ EebusError MeasurementClientRequestConstraints(
     const MeasurementConstraintsListDataSelectorsType* selector,
     const MeasurementConstraintsDataElementsType* elements
 ) {
-  return RequestData(&self->feature_info_client, kFunctionTypeMeasurementConstraintsListData, selector, elements);
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      kFunctionTypeMeasurementConstraintsListData,
+      selector,
+      elements,
+      NULL,
+      NULL
+  );
 }
 
 EebusError MeasurementClientRequestData(
     MeasurementClient* self,
     const MeasurementListDataSelectorsType* selector,
-    const MeasurementDataElementsType* elements
+    const MeasurementDataElementsType* elements,
+    ReplyMessageCallback cb,
+    void* ctx
 ) {
-  return RequestData(&self->feature_info_client, kFunctionTypeMeasurementListData, selector, elements);
+  return FEATURE_LOCAL_READ_FROM_REMOTE(
+      self->feature_info_client.local_feature,
+      self->feature_info_client.remote_feature,
+      kFunctionTypeMeasurementListData,
+      selector,
+      elements,
+      cb,
+      ctx
+  );
 }

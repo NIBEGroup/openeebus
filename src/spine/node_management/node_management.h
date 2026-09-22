@@ -50,10 +50,22 @@ static inline void NodeMnagementDelete(NodeManagementObject* node_management) {
  * @brief Request detailed discovery data from a remote device
  */
 EebusError RequestDetailedDiscovery(
-    NodeManagementObject* self, const char* remote_device_ski, const char* remote_device_addr, SenderObject* sender);
+    NodeManagementObject* self,
+    const char* remote_device_addr,
+    const char* ski,
+    SenderObject* sender,
+    ReplyMessageCallback cb,
+    void* ctx
+);
 
 EebusError RequestUseCaseData(
-    NodeManagementObject* self, const char* remote_device_ski, const char* remote_device_addr, SenderObject* sender);
+    NodeManagementObject* self,
+    const char* remote_device_addr,
+    const char* ski,
+    SenderObject* sender,
+    ReplyMessageCallback cb,
+    void* ctx
+);
 
 #ifdef __cplusplus
 }

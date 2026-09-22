@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/spine/api/events.h"
+#include "src/spine/events/events.h"
 
 #include "src/common/eebus_malloc.h"
 #include "src/common/vector.h"
@@ -27,7 +27,27 @@ struct EventHandlerInfo {
   void* ctx;
 };
 
-static Vector handlers = {0};
+typedef struct EventsManager EventsManager;
+
+struct EventsManager {
+  EventsManagerObject obj;
+
+  Vector handlers;
+};
+
+#define EVENTS_MANAGER(obj) ((EventsManager*)(obj))
+
+static void Destruct(EventsManagerObject* self);
+static EebusError Subscribe(EventsManagerObject* self, EventHandlerLevel level, EventHandler handler, void* ctx);
+static EebusError Unsubscribe(EventsManagerObject* self, EventHandlerLevel level, EventHandler handler, void* ctx);
+static void Publish(EventsManagerObject* self, const EventPayload* payload);
+
+static const EventsManagerInterface events_manager_methods = {
+    .destruct    = Destruct,
+    .subscribe   = Subscribe,
+    .unsubscribe = Unsubscribe,
+    .publish     = Publish,
+};
 
 EventHandlerInfo* EventHandlerInfoCreate(EventHandlerLevel level, EventHandler handler, void* ctx) {
   EventHandlerInfo* info = EEBUS_MALLOC(sizeof(*info));
@@ -43,9 +63,10 @@ EventHandlerInfo* EventHandlerInfoCreate(EventHandlerLevel level, EventHandler h
 
 void EventHandlerInfoDelete(EventHandlerInfo* info) { EEBUS_FREE(info); }
 
-const EventHandlerInfo* EventHandlerFind(EventHandlerLevel level, EventHandler handler, void* ctx) {
-  for (size_t i = 0; i < VectorGetSize(&handlers); ++i) {
-    EventHandlerInfo* info = VectorGetElement(&handlers, i);
+const EventHandlerInfo*
+EventHandlerFind(const EventsManager* self, EventHandlerLevel level, EventHandler handler, void* ctx) {
+  for (size_t i = 0; i < VectorGetSize(&self->handlers); ++i) {
+    EventHandlerInfo* info = VectorGetElement(&self->handlers, i);
     if ((info->level == level) && (info->handler == handler) && (info->ctx == ctx)) {
       return info;
     }
@@ -54,8 +75,32 @@ const EventHandlerInfo* EventHandlerFind(EventHandlerLevel level, EventHandler h
   return NULL;
 }
 
-EebusError EventSubscribe(EventHandlerLevel level, EventHandler handler, void* ctx) {
-  if (EventHandlerFind(level, handler, ctx) != NULL) {
+void EventsManagerConstruct(EventsManager* self) {
+  EVENTS_MANAGER_INTERFACE(self) = &events_manager_methods;
+  VectorConstruct(&self->handlers);
+}
+
+EventsManagerObject* EventsManagerCreate(void) {
+  EventsManager* const events_manager = EEBUS_MALLOC(sizeof(*events_manager));
+  if (events_manager == NULL) {
+    return NULL;
+  }
+
+  EventsManagerConstruct(events_manager);
+  return EVENTS_MANAGER_OBJECT(events_manager);
+}
+
+void Destruct(EventsManagerObject* self) {
+  EventsManager* const events_manager = EVENTS_MANAGER(self);
+  for (size_t i = 0; i < VectorGetSize(&events_manager->handlers); ++i) {
+    EventHandlerInfoDelete(VectorGetElement(&events_manager->handlers, i));
+  }
+  VectorDestruct(&events_manager->handlers);
+}
+
+EebusError Subscribe(EventsManagerObject* self, EventHandlerLevel level, EventHandler handler, void* ctx) {
+  EventsManager* const events_manager = EVENTS_MANAGER(self);
+  if (EventHandlerFind(events_manager, level, handler, ctx) != NULL) {
     return kEebusErrorOk;
   }
 
@@ -64,30 +109,34 @@ EebusError EventSubscribe(EventHandlerLevel level, EventHandler handler, void* c
     return kEebusErrorMemoryAllocate;
   }
 
-  VectorPushBack(&handlers, new_handler_info);
+  VectorPushBack(&events_manager->handlers, new_handler_info);
   return kEebusErrorOk;
 }
 
-EebusError EventUnsubscribe(EventHandlerLevel level, EventHandler handler, void* ctx) {
-  const EventHandlerInfo* const info = EventHandlerFind(level, handler, ctx);
+EebusError Unsubscribe(EventsManagerObject* self, EventHandlerLevel level, EventHandler handler, void* ctx) {
+  EventsManager* const events_manager = EVENTS_MANAGER(self);
+  const EventHandlerInfo* const info  = EventHandlerFind(events_manager, level, handler, ctx);
   if (info == NULL) {
     return kEebusErrorNoChange;
   }
 
-  VectorRemove(&handlers, (void*)info);
+  VectorRemove(&events_manager->handlers, (void*)info);
   EventHandlerInfoDelete((void*)info);
-  if (VectorGetSize(&handlers) == 0) {
-    // Required to pass the memory check test as vector can keep the allocated buffer
-    VectorClear(&handlers);
+  if (VectorGetSize(&events_manager->handlers) == 0) {
+    VectorClear(&events_manager->handlers);
   }
 
   return kEebusErrorOk;
 }
 
-void EventPublish(const EventPayload* payload) {
-  // TODO: Check if level is required and should be analysed
-  for (size_t i = 0; i < VectorGetSize(&handlers); ++i) {
-    EventHandlerInfo* info = VectorGetElement(&handlers, i);
+void Publish(EventsManagerObject* self, const EventPayload* payload) {
+  if (payload == NULL) {
+    return;
+  }
+
+  EventsManager* const events_manager = EVENTS_MANAGER(self);
+  for (size_t i = 0; i < VectorGetSize(&events_manager->handlers); ++i) {
+    EventHandlerInfo* info = VectorGetElement(&events_manager->handlers, i);
     info->handler(payload, info->ctx);
   }
 }

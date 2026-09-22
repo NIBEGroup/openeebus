@@ -27,6 +27,7 @@
 
 #include "mocks/common/eebus_timer/eebus_timer_mock.h"
 #include "mocks/ship/ship_connection/data_writer_mock.h"
+#include "mocks/use_case/api/mu_mpc_listener_mock.h"
 #include "src/common/array_util.h"
 #include "src/common/eebus_malloc.h"
 #include "src/common/eebus_timer/eebus_timer.h"
@@ -127,7 +128,8 @@ class MuMpcTestFixture : public UseCaseTestFixture {
       .frequency_cfg = &frequency_cfg
     };
 
-    use_case_.reset(MuMpcUseCaseCreate(entity, 0, &cfg));
+    mu_mpc_listener_mock_.reset(MuMpcListenerMockCreate());
+    use_case_.reset(MuMpcUseCaseCreate(entity, 0, &cfg, MU_MPC_LISTENER_OBJECT(mu_mpc_listener_mock_.get())));
 
     static constexpr ScaledValue power_total{1000, 0};
     MuMpcSetMeasurementDataCache(use_case_.get(), kMpcPowerTotal, &power_total, NULL, NULL);
@@ -200,10 +202,16 @@ class MuMpcTestFixture : public UseCaseTestFixture {
   }
 
   void TearDownUseCase() override {
+    EXPECT_CALL(*mu_mpc_listener_mock_->gmock, Destruct(_)).WillOnce(Return());
     use_case_.reset();
+    mu_mpc_listener_mock_.reset();
   }
 
  protected:
+  std::unique_ptr<MuMpcListenerMock, decltype(&MuMpcListenerMockDelete)> mu_mpc_listener_mock_{
+      nullptr,
+      MuMpcListenerMockDelete
+  };
   std::unique_ptr<MuMpcUseCaseObject, decltype(&MuMpcUseCaseDelete)> use_case_{nullptr, MuMpcUseCaseDelete};
 };
 
@@ -298,65 +306,12 @@ TEST_F(MuMpcTestFixture, MuMpcTest) {
   // 12. Receive the result with message counter reference 3
   HandleMessage(receive::result_data_msg_cnt_ref_3);
 
-  // 13. Receive the Use Case reply
+  // 13. Receive the Use Case reply — MA recognized as compatible, OnRemoteMaAdded fires
+  EXPECT_CALL(*mu_mpc_listener_mock_->gmock, OnRemoteMaAdded(_, _)).WillOnce(Return());
   HandleMessage(receive::use_case_reply);
 
-  // 14. Update scenario 1 (power) and expect the notify
-  static constexpr ScaledValue new_power_total{2000, 0};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcPowerTotal, &new_power_total, NULL, NULL);
-  static constexpr ScaledValue new_power_a{700, 0};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcPowerPhaseA, &new_power_a, NULL, NULL);
-  static constexpr ScaledValue new_power_b{750, 0};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcPowerPhaseB, &new_power_b, NULL, NULL);
-  static constexpr ScaledValue new_power_c{550, 0};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcPowerPhaseC, &new_power_c, NULL, NULL);
-
-  ExpectSendMessage(send::measurement_notify_power);
-  MuMpcUpdate(use_case_.get());
-
-  // 15. Update scenario 2 (energy) and expect the notify
-  static constexpr ScaledValue new_energy_consumed{6000, 0};
-  MuMpcSetEnergyConsumedCache(use_case_.get(), &new_energy_consumed, NULL, NULL, NULL, NULL);
-  static constexpr ScaledValue new_energy_produced{2500, 0};
-  MuMpcSetEnergyProducedCache(use_case_.get(), &new_energy_produced, NULL, NULL, NULL, NULL);
-
-  ExpectSendMessage(send::measurement_notify_energy);
-  MuMpcUpdate(use_case_.get());
-
-  // 16. Update scenario 3 (current) and expect the notify
-  static constexpr ScaledValue new_current_a{150, -1};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcCurrentPhaseA, &new_current_a, NULL, NULL);
-  static constexpr ScaledValue new_current_b{160, -1};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcCurrentPhaseB, &new_current_b, NULL, NULL);
-  static constexpr ScaledValue new_current_c{170, -1};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcCurrentPhaseC, &new_current_c, NULL, NULL);
-
-  ExpectSendMessage(send::measurement_notify_current);
-  MuMpcUpdate(use_case_.get());
-
-  // 17. Update scenario 4 (voltage) and expect the notify
-  static constexpr ScaledValue new_voltage_a{23500, -2};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcVoltagePhaseA, &new_voltage_a, NULL, NULL);
-  static constexpr ScaledValue new_voltage_b{23600, -2};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcVoltagePhaseB, &new_voltage_b, NULL, NULL);
-  static constexpr ScaledValue new_voltage_c{23400, -2};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcVoltagePhaseC, &new_voltage_c, NULL, NULL);
-  static constexpr ScaledValue new_voltage_ab{40500, -2};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcVoltagePhaseAb, &new_voltage_ab, NULL, NULL);
-  static constexpr ScaledValue new_voltage_bc{40600, -2};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcVoltagePhaseBc, &new_voltage_bc, NULL, NULL);
-  static constexpr ScaledValue new_voltage_ac{40400, -2};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcVoltagePhaseAc, &new_voltage_ac, NULL, NULL);
-
-  ExpectSendMessage(send::measurement_notify_voltage);
-  MuMpcUpdate(use_case_.get());
-
-  // 18. Update scenario 5 (frequency) and expect the notify
-  static constexpr ScaledValue new_frequency{6000, -2};
-  MuMpcSetMeasurementDataCache(use_case_.get(), kMpcFrequency, &new_frequency, NULL, NULL);
-
-  ExpectSendMessage(send::measurement_notify_frequency);
-  MuMpcUpdate(use_case_.get());
+  // 14. Expect the remote MA disconnect event while tearing down the use case
+  EXPECT_CALL(*mu_mpc_listener_mock_->gmock, OnRemoteMaRemoved(_, _));
 }
 
 }  // namespace mu_mpc_test

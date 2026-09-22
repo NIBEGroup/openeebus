@@ -23,6 +23,8 @@
 
 #include "src/common/eebus_malloc.h"
 #include "src/spine/model/entity_types.h"
+#include "src/use_case/actor/cem/ohpcf/cem_ohpcf.h"
+#include "src/use_case/actor/compressor/ohpcf/compressor_ohpcf.h"
 #include "src/use_case/actor/cs/cs_lp.h"
 #include "src/use_case/actor/eg/eg_lp.h"
 #include "src/use_case/actor/gcp/mgcp/gcp_mgcp.h"
@@ -108,6 +110,27 @@ struct EebusCliInterface {
       const EntityAddressType* remote_entity_address
   );
   /**
+   * @brief Set the Compressor OHPCF use case instance to be used by the CLI handler
+   * @param self Pointer to the EEBUS CLI handler instance
+   * @param cp_ohpcf_use_case Compressor OHPCF use case instance to be used by the CLI handler
+   */
+  void (*set_compressor_ohpcf)(
+      EebusCliObject* self,
+      CompressorOhpcfUseCaseObject* cp_ohpcf_use_case,
+      MuMpcUseCaseObject* mu_mpc_use_case
+  );
+  /**
+   * @brief Set the CEM OHPCF use case instance to be used by the CLI handler
+   * @param self Pointer to the EEBUS CLI handler instance
+   * @param cem_ohpcf_use_case CEM OHPCF use case instance to be used by the CLI handler
+   * @param remote_entity_address CEM OHPCF remote entity address to be used by the CLI handler
+   */
+  void (*set_cem_ohpcf)(
+      EebusCliObject* self,
+      CemOhpcfUseCaseObject* cem_ohpcf_use_case,
+      const EntityAddressType* remote_entity_address
+  );
+  /**
    * @brief Set the GCP MGCP use case instance to be used by the CLI handler
    * @param self Pointer to the EEBUS CLI handler instance
    * @param gcp_mgcp_use_case GCP MGCP use case instance to be used by the CLI handler
@@ -187,6 +210,18 @@ struct EebusCliObject {
  */
 #define EEBUS_CLI_SET_MA_MPC(obj, ma_mpc_use_case, remote_entity_address) \
   (EEBUS_CLI_INTERFACE(obj)->set_ma_mpc(obj, ma_mpc_use_case, remote_entity_address))
+
+/**
+ * @brief EEBUS CLI Set Compressor OHPCF caller definition
+ */
+#define EEBUS_CLI_SET_COMPRESSOR_OHPCF(obj, cp_ohpcf_use_case, mu_mpc_use_case) \
+  (EEBUS_CLI_INTERFACE(obj)->set_compressor_ohpcf(obj, cp_ohpcf_use_case, mu_mpc_use_case))
+
+/**
+ * @brief EEBUS CLI Set CEM OHPCF caller definition
+ */
+#define EEBUS_CLI_SET_CEM_OHPCF(obj, cem_ohpcf_use_case, remote_entity_address) \
+  (EEBUS_CLI_INTERFACE(obj)->set_cem_ohpcf(obj, cem_ohpcf_use_case, remote_entity_address))
 
 /**
  * @brief EEBUS CLI Set GCP MGCP caller definition

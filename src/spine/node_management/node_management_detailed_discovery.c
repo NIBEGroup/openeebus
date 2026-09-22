@@ -32,9 +32,11 @@
 
 EebusError RequestDetailedDiscovery(
     NodeManagementObject* self,
-    const char* remote_device_ski,
     const char* remote_device_addr,
-    SenderObject* sender
+    const char* ski,
+    SenderObject* sender,
+    ReplyMessageCallback cb,
+    void* ctx
 ) {
   static const uint32_t entity_id        = DEVICE_INFORMATION_ADDRESS_ENTITY_ID;
   static const uint32_t* const entity[1] = {&entity_id};
@@ -55,14 +57,24 @@ EebusError RequestDetailedDiscovery(
   };
 
   FeatureLocalObject* const fl = FEATURE_LOCAL_OBJECT(self);
-  return FEATURE_LOCAL_REQUEST_REMOTE_DATA_BY_SENDER_ADDRESS(
-      fl,
-      &cmd,
-      sender,
-      remote_device_ski,
-      &remote_feature_addr,
-      kDefaultMaxResponseDelayMs
-  );
+
+  MsgCounterType msg_cnt = 0;
+  const EebusError err
+      = SEND_READ(sender, FEATURE_GET_ADDRESS(FEATURE_OBJECT(fl)), &remote_feature_addr, &cmd, &msg_cnt);
+
+  if ((err == kEebusErrorOk) && (cb != NULL)) {
+    PENDING_REPLY_CONTAINER_ADD(
+        FEATURE_LOCAL(fl)->pending_replies,
+        msg_cnt,
+        &remote_feature_addr,
+        kFunctionTypeNodeManagementDetailedDiscoveryData,
+        ski,
+        cb,
+        ctx
+    );
+  }
+
+  return err;
 }
 
 EebusError AddDeviceInfo(NodeManagement* self, NodeManagementDetailedDiscoveryDataType* discovery_data) {
@@ -187,8 +199,9 @@ EebusError ProcessReadDetailedDiscoveryData(NodeManagement* self, const Message*
 }
 
 EebusError ProcessReplyDetailedDiscoveryData(NodeManagement* self, const Message* msg) {
-  UNUSED(self);
   DeviceRemoteObject* const dr = msg->device_remote;
+  EventsManagerObject* const events_manager
+      = DEVICE_LOCAL_GET_EVENTS_MANAGER(FEATURE_LOCAL_GET_DEVICE(FEATURE_LOCAL_OBJECT(self)));
 
   const NodeManagementDetailedDiscoveryDataType* const discovery_data
       = (const NodeManagementDetailedDiscoveryDataType*)msg->cmd->data_choice;
@@ -220,18 +233,20 @@ EebusError ProcessReplyDetailedDiscoveryData(NodeManagement* self, const Message
     return kEebusErrorMemoryAllocate;
   }
 
+  FeatureRemoteObject* const new_remote_feature = DEVICE_REMOTE_GET_FEATURE_WITH_ADDRESS(dr, feature_remote_addr);
+
   // Publish event for remote device added
   const EventPayload payload = {
       .ski           = DEVICE_REMOTE_GET_SKI(dr),
       .event_type    = kEventTypeDeviceChange,
       .change_type   = kElementChangeAdd,
       .device        = dr,
-      .feature       = DEVICE_REMOTE_GET_FEATURE_WITH_ADDRESS(dr, feature_remote_addr),
+      .feature       = new_remote_feature,
       .function_data = discovery_data,
       .function_type = kFunctionTypeNodeManagementDetailedDiscoveryData,
   };
 
-  EventPublish(&payload);
+  EVENTS_PUBLISH(events_manager, &payload);
 
   // Publish event for each added remote entity
   for (size_t i = 0; i < VectorGetSize(entities); ++i) {
@@ -247,7 +262,22 @@ EebusError ProcessReplyDetailedDiscoveryData(NodeManagement* self, const Message
         .function_type = kFunctionTypeNodeManagementDetailedDiscoveryData,
     };
 
-    EventPublish(&payload);
+    EVENTS_PUBLISH(events_manager, &payload);
+  }
+
+  if ((msg->request_header != NULL) && (msg->request_header->msg_cnt_ref != NULL)) {
+    const ReplyMessage reply_msg = {
+        .msg_cnt_ref    = *msg->request_header->msg_cnt_ref,
+        .function_data  = discovery_data,
+        .function_type  = kFunctionTypeNodeManagementDetailedDiscoveryData,
+        .feature_local  = FEATURE_LOCAL_OBJECT(self),
+        .feature_remote = new_remote_feature,
+        .entity_remote  = FEATURE_REMOTE_GET_ENTITY(new_remote_feature),
+        .device_remote  = dr,
+        .ski            = DEVICE_REMOTE_GET_SKI(dr),
+    };
+
+    PENDING_REPLY_CONTAINER_PROCESS(self->obj.pending_replies, &reply_msg, kEebusErrorOk);
   }
 
   FeatureAddressDelete(feature_remote_addr);

@@ -29,6 +29,7 @@ static const char* GetAddress(const DeviceObject* self);
 static const DeviceTypeType* GetDeviceType(const DeviceObject* self);
 static const NetworkManagementFeatureSetType* GetFeatureSet(const DeviceObject* self);
 static const NodeManagementDestinationDataType* CreateDestinationData(const DeviceObject* self);
+static DeviceLocalObject* GetLocalDevice(const DeviceRemoteObject* self);
 static const char* GetSki(const DeviceRemoteObject* self);
 static DataReaderObject* GetDataReader(const DeviceRemoteObject* self);
 static void AddEntity(DeviceRemoteObject* self, EntityRemoteObject* entity);
@@ -68,6 +69,7 @@ static const DeviceRemoteInterface device_remote_methods = {
         .create_destination_data = CreateDestinationData,
     },
 
+    .get_local_device               = GetLocalDevice,
     .get_ski                        = GetSki,
     .get_data_reader                = GetDataReader,
     .add_entity                     = AddEntity,
@@ -137,6 +139,11 @@ const NetworkManagementFeatureSetType* GetFeatureSet(const DeviceObject* self) {
 const NodeManagementDestinationDataType* CreateDestinationData(const DeviceObject* self) {
   DeviceRemoteMock* const mock = DEVICE_REMOTE_MOCK(self);
   return mock->gmock->CreateDestinationData(self);
+}
+
+DeviceLocalObject* GetLocalDevice(const DeviceRemoteObject* self) {
+  DeviceRemoteMock* const mock = DEVICE_REMOTE_MOCK(self);
+  return mock->gmock->GetLocalDevice(self);
 }
 
 const char* GetSki(const DeviceRemoteObject* self) {

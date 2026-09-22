@@ -29,7 +29,8 @@ static EebusError Read(
     SenderObject* self,
     const FeatureAddressType* sender_addr,
     const FeatureAddressType* dest_addr,
-    const CmdType* cmd
+    const CmdType* cmd,
+    uint64_t* msg_cnt
 );
 static EebusError
 Reply(SenderObject* self, const HeaderType* request_header, const FeatureAddressType* sender_addr, const CmdType* cmd);
@@ -43,7 +44,8 @@ static EebusError Write(
     SenderObject* self,
     const FeatureAddressType* sender_addr,
     const FeatureAddressType* dest_addr,
-    const CmdType* cmd
+    const CmdType* cmd,
+    uint64_t* msg_cnt
 );
 static EebusError CallSubscribe(
     SenderObject* self,
@@ -122,10 +124,11 @@ EebusError Read(
     SenderObject* self,
     const FeatureAddressType* sender_addr,
     const FeatureAddressType* dest_addr,
-    const CmdType* cmd
+    const CmdType* cmd,
+    uint64_t* msg_cnt
 ) {
   SenderMock* const mock = SENDER_MOCK(self);
-  return mock->gmock->Read(self, sender_addr, dest_addr, cmd);
+  return mock->gmock->Read(self, sender_addr, dest_addr, cmd, msg_cnt);
 }
 
 EebusError
@@ -148,10 +151,11 @@ EebusError Write(
     SenderObject* self,
     const FeatureAddressType* sender_addr,
     const FeatureAddressType* dest_addr,
-    const CmdType* cmd
+    const CmdType* cmd,
+    uint64_t* msg_cnt
 ) {
   SenderMock* const mock = SENDER_MOCK(self);
-  return mock->gmock->Write(self, sender_addr, dest_addr, cmd);
+  return mock->gmock->Write(self, sender_addr, dest_addr, cmd, msg_cnt);
 }
 
 EebusError CallSubscribe(

@@ -132,7 +132,7 @@ EebusError AddBinding(
       .function_type = kFunctionTypeBindingManagementRequestCall,
   };
 
-  EventPublish(&payload);
+  EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(bm->local_device), &payload);
   return kEebusErrorOk;
 }
 
@@ -188,7 +188,7 @@ EebusError RemoveBinding(
       .function_type = kFunctionTypeBindingManagementDeleteCall,
   };
 
-  EventPublish(&payload);
+  EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(bm->local_device), &payload);
   return kEebusErrorOk;
 }
 
@@ -229,7 +229,7 @@ void RemoveEntityBindings(BindingManagerObject* self, EntityRemoteObject* remote
           .local_feature = DEVICE_LOCAL_GET_FEATURE_WITH_ADDRESS(bm->local_device, server_addr),
       };
 
-      EventPublish(&payload);
+      EVENTS_PUBLISH(DEVICE_LOCAL_GET_EVENTS_MANAGER(bm->local_device), &payload);
       FeatureLinkContainerRemove(&bm->binding_entries, binding);
     } else {
       ++i;

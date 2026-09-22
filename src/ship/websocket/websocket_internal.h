@@ -29,6 +29,19 @@
 #include "src/ship/api/tls_certificate_interface.h"
 #include "src/ship/api/websocket_interface.h"
 
+/**
+ * @brief Upper bound in bytes for the total reassembled WebSocket input message size.
+ *
+ * Fragments are accumulated until the final one arrives; if the running total
+ * exceeds this cap the connection is closed and the partial data is discarded.
+ * The default limits memory consumption from unexpectedly large or malformed
+ * messages. Products/builds with different constraints can override this value
+ * at compile time.
+ */
+#ifndef EEBUS_WEBSOCKET_MAX_INPUT_MSG_SIZE
+#define EEBUS_WEBSOCKET_MAX_INPUT_MSG_SIZE (64 * 1024)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus

@@ -49,6 +49,7 @@
 #include "src/spine/model/timetable_types.inc"
 #include "src/spine/model/usecase_information_types.inc"
 #include "src/spine/model/version_types.inc"
+#include "src/spine/model/smart_energy_management_ps_cfg.h"
 
 static const EnumMapping command_classifier_lut[] = {
     {"read", kCommandClassifierTypeRead},
@@ -835,7 +836,7 @@ static const EebusDataCfg data_choice_data_cfg[] = {
     EEBUS_DATA_CHOICE_ELEMENT(sequence, "smartEnergyManagementPsConfigurationRequestCall",
         SmartEnergyManagementPsConfigurationRequestCallType, smart_energy_management_ps_configuration_request_call_cfg),
     EEBUS_DATA_CHOICE_ELEMENT(
-        sequence, "smartEnergyManagementPsData", SmartEnergyManagementPsDataType, smart_energy_management_ps_data_cfg),
+        smart_energy_management_ps, "smartEnergyManagementPsData", SmartEnergyManagementPsDataType, smart_energy_management_ps_data_cfg),
     EEBUS_DATA_CHOICE_ELEMENT(sequence, "smartEnergyManagementPsPriceCalculationRequestCall",
         SmartEnergyManagementPsPriceCalculationRequestCallType,
         smart_energy_management_ps_price_calculation_request_call_cfg),
