@@ -51,7 +51,7 @@ typedef struct {
 /**
  * @brief Prepares the console commands
  */
-void PairingCmdInit(
+void PairingCmdConstruct(
     PairingCmd* self,
     EebusServiceObject* service,
     const TlsCertificateObject* tls_certificate,

@@ -33,7 +33,7 @@ static const char* PairingCmdOwnFingerprint(const PairingCmd* self) {
   );
 }
 
-void PairingCmdInit(
+void PairingCmdConstruct(
     PairingCmd* self,
     EebusServiceObject* service,
     const TlsCertificateObject* tls_certificate,

@@ -498,7 +498,7 @@ static EebusError HpsrvStart(Hpsrv* hpsrv, int32_t port, const char* role, TlsCe
 
   hpsrv->service = EebusServiceCreate(hpsrv->cfg, role, tls_certificate, SERVICE_READER_OBJECT(hpsrv));
 
-  PairingCmdInit(&hpsrv->pairing_cmd, hpsrv->service, tls_certificate, EebusServiceConfigGetShipId(hpsrv->cfg));
+  PairingCmdConstruct(&hpsrv->pairing_cmd, hpsrv->service, tls_certificate, EebusServiceConfigGetShipId(hpsrv->cfg));
   if (hpsrv->service == NULL) {
     return kEebusErrorInit;
   }

@@ -226,7 +226,7 @@ EebusError HemsStart(Hems* hems, int32_t port, const char* role, TlsCertificateO
 
   hems->service = EebusServiceCreate(hems->cfg, role, tls_certificate, SERVICE_READER_OBJECT(hems));
 
-  PairingCmdInit(&hems->pairing_cmd, hems->service, tls_certificate, EebusServiceConfigGetShipId(hems->cfg));
+  PairingCmdConstruct(&hems->pairing_cmd, hems->service, tls_certificate, EebusServiceConfigGetShipId(hems->cfg));
   if (hems->service == NULL) {
     EebusServiceConfigDelete(hems->cfg);
     hems->cfg = NULL;
