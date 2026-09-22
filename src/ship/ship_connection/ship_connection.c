@@ -455,24 +455,28 @@ EebusError ShipConnectionSend(ShipConnection* self, const MessageBuffer* buf) {
   return kEebusErrorOk;
 }
 
-EebusError ShipConnectionReceive(ShipConnection* self, MessageBuffer* buf, uint32_t timeout) {
+// Waits for the next connection-thread message, filtering out trust decisions
+// that raced the handshake (see ShipConnectionPostTrustDecision()). The timer
+// bounds the whole wait, not a single queue read, so it keeps running across
+// loop iterations. On kEebusErrorOk, either *out_msg holds the next message to
+// interpret, or self->trust_decision has been set and *out_msg is stale.
+static EebusError
+ShipConnectionWaitForMessage(ShipConnection* self, uint32_t timeout, ShipConnectionQueueMessage* out_msg) {
   EEBUS_TIMER_START(self->wait_for_ready_timer, timeout, false);
 
-  ShipConnectionQueueMessage queue_msg;
   EebusError queue_recv_ret = kEebusErrorOk;
 
   // A trust decision is only meaningful in the "hello" PENDING phase. In any
-  // other state it raced the handshake, so drop it and keep waiting. The timer
-  // bounds the whole wait, not a single queue read, so it keeps running.
+  // other state it raced the handshake, so drop it and keep waiting.
   for (;;) {
-    queue_recv_ret = EEBUS_QUEUE_RECEIVE(self->msg_queue, &queue_msg, kTimeoutInfinite);
+    queue_recv_ret = EEBUS_QUEUE_RECEIVE(self->msg_queue, out_msg, kTimeoutInfinite);
 
     if (queue_recv_ret != kEebusErrorOk) {
       break;
     }
 
-    const bool is_trust_decision = (queue_msg.type == kShipConnectionQueueMsgTypeTrustGranted)
-                                   || (queue_msg.type == kShipConnectionQueueMsgTypeTrustDenied);
+    const bool is_trust_decision = (out_msg->type == kShipConnectionQueueMsgTypeTrustGranted)
+                                   || (out_msg->type == kShipConnectionQueueMsgTypeTrustDenied);
 
     if (!is_trust_decision) {
       break;
@@ -483,7 +487,7 @@ EebusError ShipConnectionReceive(ShipConnection* self, MessageBuffer* buf, uint3
       continue;
     }
 
-    self->trust_decision = (queue_msg.type == kShipConnectionQueueMsgTypeTrustGranted)
+    self->trust_decision = (out_msg->type == kShipConnectionQueueMsgTypeTrustGranted)
                                ? kShipConnectionTrustDecisionGranted
                                : kShipConnectionTrustDecisionDenied;
     break;
@@ -491,35 +495,53 @@ EebusError ShipConnectionReceive(ShipConnection* self, MessageBuffer* buf, uint3
 
   EEBUS_TIMER_STOP(self->wait_for_ready_timer);
 
-  if (queue_recv_ret != kEebusErrorOk) {
-    SHIP_CONNECTION_DEBUG_PRINTF("%s(), error receiving the message from queue\n", __func__);
-    return queue_recv_ret;
-  }
+  return queue_recv_ret;
+}
 
+// Turns a queue message already known to be ready (see
+// ShipConnectionWaitForMessage()) into the EebusError ShipConnectionReceive()
+// callers expect, copying the payload out to *buf when data was received.
+static EebusError ShipConnectionTranslateQueueMessage(
+    ShipConnection* self,
+    const ShipConnectionQueueMessage* queue_msg,
+    MessageBuffer* buf
+) {
   if (self->trust_decision != kShipConnectionTrustDecisionNone) {
     // No SHIP message was received, the caller reads trust_decision instead.
     return kEebusErrorNoChange;
   }
 
-  if (queue_msg.type == kShipConnectionQueueMsgTypeDataReceived) {
-    *buf = queue_msg.msg_buf;
+  if (queue_msg->type == kShipConnectionQueueMsgTypeDataReceived) {
+    *buf = queue_msg->msg_buf;
     return kEebusErrorOk;
-  } else if (queue_msg.type == kShipConnectionQueueMsgTypeTimeout) {
+  } else if (queue_msg->type == kShipConnectionQueueMsgTypeTimeout) {
     SHIP_CONNECTION_DEBUG_PRINTF("%s(), timed out\n", __func__);
     return kEebusErrorTime;
-  } else if (queue_msg.type == kShipConnectionQueueMsgTypeCancel) {
+  } else if (queue_msg->type == kShipConnectionQueueMsgTypeCancel) {
     SHIP_CONNECTION_DEBUG_PRINTF("%s(), cancelled\n", __func__);
     return kEebusErrorDeactivate;
-  } else if (queue_msg.type == kShipConnectionQueueMsgTypeWebsocketError) {
+  } else if (queue_msg->type == kShipConnectionQueueMsgTypeWebsocketError) {
     SHIP_CONNECTION_DEBUG_PRINTF("%s(), websocket error\n", __func__);
     return kEebusErrorCommunication;
-  } else if (queue_msg.type == kShipConnectionQueueMsgTypeWebsocketClose) {
+  } else if (queue_msg->type == kShipConnectionQueueMsgTypeWebsocketClose) {
     SHIP_CONNECTION_DEBUG_PRINTF("%s(), websocket closed\n", __func__);
     return kEebusErrorCommunicationEnd;
   } else {
     SHIP_CONNECTION_DEBUG_PRINTF("%s(), invalid queue message type\n", __func__);
     return kEebusErrorInputType;
   }
+}
+
+EebusError ShipConnectionReceive(ShipConnection* self, MessageBuffer* buf, uint32_t timeout) {
+  ShipConnectionQueueMessage queue_msg;
+  const EebusError queue_recv_ret = ShipConnectionWaitForMessage(self, timeout, &queue_msg);
+
+  if (queue_recv_ret != kEebusErrorOk) {
+    SHIP_CONNECTION_DEBUG_PRINTF("%s(), error receiving the message from queue\n", __func__);
+    return queue_recv_ret;
+  }
+
+  return ShipConnectionTranslateQueueMessage(self, &queue_msg, buf);
 }
 
 bool ShipConnectionEvaluateInitMsg(const MessageBuffer* buf) {
