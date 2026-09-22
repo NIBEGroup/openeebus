@@ -70,7 +70,7 @@ void PairingCmdDestruct(PairingCmd* self);
  * @param cmd Whole command line
  * @return true if the command was handled here
  */
-bool PairingCmdHandle(PairingCmd* self, const char* cmd);
+bool PairingCmdHandle(PairingCmd* self, char* cmd);
 
 #ifdef __cplusplus
 }

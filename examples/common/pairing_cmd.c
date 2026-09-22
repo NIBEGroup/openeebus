@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "src/common/array_util.h"
 #include "src/common/string_util.h"
 #include "src/ship/tls_certificate/tls_certificate.h"
 
@@ -162,27 +163,37 @@ static void PairingCmdStatus(const PairingCmd* self) {
   }
 }
 
-bool PairingCmdHandle(PairingCmd* self, const char* cmd) {
-  if (strncmp(cmd, "pairing", strlen("pairing")) != 0) {
+bool PairingCmdHandle(PairingCmd* self, char* cmd) {
+  static const char delimiters[] = " \t\n";
+
+  const char* tokens[5] = {NULL};
+  size_t num_tokens     = 0;
+  char* p               = NULL;
+
+  for (char* token = StringToken(cmd, delimiters, &p); token != NULL; token = StringToken(NULL, delimiters, &p)) {
+    if (num_tokens >= ARRAY_SIZE(tokens)) {
+      break;
+    }
+
+    tokens[num_tokens++] = token;
+  }
+
+  if ((tokens[0] == NULL) || (strcmp(tokens[0], "pairing") != 0)) {
     return false;
   }
 
-  char verb[32]        = "";
-  char arg1[128]       = "";
-  char arg2[128]       = "";
-  char arg3[128]       = "";
-  const int parsed_num = sscanf(cmd, "pairing %31s %127s %127s %127s", verb, arg1, arg2, arg3);
+  const char* const verb = tokens[1];
+  const char* const arg1 = tokens[2];
+  const char* const arg2 = tokens[3];
+  const char* const arg3 = tokens[4];
 
-  if (parsed_num < 1) {
+  if (verb == NULL) {
     PairingCmdPrintUsage();
-    return true;
-  }
-
-  if (strcmp(verb, "info") == 0) {
+  } else if (strcmp(verb, "info") == 0) {
     PairingCmdInfo(self);
-  } else if ((strcmp(verb, "secret") == 0) && (parsed_num >= 2)) {
+  } else if ((strcmp(verb, "secret") == 0) && (arg1 != NULL)) {
     PairingCmdSetSecret(self, arg1);
-  } else if ((strcmp(verb, "announce") == 0) && (parsed_num >= 4)) {
+  } else if ((strcmp(verb, "announce") == 0) && (arg1 != NULL) && (arg2 != NULL) && (arg3 != NULL)) {
     PairingCmdAnnounce(self, arg1, arg2, arg3);
   } else if (strcmp(verb, "stop") == 0) {
     PairingCmdStop(self);
