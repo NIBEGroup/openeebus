@@ -27,23 +27,7 @@ extern "C" {
 namespace {
 
 /** @brief Owns a string returned by the functions under test */
-class OwnedString {
- public:
-  explicit OwnedString(char* s) : s_(s) {}
-  ~OwnedString() {
-    StringDelete(s_);
-  }
-
-  OwnedString(const OwnedString&)            = delete;
-  OwnedString& operator=(const OwnedString&) = delete;
-
-  const char* Get() const {
-    return s_;
-  }
-
- private:
-  char* s_;
-};
+using OwnedString = std::unique_ptr<char[], decltype(&StringDelete)>;
 
 /** @brief The devA-secret of Annex A.1 as octets */
 std::vector<uint8_t> AnnexASecret() {
@@ -58,13 +42,13 @@ TEST_F(ShipPairingTestSuite, BuildsTheSpecifiedMessage) {
   const EntryPtr entry = AnnexAEntry();
   ASSERT_NE(entry, nullptr);
 
-  const OwnedString message(ShipPairingBuildMessage(entry.get()));
-  ASSERT_NE(message.Get(), nullptr);
+  const OwnedString message(ShipPairingBuildMessage(entry.get()), StringDelete);
+  ASSERT_NE(message.get(), nullptr);
 
   // Annex A.3. The digest key is not part of the message, and the trailing
   // semicolon after the last pair is.
   EXPECT_STREQ(
-      message.Get(),
+      message.get(),
       "txtvers=1;"
       "parType=fpSha256;"
       "forId=" ANNEX_A_FOR_ID
@@ -88,10 +72,10 @@ TEST_F(ShipPairingTestSuite, ReproducesTheSpecifiedDigest) {
   const std::vector<uint8_t> secret = AnnexASecret();
   ASSERT_NE(entry, nullptr);
 
-  const OwnedString digest(ShipPairingCalcDigest(entry.get(), secret.data(), secret.size()));
-  ASSERT_NE(digest.Get(), nullptr);
+  const OwnedString digest(ShipPairingCalcDigest(entry.get(), secret.data(), secret.size()), StringDelete);
+  ASSERT_NE(digest.get(), nullptr);
 
-  EXPECT_STREQ(digest.Get(), ANNEX_A_DIGEST);
+  EXPECT_STREQ(digest.get(), ANNEX_A_DIGEST);
 }
 
 TEST_F(ShipPairingTestSuite, VerifiesTheSpecifiedRequest) {

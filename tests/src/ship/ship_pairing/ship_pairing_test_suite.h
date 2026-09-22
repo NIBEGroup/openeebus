@@ -127,8 +127,8 @@ class Evaluator {
 
  private:
   TlsCertificateMock* cert_mock_;
-  ShipPairingObject* obj_ = nullptr;
-  EebusTimerMock* timer_  = nullptr;
+  ShipPairingObject* obj_{nullptr};
+  EebusTimerMock* timer_{nullptr};
 };
 
 #endif  // TESTS_SRC_SHIP_SHIP_PAIRING_SHIP_PAIRING_TEST_SUITE_H
