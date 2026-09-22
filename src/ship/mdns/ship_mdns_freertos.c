@@ -415,8 +415,12 @@ void MdnsQueryPairingServices(Mdns* mdns) {
   }
 
   mdns_result_t* results = NULL;
-  const esp_err_t err = mdns_query_ptr(
-      kShipPairingServiceType, kShipPairingServiceProtocol, kMdnsQueryTimeoutMs, kMdnsQueryMaxResults, &results
+  const esp_err_t err    = mdns_query_ptr(
+      kShipPairingServiceType,
+      kShipPairingServiceProtocol,
+      kMdnsQueryTimeoutMs,
+      kMdnsQueryMaxResults,
+      &results
   );
 
   if (err != ESP_OK) {

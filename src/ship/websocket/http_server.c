@@ -423,9 +423,7 @@ int HttpServerServiceCallback(struct lws* wsi, enum lws_callback_reasons reason,
 
   switch (reason) {
     /* The new vhost TLS context arrives in the user parameter. */
-    case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_SERVER_VERIFY_CERTS:
-      ret = HttpServerOnSslContextCreated(srv, user);
-      break;
+    case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_SERVER_VERIFY_CERTS: ret = HttpServerOnSslContextCreated(srv, user); break;
 
     case LWS_CALLBACK_ESTABLISHED: ret = HttpServerOnClientConnect(srv, wsi); break;
 
