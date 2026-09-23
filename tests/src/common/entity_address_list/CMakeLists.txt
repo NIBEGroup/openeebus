@@ -25,6 +25,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/common/json_impl_cjson.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/entity_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
   ${EEBUS_DATE_TIME_SOURCES}
   ${EEBUS_DATA_SOURCES}
 
