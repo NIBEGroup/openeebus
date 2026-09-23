@@ -205,6 +205,18 @@ void TwoRemoteEgLpcTestFixture::SetUp() {
 }
 
 void TwoRemoteEgLpcTestFixture::TearDown() {
+  // Remove remote devices first so that NodeManagementRemote::Destruct fires
+  // OnRemoteCsRemoved while the use case is still subscribed to events.
+  // If a test already removed a device, this call is a no-op.
+  DEVICE_LOCAL_REMOVE_REMOTE_DEVICE_CONNECTION(device_local_.get(), kHpSki);
+  DEVICE_LOCAL_REMOVE_REMOTE_DEVICE_CONNECTION(device_local_.get(), kEvSki);
+
+  // Use cases unsubscribe from the device event manager during destruction,
+  // so they must be released before the device and its local device are deleted.
+  EXPECT_CALL(*listener_mock_->gmock, Destruct(_)).WillOnce(Return());
+  use_case_.reset();
+  listener_mock_.reset();
+
   device_local_.reset();
 
   EXPECT_CALL(*hp_writer_->gmock, Destruct(_)).WillOnce(Return());
@@ -212,10 +224,6 @@ void TwoRemoteEgLpcTestFixture::TearDown() {
 
   EXPECT_CALL(*ev_writer_->gmock, Destruct(_)).WillOnce(Return());
   ev_writer_.reset();
-
-  EXPECT_CALL(*listener_mock_->gmock, Destruct(_)).WillOnce(Return());
-  use_case_.reset();
-  listener_mock_.reset();
 
   device_info_.reset();
 
