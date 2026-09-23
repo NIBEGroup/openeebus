@@ -76,11 +76,8 @@ static void SetCompressorOhpcf(
     CompressorOhpcfUseCaseObject* cp_ohpcf_use_case,
     MuMpcUseCaseObject* mu_mpc_use_case
 );
-static void SetCemOhpcf(
-    EebusCliObject* self,
-    CemOhpcfUseCaseObject* cem_ohpcf_use_case,
-    const EntityAddressList* addr_list
-);
+static void
+SetCemOhpcf(EebusCliObject* self, CemOhpcfUseCaseObject* cem_ohpcf_use_case, const EntityAddressList* addr_list);
 static void SetGcpMgcp(EebusCliObject* self, GcpMgcpUseCaseObject* gcp_mgcp_use_case);
 static void SetMaMgcp(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_case, EntityAddressList* addr_list);
 static void HandleCmd(const EebusCliObject* self, char* cmd);
@@ -243,11 +240,7 @@ void SetCompressorOhpcf(
   eebus_cli->compressor_ohpcf_cli = CompressorOhpcfCliCreate(cp_ohpcf_use_case, mu_mpc_use_case);
 }
 
-void SetCemOhpcf(
-    EebusCliObject* self,
-    CemOhpcfUseCaseObject* cem_ohpcf_use_case,
-    const EntityAddressList* addr_list
-) {
+void SetCemOhpcf(EebusCliObject* self, CemOhpcfUseCaseObject* cem_ohpcf_use_case, const EntityAddressList* addr_list) {
   EebusCli* const eebus_cli = EEBUS_CLI(self);
 
   CemOhpcfCliDelete(eebus_cli->cem_ohpcf_cli);

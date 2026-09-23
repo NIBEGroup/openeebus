@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
   const char* const pkey       = argv[4];
 
   // argv[5] is optional role — only if it doesn't look like a flag
-  int extra_start = 5;
+  int extra_start  = 5;
   const char* role = "auto";
   if (argc > 5 && strncmp(argv[5], "--", 2) != 0) {
     role        = argv[5];

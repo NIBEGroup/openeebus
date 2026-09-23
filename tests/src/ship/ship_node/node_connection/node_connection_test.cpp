@@ -24,9 +24,7 @@
 
 static ShipConnectionMock* ship_connection_mock = nullptr;
 
-ShipConnectionObject* ShipConnectionCreate(
-    InfoProviderObject*, ShipRole, const char*, const char*, const char*
-) {
+ShipConnectionObject* ShipConnectionCreate(InfoProviderObject*, ShipRole, const char*, const char*, const char*) {
   ship_connection_mock = ShipConnectionMockCreate();
   return SHIP_CONNECTION_OBJECT(ship_connection_mock);
 }
