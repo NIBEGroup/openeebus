@@ -27,6 +27,7 @@
 #include "src/common/eebus_errors.h"
 #include "src/common/eebus_malloc.h"
 
+#include "examples/common/pairing_cmd.h"
 #include "examples/heat_pump/compressor_ohpcf_listener.h"
 #include "examples/heat_pump/cs_lpc_approver.h"
 #include "examples/heat_pump/cs_lpc_listener.h"
@@ -69,6 +70,9 @@ struct Hpsrv {
   MuMpcUseCaseObject* cp_ohpcf_mu_mpc;
   GcpMgcpUseCaseObject* gcp_mgcp;
   EebusCliObject* cli;
+
+  /** Console commands for SHIP Pairing Service */
+  PairingCmd pairing_cmd;
 };
 
 #define HPSRV(obj) ((Hpsrv*)(obj))
@@ -493,6 +497,8 @@ static EebusError HpsrvStart(Hpsrv* hpsrv, int32_t port, const char* role, TlsCe
   EebusServiceConfigSetAlternateIdentifier(hpsrv->cfg, "NIBE-HeatPump-123456789");
 
   hpsrv->service = EebusServiceCreate(hpsrv->cfg, role, tls_certificate, SERVICE_READER_OBJECT(hpsrv));
+
+  PairingCmdConstruct(&hpsrv->pairing_cmd, hpsrv->service, tls_certificate, EebusServiceConfigGetShipId(hpsrv->cfg));
   if (hpsrv->service == NULL) {
     return kEebusErrorInit;
   }
@@ -895,5 +901,12 @@ EebusError HpsrvSetGcpMgcpPvCurtailmentLimitFactor(HpsrvObject* self, const Scal
 
 void HpsrvHandleCmd(HpsrvObject* self, char* cmd) {
   Hpsrv* const hpsrv = HPSRV(self);
+
+  // SHIP Pairing Service is not a use case, so its commands are handled here
+  // rather than added to the use case CLI.
+  if (PairingCmdHandle(&hpsrv->pairing_cmd, cmd)) {
+    return;
+  }
+
   EEBUS_CLI_HANDLE_CMD(hpsrv->cli, cmd);
 }

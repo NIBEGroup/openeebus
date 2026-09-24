@@ -20,7 +20,11 @@
 
 #include <openssl/asn1.h>
 #include <openssl/crypto.h>
+#include <openssl/hmac.h>
+#include <openssl/obj_mac.h>
+#include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <stdbool.h>
@@ -319,4 +323,114 @@ const char* TlsCertificateCalcPublicKeySki(const uint8_t* cert, size_t cert_size
   const char* ski = CalcSubjectKeyIdString(x509_cert);
   X509_free(x509_cert);
   return ski;
+}
+
+const char* TlsCertificateCalcFingerprintSha256(const uint8_t* cert, size_t cert_size) {
+  if ((cert == NULL) || (cert_size == 0)) {
+    return NULL;
+  }
+
+  const unsigned char* p = cert;
+
+  X509* const x509_cert = d2i_X509(NULL, &p, (long)cert_size);
+  if (x509_cert == NULL) {
+    return NULL;
+  }
+
+  // X509_digest() hashes the certificate's DER encoding, which is what a
+  // fingerprint is defined over (SHIP Pairing Service TS 1.0.0, section 6.2).
+  unsigned char sha256[EVP_MAX_MD_SIZE];
+  unsigned int sha256_size = 0;
+  const int ok             = X509_digest(x509_cert, EVP_sha256(), sha256, &sha256_size);
+  X509_free(x509_cert);
+
+  if ((ok != 1) || (sha256_size != TLS_CERTIFICATE_SHA256_SIZE)) {
+    return NULL;
+  }
+
+  return StringWithHexUpper(sha256, sha256_size);
+}
+
+const char* TlsCertificateGetCurveName(const uint8_t* cert, size_t cert_size) {
+  if ((cert == NULL) || (cert_size == 0)) {
+    return NULL;
+  }
+
+  const unsigned char* p = cert;
+
+  X509* const x509_cert = d2i_X509(NULL, &p, (long)cert_size);
+  if (x509_cert == NULL) {
+    return NULL;
+  }
+
+  // The curve is read as the AlgorithmIdentifier parameter of the
+  // SubjectPublicKeyInfo, which for a named curve is the curve's own OID. Doing
+  // it this way avoids the key handling APIs, whose spelling of a curve differs
+  // between OpenSSL versions (secp256r1 is "prime256v1" to OpenSSL).
+  X509_PUBKEY* const pub_key = X509_get_X509_PUBKEY(x509_cert);
+  X509_ALGOR* alg            = NULL;
+  if ((pub_key == NULL) || (X509_PUBKEY_get0_param(NULL, NULL, NULL, &alg, pub_key) != 1)) {
+    X509_free(x509_cert);
+    return NULL;
+  }
+
+  const ASN1_OBJECT* alg_oid = NULL;
+  int param_type             = 0;
+  const void* param_value    = NULL;
+  X509_ALGOR_get0(&alg_oid, &param_type, &param_value, alg);
+
+  // A named curve is carried as an OID. Explicit curve parameters are not
+  // permitted for SHIP certificates and are reported as unsupported.
+  if ((OBJ_obj2nid(alg_oid) != NID_X9_62_id_ecPublicKey) || (param_type != V_ASN1_OBJECT) || (param_value == NULL)) {
+    X509_free(x509_cert);
+    return NULL;
+  }
+
+  const int nid = OBJ_obj2nid((const ASN1_OBJECT*)param_value);
+  X509_free(x509_cert);
+
+  switch (nid) {
+    case NID_X9_62_prime256v1: return TLS_CERTIFICATE_CURVE_SECP256R1;
+    case NID_brainpoolP256r1: return TLS_CERTIFICATE_CURVE_BRAINPOOLP256R1;
+    case NID_brainpoolP384r1: return TLS_CERTIFICATE_CURVE_BRAINPOOLP384R1;
+    default: return NULL;
+  }
+}
+
+EebusError TlsCertificateRandomBytes(uint8_t* buf, size_t buf_size) {
+  if (buf == NULL) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  if (buf_size == 0) {
+    return kEebusErrorInputArgumentOutOfRange;
+  }
+
+  if (RAND_bytes(buf, (int)buf_size) != 1) {
+    return kEebusErrorOther;
+  }
+
+  return kEebusErrorOk;
+}
+
+EebusError
+TlsCertificateHmacSha256(const uint8_t* key, size_t key_size, const uint8_t* msg, size_t msg_size, uint8_t* digest) {
+  if ((key == NULL) || (msg == NULL) || (digest == NULL)) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  if (key_size == 0) {
+    return kEebusErrorInputArgumentOutOfRange;
+  }
+
+  unsigned int digest_size = 0;
+  if (HMAC(EVP_sha256(), key, (int)key_size, msg, msg_size, digest, &digest_size) == NULL) {
+    return kEebusErrorOther;
+  }
+
+  if (digest_size != TLS_CERTIFICATE_SHA256_SIZE) {
+    return kEebusErrorOther;
+  }
+
+  return kEebusErrorOk;
 }

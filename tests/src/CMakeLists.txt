@@ -30,6 +30,12 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/service/service/eebus_service
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/mdns/mdns_entry
     ${EXECUTABLE_OUTPUT_PATH}/ship/mdns/mdns_entry)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/tls_certificate
+    ${EXECUTABLE_OUTPUT_PATH}/ship/tls_certificate)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_pairing
+    ${EXECUTABLE_OUTPUT_PATH}/ship/ship_pairing)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_connection/ship_message_serialize
     ${EXECUTABLE_OUTPUT_PATH}/ship/ship_connection/ship_message_serialize)
 
@@ -62,6 +68,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spine/device/sender
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node
     ${EXECUTABLE_OUTPUT_PATH}/ship/ship_node)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node/peer_recognition
+    ${EXECUTABLE_OUTPUT_PATH}/ship/ship_node/peer_recognition)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cs/lpc
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cs/lpc)

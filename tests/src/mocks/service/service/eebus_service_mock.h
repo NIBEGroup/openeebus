@@ -41,6 +41,8 @@ class EebusServiceGMockInterface : public ShipNodeReaderGMockInterface {
   virtual void RegisterRemoteSki(EebusServiceObject* self, const char* ski, bool enable)                        = 0;
   virtual void UnregisterRemoteSki(EebusServiceObject* self, const char* ski)                                   = 0;
   virtual void CancelPairingWithSki(EebusServiceObject* self, const char* ski)                                  = 0;
+  virtual void ApprovePendingHandshakeWithSki(EebusServiceObject* self, const char* ski)                        = 0;
+  virtual uint32_t GetPendingWaitingMsWithSki(EebusServiceObject* self, const char* ski)                        = 0;
   virtual void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible)                           = 0;
   virtual const char* GetLocalSki(EebusServiceObject* self)                                                     = 0;
   virtual const char* GetQrCodeString(EebusServiceObject* self)                                                 = 0;
@@ -66,6 +68,8 @@ class EebusServiceGMock : public EebusServiceGMockInterface {
   MOCK_METHOD3(RegisterRemoteSki, void(EebusServiceObject*, const char*, bool));
   MOCK_METHOD2(UnregisterRemoteSki, void(EebusServiceObject*, const char*));
   MOCK_METHOD2(CancelPairingWithSki, void(EebusServiceObject*, const char*));
+  MOCK_METHOD2(ApprovePendingHandshakeWithSki, void(EebusServiceObject*, const char*));
+  MOCK_METHOD2(GetPendingWaitingMsWithSki, uint32_t(EebusServiceObject*, const char*));
   MOCK_METHOD2(SetPairingPossible, void(EebusServiceObject*, bool));
   MOCK_METHOD1(GetLocalSki, const char*(EebusServiceObject*));
   MOCK_METHOD1(GetQrCodeString, const char*(EebusServiceObject*));

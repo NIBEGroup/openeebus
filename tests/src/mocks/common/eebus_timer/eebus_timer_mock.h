@@ -52,7 +52,26 @@ typedef struct EebusTimerMock {
   /** Implements the Eebus Timer Interface */
   EebusTimerObject obj;
   EebusTimerGMock* gmock;
+
+  /**
+   * @brief What the object under test asked to be called on expiry
+   *
+   * A mock never expires on its own, so a test that needs to see what happens
+   * when the timeout arrives calls this itself, with @ref ctx.
+   */
+  EebusTimerTimeoutCallback cb;
+  void* ctx;
 } EebusTimerMock;
+
+/**
+ * @brief Calls the timeout callback the object under test registered
+ * @param self Mock whose timer is to expire
+ */
+static inline void EebusTimerMockExpire(EebusTimerMock* self) {
+  if ((self != nullptr) && (self->cb != nullptr)) {
+    self->cb(self->ctx);
+  }
+}
 
 #define EEBUS_TIMER_MOCK(obj) ((EebusTimerMock*)(obj))
 

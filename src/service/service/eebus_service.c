@@ -78,8 +78,16 @@ static const ServiceDetails* GetRemoteServiceDetailsWithSki(const EebusServiceOb
 static void RegisterRemoteSki(EebusServiceObject* self, const char* ski, bool enable);
 static void UnregisterRemoteSki(EebusServiceObject* self, const char* ski);
 static void CancelPairingWithSki(EebusServiceObject* self, const char* ski);
+static void ApprovePendingHandshakeWithSki(EebusServiceObject* self, const char* ski);
+static uint32_t GetPendingWaitingMsWithSki(EebusServiceObject* self, const char* ski);
 static void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible);
 static const char* GetLocalSki(EebusServiceObject* self);
+static void OnShipPairingAccepted(
+    ShipNodeReaderObject* self,
+    const char* trust_ship_id,
+    const char* trust_fingerprint,
+    const char* trust_curve
+);
 static const char* GetQrCodeString(EebusServiceObject* self);
 static char*
 CreateQrCodeString(const char* ski, const char* ship_id, const char* brand, const char* type, const char* model);
@@ -94,6 +102,7 @@ static const EebusServiceInterface service_methods = {
         .on_ship_id_update            = OnShipIdUpdate,
         .on_ship_state_update         = OnHandleShipStateUpdate,
         .is_waiting_for_trust_allowed = IsWaitingForTrustAllowed,
+        .on_ship_pairing_accepted     = OnShipPairingAccepted,
     },
 
     .start                               = Start,
@@ -105,6 +114,8 @@ static const EebusServiceInterface service_methods = {
     .register_remote_ski                 = RegisterRemoteSki,
     .unregister_remote_ski               = UnregisterRemoteSki,
     .cancel_pairing_with_ski             = CancelPairingWithSki,
+    .approve_pending_handshake_with_ski  = ApprovePendingHandshakeWithSki,
+    .get_pending_waiting_ms_with_ski     = GetPendingWaitingMsWithSki,
     .set_pairing_possible                = SetPairingPossible,
     .get_local_ski                       = GetLocalSki,
     .get_qr_code_string                  = GetQrCodeString,
@@ -196,8 +207,9 @@ EebusError ServiceConstruct(
     return kEebusErrorInit;
   }
 
-  const char* const service_name = EebusServiceConfigGetMdnsServiceName(cfg);
-  const int32_t port             = EebusServiceConfigGetPort(cfg);
+  const char* const service_name  = EebusServiceConfigGetMdnsServiceName(cfg);
+  const int32_t port              = EebusServiceConfigGetPort(cfg);
+  const EebusTrustMode trust_mode = EebusServiceConfigGetTrustMode(cfg);
 
   self->tls_certificate = tls_certificate;
 
@@ -210,7 +222,8 @@ EebusError ServiceConstruct(
       port,
       tls_certificate,
       SHIP_NODE_READER_OBJECT(self),
-      self->local_service_details
+      self->local_service_details,
+      trust_mode
   );
 
   if (self->ship_node == NULL) {
@@ -303,6 +316,30 @@ void OnHandleShipStateUpdate(ShipNodeReaderObject* self, const char* ski, SmeSta
   SERVICE_READER_ON_SHIP_STATE_UPDATE(EEBUS_SERVICE(self)->service_reader, ski, state);
 }
 
+/**
+ * @brief Passes on a shippairing request that established trust
+ *
+ * The trust store belongs to the integrator, so the report is relayed rather
+ * than acted on here (SHIP Pairing Service TS 1.0.0, section 10.4). What the
+ * integrator has to do with it is create or update the entry for the node,
+ * record the fingerprint against it, and untrust whichever node a previous
+ * shippairing request had trusted (section 10.3).
+ */
+void OnShipPairingAccepted(
+    ShipNodeReaderObject* self,
+    const char* trust_ship_id,
+    const char* trust_fingerprint,
+    const char* trust_curve
+) {
+  EebusService* const service = EEBUS_SERVICE(self);
+
+  SERVICE_READER_ON_SHIP_PAIRING_ACCEPTED(service->service_reader, trust_ship_id, trust_fingerprint, trust_curve);
+}
+
+ShipNodeObject* EebusServiceGetShipNode(EebusServiceObject* self) {
+  return (self == NULL) ? NULL : EEBUS_SERVICE(self)->ship_node;
+}
+
 bool IsWaitingForTrustAllowed(ShipNodeReaderObject* self, const char* ski) {
   UNUSED(ski);
 
@@ -357,6 +394,14 @@ void UnregisterRemoteSki(EebusServiceObject* self, const char* ski) {
 
 void CancelPairingWithSki(EebusServiceObject* self, const char* ski) {
   SHIP_NODE_CANCEL_PAIRING_WITH_SKI(EEBUS_SERVICE(self)->ship_node, ski);
+}
+
+void ApprovePendingHandshakeWithSki(EebusServiceObject* self, const char* ski) {
+  SHIP_NODE_APPROVE_PENDING_HANDSHAKE_WITH_SKI(EEBUS_SERVICE(self)->ship_node, ski);
+}
+
+uint32_t GetPendingWaitingMsWithSki(EebusServiceObject* self, const char* ski) {
+  return SHIP_NODE_GET_PENDING_WAITING_MS_WITH_SKI(EEBUS_SERVICE(self)->ship_node, ski);
 }
 
 void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible) {

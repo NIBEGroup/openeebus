@@ -87,6 +87,7 @@ EebusError EebusServiceConfigConstruct(
   cfg->port = (port != 0) ? port : kDefaultPort;
 
   cfg->register_auto_accept = false;
+  cfg->trust_mode           = kEebusTrustModePreTrust;
   cfg->generated_id         = GenerateIdentifier(cfg);
   if (cfg->generated_id == NULL) {
     return kEebusErrorMemoryAllocate;

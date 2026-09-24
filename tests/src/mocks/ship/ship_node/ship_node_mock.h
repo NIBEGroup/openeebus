@@ -37,6 +37,8 @@ class ShipNodeGMockInterface : public InfoProviderMock {
   virtual void RegisterRemoteSki(ShipNodeObject* self, const char* ski, bool is_trusted) = 0;
   virtual void UnregisterRemoteSki(ShipNodeObject* self, const char* ski)                = 0;
   virtual void CancelPairingWithSki(ShipNodeObject* self, const char* ski)               = 0;
+  virtual void ApprovePendingHandshakeWithSki(ShipNodeObject* self, const char* ski)     = 0;
+  virtual uint32_t GetPendingWaitingMsWithSki(ShipNodeObject* self, const char* ski)     = 0;
 };
 
 class ShipNodeGMock : public ShipNodeGMockInterface {
@@ -57,6 +59,8 @@ class ShipNodeGMock : public ShipNodeGMockInterface {
   MOCK_METHOD3(RegisterRemoteSki, void(ShipNodeObject*, const char*, bool));
   MOCK_METHOD2(UnregisterRemoteSki, void(ShipNodeObject*, const char*));
   MOCK_METHOD2(CancelPairingWithSki, void(ShipNodeObject*, const char*));
+  MOCK_METHOD2(ApprovePendingHandshakeWithSki, void(ShipNodeObject*, const char*));
+  MOCK_METHOD2(GetPendingWaitingMsWithSki, uint32_t(ShipNodeObject*, const char*));
 };
 
 typedef struct ShipNodeMock {

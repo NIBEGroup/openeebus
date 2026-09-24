@@ -65,7 +65,8 @@ int main() {
           6677,
           nullptr,
           nullptr,
-          nullptr
+          nullptr,
+          kEebusTrustModePreTrust
       ),
       &ShipNodeDelete
   };

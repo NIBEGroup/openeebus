@@ -50,6 +50,20 @@ struct TlsCertificateInterface {
   size_t (*get_certificate_size)(const TlsCertificateObject* self);
   const void* (*get_private_key)(const TlsCertificateObject* self);
   size_t (*get_private_key_size)(const TlsCertificateObject* self);
+
+  /**
+   * @brief Install this certificate onto a server's TLS context
+   *
+   * Optional, and left NULL by a certificate that exposes its material through
+   * the getters above. A certificate whose private key is not readable as bytes
+   * implements this instead: it is handed an empty TLS context and configures
+   * itself onto it.
+   *
+   * @param ssl_ctx TLS backend context, void* so this interface stays free of
+   *                backend types.
+   * @return 0 on success.
+   */
+  int (*configure_ssl_ctx)(const TlsCertificateObject* self, void* ssl_ctx);
 };
 
 /**
@@ -98,6 +112,17 @@ struct TlsCertificateObject {
  * @brief Tls Certificate Get Private Key Size caller definition
  */
 #define TLS_CERTIFICATE_GET_PRIVATE_KEY_SIZE(obj) (TLS_CERTIFICATE_INTERFACE(obj)->get_private_key_size(obj))
+
+/**
+ * @brief Tls Certificate Configure Ssl Ctx support test definition
+ */
+#define TLS_CERTIFICATE_HAS_SSL_CTX_CONFIG(obj) (TLS_CERTIFICATE_INTERFACE(obj)->configure_ssl_ctx != NULL)
+
+/**
+ * @brief Tls Certificate Configure Ssl Ctx caller definition
+ */
+#define TLS_CERTIFICATE_CONFIGURE_SSL_CTX(obj, ssl_ctx) \
+  (TLS_CERTIFICATE_INTERFACE(obj)->configure_ssl_ctx(obj, ssl_ctx))
 
 #ifdef __cplusplus
 }

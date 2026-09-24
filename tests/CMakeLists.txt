@@ -76,6 +76,10 @@ else()
   add_library(cjson ALIAS PkgConfig::CJSON)
 endif()
 
+# OpenSSL, for the suites covering the OpenSSL certificate backend.
+find_package(OpenSSL REQUIRED)
+set(OPEN_SSL_LIBRARIES OpenSSL::SSL OpenSSL::Crypto)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
 endif()

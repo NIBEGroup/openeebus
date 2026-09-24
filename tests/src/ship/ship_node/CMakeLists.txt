@@ -90,6 +90,15 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/ship/ship_node/ship_node.c
   ${MAIN_PROJ_SOURCES_PATH}/ship/mdns/ship_mdns_bonjour.c
   ${MAIN_PROJ_SOURCES_PATH}/ship/mdns/mdns_entry.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/ship_pairing/ship_pairing_entry.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/ship_pairing/ship_pairing_digest.c
+  ${MAIN_PROJ_SOURCES_PATH}/ship/ship_pairing/ship_pairing.c
+
+  # The evaluator holds a timer, and this suite runs the real objects.
+  # Each implementation compiles only on its own platform.
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_timer/eebus_timer_linux.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_timer/eebus_timer_apple.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_timer/eebus_timer_windows.c
   ${MAIN_PROJ_SOURCES_PATH}/ship/mdns/mdns_debug.c
   ${MAIN_PROJ_SOURCES_PATH}/ship/tls_certificate/tls_certificate.c
   ${MAIN_PROJ_SOURCES_PATH}/common/eebus_device_info.c

@@ -300,7 +300,14 @@ int WebsocketOnClose(WebsocketObject* self) {
   return 0;
 }
 
-const char* WebsocketGetSkiWithWsi(struct lws* wsi) {
+/**
+ * @brief Derives an identity from the peer's certificate
+ *
+ * @param wsi Connection whose peer certificate is to be read
+ * @param calc Turns the DER encoded certificate into the identity wanted
+ * @return The identity, to be released with StringDelete(), or NULL
+ */
+static const char* WebsocketGetPeerIdentity(struct lws* wsi, const char* (*calc)(const uint8_t*, size_t)) {
   if (wsi == NULL) {
     return NULL;
   }
@@ -314,18 +321,33 @@ const char* WebsocketGetSkiWithWsi(struct lws* wsi) {
     return NULL;
   }
 
-  const char* ski = NULL;
-  const size_t n  = kMaxCertSize - sizeof(*results) + sizeof(results->ns.name);
-  int err         = lws_tls_peer_cert_info(wsi, LWS_TLS_CERT_INFO_DER_RAW, results, n);
+  const char* identity = NULL;
+  const size_t n       = kMaxCertSize - sizeof(*results) + sizeof(results->ns.name);
+  int err              = lws_tls_peer_cert_info(wsi, LWS_TLS_CERT_INFO_DER_RAW, results, n);
   if ((err == 0) && (results->ns.len != 0)) {
-    ski = TlsCertificateCalcPublicKeySki((const uint8_t*)results->ns.name, results->ns.len);
-    if (ski == NULL) {
-      WEBSOCKET_DEBUG_PRINTF("%s(), TlsCertificateCalcPublicKeySki() failed\n", __func__);
-    }
+    identity = calc((const uint8_t*)results->ns.name, results->ns.len);
   } else {
     WEBSOCKET_DEBUG_PRINTF("%s(), lws_tls_peer_cert_info() failed: %d\n", __func__, err);
   }
 
   EEBUS_FREE(buf);
+  return identity;
+}
+
+const char* WebsocketGetSkiWithWsi(struct lws* wsi) {
+  const char* const ski = WebsocketGetPeerIdentity(wsi, TlsCertificateCalcPublicKeySki);
+  if (ski == NULL) {
+    WEBSOCKET_DEBUG_PRINTF("%s(), could not derive the peer SKI\n", __func__);
+  }
+
   return ski;
+}
+
+const char* WebsocketGetFingerprintWithWsi(struct lws* wsi) {
+  const char* const fingerprint = WebsocketGetPeerIdentity(wsi, TlsCertificateCalcFingerprintSha256);
+  if (fingerprint == NULL) {
+    WEBSOCKET_DEBUG_PRINTF("%s(), could not derive the peer certificate fingerprint\n", __func__);
+  }
+
+  return fingerprint;
 }

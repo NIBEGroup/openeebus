@@ -46,6 +46,23 @@ static inline void EebusServiceDelete(EebusServiceObject* eebus_service) {
   }
 }
 
+/**
+ * @brief Gets the SHIP node this service runs on
+ *
+ * Declared here rather than on EebusServiceInterface, which cannot name a
+ * ShipNodeObject: that interface is reached from ship_node_interface.h through
+ * the service reader, so including it there would be circular.
+ *
+ * The node is what carries the SHIP Pairing Service methods. What an integrator
+ * needs from them is the evaluator, to give it a secret and to load and save
+ * its ring buffer, and the ability to announce a request of its own
+ * (SHIP Pairing Service TS 1.0.0).
+ *
+ * @param self Service to read
+ * @return The node, owned by the service, or NULL
+ */
+ShipNodeObject* EebusServiceGetShipNode(EebusServiceObject* self);
+
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

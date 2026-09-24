@@ -34,6 +34,10 @@ set(SOURCES
   src/ship/ship_connection/client.c
   src/ship/ship_connection/server.c
   src/ship/ship_node/ship_node.c
+  src/ship/ship_pairing/ship_pairing.c
+  src/ship/ship_pairing/ship_pairing_entry.c
+  src/ship/ship_pairing/ship_pairing_digest.c
+  src/ship/ship_pairing/ship_pairing_request.c
   src/ship/websocket/websocket.c
   src/ship/websocket/websocket_client_creator.c
   src/ship/websocket/websocket_server_creator.c
@@ -213,11 +217,14 @@ set(HEADERS
   src/ship/api/info_provider_interface.h
   src/ship/api/mdns_entry.h
   src/ship/api/ship_mdns_interface.h
+  src/ship/api/ship_pairing_entry.h
+  src/ship/api/ship_pairing_interface.h
   src/ship/api/ship_connection_interface.h
   src/ship/api/ship_message.h
   src/ship/api/ship_node_interface.h
   src/ship/api/ship_node_reader_interface.h
   src/ship/api/tls_certificate_interface.h
+  src/ship/api/trust_mode.h
   src/ship/api/websocket_creator_interface.h
   src/ship/api/http_server_interface.h
   src/ship/api/websocket_interface.h
@@ -226,6 +233,11 @@ set(HEADERS
   src/ship/model/types.h
   src/ship/ship_node/ship_node.h
   src/ship/ship_node/ship_node_internal.h
+  src/ship/ship_pairing/ship_pairing.h
+  src/ship/ship_pairing/ship_pairing_internal.h
+  src/ship/ship_pairing/ship_pairing_digest.h
+  src/ship/ship_pairing/ship_pairing_request.h
+  src/ship/ship_pairing/ship_pairing_request_internal.h
   src/ship/ship_connection/ship_connection.h
   src/ship/ship_connection/ship_connection_debug.h
   src/ship/ship_connection/ship_connection_internal.h

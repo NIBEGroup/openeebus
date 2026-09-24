@@ -26,10 +26,12 @@
 #define SRC_SHIP_API_SHIP_NODE_INTERFACE_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "src/common/vector.h"
 #include "src/service/api/service_reader_interface.h"
 #include "src/ship/api/info_provider_interface.h"
+#include "src/ship/api/ship_pairing_interface.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,6 +80,57 @@ struct ShipNodeInterface {
    * @brief Transformed from CancelPairingWithSKI()
    */
   void (*cancel_pairing_with_ski)(ShipNodeObject* self, const char* ski);
+  /**
+   * @brief Trust a peer held in the "hello" PENDING phase, letting it proceed
+   */
+  void (*approve_pending_handshake_with_ski)(ShipNodeObject* self, const char* ski);
+  /**
+   * @brief The "waiting" value the peer last granted, in ms, or 0 if not pending
+   */
+  uint32_t (*get_pending_waiting_ms_with_ski)(ShipNodeObject* self, const char* ski);
+
+  /**
+   * @brief Sets the certificate fingerprint the trusted node is expected to present
+   *
+   * A node trusted from a shippairing request is identified by the fingerprint
+   * of its certificate rather than by its SKI, which the request does not carry
+   * (SHIP Pairing Service TS 1.0.0, section 10.2). Once set, a peer presenting
+   * that certificate is admitted exactly as a peer presenting the registered
+   * SKI is.
+   *
+   * Appended to the end of the table and may be NULL, so that a node
+   * implemented outside this repository neither has to change nor stops
+   * compiling.
+   *
+   * @param fingerprint Uppercase hexadecimal digits, or NULL to expect none
+   */
+  void (*register_remote_fingerprint)(ShipNodeObject* self, const char* fingerprint);
+
+  /**
+   * @brief The evaluator for the shippairing requests addressed to this node
+   *
+   * Exposed rather than wrapped, because everything an integrator has to do
+   * with it, providing the secret and loading and saving the ring buffer, is
+   * already on its own interface (SHIP Pairing Service TS 1.0.0, chapters 9
+   * and 11). Until a secret is set on it, no request can be authenticated.
+   *
+   * Appended to the end of the table and may be NULL.
+   *
+   * @return The evaluator, owned by the node, or NULL if it has none
+   */
+  ShipPairingObject* (*get_ship_pairing)(ShipNodeObject* self);
+
+  /**
+   * @brief Announces a shippairing request from this node
+   *
+   * For a node asking to be trusted. Announcing again replaces the previous
+   * announcement, which is withdrawn first (section 5.5).
+   *
+   * Appended to the end of the table and may be NULL.
+   *
+   * @param entry Request to announce, or NULL to withdraw one
+   */
+  EebusError (*announce_ship_pairing_request)(ShipNodeObject* self, const ShipPairingEntry* entry);
 };
 
 /**
@@ -122,6 +175,48 @@ struct ShipNodeObject {
  * @brief Ship Node Cancel Ppairing With SKI caller definition
  */
 #define SHIP_NODE_CANCEL_PAIRING_WITH_SKI(obj, ski) (SHIP_NODE_INTERFACE(obj)->cancel_pairing_with_ski(obj, ski))
+
+/**
+ * @brief Ship Node Approve Pending Handshake With SKI caller definition
+ */
+#define SHIP_NODE_APPROVE_PENDING_HANDSHAKE_WITH_SKI(obj, ski) \
+  (SHIP_NODE_INTERFACE(obj)->approve_pending_handshake_with_ski(obj, ski))
+
+/**
+ * @brief Ship Node Get Pending Waiting Ms With SKI caller definition
+ */
+#define SHIP_NODE_GET_PENDING_WAITING_MS_WITH_SKI(obj, ski) \
+  (SHIP_NODE_INTERFACE(obj)->get_pending_waiting_ms_with_ski(obj, ski))
+
+/**
+ * @brief Ship Node Register Remote Fingerprint caller definition
+ *
+ * register_remote_fingerprint may be NULL (see the interface declaration above), so this checks for it before
+ * calling.
+ */
+#define SHIP_NODE_REGISTER_REMOTE_FINGERPRINT(obj, fingerprint)                  \
+  ((SHIP_NODE_INTERFACE(obj)->register_remote_fingerprint != NULL)               \
+       ? SHIP_NODE_INTERFACE(obj)->register_remote_fingerprint(obj, fingerprint) \
+       : (void)0)
+
+/**
+ * @brief Ship Node Get Ship Pairing caller definition
+ *
+ * get_ship_pairing may be NULL (see the interface declaration above), so this checks for it before calling.
+ */
+#define SHIP_NODE_GET_SHIP_PAIRING(obj) \
+  ((SHIP_NODE_INTERFACE(obj)->get_ship_pairing != NULL) ? SHIP_NODE_INTERFACE(obj)->get_ship_pairing(obj) : NULL)
+
+/**
+ * @brief Ship Node Announce Ship Pairing Request caller definition
+ *
+ * announce_ship_pairing_request may be NULL (see the interface declaration above), so this checks for it before
+ * calling.
+ */
+#define SHIP_NODE_ANNOUNCE_SHIP_PAIRING_REQUEST(obj, entry)                  \
+  ((SHIP_NODE_INTERFACE(obj)->announce_ship_pairing_request != NULL)         \
+       ? SHIP_NODE_INTERFACE(obj)->announce_ship_pairing_request(obj, entry) \
+       : kEebusErrorNotSupported)
 
 #ifdef __cplusplus
 }

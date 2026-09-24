@@ -92,6 +92,7 @@
 #include "src/common/vector.h"
 #include "src/ship/api/mdns_entry.h"
 #include "src/ship/api/ship_mdns_interface.h"
+#include "src/ship/api/ship_pairing_entry.h"
 #include "src/ship/mdns/mdns_debug.h"
 
 /** mDNS debug printf(), enabled whith MDNS_DEBUG = 1 */
@@ -105,6 +106,19 @@
 static const uint32_t kMdnsRecoveryDelaySeconds = 5;
 
 static const char* kShipServiceType   = "_ship._tcp";
+static const char* kShipPairingServiceType = SHIP_PAIRING_SERVICE_TYPE;
+
+// Section 5.3 recommends a TTL of two minutes for shippairing records.
+// DNSServiceRegister() does not expose the TTL of the records it publishes, so
+// the responder's own default applies. The recommendation only affects how
+// quickly a stale announcement ages out of a cache; a withdrawn request is
+// removed by the goodbye that deregistering it sends.
+
+/**
+ * Section 5.3: the port of a shippairing SRV record is unused. It must never be
+ * connected to and nothing is ever sent to it, but a port has to be published.
+ */
+static const uint16_t kShipPairingUnusedPort = 1;
 static const char* kShipServicePath   = "/ship/";
 static const char* kShipServiceTxtVer = "1";
 
@@ -120,8 +134,16 @@ typedef struct ActiveResolveEntry ActiveResolveEntry;
 struct ActiveResolveEntry {
   /** The DNSServiceRef for this resolve */
   DNSServiceRef service_ref;
-  /** The MdnsEntry being resolved */
+  /** The MdnsEntry being resolved, NULL for a shippairing resolve */
   MdnsEntry* entry;
+  /**
+   * @brief The ShipPairingEntry being resolved, NULL for a SHIP resolve
+   *
+   * A shippairing instance has to be resolved like any other, because a browse
+   * reports only a name and the TXT record arrives with the resolve. Its host
+   * and port are then discarded: section 5.3 forbids using them.
+   */
+  ShipPairingEntry* pairing_entry;
   /** The owning Mdns instance */
   Mdns* owner;
   /** Whether the resolve is done */
@@ -145,6 +167,13 @@ struct Mdns {
   DNSServiceRef dns_service_register_ref;
   Vector* active_resolves;
   Vector* found_entries;
+
+  /** @brief SHIP Pairing Service, browsed and announced alongside SHIP itself */
+  OnShipPairingEntriesFoundCallback on_pairing_entries_found_cb;
+  void* pairing_context;
+  DNSServiceRef dns_service_pairing_browser_ref;
+  DNSServiceRef dns_service_pairing_register_ref;
+  Vector* pairing_found_entries;
 
   bool cancel;
 
@@ -171,14 +200,22 @@ static void Stop(ShipMdnsObject* self);
 static EebusError RegisterService(ShipMdnsObject* self);
 static void DeregisterService(ShipMdnsObject* self);
 static void SetAutoaccept(ShipMdnsObject* self, bool autoaccept);
+static EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesFoundCallback cb, void* ctx);
+static void StopPairingBrowse(ShipMdnsObject* self);
+static EebusError RegisterPairingService(ShipMdnsObject* self, const ShipPairingEntry* entry);
+static void DeregisterPairingService(ShipMdnsObject* self);
 
 static const ShipMdnsInterface mdns_methods = {
-    .destruct           = Destruct,
-    .start              = Start,
-    .stop               = Stop,
-    .register_service   = RegisterService,
-    .deregister_service = DeregisterService,
-    .set_autoaccept     = SetAutoaccept,
+    .destruct                   = Destruct,
+    .start                      = Start,
+    .stop                       = Stop,
+    .register_service           = RegisterService,
+    .deregister_service         = DeregisterService,
+    .set_autoaccept             = SetAutoaccept,
+    .start_pairing_browse       = StartPairingBrowse,
+    .stop_pairing_browse        = StopPairingBrowse,
+    .register_pairing_service   = RegisterPairingService,
+    .deregister_pairing_service = DeregisterPairingService,
 };
 
 static void MdnsConstruct(
@@ -238,6 +275,30 @@ static DNSServiceErrorType MdnsCreateTextRecord(TXTRecordRef* txt_record, const 
 static void MdnsBrowserReset(Mdns* self);
 static void MdnsRecoverSessions(Mdns* self, uint32_t now_seconds);
 static uint32_t MdnsGetRandomInterval(uint32_t min_seconds, uint32_t max_seconds);
+static void MdnsPairingBrowseServices(Mdns* self);
+static void MdnsNotifyFoundPairingEntries(Mdns* mdns);
+static void MdnsPairingBrowseServicesCallback(
+    DNSServiceRef service_ref,
+    DNSServiceFlags flags,
+    uint32_t iface,
+    DNSServiceErrorType err,
+    const char* name,
+    const char* type,
+    const char* domain,
+    void* ctx
+);
+static void MdnsPairingResolveServiceCallback(
+    DNSServiceRef service_ref,
+    DNSServiceFlags flags,
+    uint32_t iface,
+    DNSServiceErrorType err,
+    const char* name,
+    const char* host,
+    uint16_t opaque_port,
+    uint16_t txt_record_size,
+    const unsigned char* txt_record,
+    void* ctx
+);
 
 void MdnsConstruct(
     Mdns* self,
@@ -264,6 +325,12 @@ void MdnsConstruct(
   self->dns_service_register_ref = NULL;
   self->found_entries            = VectorCreateWithDeallocator(MdnsEntryDeallocator);
   self->active_resolves          = VectorCreateWithDeallocator(MdnsActiveResolveEntryDeallocator);
+
+  self->on_pairing_entries_found_cb      = NULL;
+  self->pairing_context                  = NULL;
+  self->dns_service_pairing_browser_ref  = NULL;
+  self->dns_service_pairing_register_ref = NULL;
+  self->pairing_found_entries            = VectorCreateWithDeallocator(ShipPairingEntryDeallocator);
 
   self->cancel                     = false;
   self->needs_recovery             = false;
@@ -297,10 +364,11 @@ static ActiveResolveEntry* MdnsActiveResolveEntryCreate(Mdns* owner, MdnsEntry* 
     return NULL;
   }
 
-  resolve->service_ref = NULL;
-  resolve->entry       = entry;
-  resolve->owner       = owner;
-  resolve->done        = false;
+  resolve->service_ref   = NULL;
+  resolve->entry         = entry;
+  resolve->pairing_entry = NULL;
+  resolve->owner         = owner;
+  resolve->done          = false;
 
   return resolve;
 }
@@ -318,6 +386,11 @@ static void MdnsActiveResolveEntryDestroy(ActiveResolveEntry* resolve) {
   if (resolve->entry != NULL) {
     MdnsEntryDelete(resolve->entry);
     resolve->entry = NULL;
+  }
+
+  if (resolve->pairing_entry != NULL) {
+    ShipPairingEntryDelete(resolve->pairing_entry);
+    resolve->pairing_entry = NULL;
   }
 
   EEBUS_FREE(resolve);
@@ -359,6 +432,16 @@ static void MdnsBrowserReset(Mdns* mdns) {
     mdns->dns_service_browser_ref = NULL;
   }
 
+  if (mdns->dns_service_pairing_browser_ref != NULL) {
+    DNSServiceRefDeallocate(mdns->dns_service_pairing_browser_ref);
+    mdns->dns_service_pairing_browser_ref = NULL;
+  }
+
+  if (mdns->pairing_found_entries != NULL) {
+    VectorFreeElements(mdns->pairing_found_entries);
+    VectorClear(mdns->pairing_found_entries);
+  }
+
   if (mdns->found_entries != NULL) {
     VectorFreeElements(mdns->found_entries);
     VectorClear(mdns->found_entries);
@@ -393,6 +476,15 @@ static void Destruct(ShipMdnsObject* self) {
     VectorDestruct(mdns->active_resolves);
     EEBUS_FREE(mdns->active_resolves);
     mdns->active_resolves = NULL;
+  }
+
+  DeregisterPairingService(self);
+
+  if (mdns->pairing_found_entries != NULL) {
+    VectorFreeElements(mdns->pairing_found_entries);
+    VectorDestruct(mdns->pairing_found_entries);
+    EEBUS_FREE(mdns->pairing_found_entries);
+    mdns->pairing_found_entries = NULL;
   }
 
   EebusDeviceInfoDelete(mdns->device_info);
@@ -757,8 +849,251 @@ static void MdnsRecoverSessions(Mdns* mdns, uint32_t now_seconds) {
   MdnsBrowseServices(mdns);
   recovered = recovered && (mdns->dns_service_browser_ref != NULL);
 
+  // The reset tore the shippairing browse down with the rest. The loop opens it
+  // again if something is still waiting for what it finds.
+
   mdns->needs_recovery             = !recovered;
   mdns->next_recovery_time_seconds = now_seconds + kMdnsRecoveryDelaySeconds;
+}
+
+EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesFoundCallback cb, void* ctx) {
+  Mdns* const mdns = MDNS(self);
+
+  mdns->on_pairing_entries_found_cb = cb;
+  mdns->pairing_context             = ctx;
+
+  // The browse itself is opened by the loop, which owns every DNSServiceRef.
+  // Opening it here would touch a ref another thread is selecting on.
+  return kEebusErrorOk;
+}
+
+void StopPairingBrowse(ShipMdnsObject* self) {
+  Mdns* const mdns = MDNS(self);
+
+  mdns->on_pairing_entries_found_cb = NULL;
+  mdns->pairing_context             = NULL;
+}
+
+EebusError RegisterPairingService(ShipMdnsObject* self, const ShipPairingEntry* entry) {
+  Mdns* const mdns = MDNS(self);
+
+  if (entry == NULL) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  // Section 5.5: a corrected request replaces the previous announcement, which
+  // has to be withdrawn first so that a goodbye is sent for it.
+  DeregisterPairingService(self);
+
+  TXTRecordRef txt_record;
+  TXTRecordCreate(&txt_record, 0, NULL);
+
+  for (size_t i = 0; i < ShipPairingEntryGetTxtPairCount(); ++i) {
+    const char* const key   = ShipPairingEntryGetTxtKey(i);
+    const char* const value = ShipPairingEntryGetTxtValue(entry, i);
+    if ((key == NULL) || (value == NULL)) {
+      MDNS_DEBUG_PRINTF("shippairing TXT record is incomplete, not announcing\n");
+      TXTRecordDeallocate(&txt_record);
+      return kEebusErrorInput;
+    }
+
+    const DNSServiceErrorType txt_error = TXTRecordSetValue(&txt_record, key, (uint8_t)strlen(value), value);
+    if (txt_error != kDNSServiceErr_NoError) {
+      MDNS_DEBUG_PRINTF("TXTRecordSetValue(%s) returned error %d\n", key, txt_error);
+      TXTRecordDeallocate(&txt_record);
+      return kEebusErrorInput;
+    }
+  }
+
+  const DNSServiceErrorType error = DNSServiceRegister(
+      &mdns->dns_service_pairing_register_ref,
+      0,
+      0,
+      ShipPairingEntryGetName(entry),
+      kShipPairingServiceType,
+      NULL,
+      NULL,
+      htons(kShipPairingUnusedPort),
+      TXTRecordGetLength(&txt_record),
+      TXTRecordGetBytesPtr(&txt_record),
+      MdnsRegisterServiceCallback,
+      mdns
+  );
+
+  TXTRecordDeallocate(&txt_record);
+
+  if (error != kDNSServiceErr_NoError) {
+    MDNS_DEBUG_PRINTF("DNSServiceRegister() for shippairing returned error %d\n", error);
+    mdns->dns_service_pairing_register_ref = NULL;
+    return kEebusErrorCommunication;
+  }
+
+  return kEebusErrorOk;
+}
+
+void DeregisterPairingService(ShipMdnsObject* self) {
+  Mdns* const mdns = MDNS(self);
+
+  if (mdns->dns_service_pairing_register_ref != NULL) {
+    // Deallocating the ref is what sends the goodbye (section 5.5).
+    DNSServiceRefDeallocate(mdns->dns_service_pairing_register_ref);
+    mdns->dns_service_pairing_register_ref = NULL;
+  }
+}
+
+void MdnsPairingBrowseServices(Mdns* self) {
+  const DNSServiceErrorType error = DNSServiceBrowse(
+      &self->dns_service_pairing_browser_ref,
+      0,
+      kDNSServiceInterfaceIndexAny,
+      kShipPairingServiceType,
+      NULL,
+      MdnsPairingBrowseServicesCallback,
+      self
+  );
+
+  if (error != kDNSServiceErr_NoError) {
+    MDNS_DEBUG_PRINTF("DNSServiceBrowse() for shippairing returned error %d\n", error);
+    self->dns_service_pairing_browser_ref = NULL;
+  }
+}
+
+void MdnsPairingBrowseServicesCallback(
+    DNSServiceRef service_ref,
+    DNSServiceFlags flags,
+    uint32_t iface,
+    DNSServiceErrorType err,
+    const char* name,
+    const char* type,
+    const char* domain,
+    void* ctx
+) {
+  UNUSED(service_ref);
+  UNUSED(type);
+
+  Mdns* const mdns = (Mdns*)ctx;
+
+  if ((mdns == NULL) || (err != kDNSServiceErr_NoError)) {
+    MDNS_DEBUG_PRINTF("shippairing browser error occurred: %d\n", err);
+    if (mdns != NULL) {
+      mdns->needs_recovery = true;
+    }
+
+    return;
+  }
+
+  if (!(flags & kDNSServiceFlagsAdd)) {
+    // A goodbye. Nothing is trusted on the strength of an announcement still
+    // being there, so there is nothing to undo.
+    MDNS_DEBUG_PRINTF("Removed shippairing service: %s%s\n", name, domain);
+    return;
+  }
+
+  // Stopped while this was in flight: resolving it would be work for an answer
+  // nobody is waiting for.
+  if (mdns->on_pairing_entries_found_cb == NULL) {
+    return;
+  }
+
+  ShipPairingEntry* const entry = ShipPairingEntryCreate(name, domain, iface);
+  if (entry == NULL) {
+    return;
+  }
+
+  // A browse reports a name; the TXT record the request lives in arrives with
+  // the resolve.
+  ActiveResolveEntry* const resolve = (ActiveResolveEntry*)EEBUS_MALLOC(sizeof(ActiveResolveEntry));
+  if (resolve == NULL) {
+    ShipPairingEntryDelete(entry);
+    return;
+  }
+
+  resolve->service_ref   = NULL;
+  resolve->entry         = NULL;
+  resolve->pairing_entry = entry;
+  resolve->owner         = mdns;
+  resolve->done          = false;
+
+  const DNSServiceErrorType error = DNSServiceResolve(
+      &resolve->service_ref,
+      0,
+      iface,
+      name,
+      kShipPairingServiceType,
+      domain,
+      MdnsPairingResolveServiceCallback,
+      resolve
+  );
+
+  if (error != kDNSServiceErr_NoError) {
+    MDNS_DEBUG_PRINTF("DNSServiceResolve() for shippairing returned error %d\n", error);
+    MdnsActiveResolveEntryDestroy(resolve);
+    return;
+  }
+
+  VectorPushBack(mdns->active_resolves, resolve);
+}
+
+void MdnsPairingResolveServiceCallback(
+    DNSServiceRef service_ref,
+    DNSServiceFlags flags,
+    uint32_t iface,
+    DNSServiceErrorType err,
+    const char* name,
+    const char* host,
+    uint16_t opaque_port,
+    uint16_t txt_record_size,
+    const unsigned char* txt_record,
+    void* ctx
+) {
+  UNUSED(service_ref);
+  UNUSED(flags);
+  UNUSED(iface);
+  UNUSED(name);
+  // Section 5.3: the host name and port of a shippairing instance are not to be
+  // used, so they are read off the wire and dropped.
+  UNUSED(host);
+  UNUSED(opaque_port);
+
+  ActiveResolveEntry* const resolve = (ActiveResolveEntry*)ctx;
+  if (resolve == NULL) {
+    return;
+  }
+
+  Mdns* const mdns              = resolve->owner;
+  ShipPairingEntry* const entry = resolve->pairing_entry;
+
+  resolve->done = true;
+
+  if ((err != kDNSServiceErr_NoError) || (mdns == NULL) || (entry == NULL)) {
+    return;
+  }
+
+  MDNS_TXT_RECORD_PRINT(txt_record, txt_record_size);
+
+  if (ShipPairingEntryParseTxtRecord(entry, (const char*)txt_record, txt_record_size) != kEebusErrorOk) {
+    MDNS_DEBUG_PRINTF("Ignoring a malformed shippairing TXT record\n");
+    return;
+  }
+
+  // Whether the request is valid, addressed here and genuine is decided by the
+  // evaluator, which is the only thing holding the secret. Everything found is
+  // handed over.
+  VectorPushBack(mdns->pairing_found_entries, entry);
+  resolve->pairing_entry = NULL;
+}
+
+void MdnsNotifyFoundPairingEntries(Mdns* mdns) {
+  if ((mdns->on_pairing_entries_found_cb == NULL) || (VectorGetSize(mdns->pairing_found_entries) == 0)) {
+    return;
+  }
+
+  Vector* const entries = mdns->pairing_found_entries;
+
+  // Ownership passes to the callback, as it does for the SHIP browse.
+  mdns->pairing_found_entries = VectorCreateWithDeallocator(ShipPairingEntryDeallocator);
+
+  mdns->on_pairing_entries_found_cb(entries, mdns->pairing_context);
 }
 
 static void* MdnsBrowserLoop(void* parameters) {
@@ -777,12 +1112,30 @@ static void* MdnsBrowserLoop(void* parameters) {
 
     MdnsRecoverSessions(mdns, now_seconds);
 
+    // Browsed from the same thread as SHIP itself, so that both share one set
+    // of service refs and one select(). Neither specification asks for
+    // discovery to be prompt, and a second browsing thread would have to be
+    // kept in step with this one for no gain.
+    //
+    // Opened only while something is waiting for what it finds, so a node that
+    // could not accept a request does not ask for any.
+    if ((mdns->on_pairing_entries_found_cb != NULL) && (mdns->dns_service_pairing_browser_ref == NULL)) {
+      MdnsPairingBrowseServices(mdns);
+    } else if ((mdns->on_pairing_entries_found_cb == NULL) && (mdns->dns_service_pairing_browser_ref != NULL)) {
+      DNSServiceRefDeallocate(mdns->dns_service_pairing_browser_ref);
+      mdns->dns_service_pairing_browser_ref = NULL;
+      VectorFreeElements(mdns->pairing_found_entries);
+      VectorClear(mdns->pairing_found_entries);
+    }
+
     fd_set readfds;
     FD_ZERO(&readfds);
 
-    int maxfd       = -1;
-    int browse_fd   = MdnsPrepareSockFd(mdns->dns_service_browser_ref, &readfds, &maxfd);
-    int register_fd = MdnsPrepareSockFd(mdns->dns_service_register_ref, &readfds, &maxfd);
+    int maxfd               = -1;
+    int browse_fd           = MdnsPrepareSockFd(mdns->dns_service_browser_ref, &readfds, &maxfd);
+    int register_fd         = MdnsPrepareSockFd(mdns->dns_service_register_ref, &readfds, &maxfd);
+    int pairing_browse_fd   = MdnsPrepareSockFd(mdns->dns_service_pairing_browser_ref, &readfds, &maxfd);
+    int pairing_register_fd = MdnsPrepareSockFd(mdns->dns_service_pairing_register_ref, &readfds, &maxfd);
 
     for (size_t i = 0; i < VectorGetSize(mdns->active_resolves); ++i) {
       ActiveResolveEntry* const resolve = (ActiveResolveEntry*)VectorGetElement(mdns->active_resolves, i);
@@ -803,10 +1156,19 @@ static void* MdnsBrowserLoop(void* parameters) {
 
     if (n > 0) {
       MdnsDispatchReadyFds(mdns, &readfds, browse_fd, register_fd);
+
+      if ((pairing_browse_fd >= 0) && FD_ISSET(pairing_browse_fd, &readfds)) {
+        DNSServiceProcessResult(mdns->dns_service_pairing_browser_ref);
+      }
+
+      if ((pairing_register_fd >= 0) && FD_ISSET(pairing_register_fd, &readfds)) {
+        DNSServiceProcessResult(mdns->dns_service_pairing_register_ref);
+      }
     }
 
     if (now_seconds >= next_notify_time_seconds) {
       MdnsNotifyFoundEntries(mdns);
+      MdnsNotifyFoundPairingEntries(mdns);
       next_notify_time_seconds
           = now_seconds + MdnsGetRandomInterval(kMdnsBrowseIntervalMinSeconds, kMdnsBrowseIntervalMaxSeconds);
     }

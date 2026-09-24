@@ -96,6 +96,18 @@ int WebsocketOnClose(WebsocketObject* self);
 
 const char* WebsocketGetSkiWithWsi(struct lws* wsi);
 
+/**
+ * @brief Calculates the SHA-256 fingerprint of the peer's certificate
+ *
+ * The authentication parameter SHIP Pairing Service verifies during the TLS
+ * handshake in place of an SKI (SHIP Pairing Service TS 1.0.0, section 10.2).
+ *
+ * @param wsi Connection whose peer certificate is to be read
+ * @return Fingerprint as uppercase hexadecimal digits, to be released with
+ *         StringDelete(), or NULL
+ */
+const char* WebsocketGetFingerprintWithWsi(struct lws* wsi);
+
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
