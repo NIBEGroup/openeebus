@@ -552,14 +552,14 @@ HpsrvObject* HpsrvOpen(int32_t port, const char* role, TlsCertificateObject* tls
 void Destruct(ServiceReaderObject* self) {
   Hpsrv* const hpsrv = HPSRV(self);
 
-  EebusCliDelete(hpsrv->cli);
-  hpsrv->cli = NULL;
-
   if (hpsrv->service != NULL) {
     EEBUS_SERVICE_STOP(hpsrv->service);
-    EebusServiceDelete(hpsrv->service);
-    hpsrv->service = NULL;
   }
+
+  // Use cases unsubscribe from the service owned device event manager during destruction,
+  // so they must be released before the service and its local device are deleted.
+  EebusCliDelete(hpsrv->cli);
+  hpsrv->cli = NULL;
 
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->mu_mpc));
   hpsrv->mu_mpc = NULL;
@@ -594,6 +594,9 @@ void Destruct(ServiceReaderObject* self) {
 
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->gcp_mgcp));
   hpsrv->gcp_mgcp = NULL;
+
+  EebusServiceDelete(hpsrv->service);
+  hpsrv->service = NULL;
 
   EebusServiceConfigDelete(hpsrv->cfg);
   hpsrv->cfg = NULL;

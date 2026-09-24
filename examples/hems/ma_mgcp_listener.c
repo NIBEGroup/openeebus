@@ -104,8 +104,7 @@ void OnRemoteEntityConnect(MaMgcpListenerObject* self, const EntityAddressType* 
 void OnRemoteEntityDisconnect(MaMgcpListenerObject* self, const EntityAddressType* entity_addr) {
   MaMgcpListener* const ma_mgcp_listener = MA_MGCP_LISTENER(self);
 
-  HemsSetMaMgcpRemoteEntity(ma_mgcp_listener->hems, NULL);
-  UNUSED(entity_addr);
+  HemsRemoveMaMgcpRemoteEntity(ma_mgcp_listener->hems, entity_addr);
 }
 
 void OnMeasurementReceive(

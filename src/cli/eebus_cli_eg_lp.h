@@ -25,8 +25,8 @@
 
 #include "src/cli/eebus_cli_handler_interface.h"
 #include "src/common/eebus_malloc.h"
+#include "src/common/entity_address_list.h"
 #include "src/spine/model/common_data_types.h"
-#include "src/spine/model/entity_types.h"
 #include "src/use_case/actor/eg/eg_lp.h"
 
 #ifdef __cplusplus
@@ -34,7 +34,7 @@ extern "C" {
 #endif  // __cplusplus
 
 EebusCliHandlerObject*
-EgLpCliCreate(EnergyDirectionType energy_direction, EgLpUseCaseObject* eg_lp, const EntityAddressType* entity_addr);
+EgLpCliCreate(EnergyDirectionType energy_direction, EgLpUseCaseObject* eg_lp, const EntityAddressList* addr_list);
 
 static inline void EgLpCliDelete(EebusCliHandlerObject* eg_lp_cli) {
   if (eg_lp_cli != NULL) {
