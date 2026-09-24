@@ -77,6 +77,23 @@ static inline bool StringIsEmpty(const char* s) {
 bool StringNCompare(const char* a, const char* b, size_t n);
 
 /**
+ * @brief Case-insensitive string equality check
+ * @param a First string (may be NULL)
+ * @param b Second string (may be NULL)
+ * @return true if both strings are equal ignoring case
+ */
+static inline bool StringEqualsIgnoreCase(const char* a, const char* b) {
+  if ((a == NULL) || (b == NULL)) {
+    return false;
+  }
+#ifdef _WIN32
+  return _stricmp(a, b) == 0;
+#else
+  return strcasecmp(a, b) == 0;
+#endif  // _WIN32
+}
+
+/**
  * @brief Dynamically allocates buffer and performs formatted sprintf() into it
  *
  * Transformed from Go fmt.Sprintf()

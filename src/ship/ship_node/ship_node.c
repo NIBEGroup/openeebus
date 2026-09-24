@@ -409,7 +409,7 @@ bool SkiMatches(const char* ski_a, const char* ski_b) {
     return false;
   }
 
-  return strcasecmp(ski_a, ski_b) == 0;
+  return StringEqualsIgnoreCase(ski_a, ski_b);
 }
 
 static bool ShipNodeFindServiceForSki(ShipNode* self, const char* ski, MdnsEntry* found_entry) {
