@@ -55,7 +55,7 @@ TEST_P(ShipConnectionServerCmiWaitStateTests, CmiServerWaitReceivedReplyTest) {
           testing::StrCaseEq("")
       )
   );
-  ExpectCloseWithError(GetParam().close_error_msg, false);
+  ExpectWebsocketClose(GetParam().close_error_msg, false);
 
   // Act: Wait for message
   CmiStateServerWait(&sc);

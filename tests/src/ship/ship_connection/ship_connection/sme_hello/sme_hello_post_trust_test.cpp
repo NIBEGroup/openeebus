@@ -48,7 +48,7 @@ TEST_F(ShipConnectionHelloStatePostTrustTests, TrustGrantedLeavesPendingForReady
   EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer)).Times(2);
   EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer)).Times(2);
   EXPECT_CALL(*ifp_mock->gmock, HandleShipStateUpdate(sc.info_provider, _, kSmeHelloStateReadyInit, _));
-  ExpectCloseWithError("", false);
+  ExpectWebsocketClose("", false);
 
   // Act
   SmeHelloStatePendingListen(&sc);
@@ -73,7 +73,7 @@ TEST_F(ShipConnectionHelloStatePostTrustTests, TrustDeniedAbortsTheHandshake) {
   EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
   EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer));
   EXPECT_CALL(*ifp_mock->gmock, HandleShipStateUpdate(sc.info_provider, _, kSmeHelloStateAbort, _));
-  ExpectCloseWithError("", false);
+  ExpectWebsocketClose("", false);
 
   // Act
   SmeHelloStatePendingListen(&sc);
@@ -103,7 +103,7 @@ TEST_F(ShipConnectionHelloStatePostTrustTests, TrustDecisionOutsidePendingIsIgno
   EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
   EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer));
   EXPECT_CALL(*ifp_mock->gmock, HandleShipStateUpdate(sc.info_provider, _, kSmeHelloStateAbort, _));
-  ExpectCloseWithError("", false);
+  ExpectWebsocketClose("", false);
 
   // Act: the message behind the stale decision is the one acted upon
   SmeHelloStateReadyListen(&sc);
@@ -169,7 +169,7 @@ TEST_F(ShipConnectionHelloStatePostTrustTests, PeerReadyDuringPendingIsRemembere
   EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer)).Times(2);
   EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer));
   EXPECT_CALL(*spr_timer_mock->gmock, Start(sc.send_prolongation_request_timer, 45000, false));
-  ExpectCloseWithError("", false);
+  ExpectWebsocketClose("", false);
 
   ASSERT_FALSE(sc.remote_hello_ready);
 
@@ -195,7 +195,7 @@ TEST_F(ShipConnectionHelloStatePostTrustTests, ReadyInitWithThePeerAlreadyReadyR
   EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer));
   EXPECT_CALL(*websocket_mock->gmock, Write(sc.websocket, _, _)).WillOnce(ReturnArg<2>());
   EXPECT_CALL(*ifp_mock->gmock, HandleShipStateUpdate(sc.info_provider, _, kSmeHelloStateOk, _));
-  ExpectCloseWithError("", false);
+  ExpectWebsocketClose("", false);
 
   // Act
   SmeHelloStateReadyInit(&sc);
@@ -217,7 +217,7 @@ TEST_F(ShipConnectionHelloStatePostTrustTests, ReadyInitWithoutAPeerReadyStillLi
   EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer));
   EXPECT_CALL(*websocket_mock->gmock, Write(sc.websocket, _, _)).WillOnce(ReturnArg<2>());
   EXPECT_CALL(*ifp_mock->gmock, HandleShipStateUpdate(sc.info_provider, _, kSmeHelloStateReadyListen, _));
-  ExpectCloseWithError("", false);
+  ExpectWebsocketClose("", false);
 
   // Act
   SmeHelloStateReadyInit(&sc);
