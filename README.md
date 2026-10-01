@@ -42,13 +42,6 @@ The source code in this repository implements the EEBUS protocol, based on the [
 
 \* Note: OHPCF is currently in draft state!
 
-### Limitations
-
-The current implementation of the OpenEEBUS by NIBE library supports a subset of the EEBUS protocol features. Notably, it does not yet include support for:
-
-* Multiple remote SHIP node connections
-* SPINE message approve/deny procedure
-
 ## Documentation
 
 ### Contribution
