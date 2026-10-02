@@ -203,7 +203,11 @@ EebusError CsLpApproveWrite(CsLpUseCaseObject* self, const char* ski, MsgCounter
 EebusError CsLpDenyWrite(CsLpUseCaseObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err);
 
 /**
- * @brief Check if a power limit value and its duration are valid.
+ * @brief Check if a power consumption limit (LPC) value and its duration are valid.
+ *
+ * Consumption limits are zero or positive. For production limits (LPP) use CsLppIsLimitValid():
+ * those follow the passive sign convention and are zero or negative.
+ *
  * @param limit Limit value to validate
  * @param duration Duration (in seconds) to validate
  * @return true if limit is not negative and duration is not negative, false otherwise
