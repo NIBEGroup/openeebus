@@ -20,7 +20,7 @@ EV_BINARY   = str(BUILD_DIR / "ev_charger")
 # Each node is started with the OTHER node's certificate SKI as its trusted remote.
 # heat_pump registers hems.crt's SKI; hems registers heat_pump.crt's SKI.
 # ev_charger also trusts hems.crt, so its remote SKI equals HP_REMOTE_SKI.
-HP_REMOTE_SKI   = os.environ.get("EEBUS_HP_SKI",   "1bb991d59a94cc1925486be3addb07200b9d7680")
+HP_REMOTE_SKI   = os.environ.get("EEBUS_HP_SKI",   "22ba544730c19c61676c35e1aefe444b36674b5b")
 HEMS_REMOTE_SKI = os.environ.get("EEBUS_HEMS_SKI", "40c61c3526f271e8e1547851c46f6ea20d4c6f83")
 EV_SKI          = os.environ.get("EEBUS_EV_SKI",   "5a139a8131d0b65b3078878bafd7ff71b84721a4")
 HP_CERT         = os.environ.get("EEBUS_HP_CERT",   str(CERTS_DIR / "heat_pump.crt"))
