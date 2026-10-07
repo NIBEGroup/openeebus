@@ -1,0 +1,63 @@
+namespace two_remote_eg_lpc_test {
+namespace receive {
+
+static constexpr char discovery_request[] = R"({
+  "datagram": [
+    {
+      "header": [
+        {
+          "specificationVersion": "1.3.0"
+        },
+        {
+          "addressSource": [
+            {
+              "device": "d:_n:EV_123456789"
+            },
+            {
+              "entity": [
+                0
+              ]
+            },
+            {
+              "feature": 0
+            }
+          ]
+        },
+        {
+          "addressDestination": [
+            {
+              "entity": [
+                0
+              ]
+            },
+            {
+              "feature": 0
+            }
+          ]
+        },
+        {
+          "msgCounter": 21
+        },
+        {
+          "cmdClassifier": "read"
+        }
+      ]
+    },
+    {
+      "payload": [
+        {
+          "cmd": [
+            [
+              {
+                "nodeManagementDetailedDiscoveryData": []
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+})";
+
+}  // namespace receive
+}  // namespace two_remote_eg_lpc_test

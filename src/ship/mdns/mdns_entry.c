@@ -257,6 +257,21 @@ EebusError MdnsEntrySetHost(MdnsEntry* entry, const char* host) {
   return (entry->host == NULL) ? kEebusErrorMemoryAllocate : kEebusErrorOk;
 }
 
+const char* MdnsEntryToUri(const MdnsEntry* entry) {
+  const char* const host = entry->host;
+
+  size_t len = host ? strlen(host) : 0;
+  if (len == 0) {
+    return NULL;
+  }
+
+  if (host[len - 1] == '.') {
+    --len;
+  }
+
+  return StringFmtSprintf("wss://%.*s:%d%s", (int)len, host, entry->port, entry->path);
+}
+
 void MdnsEntrySetPort(MdnsEntry* entry, int port) {
   entry->port = port;
 }

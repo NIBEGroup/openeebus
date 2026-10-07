@@ -504,10 +504,10 @@ class CsLpcTestFixture : public UseCaseTestFixture {
 
 // Verify that no response within the timeout triggers a re-send of the discovery read request.
 TEST_F(CsLpcTestFixture, RetryDetailedDiscoveryOnTimeout) {
-  // kDefaultMaxResponseDelayMs = 10000ms → 10 ticks to expire, +1 tick to fire the callback
+  // kDefaultMaxResponseDelayMs = 10000ms -> 10 ticks to expire, +1 tick to fire the callback
   static constexpr size_t kDiscoveryTimeoutTicks = 11;
 
-  // After timeout the pending discovery reply fires with NULL → expect retry read (msgCounter=2)
+  // After timeout the pending discovery reply fires with NULL -> expect retry read (msgCounter=2)
   ExpectSendMessage(send::discovery_read_retry);
   for (size_t i = 0; i < kDiscoveryTimeoutTicks; ++i) {
     HandleTick();

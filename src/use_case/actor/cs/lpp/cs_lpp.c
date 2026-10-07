@@ -85,3 +85,7 @@ CsLpUseCaseObject* CsLppUseCaseCreate(
 ) {
   return CsLpUseCaseCreate(kEnergyDirectionTypeProduce, &cs_lp_use_case_info, local_entity, ec_id, cs_lp_listener);
 }
+
+bool CsLppIsLimitValid(double limit, int32_t duration) {
+  return (limit <= 0.0) && (duration >= 0);
+}

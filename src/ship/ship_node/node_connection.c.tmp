@@ -1,0 +1,13 @@
+NodeConnection
+void Destruct()
+const char* GetSki()
+struct ShipNode* GetOwner()
+bool IsAttemptRunning()
+bool OwnsConnection(const ShipConnectionObject* sc)
+ShipConnectionObject* ReleaseShipConnection()
+int OnConnectionClosed()
+void StopRetryTimer()
+void ScheduleRetry(uint32_t delay_ms)
+bool OnHandshakeComplete()
+EebusError ClientConnect(WebsocketCreatorObject* wsc, const char* ship_id)
+EebusError ServerConnect(WebsocketCreatorObject* wsc, const char* ship_id)

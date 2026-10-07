@@ -23,6 +23,7 @@
 
 #include "src/cli/eebus_cli_cem_ohpcf.h"
 #include "src/cli/eebus_cli_handler_interface.h"
+#include "src/cli/eebus_cli_remote_arg.h"
 #include "src/common/eebus_arguments.h"
 #include "src/common/eebus_bool/eebus_bool.h"
 #include "src/common/eebus_date_time/eebus_date_time.h"
@@ -37,8 +38,8 @@ struct CemOhpcfCli {
 
   /** CEM OHPCF instance to deal with */
   CemOhpcfUseCaseObject* cem_ohpcf;
-  /** CEM OHPCF remote entity address to communicate with */
-  const EntityAddressType* entity_addr;
+  /** List of remote entity addresses to communicate with */
+  const EntityAddressList* addr_list;
 };
 
 #define CEM_OHPCF_CLI(obj) ((CemOhpcfCli*)(obj))
@@ -52,53 +53,65 @@ static const EebusCliHandlerInterface cem_ohpcf_cli_methods = {
 };
 
 static EebusError
-CemOhpcfCliConstruct(CemOhpcfCli* self, CemOhpcfUseCaseObject* cem_ohpcf, const EntityAddressType* entity_addr);
+CemOhpcfCliConstruct(CemOhpcfCli* self, CemOhpcfUseCaseObject* cem_ohpcf, const EntityAddressList* addr_list);
 
-static void HandleCmdGetAnnounced(const CemOhpcfCli* self, const char* const* tokens, size_t num_tokens);
-static void HandleCmdGetState(const CemOhpcfCli* self, const char* const* tokens, size_t num_tokens);
-static void HandleCmdGet(const CemOhpcfCli* self, const char* const* tokens, size_t num_tokens);
+static void HandleCmdGetAnnounced(const CemOhpcfCli* self, const EntityAddressType* entity_addr);
+static void HandleCmdGetState(const CemOhpcfCli* self, const EntityAddressType* entity_addr);
+static void HandleCmdGet(
+    const CemOhpcfCli* self,
+    const EntityAddressType* entity_addr,
+    const char* const* tokens,
+    size_t num_tokens
+);
 static void OnScheduleResult(
     const ResultMessage* result_msg,
     const FeatureAddressType* remote_feature_addr,
     EebusError err,
     void* ctx
 );
-static void HandleCmdSchedule(const CemOhpcfCli* self, const char* const* tokens, size_t num_tokens);
+static void HandleCmdSchedule(
+    const CemOhpcfCli* self,
+    const EntityAddressType* entity_addr,
+    const char* const* tokens,
+    size_t num_tokens
+);
 static void OnWriteCommandResult(
     const ResultMessage* result_msg,
     const FeatureAddressType* remote_feature_addr,
     EebusError err,
     void* ctx
 );
-static void HandleCmdWriteCommand(const CemOhpcfCli* self, const char* const* tokens, size_t num_tokens);
+static void HandleCmdWriteCommand(
+    const CemOhpcfCli* self,
+    const EntityAddressType* entity_addr,
+    const char* const* tokens,
+    size_t num_tokens
+);
 
 EebusError
-CemOhpcfCliConstruct(CemOhpcfCli* self, CemOhpcfUseCaseObject* cem_ohpcf, const EntityAddressType* entity_addr) {
+CemOhpcfCliConstruct(CemOhpcfCli* self, CemOhpcfUseCaseObject* cem_ohpcf, const EntityAddressList* addr_list) {
   // Override "virtual functions table"
   EEBUS_CLI_HANDLER_INTERFACE(self) = &cem_ohpcf_cli_methods;
 
-  self->cem_ohpcf   = cem_ohpcf;
-  self->entity_addr = NULL;
+  self->cem_ohpcf = cem_ohpcf;
+  self->addr_list = NULL;
 
-  if ((cem_ohpcf == NULL) || (entity_addr == NULL)) {
+  if ((cem_ohpcf == NULL) || (addr_list == NULL)) {
     return kEebusErrorInputArgumentNull;
   }
 
-  self->entity_addr = EntityAddressCopy(entity_addr);
-  if (self->entity_addr == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
+  self->addr_list = addr_list;
 
   return kEebusErrorOk;
 }
 
-EebusCliHandlerObject* CemOhpcfCliCreate(CemOhpcfUseCaseObject* cem_ohpcf, const EntityAddressType* entity_addr) {
+EebusCliHandlerObject* CemOhpcfCliCreate(CemOhpcfUseCaseObject* cem_ohpcf, const EntityAddressList* addr_list) {
   CemOhpcfCli* const cem_ohpcf_cli = (CemOhpcfCli*)EEBUS_MALLOC(sizeof(CemOhpcfCli));
   if (cem_ohpcf_cli == NULL) {
     return NULL;
   }
 
-  if (CemOhpcfCliConstruct(cem_ohpcf_cli, cem_ohpcf, entity_addr) != kEebusErrorOk) {
+  if (CemOhpcfCliConstruct(cem_ohpcf_cli, cem_ohpcf, addr_list) != kEebusErrorOk) {
     CemOhpcfCliDelete(EEBUS_CLI_HANDLER_OBJECT(cem_ohpcf_cli));
     return NULL;
   }
@@ -109,8 +122,7 @@ EebusCliHandlerObject* CemOhpcfCliCreate(CemOhpcfUseCaseObject* cem_ohpcf, const
 void Destruct(EebusCliHandlerObject* self) {
   CemOhpcfCli* const cem_ohpcf_cli = CEM_OHPCF_CLI(self);
 
-  EntityAddressDelete((EntityAddressType*)cem_ohpcf_cli->entity_addr);
-  cem_ohpcf_cli->entity_addr = NULL;
+  cem_ohpcf_cli->addr_list = NULL;
 }
 
 //-------------------------------------------------------------------------------------------//
@@ -118,13 +130,10 @@ void Destruct(EebusCliHandlerObject* self) {
 // CEM OHPCF Getters Handling
 //
 //-------------------------------------------------------------------------------------------//
-void HandleCmdGetAnnounced(const CemOhpcfCli* self, const char* const* tokens, size_t num_tokens) {
-  UNUSED(tokens);
-  UNUSED(num_tokens);
-
+void HandleCmdGetAnnounced(const CemOhpcfCli* self, const EntityAddressType* entity_addr) {
   OptionalPowerConsumption optional_power_consumption;
   const EebusError err
-      = CemOhpcfGetAnnouncedOptionalPowerConsumption(self->cem_ohpcf, self->entity_addr, &optional_power_consumption);
+      = CemOhpcfGetAnnouncedOptionalPowerConsumption(self->cem_ohpcf, entity_addr, &optional_power_consumption);
 
   if (err != kEebusErrorOk) {
     printf("CEM OHPCF failed to get announced optional power consumption, error code: %d\n", err);
@@ -136,11 +145,8 @@ void HandleCmdGetAnnounced(const CemOhpcfCli* self, const char* const* tokens, s
   printf("\n");
 }
 
-void HandleCmdGetState(const CemOhpcfCli* self, const char* const* tokens, size_t num_tokens) {
-  UNUSED(tokens);
-  UNUSED(num_tokens);
-
-  const CompressorOhpcfState state = CemOhpcfGetCompressorState(self->cem_ohpcf, self->entity_addr);
+void HandleCmdGetState(const CemOhpcfCli* self, const EntityAddressType* entity_addr) {
+  const CompressorOhpcfState state = CemOhpcfGetCompressorState(self->cem_ohpcf, entity_addr);
 
   const char* const state_name = CompressorOhpcfStateGetName(state);
   if (state_name != NULL) {
@@ -151,16 +157,21 @@ void HandleCmdGetState(const CemOhpcfCli* self, const char* const* tokens, size_
   printf("CEM OHPCF Compressor State: %d\n", state);
 }
 
-void HandleCmdGet(const CemOhpcfCli* self, const char* const* tokens, size_t num_tokens) {
+void HandleCmdGet(
+    const CemOhpcfCli* self,
+    const EntityAddressType* entity_addr,
+    const char* const* tokens,
+    size_t num_tokens
+) {
   if (num_tokens < 3) {
     printf("Insufficient arguments for cem_ohpcf get command\n");
     return;
   }
 
   if (strcmp(tokens[2], "announced") == 0) {
-    HandleCmdGetAnnounced(self, tokens, num_tokens);
+    HandleCmdGetAnnounced(self, entity_addr);
   } else if (strcmp(tokens[2], "state") == 0) {
-    HandleCmdGetState(self, tokens, num_tokens);
+    HandleCmdGetState(self, entity_addr);
   } else {
     printf("Unknown get subcommand for cem_ohpcf: %s\n", tokens[2]);
   }
@@ -192,7 +203,12 @@ void OnScheduleResult(
   }
 }
 
-void HandleCmdSchedule(const CemOhpcfCli* self, const char* const* tokens, size_t num_tokens) {
+void HandleCmdSchedule(
+    const CemOhpcfCli* self,
+    const EntityAddressType* entity_addr,
+    const char* const* tokens,
+    size_t num_tokens
+) {
   if (num_tokens < 3) {
     printf("Insufficient arguments for cem_ohpcf schedule command\n");
     return;
@@ -205,13 +221,8 @@ void HandleCmdSchedule(const CemOhpcfCli* self, const char* const* tokens, size_
     return;
   }
 
-  const EebusError err = CemOhpcfScheduleOptionalPowerConsumption(
-      self->cem_ohpcf,
-      self->entity_addr,
-      &start_time,
-      OnScheduleResult,
-      NULL
-  );
+  const EebusError err
+      = CemOhpcfScheduleOptionalPowerConsumption(self->cem_ohpcf, entity_addr, &start_time, OnScheduleResult, NULL);
   if (err != kEebusErrorOk) {
     printf("CEM OHPCF failed to schedule optional power consumption, error code: %d\n", err);
     return;
@@ -247,7 +258,12 @@ void OnWriteCommandResult(
   }
 }
 
-void HandleCmdWriteCommand(const CemOhpcfCli* self, const char* const* tokens, size_t num_tokens) {
+void HandleCmdWriteCommand(
+    const CemOhpcfCli* self,
+    const EntityAddressType* entity_addr,
+    const char* const* tokens,
+    size_t num_tokens
+) {
   if (num_tokens < 3) {
     printf("Insufficient arguments for cem_ohpcf write_command command\n");
     return;
@@ -257,11 +273,11 @@ void HandleCmdWriteCommand(const CemOhpcfCli* self, const char* const* tokens, s
 
   EebusError err = kEebusErrorOk;
   if (strcmp(command_str, "stop") == 0) {
-    err = CemOhpcfWriteStopCommand(self->cem_ohpcf, self->entity_addr, OnWriteCommandResult, "stop");
+    err = CemOhpcfWriteStopCommand(self->cem_ohpcf, entity_addr, OnWriteCommandResult, "stop");
   } else if (strcmp(command_str, "pause") == 0) {
-    err = CemOhpcfWritePauseCommand(self->cem_ohpcf, self->entity_addr, OnWriteCommandResult, "pause");
+    err = CemOhpcfWritePauseCommand(self->cem_ohpcf, entity_addr, OnWriteCommandResult, "pause");
   } else if (strcmp(command_str, "resume") == 0) {
-    err = CemOhpcfWriteResumeCommand(self->cem_ohpcf, self->entity_addr, OnWriteCommandResult, "resume");
+    err = CemOhpcfWriteResumeCommand(self->cem_ohpcf, entity_addr, OnWriteCommandResult, "resume");
   } else {
     printf("Unknown subcommand for cem_ohpcf write command: %s\n", command_str);
     return;
@@ -283,13 +299,26 @@ void HandleCmd(const EebusCliHandlerObject* self, const char* const* tokens, siz
     return;
   }
 
-  if (strcmp(tokens[1], "get") == 0) {
-    HandleCmdGet(cem_ohpcf_cli, tokens, num_tokens);
-  } else if (strcmp(tokens[1], "schedule") == 0) {
-    HandleCmdSchedule(cem_ohpcf_cli, tokens, num_tokens);
-  } else if (strcmp(tokens[1], "write_command") == 0) {
-    HandleCmdWriteCommand(cem_ohpcf_cli, tokens, num_tokens);
+  const char* adjusted[10];
+  size_t adjusted_count = 0;
+  const EntityAddressType* const entity_addr
+      = CliExtractRemoteArg(tokens, num_tokens, cem_ohpcf_cli->addr_list, "cem_ohpcf", adjusted, &adjusted_count);
+  if (entity_addr == NULL) {
+    return;
+  }
+
+  if (adjusted_count < 2) {
+    printf("Insufficient arguments for cem_ohpcf command\n");
+    return;
+  }
+
+  if (strcmp(adjusted[1], "get") == 0) {
+    HandleCmdGet(cem_ohpcf_cli, entity_addr, adjusted, adjusted_count);
+  } else if (strcmp(adjusted[1], "schedule") == 0) {
+    HandleCmdSchedule(cem_ohpcf_cli, entity_addr, adjusted, adjusted_count);
+  } else if (strcmp(adjusted[1], "write_command") == 0) {
+    HandleCmdWriteCommand(cem_ohpcf_cli, entity_addr, adjusted, adjusted_count);
   } else {
-    printf("Unknown subcommand for cem_ohpcf: %s\n", tokens[1]);
+    printf("Unknown subcommand for cem_ohpcf: %s\n", adjusted[1]);
   }
 }

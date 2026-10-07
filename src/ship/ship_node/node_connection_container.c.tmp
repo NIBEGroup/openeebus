@@ -1,0 +1,10 @@
+NodeConnectionContainer
+void Destruct()
+NodeConnectionObject* GetOrCreate(const char* ski, struct ShipNode* owner, NodeConnectionRetryFn retry_fn)
+NodeConnectionObject* FindWithSki(const char* ski)
+NodeConnectionObject* FindWithShipConnection(const ShipConnectionObject* sc)
+void RemoveWithSki(const char* ski)
+bool IsSkiTrusted(const char* ski)
+bool IsSkiConnected(const char* ski)
+size_t GetSize()
+NodeConnectionObject* GetWithIndex(size_t i)

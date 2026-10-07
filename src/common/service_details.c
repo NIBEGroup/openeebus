@@ -41,18 +41,22 @@ EebusError ServiceDetailsConstruct(
     const char* device_type,
     bool auto_accept
 ) {
-  if (StringIsEmpty(ski) || StringIsEmpty(ship_id) || StringIsEmpty(device_type)) {
-    return kEebusErrorInputArgument;
-  }
-
-  service_details->ski                     = NULL;
-  service_details->ipv4                    = NULL;
+  // Initialise every pointer before the first early return: the caller frees
+  // the struct via ServiceDetailsDelete() on any error, which would otherwise
+  // free uninitialised pointers (GCC -Wmaybe-uninitialized at -O3).
   service_details->cert_fingerprint_sha256 = NULL;
-  service_details->ship_id                 = NULL;
+
+  service_details->ski         = NULL;
+  service_details->ipv4        = NULL;
+  service_details->ship_id     = NULL;
   service_details->device_type = NULL;
   service_details->auto_accept = auto_accept;
   service_details->is_trusted  = false;
   service_details->state       = kConnectionStateNone;
+
+  if (StringIsEmpty(ski) || StringIsEmpty(ship_id) || StringIsEmpty(device_type)) {
+    return kEebusErrorInputArgument;
+  }
 
   service_details->ski = StringCopy(ski);
   if (service_details->ski == NULL) {

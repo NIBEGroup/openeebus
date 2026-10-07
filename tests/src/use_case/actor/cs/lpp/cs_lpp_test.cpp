@@ -350,4 +350,26 @@ TEST_F(CsLppTestFixture, CsLppTest) {
   EXPECT_CALL(*cs_lpp_listener_mock_->gmock, OnRemoteEgRemoved(_, _));
 }
 
+// Production limits follow the passive sign convention: zero or negative ([LPP-TS-001]).
+TEST(CsLppIsLimitValidTest, AcceptsZeroAndNegativeLimits) {
+  EXPECT_TRUE(CsLppIsLimitValid(0.0, 0));
+  EXPECT_TRUE(CsLppIsLimitValid(-4200.0, 0));
+  EXPECT_TRUE(CsLppIsLimitValid(-4200.0, 3600));
+}
+
+TEST(CsLppIsLimitValidTest, RejectsPositiveLimits) {
+  EXPECT_FALSE(CsLppIsLimitValid(1.0, 0));
+  EXPECT_FALSE(CsLppIsLimitValid(4200.0, 3600));
+}
+
+TEST(CsLppIsLimitValidTest, RejectsNegativeDuration) {
+  EXPECT_FALSE(CsLppIsLimitValid(-4200.0, -1));
+}
+
+// The consumption check keeps its sign: a negative consumption limit is invalid.
+TEST(CsLppIsLimitValidTest, ConsumptionCheckUsesOppositeSign) {
+  EXPECT_TRUE(CsLpIsLimitValid(4200.0, 0));
+  EXPECT_FALSE(CsLpIsLimitValid(-4200.0, 0));
+}
+
 }  // namespace cs_lpp_test

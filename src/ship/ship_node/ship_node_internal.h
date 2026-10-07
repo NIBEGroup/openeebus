@@ -18,36 +18,24 @@
 
 #include <stdbool.h>
 
+#include "node_connection_container.h"
 #include "src/common/api/eebus_mutex_interface.h"
 #include "src/common/api/eebus_queue_interface.h"
 #include "src/common/api/eebus_thread_interface.h"
 #include "src/common/service_details.h"
 #include "src/common/string_util.h"
 #include "src/ship/api/http_server_interface.h"
-#include "src/ship/api/ship_connection_interface.h"
 #include "src/ship/api/ship_mdns_interface.h"
 #include "src/ship/api/ship_node_interface.h"
 #include "src/ship/api/ship_node_reader_interface.h"
 #include "src/ship/api/tls_certificate_interface.h"
 #include "src/ship/api/trust_mode.h"
-#include "src/ship/api/websocket_creator_interface.h"
 #include "src/ship/ship_connection/types.h"
 #include "src/ship/ship_pairing/ship_pairing.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
-
-typedef struct ConnectionMapping ConnectionMapping;
-
-struct ConnectionMapping {
-  const char* ski;
-  ShipConnectionInterface* connection;
-  /** Which attempt is it to initate an connection to the remote SKI */
-  int attempt_cnt;
-  bool is_attempt_running;
-  ServiceDetails* service_details;
-};
 
 typedef struct ShipNode ShipNode;
 
@@ -56,7 +44,6 @@ struct ShipNode {
   ShipNodeObject sc_object;
 
   EebusQueueObject* msg_queue;
-  char* remote_ski;
   ShipMdnsObject* mdns;
   Vector* mdns_entries;
   EebusMutexObject* mutex;
@@ -64,55 +51,24 @@ struct ShipNode {
   bool cancel;
   EebusThreadObject* connection_thread;
 
-  ConnectionMapping* connections_table;
+  NodeConnectionContainerObject* connections;
   ShipNodeReaderObject* ship_node_reader;
   const TlsCertificateObject* tsl_certificate;
   ServiceDetails* local_service_details;
-  // Temporary single SHIP Connection object instance
-  // for early stage of Ship Node development and testing.
-  // To be replaces with multiple instances handling
-  ShipConnectionObject* ship_connection;
-  // Old client connection superseded by the simultaneous-open tiebreaker.
-  // Stopped and freed by the DiscardSuperseded handler on the connection loop thread.
-  ShipConnectionObject* superseded_connection;
-  WebsocketCreatorObject* websocket_creator;
   HttpServerObject* http_server;
-
   /**
-   * @brief Certificate fingerprint the trusted node is expected to present
+   * @brief Certificate fingerprint named by the current accepted pairing request
    *
-   * Set when trust came from a shippairing request, which names a fingerprint
-   * and not an SKI (SHIP Pairing Service TS 1.0.0, section 10.2). NULL when
-   * trust came from a classic SHIP mechanism.
+   * The pairing service permits one current devZ. Each peer's trust and
+   * presented certificate fingerprint are held in its NodeConnection.
    */
-  const char* remote_fingerprint;
-
-  /**
-   * @brief Certificate fingerprint the connected peer presented, NULL when none
-   *
-   * The http server publishes a peer's fingerprint only for the length of the
-   * connection callback, which is all the decision taken there needs. A
-   * shippairing request can be accepted at any point afterwards, though, and
-   * deciding whether it names the peer already connected means still having the
-   * fingerprint then. Kept for the life of the connection and discarded with it.
-   *
-   * A certificate hash is public, so holding one costs nothing in secrecy.
-   */
-  const char* connected_peer_fingerprint;
+  char* remote_fingerprint;
 
   /** Evaluates the shippairing requests addressed to this node, chapter 9 */
   ShipPairingObject* ship_pairing;
-  bool connection_attempt_running;
-  // True only while a CLIENT ShipConnection is alive.  Distinct from
-  // connection_attempt_running (which is also true for active servers) so that
-  // the SIMOPEN detector can tell whether there is a real concurrent outgoing
-  // client, not just an already-established server.
-  bool client_connection_running;
   ShipRole role;
   /** When a foreign SKI is trusted, see EebusTrustMode */
   EebusTrustMode trust_mode;
-  /** Whether remote_ski is trusted, as opposed to provisionally accepted */
-  bool remote_ski_trusted;
 };
 
 #define SHIP_NODE(obj) ((ShipNode*)(obj))
@@ -153,7 +109,7 @@ static inline bool ShipNodeFingerprintMatches(const char* peer_fingerprint, cons
     return false;
   }
 
-  return strcmp(peer_fingerprint, trusted_fingerprint) == 0;
+  return StringEqualsIgnoreCase(peer_fingerprint, trusted_fingerprint);
 }
 
 /**
@@ -194,7 +150,7 @@ static inline bool ShipNodeIsPeerRecognised(
     const char* peer_fingerprint,
     const char* trusted_fingerprint
 ) {
-  if (!StringIsEmpty(peer_ski) && !StringIsEmpty(trusted_ski) && (strcmp(peer_ski, trusted_ski) == 0)) {
+  if (!StringIsEmpty(peer_ski) && !StringIsEmpty(trusted_ski) && StringEqualsIgnoreCase(peer_ski, trusted_ski)) {
     return true;
   }
 

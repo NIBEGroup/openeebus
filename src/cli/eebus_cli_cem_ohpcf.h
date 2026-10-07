@@ -25,14 +25,14 @@
 
 #include "src/cli/eebus_cli_handler_interface.h"
 #include "src/common/eebus_malloc.h"
-#include "src/spine/model/entity_types.h"
+#include "src/common/entity_address_list.h"
 #include "src/use_case/actor/cem/ohpcf/cem_ohpcf.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
 
-EebusCliHandlerObject* CemOhpcfCliCreate(CemOhpcfUseCaseObject* cem_ohpcf, const EntityAddressType* entity_addr);
+EebusCliHandlerObject* CemOhpcfCliCreate(CemOhpcfUseCaseObject* cem_ohpcf, const EntityAddressList* addr_list);
 
 static inline void CemOhpcfCliDelete(EebusCliHandlerObject* cem_ohpcf_cli) {
   if (cem_ohpcf_cli != NULL) {

@@ -385,7 +385,7 @@ int WebsocketClientOnClientEstablished(WebsocketClient* self) {
   }
 
   int ret = -1;
-  if (strcmp(ski, self->remote_ski) == 0) {
+  if (StringEqualsIgnoreCase(ski, self->remote_ski)) {
     lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
     lws_callback_on_writable(wsi);
     ret = 0;

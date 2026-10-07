@@ -292,11 +292,11 @@ TEST_F(MaMpcTestFixture, MaMpcTest) {
     EXPECT_THAT(&value, ScaledValueEq(scaled_value.value, scaled_value.scale));
   }
 
-  // 20. Explicitly read measurements data → MA sends READ at msgCounter 14
+  // 20. Explicitly read measurements data -> MA sends READ at msgCounter 14
   ExpectSendMessage(send::measurement_read_2);
   EXPECT_EQ(MaMpcReadMeasurementsData(use_case_.get(), &remote_entity_addr, nullptr, nullptr), kEebusErrorOk);
 
-  // 21. Receive the reply → OnMeasurementReceive with updated total power (3500.0W)
+  // 21. Receive the reply -> OnMeasurementReceive with updated total power (3500.0W)
   EXPECT_CALL(*ma_mpc_listener_mock_->gmock, OnMeasurementReceive(_, kMpcPowerTotal, ScaledValueEq(35000, -1), _))
       .WillOnce(Return());
   HandleMessage(receive::measurement_reply_ref_14);

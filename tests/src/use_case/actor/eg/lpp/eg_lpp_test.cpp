@@ -241,11 +241,11 @@ TEST_F(EgLppTestFixture, EgLppTest) {
   // 18. Verify that starting the heartbeat sends NOTIFYs and stopping suppresses them
   VerifyHeartbeatStopStart();
 
-  // 20. Receive DC description reply → EG sends DC key value list READ
+  // 20. Receive DC description reply -> EG sends DC key value list READ
   ExpectSendMessage(send::device_configuration_key_value_list_read);
   HandleMessage(receive::device_configuration_description_reply);
 
-  // 21. Receive DC key value list reply → OnFailsafePowerLimitReceive + OnFailsafeDurationReceive
+  // 21. Receive DC key value list reply -> OnFailsafePowerLimitReceive + OnFailsafeDurationReceive
   EXPECT_CALL(*eg_lpp_listener_mock_->gmock, OnFailsafePowerLimitReceive(_, ScaledValueEq(500, 0)));
   EXPECT_CALL(*eg_lpp_listener_mock_->gmock, OnFailsafeDurationReceive(_, DurationTypeEq(2, 0, 0)));
   HandleMessage(receive::device_configuration_key_value_list_reply);
@@ -273,7 +273,7 @@ TEST_F(EgLppTestFixture, EgLppTest) {
   EXPECT_EQ(EgLppGetFailsafeDurationMinimum(use_case_.get(), remote_entity_addr, &failsafe_duration), kEebusErrorOk);
   EXPECT_THAT(&failsafe_duration, DurationTypeEq(2, 0, 0));
 
-  // 26. Set the failsafe production active power limit → sends WRITE to CS at msgCounter 22
+  // 26. Set the failsafe production active power limit -> sends WRITE to CS at msgCounter 22
   ExpectSendMessage(send::failsafe_power_limit_write);
   const ScaledValue new_power_limit{600, 0};
   EXPECT_EQ(
@@ -290,7 +290,7 @@ TEST_F(EgLppTestFixture, EgLppTest) {
   // 27. Receive the result ACK for the failsafe power limit write
   HandleMessage(receive::result_data_msg_cnt_ref_22);
 
-  // 28. Set the failsafe duration minimum → sends WRITE to CS at msgCounter 23
+  // 28. Set the failsafe duration minimum -> sends WRITE to CS at msgCounter 23
   ExpectSendMessage(send::failsafe_duration_write);
   const EebusDuration new_duration{.hours = 3};
   EXPECT_EQ(
@@ -301,7 +301,7 @@ TEST_F(EgLppTestFixture, EgLppTest) {
   // 29. Receive the result ACK for the failsafe duration write
   HandleMessage(receive::result_data_msg_cnt_ref_23);
 
-  // 30. Set the active production power limit → sends WRITE to CS at msgCounter 24
+  // 30. Set the active production power limit -> sends WRITE to CS at msgCounter 24
   ExpectSendMessage(send::limits_write);
   static constexpr LoadLimit new_limit = {
       .value     = {.value = 8000, .scale = 0},
@@ -316,38 +316,38 @@ TEST_F(EgLppTestFixture, EgLppTest) {
   // 31. Receive the result ACK for the active power limit write
   HandleMessage(receive::result_data_msg_cnt_ref_24);
 
-  // 33. Explicitly read active production power limit → EG sends READ at msgCounter 25
+  // 33. Explicitly read active production power limit -> EG sends READ at msgCounter 25
   ExpectSendMessage(send::load_control_limit_list_read_2);
   EXPECT_EQ(EgLppReadActiveProductionPowerLimit(use_case_.get(), remote_entity_addr, nullptr, nullptr), kEebusErrorOk);
 
-  // 34. Receive the reply → OnPowerLimitReceive with updated values (8000W active, no duration)
+  // 34. Receive the reply -> OnPowerLimitReceive with updated values (8000W active, no duration)
   EXPECT_CALL(*eg_lpp_listener_mock_->gmock, OnPowerLimitReceive(_, ScaledValueEq(8000, 0), testing::IsNull(), true));
   HandleMessage(receive::limits_reply_ref_25);
 
-  // 35. Explicitly read failsafe production active power limit → EG sends READ at msgCounter 26
+  // 35. Explicitly read failsafe production active power limit -> EG sends READ at msgCounter 26
   ExpectSendMessage(send::device_configuration_key_value_list_read_2);
   EXPECT_EQ(
       EgLppReadFailsafeProductionActivePowerLimit(use_case_.get(), remote_entity_addr, nullptr, nullptr),
       kEebusErrorOk
   );
 
-  // 36. Receive the reply → OnFailsafePowerLimitReceive with updated value (600W)
+  // 36. Receive the reply -> OnFailsafePowerLimitReceive with updated value (600W)
   EXPECT_CALL(*eg_lpp_listener_mock_->gmock, OnFailsafePowerLimitReceive(_, ScaledValueEq(600, 0)));
   HandleMessage(receive::device_configuration_key_value_list_reply_ref_26);
 
-  // 37. Explicitly read failsafe duration minimum → EG sends READ at msgCounter 27
+  // 37. Explicitly read failsafe duration minimum -> EG sends READ at msgCounter 27
   ExpectSendMessage(send::device_configuration_key_value_list_read_3);
   EXPECT_EQ(EgLppReadFailsafeDurationMinimum(use_case_.get(), remote_entity_addr, nullptr, nullptr), kEebusErrorOk);
 
-  // 38. Receive the reply → OnFailsafeDurationReceive with updated value (3h)
+  // 38. Receive the reply -> OnFailsafeDurationReceive with updated value (3h)
   EXPECT_CALL(*eg_lpp_listener_mock_->gmock, OnFailsafeDurationReceive(_, DurationTypeEq(3, 0, 0)));
   HandleMessage(receive::device_configuration_key_value_list_reply_ref_27);
 
-  // 39. Explicitly read power production nominal max → EG sends READ at msgCounter 28
+  // 39. Explicitly read power production nominal max -> EG sends READ at msgCounter 28
   ExpectSendMessage(send::electrical_connection_characteristic_read_2);
   EXPECT_EQ(EgLppReadPowerProductionNominalMax(use_case_.get(), remote_entity_addr, nullptr, nullptr), kEebusErrorOk);
 
-  // 40. Receive the reply → OnPowerNominalMaxReceive with updated value (14000W)
+  // 40. Receive the reply -> OnPowerNominalMaxReceive with updated value (14000W)
   EXPECT_CALL(*eg_lpp_listener_mock_->gmock, OnPowerNominalMaxReceive(_, ScaledValueEq(14000, 0)));
   HandleMessage(receive::electrical_connection_characteristic_reply_ref_28);
 
