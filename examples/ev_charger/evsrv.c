@@ -233,6 +233,7 @@ static EebusError EvsrvStart(Evsrv* self, int32_t port, const char* role, TlsCer
   }
 
   EebusServiceConfigSetAlternateIdentifier(self->cfg, "OpenEEBUS-EV-123456789");
+  EebusServiceConfigSetAlternateMdnsServiceName(self->cfg, "OpenEEBUS-EV-123456789");
 
   self->service = EebusServiceCreate(self->cfg, role, tls_certificate, SERVICE_READER_OBJECT(self));
   if (self->service == NULL) {
