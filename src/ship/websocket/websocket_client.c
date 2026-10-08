@@ -18,6 +18,7 @@
  * @brief Websocket Uri implementation
  */
 
+#include "src/ship/websocket/websocket_client.h"
 #include "src/common/eebus_arguments.h"
 #include "src/common/eebus_malloc.h"
 #include "src/common/eebus_thread/eebus_thread.h"
@@ -41,6 +42,7 @@ struct WebsocketClient {
   int port;
   const TlsCertificateObject* tls_cert;
   const char* remote_ski;
+  const char* remote_fingerprint;
   struct lws_protocols protocols[2];
   struct lws_client_connect_info* lws_connect_info;
 };
@@ -63,6 +65,7 @@ static EebusError WebsocketClientConstruct(
     const char* uri,
     const TlsCertificateObject* tls_cert,
     const char* remote_ski,
+    const char* remote_fingerprint,
     WebsocketCallback cb,
     void* ctx
 );
@@ -82,6 +85,7 @@ EebusError WebsocketClientConstruct(
     const char* uri,
     const TlsCertificateObject* tls_cert,
     const char* remote_ski,
+    const char* remote_fingerprint,
     WebsocketCallback cb,
     void* ctx
 ) {
@@ -89,25 +93,31 @@ EebusError WebsocketClientConstruct(
   // Override "virtual functions table"
   WEBSOCKET_INTERFACE(self) = &websocket_client_methods;
 
-  if (ret != kEebusErrorOk) {
-    return ret;
-  }
-
   self->cancel = false;
   self->thread = NULL;
 
-  self->uri        = StringCopy(uri);
-  self->address    = NULL;
-  self->path       = NULL;
-  self->port       = 0;
-  self->tls_cert   = tls_cert;
-  self->remote_ski = StringCopy(remote_ski);
+  self->uri                = StringCopy(uri);
+  self->address            = NULL;
+  self->path               = NULL;
+  self->port               = 0;
+  self->tls_cert           = tls_cert;
+  self->remote_ski         = StringCopy(remote_ski);
+  self->remote_fingerprint = StringCopy(remote_fingerprint);
 
   self->protocols[0]
       = (struct lws_protocols){SHIP_WEBSOCKET_SUB_PROTOCOL, WebsocketClientServiceCallback, 0, 16 * 1024, 0, self, 0};
   self->protocols[1] = (struct lws_protocols)LWS_PROTOCOL_LIST_TERM;
 
   self->lws_connect_info = NULL;
+
+  if (ret != kEebusErrorOk) {
+    return ret;
+  }
+
+  if ((self->uri == NULL) || ((remote_ski != NULL) && (self->remote_ski == NULL))
+      || ((remote_fingerprint != NULL) && (self->remote_fingerprint == NULL))) {
+    return kEebusErrorMemoryAllocate;
+  }
 
   return kEebusErrorOk;
 }
@@ -303,12 +313,23 @@ WebsocketObject* WebsocketClientOpen(
     WebsocketCallback cb,
     void* ctx
 ) {
+  return WebsocketClientOpenWithFingerprint(uri, tls_cert, remote_ski, NULL, cb, ctx);
+}
+
+WebsocketObject* WebsocketClientOpenWithFingerprint(
+    const char* uri,
+    const TlsCertificateObject* tls_cert,
+    const char* remote_ski,
+    const char* remote_fingerprint,
+    WebsocketCallback cb,
+    void* ctx
+) {
   WebsocketClient* const ws = (WebsocketClient*)EEBUS_MALLOC(sizeof(WebsocketClient));
   if (ws == NULL) {
     return NULL;
   }
 
-  EebusError ret = WebsocketClientConstruct(ws, uri, tls_cert, remote_ski, cb, ctx);
+  EebusError ret = WebsocketClientConstruct(ws, uri, tls_cert, remote_ski, remote_fingerprint, cb, ctx);
   if (ret != kEebusErrorOk) {
     WebsocketDelete(WEBSOCKET_OBJECT(ws));
     return NULL;
@@ -343,6 +364,9 @@ void Destruct(WebsocketObject* self) {
     ws->remote_ski = NULL;
   }
 
+  StringDelete((char*)ws->remote_fingerprint);
+  ws->remote_fingerprint = NULL;
+
   if (ws->lws_connect_info != NULL) {
     if (ws->lws_connect_info->path != NULL) {
       StringDelete((char*)ws->lws_connect_info->path);
@@ -361,9 +385,8 @@ void Destruct(WebsocketObject* self) {
 int WebsocketClientOnClientEstablished(WebsocketClient* self) {
   Websocket* const ws = WEBSOCKET(self);
 
-  if (self->remote_ski == NULL) {
-    // Initialisation without trusted SKI is not accepted
-    WEBSOCKET_DEBUG_PRINTF("%s(), remote_ski is NULL\n", __func__);
+  if (StringIsEmpty(self->remote_ski) && StringIsEmpty(self->remote_fingerprint)) {
+    WEBSOCKET_DEBUG_PRINTF("%s(), no trusted SKI or certificate fingerprint\n", __func__);
     return -1;
   }
 
@@ -378,24 +401,31 @@ int WebsocketClientOnClientEstablished(WebsocketClient* self) {
     return -1;
   }
 
-  const char* ski = WebsocketGetSkiWithWsi(wsi);
-  if (ski == NULL) {
-    WEBSOCKET_DEBUG_PRINTF("%s(), WebsocketGetSkiWithWsi() failed\n", __func__);
-    return -1;
+  if (self->remote_fingerprint != NULL) {
+    const char* fingerprint = WebsocketGetFingerprintWithWsi(wsi);
+    const bool matches      = StringEqualsIgnoreCase(fingerprint, self->remote_fingerprint);
+    StringDelete((char*)fingerprint);
+    if (!matches) {
+      WEBSOCKET_DEBUG_PRINTF("%s(), server certificate fingerprint does not match\n", __func__);
+      return -1;
+    }
   }
 
-  int ret = -1;
-  if (StringEqualsIgnoreCase(ski, self->remote_ski)) {
-    lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
-    lws_callback_on_writable(wsi);
-    ret = 0;
-  } else {
-    WEBSOCKET_DEBUG_PRINTF("%s(), server certificate SKI does not match the trusted SKI\n", __func__);
-    ret = -1;
+  // For fingerprint trust, the discovered SKI only binds SHIP bookkeeping to
+  // the certificate. It cannot authorise a certificate with a different hash.
+  if (!StringIsEmpty(self->remote_ski)) {
+    const char* ski    = WebsocketGetSkiWithWsi(wsi);
+    const bool matches = StringEqualsIgnoreCase(ski, self->remote_ski);
+    StringDelete((char*)ski);
+    if (!matches) {
+      WEBSOCKET_DEBUG_PRINTF("%s(), server certificate SKI does not match\n", __func__);
+      return -1;
+    }
   }
 
-  StringDelete((char*)ski);
-  return ret;
+  lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
+  lws_callback_on_writable(wsi);
+  return 0;
 }
 
 int WebsocketClientOnClientConnectionError(WebsocketClient* self, const char* in, size_t len) {

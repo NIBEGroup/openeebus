@@ -125,6 +125,16 @@ static void PairingCmdAnnounce(PairingCmd* self, const char* for_id, const char*
     return;
   }
 
+  // Section 4.2: devZ trusts devA before publishing the request.
+  if (SHIP_NODE_REGISTER_REMOTE_FINGERPRINT_WITH_SHIP_ID(EebusServiceGetShipNode(self->service), for_id, for_par)
+      != kEebusErrorOk) {
+    printf(
+        "Could not configure trust in the target node. Stop any existing connection before changing its fingerprint\n"
+    );
+    ShipPairingRequestDelete(request);
+    return;
+  }
+
   // Section 5.5: announcing again replaces what was there, which is withdrawn
   // first.
   ShipPairingRequestDelete(self->request);

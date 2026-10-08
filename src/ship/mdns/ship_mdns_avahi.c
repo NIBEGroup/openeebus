@@ -544,7 +544,7 @@ static AvahiStringList* MdnsCreateTextRecord(const Mdns* mdns) {
   const char* register_str = mdns->autoaccept ? "true" : "false";
 
   result = avahi_string_list_add_pair(result, "txtvers", kShipServiceTxtVer);
-  result = avahi_string_list_add_pair(result, "id", mdns->service_name);
+  result = avahi_string_list_add_pair(result, "id", mdns->device_info->ship_id);
   result = avahi_string_list_add_pair(result, "path", kShipServicePath);
   result = avahi_string_list_add_pair(result, "ski", mdns->ski);
   result = avahi_string_list_add_pair(result, "register", register_str);

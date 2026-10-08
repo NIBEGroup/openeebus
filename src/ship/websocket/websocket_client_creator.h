@@ -35,6 +35,14 @@ extern "C" {
 WebsocketCreatorObject*
 WebsocketClientCreatorCreate(const char* uri, const TlsCertificateObject* tls_cert, const char* remote_ski);
 
+/** The fingerprint is mandatory for authentication when supplied. */
+WebsocketCreatorObject* WebsocketClientCreatorCreateWithFingerprint(
+    const char* uri,
+    const TlsCertificateObject* tls_cert,
+    const char* remote_ski,
+    const char* remote_fingerprint
+);
+
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

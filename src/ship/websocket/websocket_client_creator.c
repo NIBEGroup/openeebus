@@ -18,6 +18,7 @@
  * @brief Websocket Client Creator with URI parameter implementation
  */
 
+#include "src/ship/websocket/websocket_client_creator.h"
 #include "src/common/eebus_malloc.h"
 #include "src/common/string_util.h"
 #include "src/ship/api/tls_certificate_interface.h"
@@ -31,8 +32,9 @@ struct WebsocketClientCreator {
   WebsocketCreatorObject obj;
 
   const char* uri;
-  TlsCertificateObject* tls_cert;
+  const TlsCertificateObject* tls_cert;
   const char* remote_ski;
+  const char* remote_fingerprint;
 };
 
 #define WEBSOCKET_CLIENT_CREATOR(obj) ((WebsocketClientCreator*)(obj))
@@ -48,30 +50,51 @@ static const WebsocketCreatorInterface websocket_creator_methods = {
 static void WebsocketClientCreatorConstruct(
     WebsocketClientCreator* self,
     const char* uri,
-    TlsCertificateObject* tls_cert,
-    const char* remote_ski
+    const TlsCertificateObject* tls_cert,
+    const char* remote_ski,
+    const char* remote_fingerprint
 );
 
 void WebsocketClientCreatorConstruct(
     WebsocketClientCreator* self,
     const char* uri,
-    TlsCertificateObject* tls_cert,
-    const char* remote_ski
+    const TlsCertificateObject* tls_cert,
+    const char* remote_ski,
+    const char* remote_fingerprint
 ) {
   // Override "virtual functions table"
   WEBSOCKET_CREATOR_INTERFACE(self) = &websocket_creator_methods;
 
-  self->uri        = StringCopy(uri);
-  self->tls_cert   = tls_cert;
-  self->remote_ski = StringCopy(remote_ski);
+  self->uri                = StringCopy(uri);
+  self->tls_cert           = tls_cert;
+  self->remote_ski         = StringCopy(remote_ski);
+  self->remote_fingerprint = StringCopy(remote_fingerprint);
 }
 
 WebsocketCreatorObject*
-WebsocketClientCreatorCreate(const char* uri, TlsCertificateObject* tls_cert, const char* remote_ski) {
+WebsocketClientCreatorCreate(const char* uri, const TlsCertificateObject* tls_cert, const char* remote_ski) {
+  return WebsocketClientCreatorCreateWithFingerprint(uri, tls_cert, remote_ski, NULL);
+}
+
+WebsocketCreatorObject* WebsocketClientCreatorCreateWithFingerprint(
+    const char* uri,
+    const TlsCertificateObject* tls_cert,
+    const char* remote_ski,
+    const char* remote_fingerprint
+) {
   WebsocketClientCreator* const websocket_creator
       = (WebsocketClientCreator*)EEBUS_MALLOC(sizeof(WebsocketClientCreator));
 
-  WebsocketClientCreatorConstruct(websocket_creator, uri, tls_cert, remote_ski);
+  if (websocket_creator == NULL) {
+    return NULL;
+  }
+
+  WebsocketClientCreatorConstruct(websocket_creator, uri, tls_cert, remote_ski, remote_fingerprint);
+  if ((websocket_creator->uri == NULL) || ((remote_ski != NULL) && (websocket_creator->remote_ski == NULL))
+      || ((remote_fingerprint != NULL) && (websocket_creator->remote_fingerprint == NULL))) {
+    WebsocketCreatorDelete(WEBSOCKET_CREATOR_OBJECT(websocket_creator));
+    return NULL;
+  }
 
   return WEBSOCKET_CREATOR_OBJECT(websocket_creator);
 }
@@ -83,9 +106,12 @@ void Destruct(WebsocketCreatorObject* self) {
 
   StringDelete((char*)ws->remote_ski);
   ws->remote_ski = NULL;
+
+  StringDelete((char*)ws->remote_fingerprint);
+  ws->remote_fingerprint = NULL;
 }
 
 WebsocketObject* Create(WebsocketCreatorObject* self, WebsocketCallback cb, void* ctx) {
   WebsocketClientCreator* const wsc = WEBSOCKET_CLIENT_CREATOR(self);
-  return WebsocketClientOpen(wsc->uri, wsc->tls_cert, wsc->remote_ski, cb, ctx);
+  return WebsocketClientOpenWithFingerprint(wsc->uri, wsc->tls_cert, wsc->remote_ski, wsc->remote_fingerprint, cb, ctx);
 }

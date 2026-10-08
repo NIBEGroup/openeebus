@@ -1210,7 +1210,7 @@ static DNSServiceErrorType MdnsCreateTextRecord(TXTRecordRef* txt_record, const 
   TXTRecordCreate(txt_record, 0, NULL);
 
   TRY_SET_TXT_RECORD_VALUE(txt_record, "txtvers", kShipServiceTxtVer);
-  TRY_SET_TXT_RECORD_VALUE(txt_record, "id", mdns->service_name);
+  TRY_SET_TXT_RECORD_VALUE(txt_record, "id", mdns->device_info->ship_id);
   TRY_SET_TXT_RECORD_VALUE(txt_record, "path", kShipServicePath);
   TRY_SET_TXT_RECORD_VALUE(txt_record, "ski", mdns->ski);
 

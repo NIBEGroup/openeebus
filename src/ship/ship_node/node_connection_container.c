@@ -23,7 +23,9 @@
 #include <string.h>
 
 #include "node_connection.h"
+#include "node_connection_internal.h"
 #include "src/common/eebus_malloc.h"
+#include "src/common/string_util.h"
 #include "src/common/vector.h"
 
 typedef struct NodeConnectionContainer NodeConnectionContainer;
@@ -45,8 +47,11 @@ static NodeConnectionObject* GetOrCreate(
     NodeConnectionRetryFn retry_fn
 );
 static NodeConnectionObject* FindWithSki(NodeConnectionContainerObject* self, const char* ski);
+static NodeConnectionObject* FindWithFingerprint(NodeConnectionContainerObject* self, const char* fingerprint);
+static NodeConnectionObject* FindWithShipId(NodeConnectionContainerObject* self, const char* ship_id);
 static NodeConnectionObject*
 FindWithShipConnection(NodeConnectionContainerObject* self, const ShipConnectionObject* sc);
+static void Remove(NodeConnectionContainerObject* self, NodeConnectionObject* nc);
 static void RemoveWithSki(NodeConnectionContainerObject* self, const char* ski);
 static bool IsSkiTrusted(const NodeConnectionContainerObject* self, const char* ski);
 static bool IsSkiConnected(const NodeConnectionContainerObject* self, const char* ski);
@@ -57,7 +62,10 @@ static const NodeConnectionContainerInterface node_connection_container_methods 
     .destruct                  = Destruct,
     .get_or_create             = GetOrCreate,
     .find_with_ski             = FindWithSki,
+    .find_with_fingerprint     = FindWithFingerprint,
+    .find_with_ship_id         = FindWithShipId,
     .find_with_ship_connection = FindWithShipConnection,
+    .remove                    = Remove,
     .remove_with_ski           = RemoveWithSki,
     .is_ski_trusted            = IsSkiTrusted,
     .is_ski_connected          = IsSkiConnected,
@@ -122,11 +130,15 @@ NodeConnectionObject* GetOrCreate(
 }
 
 NodeConnectionObject* FindWithSki(NodeConnectionContainerObject* self, const char* ski) {
+  if (StringIsEmpty(ski)) {
+    return NULL;
+  }
+
   NodeConnectionContainer* const ncc = NODE_CONNECTION_CONTAINER(self);
 
   for (size_t i = 0; i < VectorGetSize(&ncc->items); ++i) {
     NodeConnectionObject* nc = (NodeConnectionObject*)VectorGetElement(&ncc->items, i);
-    if (strcmp(NODE_CONNECTION_GET_SKI(nc), ski) == 0) {
+    if (StringEqualsIgnoreCase(NODE_CONNECTION_GET_SKI(nc), ski)) {
       return nc;
     }
   }
@@ -134,7 +146,45 @@ NodeConnectionObject* FindWithSki(NodeConnectionContainerObject* self, const cha
   return NULL;
 }
 
+NodeConnectionObject* FindWithShipId(NodeConnectionContainerObject* self, const char* ship_id) {
+  if (StringIsEmpty(ship_id)) {
+    return NULL;
+  }
+
+  for (size_t i = 0; i < GetSize(self); ++i) {
+    NodeConnectionObject* nco = GetWithIndex(self, i);
+
+    NodeConnection* nc = NODE_CONNECTION(nco);
+    if ((nc->ship_id != NULL) && (strcmp(nc->ship_id, ship_id) == 0)) {
+      return nco;
+    }
+  }
+
+  return NULL;
+}
+
+NodeConnectionObject* FindWithFingerprint(NodeConnectionContainerObject* self, const char* fingerprint) {
+  if (StringIsEmpty(fingerprint)) {
+    return NULL;
+  }
+
+  for (size_t i = 0; i < GetSize(self); ++i) {
+    NodeConnectionObject* nco = GetWithIndex(self, i);
+
+    NodeConnection* nc = NODE_CONNECTION(nco);
+    if (nc->is_trusted && StringEqualsIgnoreCase(nc->expected_fingerprint, fingerprint)) {
+      return nco;
+    }
+  }
+
+  return NULL;
+}
+
 NodeConnectionObject* FindWithShipConnection(NodeConnectionContainerObject* self, const ShipConnectionObject* sc) {
+  if (sc == NULL) {
+    return NULL;
+  }
+
   NodeConnectionContainer* const ncc = NODE_CONNECTION_CONTAINER(self);
 
   for (size_t i = 0; i < VectorGetSize(&ncc->items); ++i) {
@@ -147,10 +197,8 @@ NodeConnectionObject* FindWithShipConnection(NodeConnectionContainerObject* self
   return NULL;
 }
 
-void RemoveWithSki(NodeConnectionContainerObject* self, const char* ski) {
+void Remove(NodeConnectionContainerObject* self, NodeConnectionObject* nc) {
   NodeConnectionContainer* const ncc = NODE_CONNECTION_CONTAINER(self);
-
-  NodeConnectionObject* const nc = FindWithSki(self, ski);
   if (nc == NULL) {
     return;
   }
@@ -159,8 +207,14 @@ void RemoveWithSki(NodeConnectionContainerObject* self, const char* ski) {
   NodeConnectionDelete(nc);
 }
 
+void RemoveWithSki(NodeConnectionContainerObject* self, const char* ski) {
+  NodeConnectionObject* const nc = FindWithSki(self, ski);
+  Remove(self, nc);
+}
+
 bool IsSkiTrusted(const NodeConnectionContainerObject* self, const char* ski) {
-  return FindWithSki((NodeConnectionContainerObject*)self, ski) != NULL;
+  NodeConnectionObject* nc = FindWithSki((NodeConnectionContainerObject*)self, ski);
+  return (nc != NULL) && NODE_CONNECTION(nc)->is_trusted;
 }
 
 bool IsSkiConnected(const NodeConnectionContainerObject* self, const char* ski) {

@@ -33,6 +33,7 @@ struct NodeConnection {
   NodeConnectionObject obj;
 
   const char* ski;
+  char* ship_id;
   ShipConnectionObject* connection;
   int attempt_cnt;
   bool is_attempt_running;
@@ -40,7 +41,9 @@ struct NodeConnection {
   bool is_trusted;
   bool provisional;
   bool trusted_by_pairing;
-  char* paired_fingerprint;
+  /** Expected certificate fingerprint, from configuration or an accepted pairing request. */
+  char* expected_fingerprint;
+  /** Fingerprint of the certificate presented on the current incoming connection. */
   char* peer_fingerprint;
   ServiceDetails* service_details;
   struct ShipNode* owner;

@@ -491,7 +491,7 @@ EebusError RegisterService(ShipMdnsObject* self) {
   // Structure with TXT records
   mdns_txt_item_t service_txt_data[] = {
       { "txtvers",       kShipServiceTxtVer},
-      {      "id",       mdns->service_name},
+      {      "id", mdns->device_info->ship_id},
       {    "path",         kShipServicePath},
       {     "ski",                mdns->ski},
       {"register",             register_str},

@@ -24,6 +24,7 @@
 #include <stddef.h>
 
 #include "src/ship/api/tls_certificate_interface.h"
+#include "src/ship/api/websocket_interface.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +34,16 @@ WebsocketObject* WebsocketClientOpen(
     const char* uri,
     const TlsCertificateObject* tls_cert,
     const char* remote_ski,
+    WebsocketCallback cb,
+    void* ctx
+);
+
+/** Verifies the certificate fingerprint before allowing SHIP messages. */
+WebsocketObject* WebsocketClientOpenWithFingerprint(
+    const char* uri,
+    const TlsCertificateObject* tls_cert,
+    const char* remote_ski,
+    const char* remote_fingerprint,
     WebsocketCallback cb,
     void* ctx
 );

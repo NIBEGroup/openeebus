@@ -4,6 +4,11 @@ Both halves of the process are in this repository, so the whole of it can be run
 on one machine: `hems` asks to be trusted, `heat_pump` decides whether to trust
 it (SHIP Pairing Service TS 1.0.0).
 
+Here `heat_pump` is devA and `hems` is devZ. Neither node needs a manually
+configured remote SKI: HEMS uses the heat pump's SHIP ID for discovery and its
+certificate fingerprint for TLS authentication. The heat pump learns HEMS's
+trust parameters from the authenticated request.
+
 ## What an administrator does
 
 The specification has a person collect three things about the node that is to do
@@ -61,6 +66,11 @@ pairing status
 Processing addCu-requests: no
 Paired by a request:       yes
 ```
+
+Classic SKI trust remains available through the startup `remote_ski` argument
+and HEMS's `--remote` option. For a peer with a configured certificate
+fingerprint, that fingerprint is verified on every incoming and outgoing
+connection, even when its SKI is known.
 
 "Processing addCu-requests: no" is the point of section 4.2, step 3: having
 accepted one request, the node stops accepting others, so a later announcement

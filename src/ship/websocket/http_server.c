@@ -248,7 +248,8 @@ struct lws_context* HttpServerContextCreate(HttpServer* self) {
        */
       .options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT | LWS_SERVER_OPTION_SSL_ECDH
                  | LWS_SERVER_OPTION_H2_JUST_FIX_WINDOW_UPDATE_OVERFLOW
-                 | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT,
+                 | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT
+                 | LWS_SERVER_OPTION_MBEDTLS_VERIFY_CLIENT_CERT_POST_HANDSHAKE,
 
       .ecdh_curve = "prime256v1",
       .ssl_cipher_list

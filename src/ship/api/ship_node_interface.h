@@ -131,6 +131,22 @@ struct ShipNodeInterface {
    * @param entry Request to announce, or NULL to withdraw one
    */
   EebusError (*announce_ship_pairing_request)(ShipNodeObject* self, const ShipPairingEntry* entry);
+
+  /**
+   * @brief Configures a peer's expected certificate fingerprint and discovery identity
+   *
+   * Used by devZ before announcing its request. The fingerprint is required
+   * on every TLS connection; an SKI learned from discovery is bookkeeping.
+   * The SHIP ID locates the peer's service; it does not authenticate the peer.
+   * Success means trust was configured and, when client connections are supported,
+   * a connection attempt was scheduled. It does not mean a connection was established.
+   * Optional, appended for compatibility with other implementations.
+   */
+  EebusError (*register_remote_fingerprint_with_ship_id)(
+      ShipNodeObject* self,
+      const char* ship_id,
+      const char* fingerprint
+  );
 };
 
 /**
@@ -216,6 +232,14 @@ struct ShipNodeObject {
 #define SHIP_NODE_ANNOUNCE_SHIP_PAIRING_REQUEST(obj, entry)                  \
   ((SHIP_NODE_INTERFACE(obj)->announce_ship_pairing_request != NULL)         \
        ? SHIP_NODE_INTERFACE(obj)->announce_ship_pairing_request(obj, entry) \
+       : kEebusErrorNotSupported)
+
+/**
+ * @brief Configures a peer's SHIP ID and expected certificate fingerprint
+ */
+#define SHIP_NODE_REGISTER_REMOTE_FINGERPRINT_WITH_SHIP_ID(obj, ship_id, fingerprint)                  \
+  ((SHIP_NODE_INTERFACE(obj)->register_remote_fingerprint_with_ship_id != NULL)                        \
+       ? SHIP_NODE_INTERFACE(obj)->register_remote_fingerprint_with_ship_id(obj, ship_id, fingerprint) \
        : kEebusErrorNotSupported)
 
 #ifdef __cplusplus
