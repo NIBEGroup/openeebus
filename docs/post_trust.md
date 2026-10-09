@@ -61,8 +61,8 @@ node doing user verification leaves it false and does not call
 ## How long the user has
 
 The peer's `connectionHello.waiting` value bounds the decision, not a locally
-chosen timeout. `EEBUS_SERVICE_GET_PENDING_WAITING_MS_WITH_SKI()` reports how much
-of it is left, so a countdown shown to a user is the real remaining time.
+chosen timeout. `EEBUS_SERVICE_GET_PENDING_WAITING_MS_WITH_SKI()` reports the stored waiting duration, 
+which the application can use to show an estimated countdown.
 
 The library keeps that window open on the application's behalf: while PENDING it
 sends prolongation requests, and [SHIP] 13.4.4.1.3 requires a peer to accept at
