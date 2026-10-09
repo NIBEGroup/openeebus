@@ -17,6 +17,7 @@
 #define SRC_SHIP_SHIP_NODE_NODE_CONNECTION_INTERNAL_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "src/common/api/eebus_timer_interface.h"
 #include "src/common/service_details.h"
@@ -35,6 +36,7 @@ struct NodeConnection {
   const char* ski;
   char* ship_id;
   ShipConnectionObject* connection;
+  uint64_t pending_approval_id;
   int attempt_cnt;
   bool is_attempt_running;
   bool handshake_complete;
@@ -51,6 +53,13 @@ struct NodeConnection {
 };
 
 #define NODE_CONNECTION(obj) ((NodeConnection*)(obj))
+
+/** Caller holds the node mutex. A token also distinguishes reused addresses. */
+static inline bool
+NodeConnectionHasPendingApproval(const NodeConnection* self, const ShipConnectionObject* sc, uint64_t approval_id) {
+  return (self != NULL) && (sc != NULL) && (self->connection == sc) && (approval_id != 0)
+         && (self->pending_approval_id == approval_id);
+}
 
 #ifdef __cplusplus
 }  // extern "C"

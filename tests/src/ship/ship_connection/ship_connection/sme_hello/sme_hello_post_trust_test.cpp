@@ -22,6 +22,8 @@
 
 #include <string_view>
 
+#include "src/common/eebus_queue/eebus_queue.h"
+#include "src/ship/ship_connection/ship_connection_trust.h"
 #include "tests/src/json.h"
 #include "tests/src/ship/ship_connection/ship_connection/ship_connection_test_suite.h"
 
@@ -30,6 +32,12 @@ using testing::_;
 using testing::ReturnArg;
 
 class ShipConnectionHelloStatePostTrustTests : public ShipConnectionTestSuite {};
+
+using TrustAcceptanceMock = testing::MockFunction<bool(ShipConnectionObject*, uint64_t)>;
+
+static bool AcceptTrust(ShipConnectionObject* sc, uint64_t approval_id, void* ctx) {
+  return static_cast<TrustAcceptanceMock*>(ctx)->Call(sc, approval_id);
+}
 
 /**
  * SHIP 13.4.4.1.2 a): the SME User switches into state READY and informs the
@@ -56,6 +64,83 @@ TEST_F(ShipConnectionHelloStatePostTrustTests, TrustGrantedLeavesPendingForReady
   // Assert
   EXPECT_EQ(SHIP_CONNECTION_GET_SHIP_STATE(&sc, NULL), kSmeHelloStateReadyInit);
   EXPECT_EQ(sc.trust_decision, kShipConnectionTrustDecisionNone);
+}
+
+TEST_F(ShipConnectionHelloStatePostTrustTests, TokenApprovalIsAcknowledgedBeforeReady) {
+  TrustAcceptanceMock accept;
+  SetShipConnectionState(kSmeHelloStatePendingListen);
+  ASSERT_EQ(
+      ShipConnectionApprovePendingHandshakeWithToken(SHIP_CONNECTION_OBJECT(&sc), 73, AcceptTrust, &accept),
+      kEebusErrorOk
+  );
+
+  EXPECT_CALL(*wfr_timer_mock->gmock, Start(sc.wait_for_ready_timer, tHelloInit, false));
+  EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer)).Times(2);
+  EXPECT_CALL(*spr_timer_mock->gmock, Stop(sc.send_prolongation_request_timer)).Times(2);
+  EXPECT_CALL(*prr_timer_mock->gmock, Stop(sc.prolongation_request_reply_timer)).Times(2);
+  {
+    testing::InSequence sequence;
+    EXPECT_CALL(accept, Call(SHIP_CONNECTION_OBJECT(&sc), 73)).WillOnce(testing::Return(true));
+    EXPECT_CALL(*ifp_mock->gmock, HandleShipStateUpdate(sc.info_provider, _, kSmeHelloStateReadyInit, _));
+  }
+  ExpectWebsocketClose("", false);
+
+  SmeHelloStatePendingListen(&sc);
+
+  EXPECT_EQ(sc.sme_state, kSmeHelloStateReadyInit);
+  EXPECT_EQ(sc.trust_decision_id, 0u);
+  EXPECT_EQ(sc.trust_accept_cb, nullptr);
+  EXPECT_EQ(sc.trust_accept_ctx, nullptr);
+}
+
+TEST_F(ShipConnectionHelloStatePostTrustTests, RejectedAcknowledgmentAbortsWithoutReady) {
+  TrustAcceptanceMock accept;
+  SetShipConnectionState(kSmeHelloStatePendingListen);
+  ASSERT_EQ(
+      ShipConnectionApprovePendingHandshakeWithToken(SHIP_CONNECTION_OBJECT(&sc), 73, AcceptTrust, &accept),
+      kEebusErrorOk
+  );
+  EXPECT_CALL(*wfr_timer_mock->gmock, Start(sc.wait_for_ready_timer, tHelloInit, false));
+  EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer)).Times(2);
+  EXPECT_CALL(accept, Call(SHIP_CONNECTION_OBJECT(&sc), 73)).WillOnce(testing::Return(false));
+  EXPECT_CALL(*ifp_mock->gmock, HandleShipStateUpdate(sc.info_provider, _, kSmeHelloStateReadyInit, _)).Times(0);
+  ExpectStateUpdate(kSmeHelloStateAbort);
+  ExpectWebsocketClose("", false);
+
+  SmeHelloStatePendingListen(&sc);
+
+  EXPECT_EQ(sc.sme_state, kSmeHelloStateAbort);
+  EXPECT_EQ(sc.trust_decision_id, 0u);
+  EXPECT_EQ(sc.trust_accept_cb, nullptr);
+  EXPECT_EQ(sc.trust_accept_ctx, nullptr);
+}
+
+TEST_F(ShipConnectionHelloStatePostTrustTests, TimeoutBeforeApprovalNeverAcknowledgesTrust) {
+  TrustAcceptanceMock accept;
+  SetShipConnectionState(kSmeHelloStatePendingListen);
+  ShipConnectionQueueMessage timeout = {.type = kShipConnectionQueueMsgTypeTimeout};
+  ShipConnectionQueueMessage cancel  = {.type = kShipConnectionQueueMsgTypeCancel};
+  ASSERT_EQ(EEBUS_QUEUE_SEND(sc.msg_queue, &timeout, kTimeoutInfinite), kEebusErrorOk);
+  ASSERT_EQ(
+      ShipConnectionApprovePendingHandshakeWithToken(SHIP_CONNECTION_OBJECT(&sc), 73, AcceptTrust, &accept),
+      kEebusErrorOk
+  );
+  ASSERT_EQ(EEBUS_QUEUE_SEND(sc.msg_queue, &cancel, kTimeoutInfinite), kEebusErrorOk);
+
+  EXPECT_CALL(*wfr_timer_mock->gmock, Start(sc.wait_for_ready_timer, tHelloInit, false)).Times(2);
+  EXPECT_CALL(*wfr_timer_mock->gmock, Stop(sc.wait_for_ready_timer)).Times(3);
+  EXPECT_CALL(accept, Call(_, _)).Times(0);
+  ExpectStateUpdate(kSmeHelloStatePendingTimeout);
+  ExpectWebsocketClose("", false);
+
+  SmeHelloStatePendingListen(&sc);
+  EXPECT_EQ(sc.sme_state, kSmeHelloStatePendingTimeout);
+  // A later receive in the timeout state discards the queued approval.
+  EXPECT_EQ(ShipConnectionReceive(&sc, &sc.msg, tHelloInit), kEebusErrorDeactivate);
+  EXPECT_EQ(sc.trust_decision, kShipConnectionTrustDecisionNone);
+  EXPECT_EQ(sc.trust_decision_id, 0u);
+  EXPECT_EQ(sc.trust_accept_cb, nullptr);
+  EXPECT_EQ(sc.trust_accept_ctx, nullptr);
 }
 
 /**

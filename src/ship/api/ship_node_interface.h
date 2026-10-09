@@ -82,6 +82,10 @@ struct ShipNodeInterface {
   void (*cancel_pairing_with_ski)(ShipNodeObject* self, const char* ski);
   /**
    * @brief Trust a peer held in the "hello" PENDING phase, letting it proceed
+   *
+   * The decision targets the connection active when this method is called.
+   * Trust is committed only if that connection accepts the decision while
+   * still pending. Calls without an active connection do not grant trust.
    */
   void (*approve_pending_handshake_with_ski)(ShipNodeObject* self, const char* ski);
   /**

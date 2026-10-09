@@ -253,6 +253,7 @@ set(HEADERS
   src/ship/ship_connection/ship_connection.h
   src/ship/ship_connection/ship_connection_debug.h
   src/ship/ship_connection/ship_connection_internal.h
+  src/ship/ship_connection/ship_connection_trust.h
   src/ship/ship_connection/ship_message_deserialize.h
   src/ship/ship_connection/ship_message_serialize.h
   src/ship/ship_connection/client.h

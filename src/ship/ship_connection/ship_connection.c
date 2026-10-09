@@ -42,6 +42,7 @@
 #include "src/ship/ship_connection/server.h"
 #include "src/ship/ship_connection/ship_connection_debug.h"
 #include "src/ship/ship_connection/ship_connection_internal.h"
+#include "src/ship/ship_connection/ship_connection_trust.h"
 #include "src/ship/ship_connection/ship_message_deserialize.h"
 #include "src/ship/ship_connection/ship_message_serialize.h"
 #include "src/ship/ship_connection/types.h"
@@ -109,6 +110,9 @@ void ShipConnectionConstruct(
 
   self->last_received_waiting_value = 0;
   self->trust_decision              = kShipConnectionTrustDecisionNone;
+  self->trust_decision_id           = 0;
+  self->trust_accept_cb             = NULL;
+  self->trust_accept_ctx            = NULL;
   self->remote_hello_ready          = false;
   self->shutdown_once               = false;
 
@@ -270,23 +274,49 @@ SmeState GetState(ShipConnectionObject* self, EebusError* error) {
 // The state machine is only ever advanced by the connection thread, which
 // sits in ShipConnectionReceive(). A decision is therefore posted to it
 // rather than applied on the caller's thread.
-static void ShipConnectionPostTrustDecision(ShipConnection* self, ShipConnectionQueueMsgType type) {
+static EebusError ShipConnectionPostTrustDecision(
+    ShipConnection* self,
+    ShipConnectionQueueMsgType type,
+    uint64_t approval_id,
+    ShipConnectionTrustAcceptanceCallback accept_cb,
+    void* ctx
+) {
   if (self->msg_queue == NULL) {
-    return;
+    return kEebusErrorNotAvailable;
   }
 
-  ShipConnectionQueueMessage queue_msg = {.type = type};
+  ShipConnectionQueueMessage queue_msg
+      = {.type = type, .approval_id = approval_id, .accept_cb = accept_cb, .accept_ctx = ctx};
   MessageBufferInit(&queue_msg.msg_buf, NULL, 0);
 
-  EEBUS_QUEUE_SEND(self->msg_queue, &queue_msg, kTimeoutInfinite);
+  return EEBUS_QUEUE_SEND(self->msg_queue, &queue_msg, kTimeoutInfinite);
 }
 
 void ApprovePendingHandshake(ShipConnectionObject* self) {
-  ShipConnectionPostTrustDecision(SHIP_CONNECTION(self), kShipConnectionQueueMsgTypeTrustGranted);
+  ShipConnectionPostTrustDecision(SHIP_CONNECTION(self), kShipConnectionQueueMsgTypeTrustGranted, 0, NULL, NULL);
+}
+
+EebusError ShipConnectionApprovePendingHandshakeWithToken(
+    ShipConnectionObject* self,
+    uint64_t approval_id,
+    ShipConnectionTrustAcceptanceCallback accept_cb,
+    void* ctx
+) {
+  if ((self == NULL) || (accept_cb == NULL)) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  return ShipConnectionPostTrustDecision(
+      SHIP_CONNECTION(self),
+      kShipConnectionQueueMsgTypeTrustGranted,
+      approval_id,
+      accept_cb,
+      ctx
+  );
 }
 
 void AbortPendingHandshake(ShipConnectionObject* self) {
-  ShipConnectionPostTrustDecision(SHIP_CONNECTION(self), kShipConnectionQueueMsgTypeTrustDenied);
+  ShipConnectionPostTrustDecision(SHIP_CONNECTION(self), kShipConnectionQueueMsgTypeTrustDenied, 0, NULL, NULL);
 }
 
 uint32_t GetPendingWaitingMs(ShipConnectionObject* self) {
@@ -406,10 +436,7 @@ void ShipConnectionWebsocketCallback(WebsocketCallbackType type, const void* in,
 
 void ShipConnectionTimeoutCallback(void* ctx) {
   ShipConnection* const sc             = (ShipConnection*)ctx;
-  ShipConnectionQueueMessage queue_msg = {
-      kShipConnectionQueueMsgTypeTimeout,
-      {NULL, 0, NULL}
-  };
+  ShipConnectionQueueMessage queue_msg = {.type = kShipConnectionQueueMsgTypeTimeout};
   EEBUS_QUEUE_SEND(sc->msg_queue, &queue_msg, kTimeoutInfinite);
 }
 
@@ -490,6 +517,10 @@ ShipConnectionWaitForMessage(ShipConnection* self, uint32_t timeout, ShipConnect
     self->trust_decision = (out_msg->type == kShipConnectionQueueMsgTypeTrustGranted)
                                ? kShipConnectionTrustDecisionGranted
                                : kShipConnectionTrustDecisionDenied;
+
+    self->trust_decision_id = out_msg->approval_id;
+    self->trust_accept_cb   = out_msg->accept_cb;
+    self->trust_accept_ctx  = out_msg->accept_ctx;
     break;
   }
 
@@ -816,16 +847,32 @@ void SmeHelloStatePendingListen(ShipConnection* self) {
       // The application decided about this peer: SHIP 13.4.4.1.2 a) switch to
       // READY and inform the partner, or c) report the abortion.
       const ShipConnectionTrustDecision decision = self->trust_decision;
+      const uint64_t approval_id                 = self->trust_decision_id;
+      void* const accept_ctx                     = self->trust_accept_ctx;
+
+      const ShipConnectionTrustAcceptanceCallback accept_cb = self->trust_accept_cb;
 
       self->trust_decision = kShipConnectionTrustDecisionNone;
 
+      self->trust_decision_id = 0;
+      self->trust_accept_cb   = NULL;
+      self->trust_accept_ctx  = NULL;
+
       if (decision == kShipConnectionTrustDecisionGranted) {
+        const bool accepted = (accept_cb != NULL) ? accept_cb(SHIP_CONNECTION_OBJECT(self), approval_id, accept_ctx)
+                                                  : (approval_id == 0);
+        if (!accepted) {
+          ShipConnectionSetSmeState(self, kSmeHelloStateAbort);
+          break;
+        }
+
         EEBUS_TIMER_STOP(self->send_prolongation_request_timer);
         EEBUS_TIMER_STOP(self->prolongation_request_reply_timer);
         ShipConnectionSetSmeState(self, kSmeHelloStateReadyInit);
       } else {
         ShipConnectionSetSmeState(self, kSmeHelloStateAbort);
       }
+
       break;
     }
 
