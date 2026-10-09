@@ -64,7 +64,7 @@ char* ShipPairingBuildMessage(const ShipPairingEntry* entry) {
 }
 
 char* ShipPairingCalcDigest(const ShipPairingEntry* entry, const uint8_t* secret, size_t secret_size) {
-  if ((entry == NULL) || (secret == NULL) || (secret_size == 0)) {
+  if ((entry == NULL) || (secret == NULL) || (secret_size != SHIP_PAIRING_SECRET_SIZE)) {
     return NULL;
   }
 
