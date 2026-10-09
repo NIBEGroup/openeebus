@@ -29,6 +29,7 @@
 #include "src/ship/api/ship_node_interface.h"
 #include "src/ship/api/ship_node_reader_interface.h"
 #include "src/ship/api/tls_certificate_interface.h"
+#include "src/ship/api/trust_mode.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +44,7 @@ extern "C" {
  * client_ssl_ca_mem and client_ssl_ca_mem fields
  * https://github.com/bertrandmartel/ssl-cert-generator-lib/blob/master/sslcertgenerator/main.cpp
  * ssl_gen variable
+ * @param trust_mode When a foreign SKI is trusted, see EebusTrustMode
  */
 ShipNodeObject* ShipNodeCreate(
     const char* ski,
@@ -52,7 +54,8 @@ ShipNodeObject* ShipNodeCreate(
     int port,
     const TlsCertificateObject* tls_certificate,
     ShipNodeReaderObject* ship_node_reader,
-    ServiceDetails* local_service_details
+    ServiceDetails* local_service_details,
+    EebusTrustMode trust_mode
 );
 
 static inline void ShipNodeDelete(ShipNodeObject* ship_node) {

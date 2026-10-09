@@ -57,10 +57,13 @@ struct NodeConnectionContainerInterface {
       NodeConnectionRetryFn retry_fn
   );
   NodeConnectionObject* (*find_with_ski)(NodeConnectionContainerObject* self, const char* ski);
+  NodeConnectionObject* (*find_with_ship_id)(NodeConnectionContainerObject* self, const char* ship_id);
+  NodeConnectionObject* (*find_with_fingerprint)(NodeConnectionContainerObject* self, const char* fingerprint);
   NodeConnectionObject* (*find_with_ship_connection)(
       NodeConnectionContainerObject* self,
       const ShipConnectionObject* sc
   );
+  void (*remove)(NodeConnectionContainerObject* self, NodeConnectionObject* nc);
   void (*remove_with_ski)(NodeConnectionContainerObject* self, const char* ski);
   bool (*is_ski_trusted)(const NodeConnectionContainerObject* self, const char* ski);
   bool (*is_ski_connected)(const NodeConnectionContainerObject* self, const char* ski);
@@ -103,10 +106,27 @@ struct NodeConnectionContainerObject {
   (NODE_CONNECTION_CONTAINER_INTERFACE(obj)->find_with_ski(obj, ski))
 
 /**
+ * @brief Node Connection Container Find With Ship ID caller definition
+ */
+#define NODE_CONNECTION_CONTAINER_FIND_WITH_SHIP_ID(obj, ship_id) \
+  (NODE_CONNECTION_CONTAINER_INTERFACE(obj)->find_with_ship_id(obj, ship_id))
+
+/**
+ * @brief Node Connection Container Find With Fingerprint caller definition
+ */
+#define NODE_CONNECTION_CONTAINER_FIND_WITH_FINGERPRINT(obj, fingerprint) \
+  (NODE_CONNECTION_CONTAINER_INTERFACE(obj)->find_with_fingerprint(obj, fingerprint))
+
+/**
  * @brief Node Connection Container Find With Ship Connection caller definition
  */
 #define NODE_CONNECTION_CONTAINER_FIND_WITH_SHIP_CONNECTION(obj, sc) \
   (NODE_CONNECTION_CONTAINER_INTERFACE(obj)->find_with_ship_connection(obj, sc))
+
+/**
+ * @brief Node Connection Container Remove caller definition
+ */
+#define NODE_CONNECTION_CONTAINER_REMOVE(obj, nc) (NODE_CONNECTION_CONTAINER_INTERFACE(obj)->remove(obj, nc))
 
 /**
  * @brief Node Connection Container Remove With SKI caller definition

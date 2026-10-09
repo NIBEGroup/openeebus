@@ -51,11 +51,22 @@ enum ShipConnectionQueueMsgType {
   kShipConnectionQueueMsgTypeWebsocketError,
   kShipConnectionQueueMsgTypeWebsocketClose,
   kShipConnectionQueueMsgTypeCancel,
+  kShipConnectionQueueMsgTypeTrustGranted,
+  kShipConnectionQueueMsgTypeTrustDenied,
 };
 
 typedef enum ShipConnectionQueueMsgType ShipConnectionQueueMsgType;
 
 typedef struct ShipConnectionQueueMessage ShipConnectionQueueMessage;
+
+/**
+ * @brief The application's trust decision about a peer in "hello" PENDING
+ */
+typedef enum {
+  kShipConnectionTrustDecisionNone = 0,
+  kShipConnectionTrustDecisionGranted,
+  kShipConnectionTrustDecisionDenied,
+} ShipConnectionTrustDecision;
 
 struct ShipConnectionQueueMessage {
   ShipConnectionQueueMsgType type;
@@ -82,6 +93,10 @@ typedef struct {
   EebusTimerObject* send_prolongation_request_timer;
   EebusTimerObject* prolongation_request_reply_timer;
   uint32_t last_received_waiting_value;
+  /** Only ever set while sme_state is kSmeHelloStatePendingListen */
+  ShipConnectionTrustDecision trust_decision;
+  /** Whether the peer has announced hello phase "ready", which it does once */
+  bool remote_hello_ready;
   // TODO: investigate better approach for call once in POSIX, e.g.
   // pthread_once_t shutdownOnce;
   bool shutdown_once;

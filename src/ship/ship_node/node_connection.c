@@ -64,21 +64,27 @@ NodeConnectionConstruct(NodeConnection* nc, const char* ski, struct ShipNode* ow
   // Override "virtual function table"
   NODE_CONNECTION_INTERFACE(nc) = &node_connection_methods;
 
-  nc->ski                = NULL;
-  nc->connection         = NULL;
-  nc->attempt_cnt        = 0;
-  nc->is_attempt_running = false;
-  nc->handshake_complete = false;
-  nc->service_details    = NULL;
-  nc->owner              = owner;
-  nc->retry_timer        = NULL;
+  nc->ski                  = NULL;
+  nc->ship_id              = NULL;
+  nc->connection           = NULL;
+  nc->attempt_cnt          = 0;
+  nc->is_attempt_running   = false;
+  nc->handshake_complete   = false;
+  nc->is_trusted           = false;
+  nc->provisional          = false;
+  nc->trusted_by_pairing   = false;
+  nc->expected_fingerprint = NULL;
+  nc->peer_fingerprint     = NULL;
+  nc->service_details      = NULL;
+  nc->owner                = owner;
+  nc->retry_timer          = NULL;
 
   if (retry_fn == NULL) {
     return kEebusErrorInputArgumentNull;
   }
 
   nc->ski = StringCopy(ski);
-  if (nc->ski == NULL) {
+  if ((ski != NULL) && (nc->ski == NULL)) {
     return kEebusErrorMemoryAllocate;
   }
 
@@ -114,6 +120,9 @@ void Destruct(NodeConnectionObject* self) {
   }
 
   StringDelete((char*)nc->ski);
+  StringDelete(nc->ship_id);
+  StringDelete(nc->expected_fingerprint);
+  StringDelete(nc->peer_fingerprint);
 }
 
 const char* GetSki(const NodeConnectionObject* self) {
@@ -160,6 +169,8 @@ uint32_t OnConnectionClosed(NodeConnectionObject* self) {
   nc->connection         = NULL;
   nc->is_attempt_running = false;
   nc->handshake_complete = false;
+  StringDelete(nc->peer_fingerprint);
+  nc->peer_fingerprint = NULL;
 
   nc->attempt_cnt++;
 

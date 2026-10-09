@@ -53,6 +53,24 @@ struct HttpServerInterface {
   void (*destruct)(HttpServerObject* self);
   EebusError (*start)(HttpServerObject* self);
   void (*stop)(HttpServerObject* self);
+
+  /**
+   * @brief SHA-256 fingerprint of the certificate of the connecting peer
+   *
+   * Valid only while a WebsocketServerCallbackType call is on the stack, which
+   * is where a node decides whether to admit the peer. SHIP Pairing Service
+   * verifies this in place of an SKI (SHIP Pairing Service TS 1.0.0,
+   * section 10.2), and the callback receives only an SKI.
+   *
+   * Appended to the end of the table and may be NULL. Its signature carries the
+   * fingerprint out rather than into the callback, so that a backend
+   * implemented outside this repository neither has to change nor stops
+   * compiling.
+   *
+   * @return Fingerprint as uppercase hexadecimal digits, owned by the server,
+   *         or NULL if it is not known
+   */
+  const char* (*get_peer_fingerprint)(const HttpServerObject* self);
 };
 
 /**
@@ -66,6 +84,22 @@ struct HttpServerObject {
  * @brief Http Server pointer typecast
  */
 #define HTTP_SERVER_OBJECT(obj) ((HttpServerObject*)(obj))
+
+/**
+ * @brief Gets the fingerprint of the connecting peer's certificate
+ *
+ * A function rather than a macro, because the method is optional and has to be
+ * checked for before it is called.
+ *
+ * @return Fingerprint, or NULL if the backend does not report one
+ */
+static inline const char* HttpServerGetPeerFingerprint(const HttpServerObject* obj) {
+  if ((obj == NULL) || (obj->interface_->get_peer_fingerprint == NULL)) {
+    return NULL;
+  }
+
+  return obj->interface_->get_peer_fingerprint(obj);
+}
 
 /**
  * @brief Http Server Interface class pointer typecast

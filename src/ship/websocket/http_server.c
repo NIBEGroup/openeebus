@@ -79,6 +79,15 @@ struct HttpServer {
   void* conn_establish_ctx;
   Vector wsi_ws_entries;
 
+  /**
+   * @brief Fingerprint of the connecting peer's certificate
+   *
+   * Held only for the duration of the conn_establish_cb call, which is where a
+   * node decides whether to admit the peer, and cleared straight afterwards so
+   * that a later caller cannot read a stale one as though it were current.
+   */
+  const char* peer_fingerprint;
+
   int port;
   const TlsCertificateObject* tls_cert;
   struct lws_protocols protocols[2];
@@ -91,12 +100,18 @@ struct HttpServer {
 static void Destruct(HttpServerObject* self);
 static EebusError Start(HttpServerObject* self);
 static void Stop(HttpServerObject* self);
+static const char* GetPeerFingerprint(const HttpServerObject* self);
 
 static const HttpServerInterface http_server_methods = {
-    .destruct = Destruct,
-    .start    = Start,
-    .stop     = Stop,
+    .destruct             = Destruct,
+    .start                = Start,
+    .stop                 = Stop,
+    .get_peer_fingerprint = GetPeerFingerprint,
 };
+
+const char* GetPeerFingerprint(const HttpServerObject* self) {
+  return HTTP_SERVER(self)->peer_fingerprint;
+}
 
 static WsiWsEntry* WsiWsEntryCreate(struct lws* wsi, WebsocketObject* ws);
 static void WsiWsEntryDelete(void* p);
@@ -117,6 +132,7 @@ static int HttpServerOnClientConnect(HttpServer* self, struct lws* wsi);
 static int HttpServerOnReceive(HttpServer* self, struct lws* wsi, void* in, size_t len);
 static int HttpServerOnWriteable(HttpServer* self, struct lws* wsi);
 static int HttpServerOnConnectionClose(HttpServer* self, struct lws* wsi);
+static int HttpServerOnSslContextCreated(HttpServer* self, void* ssl_ctx);
 static int
 HttpServerServiceCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len);
 
@@ -160,7 +176,10 @@ void HttpServerConstruct(
   self->conn_establish_cb  = conn_establish_cb;
   self->conn_establish_ctx = conn_establish_ctx;
 
-  self->port    = port;
+  self->port = port;
+
+  self->peer_fingerprint = NULL;
+
   self->lws_ctx = NULL;
 
   VectorConstructWithDeallocator(&self->wsi_ws_entries, WsiWsEntryDelete);
@@ -214,14 +233,21 @@ void HttpServerStaggerCallback(lws_sorted_usec_list_t* sul) {
 }
 
 struct lws_context* HttpServerContextCreate(HttpServer* self) {
-  const struct lws_context_creation_info lws_ctx_creation_info = (struct lws_context_creation_info){
+  struct lws_context_creation_info lws_ctx_creation_info = (struct lws_context_creation_info){
       .port      = self->port,
       .protocols = self->protocols,
       .gid       = (gid_t)-1,
       .uid       = (uid_t)-1,
 
+      /*
+       * REQUIRE_VALID_OPENSSL_CLIENT_CERT without PEER_CERT_NOT_REQUIRED asks
+       * for an optional client certificate: the peer is asked for one and it
+       * is kept, and a chain leading to no known CA does not fail the
+       * handshake. A node admits a peer by that certificate's fingerprint once
+       * the connection is up (SHIP 10.2), so the CA verdict does not decide.
+       */
       .options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT | LWS_SERVER_OPTION_SSL_ECDH
-                 | LWS_SERVER_OPTION_PEER_CERT_NOT_REQUIRED | LWS_SERVER_OPTION_H2_JUST_FIX_WINDOW_UPDATE_OVERFLOW
+                 | LWS_SERVER_OPTION_H2_JUST_FIX_WINDOW_UPDATE_OVERFLOW
                  | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT
                  | LWS_SERVER_OPTION_MBEDTLS_VERIFY_CLIENT_CERT_POST_HANDSHAKE,
 
@@ -231,13 +257,23 @@ struct lws_context* HttpServerContextCreate(HttpServer* self) {
         "ECDHE-ECDSA-AES128-CCM8:"
         "ECDHE-ECDSA-AES128-SHA256",
 
-      .server_ssl_cert_mem            = TLS_CERTIFICATE_GET_CERTIFICATE(self->tls_cert),
-      .server_ssl_cert_mem_len        = (unsigned int)TLS_CERTIFICATE_GET_CERTIFICATE_SIZE(self->tls_cert),
-      .server_ssl_private_key_mem     = TLS_CERTIFICATE_GET_PRIVATE_KEY(self->tls_cert),
-      .server_ssl_private_key_mem_len = (unsigned int)TLS_CERTIFICATE_GET_PRIVATE_KEY_SIZE(self->tls_cert),
-
       .user = self,
   };
+
+  if (TLS_CERTIFICATE_HAS_SSL_CTX_CONFIG(self->tls_cert)) {
+    /*
+     * The certificate configures itself, so none is passed here: lws is asked
+     * for a bare TLS context, which it reports at
+     * LWS_CALLBACK_OPENSSL_LOAD_EXTRA_SERVER_VERIFY_CERTS.
+     */
+    lws_ctx_creation_info.options |= LWS_SERVER_OPTION_CREATE_VHOST_SSL_CTX;
+  } else {
+    lws_ctx_creation_info.server_ssl_cert_mem     = TLS_CERTIFICATE_GET_CERTIFICATE(self->tls_cert);
+    lws_ctx_creation_info.server_ssl_cert_mem_len = (unsigned int)TLS_CERTIFICATE_GET_CERTIFICATE_SIZE(self->tls_cert);
+    lws_ctx_creation_info.server_ssl_private_key_mem = TLS_CERTIFICATE_GET_PRIVATE_KEY(self->tls_cert);
+    lws_ctx_creation_info.server_ssl_private_key_mem_len
+        = (unsigned int)TLS_CERTIFICATE_GET_PRIVATE_KEY_SIZE(self->tls_cert);
+  }
 
   if (WEBSOCKET_DEBUG == 2) {
     int logs = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_DEBUG;
@@ -333,7 +369,17 @@ int HttpServerOnClientConnect(HttpServer* self, struct lws* wsi) {
 
   WebsocketCreatorObject* websocket_creator = WebsocketServerCreatorCreate(HTTP_SERVER_OBJECT(self), wsi);
 
+  // SHIP Pairing Service authenticates a peer by the fingerprint of the
+  // certificate it presented rather than by its SKI (section 10.2). Both come
+  // from this handshake, and the fingerprint is published only while the
+  // decision that needs it is being taken.
+  self->peer_fingerprint = WebsocketGetFingerprintWithWsi(wsi);
+
   const int ret = self->conn_establish_cb(ski, websocket_creator, self->conn_establish_ctx);
+
+  StringDelete((char*)self->peer_fingerprint);
+  self->peer_fingerprint = NULL;
+
   WebsocketCreatorDelete(websocket_creator);
   StringDelete((char*)ski);
   if (ret != 0) {
@@ -408,14 +454,23 @@ int HttpServerOnConnectionClose(HttpServer* self, struct lws* wsi) {
   return 0;
 }
 
-int HttpServerServiceCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len) {
-  UNUSED(user);
+int HttpServerOnSslContextCreated(HttpServer* self, void* ssl_ctx) {
+  if (!TLS_CERTIFICATE_HAS_SSL_CTX_CONFIG(self->tls_cert)) {
+    return 0;
+  }
 
+  return TLS_CERTIFICATE_CONFIGURE_SSL_CTX(self->tls_cert, ssl_ctx);
+}
+
+int HttpServerServiceCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len) {
   HTTP_SERVER_DEBUG_PRINTF("%s(), reason = %s\n", __func__, WebsocketLwsReasonToString(reason));
   HttpServer* const srv = lws_context_user(lws_get_context(wsi));
   int ret               = 0;
 
   switch (reason) {
+    /* The new vhost TLS context arrives in the user parameter. */
+    case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_SERVER_VERIFY_CERTS: ret = HttpServerOnSslContextCreated(srv, user); break;
+
     case LWS_CALLBACK_ESTABLISHED: ret = HttpServerOnClientConnect(srv, wsi); break;
 
     case LWS_CALLBACK_RECEIVE: ret = HttpServerOnReceive(srv, wsi, in, len); break;

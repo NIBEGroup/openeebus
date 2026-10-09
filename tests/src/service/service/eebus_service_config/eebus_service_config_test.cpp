@@ -176,6 +176,12 @@ TEST(ConfigurationTests, eebus_service_config_fields_test) {
   EebusServiceConfigSetRegisterAutoAccept(cfg.get(), true);
   EXPECT_EQ(EebusServiceConfigGetRegisterAutoAccept(cfg.get()), true);
 
+  // Pre-trust is the default
+  EXPECT_EQ(EebusServiceConfigGetTrustMode(cfg.get()), kEebusTrustModePreTrust);
+
+  EebusServiceConfigSetTrustMode(cfg.get(), kEebusTrustModePostTrust);
+  EXPECT_EQ(EebusServiceConfigGetTrustMode(cfg.get()), kEebusTrustModePostTrust);
+
   EXPECT_STREQ(EebusServiceConfigGetShipId(cfg.get()), "brand-serial");
 
   EXPECT_STREQ(EebusServiceConfigGetMdnsServiceName(cfg.get()), "brand-serial");

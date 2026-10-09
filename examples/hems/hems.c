@@ -28,6 +28,7 @@
 #include "src/common/eebus_malloc.h"
 #include "src/common/entity_address_list.h"
 
+#include "examples/common/pairing_cmd.h"
 #include "examples/hems/cem_ohpcf_listener.h"
 #include "examples/hems/eg_lpc_listener.h"
 #include "examples/hems/eg_lpp_listener.h"
@@ -65,6 +66,9 @@ struct Hems {
   MaMgcpUseCaseObject* ma_mgcp;
   MaMgcpListenerObject* ma_mgcp_listener;
   EebusCliObject* cli;
+
+  /** Console commands for SHIP Pairing Service */
+  PairingCmd pairing_cmd;
 
   EntityAddressList eg_lpc_remotes;
   EntityAddressList eg_lpp_remotes;
@@ -234,6 +238,8 @@ EebusError HemsStart(Hems* hems, int32_t port, const char* role, TlsCertificateO
   EebusServiceConfigSetAlternateIdentifier(hems->cfg, "OpenEEBUS-HEMS-123456789");
 
   hems->service = EebusServiceCreate(hems->cfg, role, tls_certificate, SERVICE_READER_OBJECT(hems));
+
+  PairingCmdConstruct(&hems->pairing_cmd, hems->service, tls_certificate, EebusServiceConfigGetShipId(hems->cfg));
   if (hems->service == NULL) {
     EebusServiceConfigDelete(hems->cfg);
     hems->cfg = NULL;
@@ -544,6 +550,12 @@ void HemsRemoveMaMgcpRemoteEntity(HemsObject* self, const EntityAddressType* ent
 
 void HemsHandleCmd(HemsObject* self, char* cmd) {
   Hems* const hems = HEMS(self);
+
+  // SHIP Pairing Service is not a use case, so its commands are handled here
+  // rather than added to the use case CLI.
+  if (PairingCmdHandle(&hems->pairing_cmd, cmd)) {
+    return;
+  }
 
   EEBUS_CLI_HANDLE_CMD(hems->cli, cmd);
 }

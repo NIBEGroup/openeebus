@@ -53,6 +53,26 @@ struct ServiceReaderInterface {
   void (*on_ship_id_update)(ServiceReaderObject* self, const char* ski, const char* ship_id);
   void (*on_ship_state_update)(ServiceReaderObject* self, const char* ski, SmeState state);
   bool (*is_waiting_for_trust_allowed)(const ServiceReaderObject* self, const char* ski);
+
+  /**
+   * @brief Report a shippairing request that established trust
+   *
+   * The node named by @p trust_ship_id is to be trusted with the certificate
+   * whose fingerprint is @p trust_fingerprint, and its entry in the trust store
+   * created or updated accordingly (SHIP Pairing Service TS 1.0.0,
+   * section 10.4). Section 10.3 requires the node trusted by any previous
+   * shippairing request to be untrusted at the same time: at most one is
+   * trusted this way.
+   *
+   * Appended to the end of the table and may be NULL, so that an implementation
+   * outside this repository neither has to change nor stops compiling.
+   */
+  void (*on_ship_pairing_accepted)(
+      ServiceReaderObject* self,
+      const char* trust_ship_id,
+      const char* trust_fingerprint,
+      const char* trust_curve
+  );
 };
 
 /**
@@ -112,6 +132,16 @@ struct ServiceReaderObject {
  */
 #define SERVICE_READER_IS_WAITING_FOR_TRUST_ALLOWED(obj, ski) \
   (SERVICE_READER_INTERFACE(obj)->is_waiting_for_trust_allowed(obj, ski))
+
+/**
+ * @brief Service Reader On Ship Pairing Accepted caller definition
+ *
+ * on_ship_pairing_accepted may be NULL (see the interface declaration above), so this checks for it before calling.
+ */
+#define SERVICE_READER_ON_SHIP_PAIRING_ACCEPTED(obj, trust_ship_id, trust_fingerprint, trust_curve)                  \
+  ((SERVICE_READER_INTERFACE(obj)->on_ship_pairing_accepted != NULL)                                                 \
+       ? SERVICE_READER_INTERFACE(obj)->on_ship_pairing_accepted(obj, trust_ship_id, trust_fingerprint, trust_curve) \
+       : (void)0)
 
 #ifdef __cplusplus
 }

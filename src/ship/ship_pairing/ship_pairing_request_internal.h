@@ -1,0 +1,46 @@
+/*
+ * Copyright 2025 NIBE AB
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * @file
+ * @brief shippairing request internal structure
+ */
+
+#ifndef SRC_SHIP_SHIP_PAIRING_SHIP_PAIRING_REQUEST_INTERNAL_H_
+#define SRC_SHIP_SHIP_PAIRING_SHIP_PAIRING_REQUEST_INTERNAL_H_
+
+#include "src/common/api/eebus_timer_interface.h"
+#include "src/ship/ship_pairing/ship_pairing_request.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
+
+struct ShipPairingRequest {
+  /** The service instance and its TXT record, as it is announced */
+  ShipPairingEntry* entry;
+
+  /** Whether the request is still to be announced, section 4.2 */
+  bool announcing;
+
+  /** Counts the fifteen minutes of uninterrupted connection of section 4.2 */
+  EebusTimerObject* settled_timer;
+};
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
+
+#endif  // SRC_SHIP_SHIP_PAIRING_SHIP_PAIRING_REQUEST_INTERNAL_H_

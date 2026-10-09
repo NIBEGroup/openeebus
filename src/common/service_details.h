@@ -53,6 +53,19 @@ struct ServiceDetails {
    */
   const char* ship_id;
   /**
+   * @brief SHA-256 fingerprint of the service's certificate, has to be persisted
+   *
+   * The authentication parameter SHIP Pairing Service uses in place of an SKI
+   * (SHIP Pairing Service TS 1.0.0, section 6.2), as 64 uppercase hexadecimal
+   * digits. Optional: a service trusted by a classic SHIP mechanism has an SKI
+   * and may have no fingerprint, and one trusted from a shippairing request has
+   * a fingerprint before anything has established its SKI.
+   *
+   * Section 10.4 is explicit that this is not a second trust store. A service
+   * trusted either way is one entry here, and may carry both.
+   */
+  const char* cert_fingerprint_sha256;
+  /**
    * @brief The EEBUS device type of the device model
    */
   const char* device_type;
@@ -120,6 +133,25 @@ static inline const char* ServiceDetailsGetIpv4(ServiceDetails* service_details)
 static inline void ServiceDetailsSetIpv4(ServiceDetails* service_details, const char* ipv4) {
   StringDelete((char*)service_details->ipv4);
   service_details->ipv4 = StringCopy(ipv4);
+}
+
+/**
+ * @brief Get the Service Details certificate fingerprint
+ * @param service_details Service Details instance to get the fingerprint
+ * @return SHA-256 fingerprint as uppercase hexadecimal digits, or NULL if none
+ */
+static inline const char* ServiceDetailsGetCertFingerprint(const ServiceDetails* service_details) {
+  return service_details->cert_fingerprint_sha256;
+}
+
+/**
+ * @brief Set the Service Details certificate fingerprint. Creates a string copy
+ * @param service_details Service Details instance to set the fingerprint
+ * @param fingerprint SHA-256 fingerprint as uppercase hexadecimal digits
+ */
+static inline void ServiceDetailsSetCertFingerprint(ServiceDetails* service_details, const char* fingerprint) {
+  StringDelete((char*)service_details->cert_fingerprint_sha256);
+  service_details->cert_fingerprint_sha256 = StringCopy(fingerprint);
 }
 
 /**

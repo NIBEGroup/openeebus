@@ -56,6 +56,7 @@ target_sources(
   sme_hello/sme_hello_abort_test.cpp
   sme_hello/sme_hello_pending_init_test.cpp
   sme_hello/sme_hello_pending_listen_test.cpp
+  sme_hello/sme_hello_post_trust_test.cpp
   sme_pin/sme_pin_check_init_test.cpp
 )
 

@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "src/ship/ship_connection/ship_connection.h"
+#include "src/ship/ship_node/node_connection_internal.h"
 #include "tests/src/memory_leak.inc"
 #include "tests/src/mocks/common/eebus_timer/eebus_timer_mock.h"
 #include "tests/src/mocks/ship/ship_connection/ship_connection_mock.h"
@@ -94,7 +95,8 @@ TEST_F(NodeConnectionContainerTest, RemoveWithSki) {
 TEST_F(NodeConnectionContainerTest, IsSkiTrusted) {
   EXPECT_FALSE(NODE_CONNECTION_CONTAINER_IS_SKI_TRUSTED(ncc_.get(), "ski_e"));
 
-  GetOrCreate("ski_e");
+  NodeConnectionObject* nc        = GetOrCreate("ski_e");
+  NODE_CONNECTION(nc)->is_trusted = true;
   EXPECT_TRUE(NODE_CONNECTION_CONTAINER_IS_SKI_TRUSTED(ncc_.get(), "ski_e"));
 }
 

@@ -41,6 +41,8 @@ static const ServiceDetails* GetRemoteServiceDetailsWithSki(const EebusServiceOb
 static void RegisterRemoteSki(EebusServiceObject* self, const char* ski, bool enable);
 static void UnregisterRemoteSki(EebusServiceObject* self, const char* ski);
 static void CancelPairingWithSki(EebusServiceObject* self, const char* ski);
+static void ApprovePendingHandshakeWithSki(EebusServiceObject* self, const char* ski);
+static uint32_t GetPendingWaitingMsWithSki(EebusServiceObject* self, const char* ski);
 static void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible);
 static const char* GetLocalSki(EebusServiceObject* self);
 static const char* GetQrCodeString(EebusServiceObject* self);
@@ -66,6 +68,8 @@ static const EebusServiceInterface eebus_service_methods = {
     .register_remote_ski                 = RegisterRemoteSki,
     .unregister_remote_ski               = UnregisterRemoteSki,
     .cancel_pairing_with_ski             = CancelPairingWithSki,
+    .approve_pending_handshake_with_ski  = ApprovePendingHandshakeWithSki,
+    .get_pending_waiting_ms_with_ski     = GetPendingWaitingMsWithSki,
     .set_pairing_possible                = SetPairingPossible,
     .get_local_ski                       = GetLocalSki,
     .get_qr_code_string                  = GetQrCodeString,
@@ -183,6 +187,16 @@ void UnregisterRemoteSki(EebusServiceObject* self, const char* ski) {
 void CancelPairingWithSki(EebusServiceObject* self, const char* ski) {
   EebusServiceMock* const mock = EEBUS_SERVICE_MOCK(self);
   mock->gmock->CancelPairingWithSki(self, ski);
+}
+
+void ApprovePendingHandshakeWithSki(EebusServiceObject* self, const char* ski) {
+  EebusServiceMock* const mock = EEBUS_SERVICE_MOCK(self);
+  mock->gmock->ApprovePendingHandshakeWithSki(self, ski);
+}
+
+uint32_t GetPendingWaitingMsWithSki(EebusServiceObject* self, const char* ski) {
+  EebusServiceMock* const mock = EEBUS_SERVICE_MOCK(self);
+  return mock->gmock->GetPendingWaitingMsWithSki(self, ski);
 }
 
 void SetPairingPossible(EebusServiceObject* self, bool is_pairing_possible) {

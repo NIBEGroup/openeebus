@@ -67,7 +67,8 @@ ShipNodeObject* ShipNodeCreate(
     int port,
     const TlsCertificateObject* ssl_cert,
     ShipNodeReaderObject* ship_node_reader,
-    ServiceDetails* local_service_details
+    ServiceDetails* local_service_details,
+    EebusTrustMode trust_mode
 ) {
   UNUSED(ski);
   UNUSED(role);
@@ -77,6 +78,7 @@ ShipNodeObject* ShipNodeCreate(
   UNUSED(ssl_cert);
   UNUSED(ship_node_reader);
   UNUSED(local_service_details);
+  UNUSED(trust_mode);
   return SHIP_NODE_OBJECT(ship_node_mock);
 }
 

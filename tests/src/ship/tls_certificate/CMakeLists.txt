@@ -1,4 +1,3 @@
-# Tls Certificate integration test
 cmake_minimum_required(VERSION 3.15)
 
 set(TEST_NAME tls_certificate_test)
@@ -7,23 +6,15 @@ project(${TESTS_NAME} LANGUAGES C CXX)
 
 add_executable(${TEST_NAME})
 
-# OpenSSL Library
-find_package(OpenSSL REQUIRED)
-
-if(APPLE)
-  set(OPEN_SSL_LIBRARIES ${OPEN_SSL_LIBRARIES} OpenSSL::Crypto)
-elseif(WIN32)
-  # For Windows, we need to link both SSL and Crypto libraries
-  # to ensure all OpenSSL functionality is available
-  set(OPEN_SSL_LIBRARIES ${OPEN_SSL_LIBRARIES} OpenSSL::SSL)
-  set(OPEN_SSL_LIBRARIES ${OPEN_SSL_LIBRARIES} OpenSSL::Crypto)
-else()
-  set(OPEN_SSL_LIBRARIES ${OPEN_SSL_LIBRARIES} crypto)
+# Set proper runtime library for Windows to avoid LIBCMT conflicts
+if(WIN32)
+  set_property(TARGET ${TEST_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 endif()
 
 target_sources(
   ${TEST_NAME}
   PRIVATE
+  ${GTEST_SOURCES}
 
   # Main project sources
   ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
@@ -48,15 +39,27 @@ target_compile_definitions(
   ${TEST_NAME}
   PRIVATE
   ${PROJECT_COMPILE_DEFINITIONS}
+  MEMORY_LEAKS_TEST
 )
 
 target_link_options(
   ${TEST_NAME}
   PRIVATE
+  ${PROJECT_LINK_OPTIONS}
 )
 
 target_link_libraries(
   ${TEST_NAME}
   PRIVATE
+  ${PROJECT_LINK_LIBRARIES}
   ${OPEN_SSL_LIBRARIES}
 )
+
+add_test(
+  NAME
+  ${TEST_NAME}
+  COMMAND
+  ${EXECUTABLE_OUTPUT_PATH}/${TEST_NAME}
+)
+
+gtest_discover_tests(${TEST_NAME})
