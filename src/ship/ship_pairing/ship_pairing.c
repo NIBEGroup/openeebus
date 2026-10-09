@@ -406,6 +406,31 @@ void GetRingBuffer(const ShipPairingObject* self, ShipPairingRingBuffer* ring_bu
   *ring_buffer = SHIP_PAIRING(self)->ring_buffer;
 }
 
+static bool ShipPairingRingEntryIsValid(const ShipPairingRingEntry* entry) {
+  if (entry->digest[0] == '\0') {
+    return entry->alg[0] == '\0';
+  }
+
+  // The bounded comparison includes the expected algorithm's NUL terminator.
+  if (memcmp(entry->alg, SHIP_PAIRING_ALG_HMAC_SHA256, sizeof(SHIP_PAIRING_ALG_HMAC_SHA256)) != 0) {
+    return false;
+  }
+
+  const size_t digits = SHIP_PAIRING_DIGEST_SIZE * 2;
+  if (entry->digest[digits] != '\0') {
+    return false;
+  }
+
+  for (size_t i = 0; i < digits; ++i) {
+    const char c = entry->digest[i];
+    if (!(((c >= '0') && (c <= '9')) || ((c >= 'A') && (c <= 'F')))) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void SetRingBuffer(ShipPairingObject* self, const ShipPairingRingBuffer* ring_buffer) {
   ShipPairing* const ship_pairing = SHIP_PAIRING(self);
 
@@ -413,13 +438,19 @@ void SetRingBuffer(ShipPairingObject* self, const ShipPairingRingBuffer* ring_bu
     return;
   }
 
-  ship_pairing->ring_buffer = *ring_buffer;
+  bool valid = ring_buffer->next <= SHIP_PAIRING_RING_BUFFER_SIZE;
+  for (size_t i = 0; i < SHIP_PAIRING_RING_BUFFER_SIZE; ++i) {
+    if (!valid) {
+      break;
+    }
 
-  // A stored index outside the buffer would be read back as an entry that is
-  // not there, so a damaged one is treated as an empty buffer rather than
-  // trusted.
-  if (ship_pairing->ring_buffer.next > SHIP_PAIRING_RING_BUFFER_SIZE) {
-    SHIP_PAIRING_DEBUG_PRINTF("%s(), discarding a ring buffer with an out of range index\n", __func__);
+    valid = ShipPairingRingEntryIsValid(&ring_buffer->entries[i]);
+  }
+
+  if (valid) {
+    ship_pairing->ring_buffer = *ring_buffer;
+  } else {
+    SHIP_PAIRING_DEBUG_PRINTF("%s(), discarding an invalid persisted ring buffer\n", __func__);
     memset(&ship_pairing->ring_buffer, 0, sizeof(ship_pairing->ring_buffer));
   }
 
