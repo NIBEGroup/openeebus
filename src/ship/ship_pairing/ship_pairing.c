@@ -467,7 +467,7 @@ void SetSecret(ShipPairingObject* self, const uint8_t* secret, size_t secret_siz
   memset(ship_pairing->secret, 0, sizeof(ship_pairing->secret));
   ship_pairing->secret_size = 0;
 
-  if ((secret == NULL) || (secret_size == 0) || (secret_size > sizeof(ship_pairing->secret))) {
+  if ((secret == NULL) || (secret_size != SHIP_PAIRING_SECRET_SIZE)) {
     ShipPairingReportEnabled(ship_pairing);
     return;
   }
