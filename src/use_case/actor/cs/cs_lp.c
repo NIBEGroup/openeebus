@@ -97,12 +97,29 @@ static void CsLpLoadControlCallback(const Message* msg, void* ctx) {
                                   && (CsLpGetLimitId(self, &lcs, &known_limit_id) == kEebusErrorOk);
 
   const LoadControlLimitDataType* const first_entry = limit_list->load_control_limit_data[0];
+  const LoadControlLimitIdType* const target_limit_id
+      = (limit_list->load_control_limit_data_size == 1) ? first_entry->limit_id : NULL;
 
-  if ((limit_list->load_control_limit_data_size != 1) || !has_known_limit_id || (first_entry->limit_id == NULL)
-      || (*first_entry->limit_id != known_limit_id)) {
+  if ((target_limit_id == NULL) || !has_known_limit_id) {
     const ErrorType err
         = {.error_number = kErrorNumberTypeCommandRejected,
            .description  = "Write must target exactly the single known load control limit"};
+    FEATURE_LOCAL_DENY_WRITE(feature, ski, msg_cnt, &err);
+    return;
+  }
+
+  if (*target_limit_id != known_limit_id) {
+    const LoadControlLimitDescriptionDataType filter = {.limit_id = target_limit_id};
+    if (LoadControlCommonGetLimitDescriptionWithFilter(&lcs.load_control_common, &filter) != NULL) {
+      // This write doesn't touch our limit: cast our approval vote so the sibling
+      // callback's vote doesn't rely on us.
+      FEATURE_LOCAL_TRY_APPROVE_WRITE(feature, ski, msg_cnt);
+      return;
+    }
+
+    const ErrorType err
+        = {.error_number = kErrorNumberTypeCommandRejected,
+           .description  = "Write targets an unknown load control limit"};
     FEATURE_LOCAL_DENY_WRITE(feature, ski, msg_cnt, &err);
     return;
   }
@@ -354,7 +371,7 @@ EebusError AddDeviceConfigurationFeature(CsLpUseCase* self, EntityLocalObject* e
      .value = &(DeviceConfigurationKeyValueValueType) {
        .scaled_number = &(ScaledNumberType){.number = &(int64_t){0}, .scale = NULL},
      },
- 
+
      .is_value_changeable = &(bool){true},
    };
 
@@ -368,7 +385,7 @@ EebusError AddDeviceConfigurationFeature(CsLpUseCase* self, EntityLocalObject* e
      .value = &(DeviceConfigurationKeyValueValueType) {
        .duration = &(DurationType){0},
      },
- 
+
      .is_value_changeable = &(bool){true},
    };
 
