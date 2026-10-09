@@ -24,6 +24,7 @@
 #include "src/common/eebus_arguments.h"
 #include "src/common/eebus_errors.h"
 #include "src/common/eebus_malloc.h"
+#include "src/common/eebus_mutex/eebus_mutex.h"
 #include "src/common/eebus_queue/eebus_queue.h"
 #include "src/common/eebus_thread/eebus_thread.h"
 #include "src/common/eebus_timer/eebus_timer.h"
@@ -99,6 +100,7 @@ void ShipConnectionConstruct(
   self->info_provider  = info_provider;
   self->data_reader    = NULL;
   self->websocket      = NULL;
+  self->state_mutex    = EebusMutexCreate();
   self->sme_state      = (role == kShipRoleServer) ? kCmiStateServerWait : kCmiStateClientSend;
   self->sme_error      = kEebusErrorOk;
 
@@ -181,6 +183,9 @@ void Destruct(DataWriterObject* self) {
 
   MessageBufferRelease(&sc->msg);
 
+  EebusMutexDelete(sc->state_mutex);
+  sc->state_mutex = NULL;
+
   StringDelete((char*)sc->remote_ship_id);
   sc->remote_ship_id = NULL;
 
@@ -200,6 +205,10 @@ void* ShipConnectionLoop(void* parameters) {
 
 EebusError ShipConnectionTryStart(ShipConnection* self, WebsocketCreatorObject* websocket_creator) {
   static const size_t kQueueMaxMsg = 60;
+
+  if (self->state_mutex == NULL) {
+    return kEebusErrorMemory;
+  }
 
   self->msg_queue
       = EebusQueueCreate(kQueueMaxMsg, sizeof(ShipConnectionQueueMessage), ShipConnectionQueueMsgDeallocator);
@@ -264,11 +273,15 @@ WebsocketObject* GetWebsocketConnection(ShipConnectionObject* self) {
 SmeState GetState(ShipConnectionObject* self, EebusError* error) {
   const ShipConnection* const sc = SHIP_CONNECTION(self);
 
+  EEBUS_MUTEX_LOCK(sc->state_mutex);
+  const SmeState state = sc->sme_state;
   if (error != NULL) {
     *error = sc->sme_error;
   }
 
-  return sc->sme_state;
+  EEBUS_MUTEX_UNLOCK(sc->state_mutex);
+
+  return state;
 }
 
 // The state machine is only ever advanced by the connection thread, which
@@ -322,11 +335,11 @@ void AbortPendingHandshake(ShipConnectionObject* self) {
 uint32_t GetPendingWaitingMs(ShipConnectionObject* self) {
   const ShipConnection* const sc = SHIP_CONNECTION(self);
 
-  if (sc->sme_state != kSmeHelloStatePendingListen) {
-    return 0;
-  }
+  EEBUS_MUTEX_LOCK(sc->state_mutex);
+  const uint32_t waiting = (sc->sme_state == kSmeHelloStatePendingListen) ? sc->last_received_waiting_value : 0;
+  EEBUS_MUTEX_UNLOCK(sc->state_mutex);
 
-  return sc->last_received_waiting_value;
+  return waiting;
 }
 
 void CloseConnection(ShipConnectionObject* self, bool safe, int32_t code, const char* reason) {
@@ -441,8 +454,16 @@ void ShipConnectionTimeoutCallback(void* ctx) {
 }
 
 void ShipConnectionSetSmeState(ShipConnection* self, SmeState state) {
-  if (self->sme_state != state) {
+  EEBUS_MUTEX_LOCK(self->state_mutex);
+  const bool changed = self->sme_state != state;
+  if (changed) {
     self->sme_state = state;
+  }
+
+  EEBUS_MUTEX_UNLOCK(self->state_mutex);
+
+  // Node callbacks may acquire the node mutex, so report after unlocking.
+  if (changed) {
     SHIP_CONNECTION_DEBUG_PRINTF("SHIP state changed to: %s (%d)\n", SmeStateToString(state), state);
     INFO_PROVIDER_HANDLE_SHIP_STATE_UPDATE(self->info_provider, SHIP_CONNECTION_GET_REMOTE_SKI(self), state, "");
   }
@@ -754,8 +775,14 @@ void SmeHelloStatePendingInit(ShipConnection* self) {
   }
 }
 
+static void ShipConnectionSetWaitingValue(ShipConnection* self, uint32_t waiting) {
+  EEBUS_MUTEX_LOCK(self->state_mutex);
+  self->last_received_waiting_value = waiting;
+  EEBUS_MUTEX_UNLOCK(self->state_mutex);
+}
+
 void SmeHelloCalculateNewWaitValueAndSetTimer(ShipConnection* self, const ConnectionHello* msg) {
-  self->last_received_waiting_value = *msg->waiting;
+  ShipConnectionSetWaitingValue(self, *msg->waiting);
 
   if (*msg->waiting >= tHelloProlongThrInc) {
     uint32_t new_wait_duration = *msg->waiting - tHelloProlongWaitingGap;
@@ -902,8 +929,10 @@ void SmeHelloStatePendingTimeout(ShipConnection* self) {
     }
 
     if (self->last_received_waiting_value == 0) {
-      self->last_received_waiting_value
-          = (uint32_t)(EEBUS_TIMER_GET_REMAINING_TIME(self->prolongation_request_reply_timer) * 1.1);
+      ShipConnectionSetWaitingValue(
+          self,
+          (uint32_t)(EEBUS_TIMER_GET_REMAINING_TIME(self->prolongation_request_reply_timer) * 1.1)
+      );
     }
 
     EEBUS_TIMER_START(self->prolongation_request_reply_timer, self->last_received_waiting_value, false);

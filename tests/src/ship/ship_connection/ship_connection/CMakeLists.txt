@@ -19,6 +19,7 @@ target_sources(
   # Main project sources
   ${MAIN_PROJ_SOURCES_PATH}/common/json_impl_cjson.c
   ${MAIN_PROJ_SOURCES_PATH}/common/message_buffer.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_mutex/eebus_mutex.c
   ${MAIN_PROJ_SOURCES_PATH}/common/eebus_queue/eebus_queue.c
   ${MAIN_PROJ_SOURCES_PATH}/common/eebus_thread/eebus_thread.c
   ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c

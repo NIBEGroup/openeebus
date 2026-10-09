@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "src/common/api/eebus_mutex_interface.h"
 #include "src/common/api/eebus_queue_interface.h"
 #include "src/common/api/eebus_timer_interface.h"
 #include "src/common/eebus_errors.h"
@@ -90,6 +91,8 @@ typedef struct {
   InfoProviderObject* info_provider;
   DataReaderObject* data_reader;
   WebsocketObject* websocket;
+  /** Protects state and waiting values exposed to callers on other threads. */
+  EebusMutexObject* state_mutex;
   SmeState sme_state;
   EebusError sme_error;
   bool is_access_methods_req_sent;
