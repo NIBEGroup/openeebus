@@ -18,7 +18,7 @@
  * @brief Ship Message Deserialize implementation
  */
 
-#ifdef __freertos__
+#if defined(__freertos__) || defined(ESP_PLATFORM)
 #include <cJSON.h>
 #else
 #include <cjson/cJSON.h>
