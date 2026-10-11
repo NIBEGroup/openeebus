@@ -4,8 +4,9 @@ The `tests/integration/` directory contains a pytest-based end-to-end test suite
 the `heat_pump` and `hems` demo binaries as subprocesses, drives them via their CLI stdin
 interface, and verifies protocol behaviour by polling their log output.
 
-The suite covers four EEBUS use cases, simultaneous-open (SIMOPEN) tiebreaker logic, and
-service shutdown timing.
+CTest covers four EEBUS use cases and simultaneous-open (SIMOPEN) tiebreaker logic.
+Three-node HEMS + heat-pump + EV charger scenarios, stress tests, and service
+shutdown timing tests are also available through direct pytest commands.
 
 **Supported platforms: Linux, macOS, and Windows.**
 
@@ -20,10 +21,12 @@ and ensure both `heat_pump` and `hems` binaries exist in `build/`.
 
 ### Python dependencies
 
-Python 3.8 or newer is required. Install the test dependencies:
+Python 3.8 or newer with venv support is required. Parallel CTest runs also
+require the OpenSSL command-line tool to generate temporary certificates.
+Enable integration-test support:
 
 ```sh
-pip install pytest pytest-html
+cmake -S . -B build -DOPTION_OPENEEBUS_TESTS=ON -DOPTION_INTEGRATION_TESTS=ON
 ```
 
 ---
@@ -40,7 +43,8 @@ The demos use mutual TLS authentication. Development certificates are included i
 | `tests/integration/certificates/hems.crt` | hems (EG/grid) | TLS certificate |
 | `tests/integration/certificates/hems.key` | hems (EG/grid) | Private key |
 
-The tests use these files by default — no configuration needed on a fresh checkout.
+Direct pytest runs use these files by default. CTest runs generate temporary
+certificates with distinct identities for each module.
 
 To use different certificates, override the paths via environment variables before running:
 
@@ -60,29 +64,50 @@ export EEBUS_HEMS_KEY="/path/to/hems.key"
 
 ## Running the tests
 
-Run the full suite (excluding the debug-only close-timing test) from the repository root:
+Configure once to create the isolated Python environment and install its
+requirements, then build the demo binaries before running CTest:
 
 ```sh
-pytest tests/integration/ --ignore=tests/integration/test_close_timing.py
+cmake --build build
+ctest --test-dir build -L integration --output-on-failure
 ```
+
+CTest gives each module distinct ports, mDNS names, and TLS identities, so the
+suite can be run in parallel, for example with
+`ctest --test-dir build -L integration -j 5 --output-on-failure`.
+
+A standalone unit-test configuration (`cmake -S tests -B tests/build`) does
+not register integration tests because it does not build the demo targets.
 
 Run a single use-case module:
 
 ```sh
-pytest tests/integration/test_lpc.py
+ctest --test-dir build -R '^integration_lpc$' --output-on-failure
 ```
 
 Generate an HTML report:
 
 ```sh
-pytest tests/integration/ --ignore=tests/integration/test_close_timing.py --html=report.html --self-contained-html
+build/tests/integration/itest_venv/bin/python -m pytest tests/integration/ --ignore=tests/integration/test_close_timing.py --html=report.html --self-contained-html
 ```
 
 Run with verbose output:
 
 ```sh
-pytest tests/integration/test_lpc.py -v
+ctest --test-dir build -L integration -V
 ```
+
+Run the three-node scenarios directly (build `ev_charger` along with the other demos):
+
+```sh
+build/tests/integration/itest_venv/bin/python -m pytest tests/integration/test_hems_hp_ev.py -v
+```
+
+The three-node stress module is `tests/integration/test_hems_hp_ev_stress.py`.
+These modules and the debug-only close-timing module are not registered with CTest.
+
+On Windows, replace `build/tests/integration/itest_venv/bin/python` in the direct
+pytest commands with `build/tests/integration/itest_venv/Scripts/python.exe`.
 
 ---
 
@@ -109,7 +134,7 @@ process pairs independently of the shared-connection fixture used by other modul
 The number of iterations can be overridden:
 
 ```sh
-pytest tests/integration/test_close_timing.py --close-timing-iter=20
+build/tests/integration/itest_venv/bin/python -m pytest tests/integration/test_close_timing.py --close-timing-iter=20
 ```
 
 **Required compile-time flags:** `EEBUS_SERVICE_DEBUG=1` and `SHIP_NODE_DEBUG=1`

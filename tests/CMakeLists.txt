@@ -32,6 +32,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)
 
+option(OPTION_INTEGRATION_TESTS "Enable pytest-based integration tests" ON)
+
 set(OPENEEBUS_TESTS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 get_filename_component(OPENEEBUS_SOURCE_DIR
   "${OPENEEBUS_TESTS_SOURCE_DIR}/.." ABSOLUTE)
@@ -160,6 +162,9 @@ include(GoogleTest)
 enable_testing()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
+if(OPTION_INTEGRATION_TESTS AND TARGET heat_pump AND TARGET hems)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/integration)
+endif()
 
 set(CTEST_ARGS -V CACHE STRING "ctest arguments")
 set(GENHTML_ARGS CACHE STRING "genhtml arguments")
