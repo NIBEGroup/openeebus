@@ -1,8 +1,11 @@
-# pytest-based end-to-end tests for the heat_pump and hems demo binaries
+# pytest-based end-to-end tests for the heat_pump, hems, and ev_charger demos
 
 if(NOT OPTION_INTEGRATION_TESTS)
   return()
 endif()
+
+# The close-timing and SIMOPEN modules consume debug output from the library.
+target_compile_definitions(openeebus PRIVATE EEBUS_SERVICE_DEBUG=1 SHIP_NODE_DEBUG=1)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
@@ -36,9 +39,26 @@ endif()
 
 set(ITEST_PORT_BASE 4710 CACHE STRING "First HEMS port for CTest integration tests")
 set(ITEST_INDEX 0)
-foreach(ITEST_NAME lpc lpp mpc mgcp simopen_stress)
+foreach(ITEST_NAME lpc lpp mpc mgcp simopen_stress hems_hp_ev hems_hp_ev_stress close_timing)
   math(EXPR ITEST_HEMS_PORT "${ITEST_PORT_BASE} + (${ITEST_INDEX} * 10)")
   math(EXPR ITEST_HP_PORT "${ITEST_HEMS_PORT} + 2")
+  math(EXPR ITEST_EV_PORT "${ITEST_HEMS_PORT} + 4")
+
+  set(ITEST_LABELS integration)
+  set(ITEST_TIMEOUT 600)
+  if(ITEST_NAME MATCHES "stress$")
+    list(APPEND ITEST_LABELS stress)
+  endif()
+  if(ITEST_NAME MATCHES "^hems_hp_ev")
+    list(APPEND ITEST_LABELS three_node)
+  endif()
+  if(ITEST_NAME STREQUAL "hems_hp_ev_stress")
+    set(ITEST_TIMEOUT 1800)
+  endif()
+  if(ITEST_NAME STREQUAL "close_timing")
+    list(APPEND ITEST_LABELS debug_flags)
+    set(ITEST_TIMEOUT 1800)
+  endif()
 
   add_test(
     NAME integration_${ITEST_NAME}
@@ -49,9 +69,9 @@ foreach(ITEST_NAME lpc lpp mpc mgcp simopen_stress)
   )
 
   set_tests_properties(integration_${ITEST_NAME} PROPERTIES
-    LABELS integration
-    ENVIRONMENT "EEBUS_HEMS_PORT=${ITEST_HEMS_PORT};EEBUS_HP_PORT=${ITEST_HP_PORT};EEBUS_INTEGRATION_INSTANCE=${ITEST_NAME}"
-    TIMEOUT 600
+    LABELS "${ITEST_LABELS}"
+    ENVIRONMENT "EEBUS_HEMS_PORT=${ITEST_HEMS_PORT};EEBUS_HP_PORT=${ITEST_HP_PORT};EEBUS_EV_PORT=${ITEST_EV_PORT};EEBUS_INTEGRATION_INSTANCE=${ITEST_NAME}"
+    TIMEOUT ${ITEST_TIMEOUT}
   )
   math(EXPR ITEST_INDEX "${ITEST_INDEX} + 1")
 endforeach()

@@ -173,3 +173,7 @@ def test_close_timing(request):
     conn_timeouts = statuses.count("CONN_TIMEOUT")
     assert force_kills == 0, f"{force_kills} iteration(s) required force-kill"
     assert conn_timeouts == 0, f"{conn_timeouts} iteration(s) timed out on connection"
+    assert all(value is not None for value in hp_times), \
+        "heat_pump: missing close timestamps; build with EEBUS_SERVICE_DEBUG=1"
+    assert all(value is not None for value in hems_times), \
+        "hems: missing close timestamps; build with EEBUS_SERVICE_DEBUG=1"

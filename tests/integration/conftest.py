@@ -85,6 +85,7 @@ def _create_test_certificate(name: str) -> Tuple[str, str, str]:
 if _INSTANCE:
     hp_ski, HP_CERT, HP_KEY = _create_test_certificate("heat-pump")
     hems_ski, HEMS_CERT, HEMS_KEY = _create_test_certificate("hems")
+    EV_SKI, EV_CERT, EV_KEY = _create_test_certificate("ev-charger")
     HP_REMOTE_SKI = hems_ski
     HEMS_REMOTE_SKI = hp_ski
 
@@ -100,6 +101,9 @@ class NodeProcess:
 
     def __init__(self, binary: str, port: int, remote_ski: str, cert: str, key: str,
                  extra_args: tuple = (), mdns_service_name: str = None):
+        if _INSTANCE and mdns_service_name is None:
+            node_name = Path(binary).stem.replace("_", "-")
+            mdns_service_name = f"openeebus-{_INSTANCE}-{node_name}"
         fd, self.log_path = tempfile.mkstemp(suffix=".log")
         self._log_fd = os.fdopen(fd, "w")
         self.proc = subprocess.Popen(
@@ -242,6 +246,8 @@ def await_uc_ready(nodes, ready_marker: str):
 def require_binaries(*extra: str):
     missing = [b for b in (HP_BINARY, HEMS_BINARY, *extra) if not os.path.isfile(b)]
     if missing:
+        if _INSTANCE:
+            pytest.fail(f"Binaries not found: {missing!r} — build the project first")
         pytest.skip(f"Binaries not found: {missing!r}  — build the project first")
 
 
