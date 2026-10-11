@@ -21,6 +21,7 @@
 #include "examples/hems/hems.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "src/common/array_util.h"
@@ -232,6 +233,10 @@ EebusError HemsStart(Hems* hems, int32_t port, const char* role, TlsCertificateO
   }
 
   EebusServiceConfigSetAlternateIdentifier(hems->cfg, "OpenEEBUS-HEMS-123456789");
+  const char* const mdns_service_name = getenv("EEBUS_MDNS_SERVICE_NAME");
+  if (mdns_service_name != NULL && mdns_service_name[0] != '\0') {
+    EebusServiceConfigSetAlternateMdnsServiceName(hems->cfg, mdns_service_name);
+  }
 
   hems->service = EebusServiceCreate(hems->cfg, role, tls_certificate, SERVICE_READER_OBJECT(hems));
   if (hems->service == NULL) {

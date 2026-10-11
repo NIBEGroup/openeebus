@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
+from typing import Tuple
 
 import pytest
 from pytest_html import extras as html_extras
@@ -30,9 +31,9 @@ HEMS_KEY        = os.environ.get("EEBUS_HEMS_KEY",  str(CERTS_DIR / "hems.key"))
 EV_CERT         = os.environ.get("EEBUS_EV_CERT",   str(CERTS_DIR / "ev_charger.crt"))
 EV_KEY          = os.environ.get("EEBUS_EV_KEY",    str(CERTS_DIR / "ev_charger.key"))
 
-HP_PORT   = 4712
-HEMS_PORT = 4710
-EV_PORT   = 4714
+HP_PORT   = int(os.environ.get("EEBUS_HP_PORT", "4712"))
+HEMS_PORT = int(os.environ.get("EEBUS_HEMS_PORT", "4710"))
+EV_PORT   = int(os.environ.get("EEBUS_EV_PORT", "4714"))
 
 SHIP_CONNECTED_MARKER = "Remote SKI connected"
 NODES_CONNECT_TIMEOUT = 120.0
@@ -42,6 +43,51 @@ DEFAULT_PROPAGATION = 3.0
 DEFAULT_SETTLE      = 2.0
 
 _STDBUF = shutil.which("stdbuf")
+_INSTANCE = os.environ.get("EEBUS_INTEGRATION_INSTANCE")
+_CERT_TEMP_DIR = None
+
+
+def _certificate_ski(certificate: Path) -> str:
+    result = subprocess.run(
+        ["openssl", "x509", "-in", str(certificate), "-noout", "-ext", "subjectKeyIdentifier"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    match = re.search(r"(?m)^\s*([0-9A-Fa-f:]+)\s*$", result.stdout)
+    if match is None:
+        raise RuntimeError(f"OpenSSL did not print a subject key identifier for {certificate}")
+    return match.group(1).replace(":", "").lower()
+
+
+def _create_test_certificate(name: str) -> Tuple[str, str, str]:
+    global _CERT_TEMP_DIR
+    if _CERT_TEMP_DIR is None:
+        _CERT_TEMP_DIR = tempfile.TemporaryDirectory(prefix=f"openeebus-{_INSTANCE}-")
+
+    directory = Path(_CERT_TEMP_DIR.name)
+    certificate = directory / f"{name}.crt"
+    private_key = directory / f"{name}.key"
+    subprocess.run(
+        [
+            "openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+            "-keyout", str(private_key), "-out", str(certificate), "-days", "1",
+            "-subj", f"/CN=openeebus-{_INSTANCE}-{name}",
+            "-addext", "subjectKeyIdentifier=hash",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return _certificate_ski(certificate), str(certificate), str(private_key)
+
+
+if _INSTANCE:
+    hp_ski, HP_CERT, HP_KEY = _create_test_certificate("heat-pump")
+    hems_ski, HEMS_CERT, HEMS_KEY = _create_test_certificate("hems")
+    HP_REMOTE_SKI = hems_ski
+    HEMS_REMOTE_SKI = hp_ski
+
 
 
 def _cmd(binary: str, port: int, remote_ski: str, cert: str, key: str, extra_args: tuple = ()) -> list:
@@ -53,7 +99,7 @@ class NodeProcess:
     """Manages a single heat_pump, hems, or ev_charger process."""
 
     def __init__(self, binary: str, port: int, remote_ski: str, cert: str, key: str,
-                 extra_args: tuple = ()):
+                 extra_args: tuple = (), mdns_service_name: str = None):
         fd, self.log_path = tempfile.mkstemp(suffix=".log")
         self._log_fd = os.fdopen(fd, "w")
         self.proc = subprocess.Popen(
@@ -61,6 +107,7 @@ class NodeProcess:
             stdin=subprocess.PIPE,
             stdout=self._log_fd,
             stderr=self._log_fd,
+            env={**os.environ, "EEBUS_MDNS_SERVICE_NAME": mdns_service_name} if mdns_service_name else None,
         )
 
     def send(self, cmd: str) -> None:
@@ -161,10 +208,12 @@ def parse_pt(line: str) -> str:
 
 
 def make_node_pair():
-    """Create a fresh heat_pump + hems NodeProcess pair on the standard ports."""
+    """Create a fresh heat_pump + hems pair with this test process's identity."""
     return (
-        NodeProcess(HP_BINARY,   HP_PORT,   HP_REMOTE_SKI,   HP_CERT,   HP_KEY),
-        NodeProcess(HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY),
+        NodeProcess(HP_BINARY, HP_PORT, HP_REMOTE_SKI, HP_CERT, HP_KEY,
+                    mdns_service_name=f"openeebus-{_INSTANCE}-heat-pump" if _INSTANCE else None),
+        NodeProcess(HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY,
+                    mdns_service_name=f"openeebus-{_INSTANCE}-hems" if _INSTANCE else None),
     )
 
 
