@@ -50,7 +50,8 @@ def _create_identity(openssl: str, directory: Path, node: str) -> NodeIdentity:
     key = directory / f"{node}.key"
     _run_openssl(
         [
-            openssl, "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-sha256",
+            openssl, "req", "-x509", "-newkey", "ec",
+            "-pkeyopt", "ec_paramgen_curve:prime256v1", "-nodes", "-sha256",
             "-keyout", str(key), "-out", str(certificate), "-days", "1",
             "-subj", f"/CN=openeebus-{node}",
             "-addext", "subjectKeyIdentifier=hash",

@@ -39,7 +39,8 @@ calls `tests/integration/_certificates.py` to generate fresh HP, HEMS, and EV
 certificates and private keys in a unique system temporary directory. Both CTest
 and direct pytest use this fixture; there are no checked-in integration keys.
 
-Each identity uses a self-signed RSA-2048 certificate, SHA-256 signing, a
+Each identity uses a self-signed P-256 EC certificate compatible with the
+configured TLS 1.2 ECDHE-ECDSA cipher suites, SHA-256 signing, a
 one-day validity period, and an unencrypted PEM private key. Trusted SKIs are
 read from the generated certificates: HP and EV trust HEMS, while HEMS trusts
 HP and, in three-node scenarios, EV.
