@@ -595,8 +595,10 @@ void Destruct(ServiceReaderObject* self) {
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->gcp_mgcp));
   hpsrv->gcp_mgcp = NULL;
 
-  EebusServiceDelete(hpsrv->service);
-  hpsrv->service = NULL;
+  if (hpsrv->service != NULL) {
+    EebusServiceDelete(hpsrv->service);
+    hpsrv->service = NULL;
+  }
 
   EebusServiceConfigDelete(hpsrv->cfg);
   hpsrv->cfg = NULL;
