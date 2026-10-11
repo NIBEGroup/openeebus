@@ -272,9 +272,9 @@ if(DEFINED ENV{CI} AND NOT WIN32)
   add_custom_target(itest_venv DEPENDS "${ITEST_VENV_DIR}/stamp")
 
   add_custom_target(integration-tests
-    COMMAND "${ITEST_PYTHON}" -m pytest "${CMAKE_SOURCE_DIR}/integration_tests" -v
+    COMMAND "${ITEST_PYTHON}" -m pytest "${CMAKE_SOURCE_DIR}/tests/integration" -v
     DEPENDS heat_pump hems itest_venv
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/integration_tests"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/tests/integration"
     USES_TERMINAL
     COMMENT "Running integration tests"
   )

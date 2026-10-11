@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 from pytest_html import extras as html_extras
 
-ROOT      = Path(__file__).parent.parent
+ROOT      = Path(__file__).parent.parent.parent
 BUILD_DIR = ROOT / "build"
-CERTS_DIR = ROOT / "integration_tests" / "certificates"
+CERTS_DIR = ROOT / "tests" / "integration" / "certificates"
 
 HP_BINARY   = str(BUILD_DIR / "heat_pump")
 HEMS_BINARY = str(BUILD_DIR / "hems")

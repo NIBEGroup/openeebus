@@ -1,6 +1,6 @@
 # Integration Tests
 
-The `integration_tests/` directory contains a pytest-based end-to-end test suite that runs
+The `tests/integration/` directory contains a pytest-based end-to-end test suite that runs
 the `heat_pump` and `hems` demo binaries as subprocesses, drives them via their CLI stdin
 interface, and verifies protocol behaviour by polling their log output.
 
@@ -31,14 +31,14 @@ pip install pytest pytest-html
 ## TLS certificates
 
 The demos use mutual TLS authentication. Development certificates are included in
-`integration_tests/certificates/`:
+`tests/integration/certificates/`:
 
 | File | Node | Purpose |
 |---|---|---|
-| `integration_tests/certificates/heat_pump.crt` | heat_pump (CS/EV) | TLS certificate |
-| `integration_tests/certificates/heat_pump.key` | heat_pump (CS/EV) | Private key |
-| `integration_tests/certificates/hems.crt` | hems (EG/grid) | TLS certificate |
-| `integration_tests/certificates/hems.key` | hems (EG/grid) | Private key |
+| `tests/integration/certificates/heat_pump.crt` | heat_pump (CS/EV) | TLS certificate |
+| `tests/integration/certificates/heat_pump.key` | heat_pump (CS/EV) | Private key |
+| `tests/integration/certificates/hems.crt` | hems (EG/grid) | TLS certificate |
+| `tests/integration/certificates/hems.key` | hems (EG/grid) | Private key |
 
 The tests use these files by default — no configuration needed on a fresh checkout.
 
@@ -63,25 +63,25 @@ export EEBUS_HEMS_KEY="/path/to/hems.key"
 Run the full suite (excluding the debug-only close-timing test) from the repository root:
 
 ```sh
-pytest integration_tests/ --ignore=integration_tests/test_close_timing.py
+pytest tests/integration/ --ignore=tests/integration/test_close_timing.py
 ```
 
 Run a single use-case module:
 
 ```sh
-pytest integration_tests/test_lpc.py
+pytest tests/integration/test_lpc.py
 ```
 
 Generate an HTML report:
 
 ```sh
-pytest integration_tests/ --ignore=integration_tests/test_close_timing.py --html=report.html --self-contained-html
+pytest tests/integration/ --ignore=tests/integration/test_close_timing.py --html=report.html --self-contained-html
 ```
 
 Run with verbose output:
 
 ```sh
-pytest integration_tests/test_lpc.py -v
+pytest tests/integration/test_lpc.py -v
 ```
 
 ---
@@ -109,7 +109,7 @@ process pairs independently of the shared-connection fixture used by other modul
 The number of iterations can be overridden:
 
 ```sh
-pytest integration_tests/test_close_timing.py --close-timing-iter=20
+pytest tests/integration/test_close_timing.py --close-timing-iter=20
 ```
 
 **Required compile-time flags:** `EEBUS_SERVICE_DEBUG=1` and `SHIP_NODE_DEBUG=1`
