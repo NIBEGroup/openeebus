@@ -88,6 +88,16 @@ class NodeProcess:
             time.sleep(0.1)
         return False
 
+    def wait_for_new_line(self, marker: str, after: int, timeout: float) -> str:
+        """Return the first matching log line at index >= after, or time out."""
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            for line in self.log_lines()[after:]:
+                if marker in line:
+                    return line.rstrip()
+            time.sleep(0.1)
+        raise TimeoutError(f"No new log line containing {marker!r}")
+
     def log_lines(self) -> list:
         with open(self.log_path) as f:
             return f.readlines()
