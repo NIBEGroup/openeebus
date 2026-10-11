@@ -35,8 +35,8 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
 
   # Test helpers
-  ${CMAKE_SOURCE_DIR}/src/string_ptr.cpp
-  ${CMAKE_SOURCE_DIR}/src/spine/model/feature_address_test_data.cpp
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/string_ptr.cpp
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/model/feature_address_test_data.cpp
 
   datagram_header_test.cpp
 )

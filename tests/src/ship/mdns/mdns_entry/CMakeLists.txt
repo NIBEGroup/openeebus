@@ -22,7 +22,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/ship/mdns/mdns_debug.c
 
   # Test helpers
-  ${CMAKE_SOURCE_DIR}/src/string_ptr.cpp
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/string_ptr.cpp
 
   mdns_entry_test.cpp
 )

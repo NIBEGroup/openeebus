@@ -20,6 +20,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(OPTION_ASAN "Enable AddressSanitizer" OFF)
 option(OPTION_MDNS_USE_AVAHI_CLIENT "Enable mDNS avahi-client implementation" OFF)
+option(OPTION_OPENEEBUS_TESTS "Enable openeebus tests to be built with the project" ON)
 
 set(PROJECT_COMPILE_OPTIONS "")
 
@@ -244,6 +245,11 @@ target_link_libraries(
 add_subdirectory(examples/heat_pump)
 add_subdirectory(examples/hems)
 add_subdirectory(examples/ev_charger)
+
+if(OPTION_OPENEEBUS_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
 
 # Integration tests — only when building in CI (ENV{CI} is set by GitHub Actions)
 if(DEFINED ENV{CI} AND NOT WIN32)

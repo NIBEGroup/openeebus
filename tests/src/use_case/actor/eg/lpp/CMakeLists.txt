@@ -111,8 +111,8 @@ target_sources(
   ${MOCKS_SOURCES_PATH}/use_case/api/eg_lp_listener_mock.cpp
 
   # Test helpers
-  ${CMAKE_SOURCE_DIR}/src/spine/function_data.c
-  ${CMAKE_SOURCE_DIR}/src/use_case/use_case_test_fixture.cpp
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/function_data.c
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/use_case/use_case_test_fixture.cpp
 
   eg_lpp_test.cpp
 )
