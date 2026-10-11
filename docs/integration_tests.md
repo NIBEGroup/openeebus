@@ -21,8 +21,9 @@ and ensure `heat_pump`, `hems`, and `ev_charger` binaries exist in `build/`.
 
 ### Python dependencies
 
-Python 3.8 or newer with venv support is required. Parallel CTest runs also
-require the OpenSSL command-line tool to generate temporary certificates.
+Python 3.8 or newer with venv support is required. All integration runs, through
+CTest or direct pytest, require the OpenSSL command-line tool on `PATH` to
+generate temporary certificates.
 Enable integration-test support:
 
 ```sh
@@ -33,34 +34,24 @@ cmake -S . -B build -DOPTION_OPENEEBUS_TESTS=ON -DOPTION_INTEGRATION_TESTS=ON
 
 ## TLS certificates
 
-The demos use mutual TLS authentication. Development certificates are included in
-`tests/integration/certificates/`:
+The demos use mutual TLS authentication. The `test_identities` session fixture
+calls `tests/integration/_certificates.py` to generate fresh HP, HEMS, and EV
+certificates and private keys in a unique system temporary directory. Both CTest
+and direct pytest use this fixture; there are no checked-in integration keys.
 
-| File | Node | Purpose |
-|---|---|---|
-| `tests/integration/certificates/heat_pump.crt` | heat_pump (CS/EV) | TLS certificate |
-| `tests/integration/certificates/heat_pump.key` | heat_pump (CS/EV) | Private key |
-| `tests/integration/certificates/hems.crt` | hems (EG/grid) | TLS certificate |
-| `tests/integration/certificates/hems.key` | hems (EG/grid) | Private key |
-| `tests/integration/certificates/ev_charger.crt` | ev_charger (CS/MU) | TLS certificate |
-| `tests/integration/certificates/ev_charger.key` | ev_charger (CS/MU) | Private key |
+Each identity uses a self-signed RSA-2048 certificate, SHA-256 signing, a
+one-day validity period, and an unencrypted PEM private key. Trusted SKIs are
+read from the generated certificates: HP and EV trust HEMS, while HEMS trusts
+HP and, in three-node scenarios, EV.
 
-Direct pytest runs use these files by default. CTest runs generate temporary
-certificates with distinct identities for each module.
+One bundle is generated per pytest process and reused across its modules and
+stress iterations. Each CTest module runs in a separate pytest process and
+therefore receives distinct identities. Generation starts only when a test
+requests the fixture; collection alone does not invoke OpenSSL.
 
-To use different certificates, override the paths via environment variables before running:
-
-```sh
-# heat_pump (CS / EV side)
-export EEBUS_HP_SKI="<40-char hex SKI>"
-export EEBUS_HP_CERT="/path/to/heat_pump.crt"
-export EEBUS_HP_KEY="/path/to/heat_pump.key"
-
-# hems (EG / grid side)
-export EEBUS_HEMS_SKI="<40-char hex SKI>"
-export EEBUS_HEMS_CERT="/path/to/hems.crt"
-export EEBUS_HEMS_KEY="/path/to/hems.key"
-```
+The temporary directory is removed after node teardown, including test failures
+and partial generation failures. Missing OpenSSL, generation errors, and commands
+exceeding 30 seconds are reported as setup errors.
 
 ---
 
