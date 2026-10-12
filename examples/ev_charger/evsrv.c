@@ -284,10 +284,10 @@ void Destruct(ServiceReaderObject* self) {
 
   if (evsrv->service != NULL) {
     EEBUS_SERVICE_STOP(evsrv->service);
-    EebusServiceDelete(evsrv->service);
-    evsrv->service = NULL;
   }
 
+  // Use cases unsubscribe from the service owned device event manager during destruction,
+  // so they must be released before the service and its local device are deleted.
   EebusCliDelete(evsrv->cli);
   evsrv->cli = NULL;
 
@@ -308,6 +308,11 @@ void Destruct(ServiceReaderObject* self) {
 
   CsLpcListenerDelete(evsrv->cs_lpc_listener);
   evsrv->cs_lpc_listener = NULL;
+
+  if (evsrv->service != NULL) {
+    EebusServiceDelete(evsrv->service);
+    evsrv->service = NULL;
+  }
 
   EebusServiceConfigDelete(evsrv->cfg);
   evsrv->cfg = NULL;
