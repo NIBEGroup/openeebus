@@ -21,6 +21,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(OPTION_ASAN "Enable AddressSanitizer" OFF)
 option(OPTION_MDNS_USE_AVAHI_CLIENT "Enable mDNS avahi-client implementation" OFF)
 option(OPTION_OPENEEBUS_TESTS "Enable openeebus tests to be built with the project" ON)
+option(OPTION_INTEGRATION_TESTS "Enable pytest-based integration tests" OFF)
 
 set(PROJECT_COMPILE_OPTIONS "")
 
