@@ -57,6 +57,24 @@ extern "C" {
  */
 ShipPairingObject* ShipPairingCreate(const char* own_ship_id, const TlsCertificateObject* tls_certificate);
 
+/** Reports whether SHIP Message Exchange with the current devZ is available. */
+typedef bool (*ShipPairingMessageExchangeAvailableCallback)(void* ctx);
+
+/**
+ * @brief Checks connection availability before automatic reactivation, section 4.3, item 1.a.i
+ *
+ * An idle established connection still permits Message Exchange. If this
+ * callback returns true at expiry, addCu processing remains deactivated.
+ * The caller reports the last availability when that connection closes using
+ * SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(), starting a fresh fifteen minutes.
+ * Register before starting the node; NULL leaves the timer driven by notifications.
+ */
+void ShipPairingSetMessageExchangeAvailableCallback(
+    ShipPairingObject* self,
+    ShipPairingMessageExchangeAvailableCallback cb,
+    void* ctx
+);
+
 /**
  * @brief Destructs the evaluator and deallocates it
  * @param ship_pairing Evaluator to delete, may be NULL

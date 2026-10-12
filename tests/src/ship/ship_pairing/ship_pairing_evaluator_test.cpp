@@ -32,6 +32,10 @@ namespace {
 
 constexpr uint32_t kReactivationMs = SHIP_PAIRING_REACTIVATION_MINUTES * 60 * 1000;
 
+bool MessageExchangeAvailable(void* ctx) {
+  return *static_cast<bool*>(ctx);
+}
+
 /** @brief Returns the Annex A pairs with @p key replaced by @p value */
 std::vector<TxtPair> WithValue(const std::string& key, const std::string& value) {
   std::vector<TxtPair> pairs = ShipPairingTestSuite::AnnexAPairs();
@@ -349,10 +353,14 @@ TEST_F(ShipPairingTestSuite, AcceptsAReplacementOnlyAfterTheSilenceElapses) {
   EXPECT_FALSE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
 }
 
+/** Covers SHIP Pairing Service TS 1.0.0, section 4.3.1, item b.ii. */
 TEST_F(ShipPairingTestSuite, KeepsThePairingWhenTheTrustedNodeReturns) {
   Evaluator evaluator;
   ASSERT_NE(evaluator.Get(), nullptr);
   evaluator.SetAnnexASecret();
+
+  bool available = false;
+  ShipPairingSetMessageExchangeAvailableCallback(evaluator.Get(), MessageExchangeAvailable, &available);
 
   const EntryPtr entry = AnnexAEntry();
   ASSERT_NE(entry, nullptr);
@@ -363,8 +371,13 @@ TEST_F(ShipPairingTestSuite, KeepsThePairingWhenTheTrustedNodeReturns) {
 
   // Section 4.3.1, item b.ii: it was a network problem, not a dead control
   // unit. The existing pairing stands and no replacement is accepted.
+  available = true;
+  EXPECT_CALL(*evaluator.Timer()->gmock, Start(_, kReactivationMs, false)).Times(1);
   SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(evaluator.Get());
 
+  EXPECT_FALSE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
+
+  EebusTimerMockExpire(evaluator.Timer());
   EXPECT_FALSE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
 
   const EntryPtr successor = ParseEntry(ResignedPairs(WithValue("trustId", "i:99_u:replacement"), ANNEX_A_SECRET));
@@ -382,6 +395,72 @@ TEST_F(ShipPairingTestSuite, DoesNotCountTheSilenceWhileNothingIsPaired) {
   SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(evaluator.Get());
 
   EXPECT_TRUE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
+}
+
+/** Covers SHIP Pairing Service TS 1.0.0, section 4.3.1, item a.i. */
+TEST_F(ShipPairingTestSuite, DoesNotReactivateWhileTheCurrentPeerCanExchangeMessages) {
+  Evaluator evaluator;
+  ASSERT_NE(evaluator.Get(), nullptr);
+  evaluator.SetAnnexASecret();
+
+  bool available = true;
+  ShipPairingSetMessageExchangeAvailableCallback(evaluator.Get(), MessageExchangeAvailable, &available);
+  const EntryPtr entry = AnnexAEntry();
+  ASSERT_NE(entry, nullptr);
+  ASSERT_EQ(SHIP_PAIRING_EVALUATE(evaluator.Get(), entry.get()), kShipPairingResultAccepted);
+
+  // Expiry of a timer measuring payload silence is insufficient: an idle,
+  // established connection still permits SHIP Message Exchange.
+  EXPECT_CALL(*evaluator.Timer()->gmock, Start(_, _, _)).Times(0);
+  EebusTimerMockExpire(evaluator.Timer());
+  EXPECT_FALSE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
+
+  const EntryPtr successor = ParseEntry(ResignedPairs(WithValue("trustId", "i:99_u:replacement"), ANNEX_A_SECRET));
+  ASSERT_NE(successor, nullptr);
+  EXPECT_EQ(SHIP_PAIRING_EVALUATE(evaluator.Get(), successor.get()), kShipPairingResultNotProcessing);
+}
+
+/** Covers SHIP Pairing Service TS 1.0.0, section 4.3.1, item a.i. */
+TEST_F(ShipPairingTestSuite, CountsAFullReactivationIntervalFromConnectionLoss) {
+  Evaluator evaluator;
+  ASSERT_NE(evaluator.Get(), nullptr);
+  evaluator.SetAnnexASecret();
+
+  bool available = true;
+  ShipPairingSetMessageExchangeAvailableCallback(evaluator.Get(), MessageExchangeAvailable, &available);
+  const EntryPtr entry = AnnexAEntry();
+  ASSERT_NE(entry, nullptr);
+  ASSERT_EQ(SHIP_PAIRING_EVALUATE(evaluator.Get(), entry.get()), kShipPairingResultAccepted);
+  EebusTimerMockExpire(evaluator.Timer());
+  ASSERT_FALSE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
+
+  // The node reports the last availability when the established connection
+  // closes. Prior connection time cannot shorten the fifteen-minute interval.
+  available = false;
+  EXPECT_CALL(*evaluator.Timer()->gmock, Start(_, kReactivationMs, false)).Times(1);
+  SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(evaluator.Get());
+  EXPECT_FALSE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
+
+  EebusTimerMockExpire(evaluator.Timer());
+  EXPECT_TRUE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
+}
+
+/** Covers SHIP Pairing Service TS 1.0.0, section 4.3.1, item b.ii. */
+TEST_F(ShipPairingTestSuite, KeepsTheReturningPeerIfExpiryCompletesDuringTimerReset) {
+  Evaluator evaluator;
+  ASSERT_NE(evaluator.Get(), nullptr);
+  evaluator.SetAnnexASecret();
+  const EntryPtr entry = AnnexAEntry();
+  ASSERT_NE(entry, nullptr);
+  ASSERT_EQ(SHIP_PAIRING_EVALUATE(evaluator.Get(), entry.get()), kShipPairingResultAccepted);
+
+  // Stop may wait for an expiry callback already in progress. Its activation
+  // must be superseded by the report of renewed Message Exchange.
+  EXPECT_CALL(*evaluator.Timer()->gmock, Stop(_))
+      .WillOnce([&](EebusTimerObject*) { EebusTimerMockExpire(evaluator.Timer()); })
+      .WillRepeatedly(Return());
+  SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(evaluator.Get());
+  EXPECT_FALSE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
 }
 
 TEST_F(ShipPairingTestSuite, KeepsTheReplayHistoryWhenTheUserRemovesThePairing) {

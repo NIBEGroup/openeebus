@@ -58,6 +58,10 @@ struct ShipPairing {
   /** Counts the fifteen minutes of section 4.3.1 */
   EebusTimerObject* reactivation_timer;
 
+  /** Checks availability of the current devZ before reactivating addCu, section 4.3 */
+  ShipPairingMessageExchangeAvailableCallback message_exchange_available_cb;
+  void* message_exchange_ctx;
+
   /** Told when this evaluator becomes able, or unable, to accept a request */
   OnShipPairingEnabledCallback on_enabled_cb;
   void* enabled_ctx;

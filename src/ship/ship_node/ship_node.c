@@ -104,6 +104,7 @@ static ShipPairingObject* GetShipPairing(ShipNodeObject* self);
 static EebusError AnnounceShipPairingRequest(ShipNodeObject* self, const ShipPairingEntry* entry);
 static void ShipNodeOnPairingEntriesFoundCallback(Vector* found_entries, void* ctx);
 static void ShipNodeOnPairingEnabledCallback(bool enabled, void* ctx);
+static bool ShipNodeIsPairingMessageExchangeAvailable(void* ctx);
 static void UnregisterRemoteSki(ShipNodeObject* self, const char* ski);
 static void CancelPairingWithSki(ShipNodeObject* self, const char* ski);
 static void ApprovePendingHandshakeWithSki(ShipNodeObject* self, const char* ski);
@@ -239,6 +240,7 @@ void ShipNodeConstruct(
   self->ship_pairing = ShipPairingCreate(local_service_details->ship_id, tsl_certificate);
   if (self->ship_pairing != NULL) {
     SHIP_PAIRING_SET_ENABLED_CALLBACK(self->ship_pairing, ShipNodeOnPairingEnabledCallback, self);
+    ShipPairingSetMessageExchangeAvailableCallback(self->ship_pairing, ShipNodeIsPairingMessageExchangeAvailable, self);
   }
 
   self->http_server = HttpServerCreate(port, tsl_certificate, ShipNodeOnWebsocketServerConnectionCallback, self);
@@ -452,12 +454,33 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
   // else: orphaned/double close — sc must NOT be dereferenced
 }
 
+static bool ShipNodeIsCurrentPairingPeer(const ShipNode* self, const NodeConnection* peer) {
+  return (peer != NULL) && peer->is_trusted && peer->trusted_by_pairing
+         && ShipNodeFingerprintMatches(peer->expected_fingerprint, self->remote_fingerprint);
+}
+
+static bool ShipNodeIsPairingMessageExchangeAvailable(void* ctx) {
+  ShipNode* const sn = (ShipNode*)ctx;
+  bool available     = false;
+  EEBUS_MUTEX_LOCK(sn->mutex);
+  for (size_t i = 0; (i < NODE_CONNECTION_CONTAINER_GET_SIZE(sn->connections)) && !available; ++i) {
+    const NodeConnection* const peer = NODE_CONNECTION(NODE_CONNECTION_CONTAINER_GET_WITH_INDEX(sn->connections, i));
+    available = (peer->connection != NULL) && peer->handshake_complete && ShipNodeIsCurrentPairingPeer(sn, peer);
+  }
+
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+  return available;
+}
+
 void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, bool had_error) {
   ShipNode* const sn = SHIP_NODE(self);
 
   EEBUS_MUTEX_LOCK(sn->mutex);
-  NodeConnectionObject* nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SHIP_CONNECTION(sn->connections, sc);
+  NodeConnectionObject* nc    = NODE_CONNECTION_CONTAINER_FIND_WITH_SHIP_CONNECTION(sn->connections, sc);
+  bool current_pairing_closed = false;
   if (nc != NULL) {
+    current_pairing_closed
+        = NODE_CONNECTION(nc)->handshake_complete && ShipNodeIsCurrentPairingPeer(sn, NODE_CONNECTION(nc));
     NODE_CONNECTION(nc)->pending_approval_id = 0;
   }
 
@@ -465,6 +488,14 @@ void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, 
 
   if (sn->cancel) {
     return;
+  }
+
+  // Section 4.3.1, item a.i: after the current devZ's established connection
+  // closes, wait 15 minutes before processing addCu requests again.
+  // NotifyMessageExchange() resets the timer from this last moment of
+  // communication availability. Failed handshakes must not reset it.
+  if (current_pairing_closed && (sn->ship_pairing != NULL)) {
+    SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(sn->ship_pairing);
   }
 
   ShipNodePostConnectionClose(sn, sc, had_error);
@@ -494,14 +525,22 @@ void HandleShipStateUpdate(InfoProviderObject* self, const char* ski, SmeState s
   SHIP_NODE_READER_ON_SHIP_STATE_UPDATE(sn->ship_node_reader, ski, state);
 
   if (state == kDataExchange) {
-    bool just_completed = false;
+    bool just_completed            = false;
+    bool current_pairing_connected = false;
     EEBUS_MUTEX_LOCK(sn->mutex);
     NodeConnectionObject* nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SKI(sn->connections, ski);
     if (nc != NULL) {
-      just_completed = NODE_CONNECTION_ON_HANDSHAKE_COMPLETE(nc);
+      just_completed            = NODE_CONNECTION_ON_HANDSHAKE_COMPLETE(nc);
+      current_pairing_connected = just_completed && ShipNodeIsCurrentPairingPeer(sn, NODE_CONNECTION(nc));
     }
 
     EEBUS_MUTEX_UNLOCK(sn->mutex);
+    // Section 4.3.1, item b.ii: a successful connection to the current devZ
+    // deactivates addCu again if the reactivation interval already elapsed.
+    if (current_pairing_connected && (sn->ship_pairing != NULL)) {
+      SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(sn->ship_pairing);
+    }
+
     if (just_completed) {
       SHIP_NODE_READER_ON_REMOTE_SKI_CONNECTED(sn->ship_node_reader, ski);
     }

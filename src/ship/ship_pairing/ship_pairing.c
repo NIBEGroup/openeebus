@@ -132,7 +132,9 @@ ShipPairingObject* ShipPairingCreate(const char* own_ship_id, const TlsCertifica
 
   memset(&self->ring_buffer, 0, sizeof(self->ring_buffer));
 
-  self->reactivation_timer = EebusTimerCreate(ShipPairingTimeoutCallback, self);
+  self->reactivation_timer            = EebusTimerCreate(ShipPairingTimeoutCallback, self);
+  self->message_exchange_available_cb = NULL;
+  self->message_exchange_ctx          = NULL;
 
   self->on_enabled_cb = NULL;
   self->enabled_ctx   = NULL;
@@ -171,15 +173,22 @@ void Destruct(ShipPairingObject* self) {
 void ShipPairingTimeoutCallback(void* ctx) {
   ShipPairing* const self = (ShipPairing*)ctx;
 
-  // Section 4.3.1, item a: fifteen minutes without SHIP Message Exchange with
-  // the trusted node, this node running throughout. The pairing may be over, so
-  // a replacement is allowed to announce itself.
-  SHIP_PAIRING_DEBUG_PRINTF(
-      "%s(), no message exchange for %d minutes, processing addCu-requests again\n",
-      __func__,
-      SHIP_PAIRING_REACTIVATION_MINUTES
-  );
-  self->add_cu_activated = true;
+  // Section 4.3.1, item a.i: an idle but functional connection does not meet
+  // the condition for automatic reactivation. Its eventual close will start
+  // a fresh interval through NotifyMessageExchange().
+  const bool message_exchange_available = (self->message_exchange_available_cb != NULL)
+                                          && self->message_exchange_available_cb(self->message_exchange_ctx);
+
+  self->add_cu_activated = !message_exchange_available;
+
+  if (self->add_cu_activated) {
+    SHIP_PAIRING_DEBUG_PRINTF(
+        "%s(), no message exchange for %d minutes, processing addCu-requests again\n",
+        __func__,
+        SHIP_PAIRING_REACTIVATION_MINUTES
+    );
+  }
+
   ShipPairingReportEnabled(self);
 }
 
@@ -378,14 +387,26 @@ void DeactivateAddCu(ShipPairingObject* self) {
 void NotifyMessageExchange(ShipPairingObject* self) {
   ShipPairing* const ship_pairing = SHIP_PAIRING(self);
 
+  // Finish a timeout already in progress before deactivating processing.
+  ShipPairingRestartReactivationTimer(ship_pairing);
+
   // Section 4.3.1, item b.ii: the trusted node is reachable after all, so the
   // pairing stands and no replacement is accepted.
   if (HasTrustedPeer(self)) {
     ship_pairing->add_cu_activated = false;
   }
 
-  ShipPairingRestartReactivationTimer(ship_pairing);
   ShipPairingReportEnabled(ship_pairing);
+}
+
+void ShipPairingSetMessageExchangeAvailableCallback(
+    ShipPairingObject* self,
+    ShipPairingMessageExchangeAvailableCallback cb,
+    void* ctx
+) {
+  ShipPairing* const ship_pairing             = SHIP_PAIRING(self);
+  ship_pairing->message_exchange_available_cb = cb;
+  ship_pairing->message_exchange_ctx          = ctx;
 }
 
 bool HasTrustedPeer(const ShipPairingObject* self) {
