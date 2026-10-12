@@ -130,7 +130,7 @@ static const struct timeval select_timeout = {
 typedef struct Mdns Mdns;
 
 typedef struct ActiveResolveEntry ActiveResolveEntry;
-/** Tracks a single pending DNSServiceResolve call */
+/** Tracks a single pending service resolve or TXT query */
 struct ActiveResolveEntry {
   /** The DNSServiceRef for this resolve */
   DNSServiceRef service_ref;
@@ -139,9 +139,7 @@ struct ActiveResolveEntry {
   /**
    * @brief The ShipPairingEntry being resolved, NULL for a SHIP resolve
    *
-   * A shippairing instance has to be resolved like any other, because a browse
-   * reports only a name and the TXT record arrives with the resolve. Its host
-   * and port are then discarded: section 5.3 forbids using them.
+   * Only its TXT record is queried: section 5.3 forbids using the host and port.
    */
   ShipPairingEntry* pairing_entry;
   /** The owning Mdns instance */
@@ -287,16 +285,17 @@ static void MdnsPairingBrowseServicesCallback(
     const char* domain,
     void* ctx
 );
-static void MdnsPairingResolveServiceCallback(
+static void MdnsPairingQueryRecordCallback(
     DNSServiceRef service_ref,
     DNSServiceFlags flags,
     uint32_t iface,
     DNSServiceErrorType err,
     const char* name,
-    const char* host,
-    uint16_t opaque_port,
+    uint16_t rrtype,
+    uint16_t rrclass,
     uint16_t txt_record_size,
-    const unsigned char* txt_record,
+    const void* txt_record,
+    uint32_t ttl,
     void* ctx
 );
 
@@ -995,13 +994,18 @@ void MdnsPairingBrowseServicesCallback(
     return;
   }
 
+  char full_name[kDNSServiceMaxDomainName];
+  if (DNSServiceConstructFullName(full_name, name, kShipPairingServiceType, domain) != 0) {
+    return;
+  }
+
   ShipPairingEntry* const entry = ShipPairingEntryCreate(name, domain, iface);
   if (entry == NULL) {
     return;
   }
 
-  // A browse reports a name; the TXT record the request lives in arrives with
-  // the resolve.
+  // Query the raw TXT record: Avahi's DNSServiceResolve reverses TXT order,
+  // but section 5.4 requires txtvers to be the first key.
   ActiveResolveEntry* const resolve = (ActiveResolveEntry*)EEBUS_MALLOC(sizeof(ActiveResolveEntry));
   if (resolve == NULL) {
     ShipPairingEntryDelete(entry);
@@ -1014,19 +1018,19 @@ void MdnsPairingBrowseServicesCallback(
   resolve->owner         = mdns;
   resolve->done          = false;
 
-  const DNSServiceErrorType error = DNSServiceResolve(
+  const DNSServiceErrorType error = DNSServiceQueryRecord(
       &resolve->service_ref,
       0,
       iface,
-      name,
-      kShipPairingServiceType,
-      domain,
-      MdnsPairingResolveServiceCallback,
+      full_name,
+      kDNSServiceType_TXT,
+      kDNSServiceClass_IN,
+      MdnsPairingQueryRecordCallback,
       resolve
   );
 
   if (error != kDNSServiceErr_NoError) {
-    MDNS_DEBUG_PRINTF("DNSServiceResolve() for shippairing returned error %d\n", error);
+    MDNS_DEBUG_PRINTF("DNSServiceQueryRecord() for shippairing returned error %d\n", error);
     MdnsActiveResolveEntryDestroy(resolve);
     return;
   }
@@ -1034,26 +1038,29 @@ void MdnsPairingBrowseServicesCallback(
   VectorPushBack(mdns->active_resolves, resolve);
 }
 
-void MdnsPairingResolveServiceCallback(
+void MdnsPairingQueryRecordCallback(
     DNSServiceRef service_ref,
     DNSServiceFlags flags,
     uint32_t iface,
     DNSServiceErrorType err,
     const char* name,
-    const char* host,
-    uint16_t opaque_port,
+    uint16_t rrtype,
+    uint16_t rrclass,
     uint16_t txt_record_size,
-    const unsigned char* txt_record,
+    const void* txt_record,
+    uint32_t ttl,
     void* ctx
 ) {
   UNUSED(service_ref);
-  UNUSED(flags);
   UNUSED(iface);
   UNUSED(name);
-  // Section 5.3: the host name and port of a shippairing instance are not to be
-  // used, so they are read off the wire and dropped.
-  UNUSED(host);
-  UNUSED(opaque_port);
+  UNUSED(rrtype);
+  UNUSED(rrclass);
+  UNUSED(ttl);
+
+  if ((err == kDNSServiceErr_NoError) && !(flags & kDNSServiceFlagsAdd)) {
+    return;
+  }
 
   ActiveResolveEntry* const resolve = (ActiveResolveEntry*)ctx;
   if (resolve == NULL) {
