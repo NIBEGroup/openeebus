@@ -39,7 +39,19 @@ endif()
 
 set(ITEST_PORT_BASE 4710 CACHE STRING "First HEMS port for CTest integration tests")
 set(ITEST_INDEX 0)
-foreach(ITEST_NAME lpc lpp mpc mgcp simopen_stress hems_hp_ev hems_hp_ev_stress close_timing)
+# The list of integration tests to be executed. Add or remove test names as needed.
+set(ITEST_LIST
+  lpc
+  lpp
+  mpc
+  mgcp
+  simopen_stress
+  hems_hp_ev
+  hems_hp_ev_stress
+  close_timing
+)
+
+foreach(ITEST_NAME ${ITEST_LIST})
   math(EXPR ITEST_HEMS_PORT "${ITEST_PORT_BASE} + (${ITEST_INDEX} * 10)")
   math(EXPR ITEST_HP_PORT "${ITEST_HEMS_PORT} + 2")
   math(EXPR ITEST_EV_PORT "${ITEST_HEMS_PORT} + 4")
@@ -68,10 +80,18 @@ foreach(ITEST_NAME lpc lpp mpc mgcp simopen_stress hems_hp_ev hems_hp_ev_stress 
             -v
   )
 
+  set(ITEST_ENVIRONMENT
+    "EEBUS_HEMS_PORT=${ITEST_HEMS_PORT}"
+    "EEBUS_HP_PORT=${ITEST_HP_PORT}"
+    "EEBUS_EV_PORT=${ITEST_EV_PORT}"
+    "EEBUS_INTEGRATION_INSTANCE=${ITEST_NAME}"
+  )
+
   set_tests_properties(integration_${ITEST_NAME} PROPERTIES
     LABELS "${ITEST_LABELS}"
-    ENVIRONMENT "EEBUS_HEMS_PORT=${ITEST_HEMS_PORT};EEBUS_HP_PORT=${ITEST_HP_PORT};EEBUS_EV_PORT=${ITEST_EV_PORT};EEBUS_INTEGRATION_INSTANCE=${ITEST_NAME}"
+    ENVIRONMENT "${ITEST_ENVIRONMENT}"
     TIMEOUT ${ITEST_TIMEOUT}
   )
+
   math(EXPR ITEST_INDEX "${ITEST_INDEX} + 1")
 endforeach()
