@@ -375,7 +375,6 @@ static void MdnsResolverCallback(
   UNUSED(protocol);
   UNUSED(type);
   UNUSED(domain);
-  UNUSED(address);
   ActiveResolveEntry* const resolve = (ActiveResolveEntry*)userdata;
 
   if (resolve == NULL) {
@@ -393,7 +392,18 @@ static void MdnsResolverCallback(
     if (event == AVAHI_RESOLVER_FAILURE) {
       MDNS_DEBUG_PRINTF("could not resolve %s: error: %s\n", name, avahi_strerror(avahi_client_errno(mdns->client)));
     } else if (event == AVAHI_RESOLVER_FOUND) {
-      MdnsResolverFound(mdns, resolve, entry, interface, name, host_name, port, txt, flags);
+      // Connect to the address Avahi already resolved rather than to the
+      // ".local" host name: resolving that again needs NSS mDNS support
+      // (nss-mdns), which minimal systems and musl-based ones (Alpine,
+      // containers) do not have. IPv6 keeps the host name, a link-local
+      // address would need a zone index in the URI.
+      char address_str[AVAHI_ADDRESS_STR_MAX];
+      const char* connect_host = host_name;
+      if ((address != NULL) && (address->proto == AVAHI_PROTO_INET)
+          && (avahi_address_snprint(address_str, sizeof(address_str), address) != NULL)) {
+        connect_host = address_str;
+      }
+      MdnsResolverFound(mdns, resolve, entry, interface, name, connect_host, port, txt, flags);
     } else {
       MDNS_DEBUG_PRINTF("Unknown resolver event: %d\n", event);
     }
