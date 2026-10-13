@@ -24,8 +24,8 @@
 
 #include "src/common/api/eebus_timer_interface.h"
 #include "src/common/debug.h"
-#include "src/common/eebus_timer/eebus_timer.h"
 #include "src/common/eebus_mutex/eebus_mutex.h"
+#include "src/common/eebus_timer/eebus_timer.h"
 #include "src/common/string_util.h"
 #include "src/ship/ship_pairing/ship_pairing_digest.h"
 #include "src/ship/ship_pairing/ship_pairing_request_internal.h"
@@ -105,8 +105,8 @@ ShipPairingRequest* ShipPairingRequestCreate(const ShipPairingRequestConfig* con
 
   self->announcing_mutex = EebusMutexCreate();
   self->announcing       = false;
-  self->settled_timer = EebusTimerCreate(ShipPairingRequestTimeoutCallback, self);
-  self->entry         = ShipPairingEntryCreate(config->instance_name, SHIP_PAIRING_DOMAIN, 0);
+  self->settled_timer    = EebusTimerCreate(ShipPairingRequestTimeoutCallback, self);
+  self->entry            = ShipPairingEntryCreate(config->instance_name, SHIP_PAIRING_DOMAIN, 0);
 
   if ((self->announcing_mutex == NULL) || (self->settled_timer == NULL) || (self->entry == NULL)
       || !ShipPairingRequestBuildEntry(self->entry, config)) {

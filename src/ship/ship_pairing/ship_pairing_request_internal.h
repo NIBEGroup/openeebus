@@ -21,8 +21,8 @@
 #ifndef SRC_SHIP_SHIP_PAIRING_SHIP_PAIRING_REQUEST_INTERNAL_H_
 #define SRC_SHIP_SHIP_PAIRING_SHIP_PAIRING_REQUEST_INTERNAL_H_
 
-#include "src/common/api/eebus_timer_interface.h"
 #include "src/common/api/eebus_mutex_interface.h"
+#include "src/common/api/eebus_timer_interface.h"
 #include "src/ship/ship_pairing/ship_pairing_request.h"
 
 #ifdef __cplusplus
