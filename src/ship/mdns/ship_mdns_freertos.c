@@ -83,6 +83,7 @@ struct Mdns {
   bool service_registered;
 
   /** @brief SHIP Pairing Service, browsed in the same loop as SHIP itself */
+  SemaphoreHandle_t pairing_mutex;
   OnShipPairingEntriesFoundCallback on_pairing_entries_found_cb;
   void* pairing_context;
   bool pairing_service_registered;
@@ -151,13 +152,14 @@ EebusError MdnsConstruct(
   self->thread              = NULL;
   self->semaphore           = xSemaphoreCreateBinary();
   self->service_registered  = false;
-  if (self->semaphore == NULL) {
-    return kEebusErrorMemoryAllocate;
-  }
 
+  self->pairing_mutex               = xSemaphoreCreateMutex();
   self->on_pairing_entries_found_cb = NULL;
   self->pairing_context             = NULL;
   self->pairing_service_registered  = false;
+  if ((self->semaphore == NULL) || (self->pairing_mutex == NULL)) {
+    return kEebusErrorMemoryAllocate;
+  }
 
   return kEebusErrorOk;
 }
@@ -191,6 +193,11 @@ void Destruct(ShipMdnsObject* self) {
   DeregisterPairingService(self);
 
   SHIP_MDNS_STOP(self);
+
+  if (mdns->pairing_mutex != NULL) {
+    vSemaphoreDelete(mdns->pairing_mutex);
+    mdns->pairing_mutex = NULL;
+  }
 
   if (mdns->found_entries != NULL) {
     VectorFreeElements(mdns->found_entries);
@@ -296,8 +303,10 @@ uint32_t GetUpdateIntervalMs(void) {
 EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesFoundCallback cb, void* ctx) {
   Mdns* const mdns = MDNS(self);
 
+  xSemaphoreTake(mdns->pairing_mutex, portMAX_DELAY);
   mdns->on_pairing_entries_found_cb = cb;
   mdns->pairing_context             = ctx;
+  xSemaphoreGive(mdns->pairing_mutex);
 
   return kEebusErrorOk;
 }
@@ -305,8 +314,11 @@ EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesFoundCal
 void StopPairingBrowse(ShipMdnsObject* self) {
   Mdns* const mdns = MDNS(self);
 
+  // A callback already snapshotted by the browser may still run after this returns.
+  xSemaphoreTake(mdns->pairing_mutex, portMAX_DELAY);
   mdns->on_pairing_entries_found_cb = NULL;
   mdns->pairing_context             = NULL;
+  xSemaphoreGive(mdns->pairing_mutex);
 }
 
 EebusError RegisterPairingService(ShipMdnsObject* self, const ShipPairingEntry* entry) {
@@ -410,7 +422,10 @@ static ShipPairingEntry* ShipPairingEntryCreateWithMdnsResult(const mdns_result_
  * nothing that matters.
  */
 void MdnsQueryPairingServices(Mdns* mdns) {
-  if (mdns->on_pairing_entries_found_cb == NULL) {
+  xSemaphoreTake(mdns->pairing_mutex, portMAX_DELAY);
+  const bool enabled = (mdns->on_pairing_entries_found_cb != NULL);
+  xSemaphoreGive(mdns->pairing_mutex);
+  if (!enabled) {
     return;
   }
 
@@ -443,10 +458,16 @@ void MdnsQueryPairingServices(Mdns* mdns) {
 
   mdns_query_results_free(results);
 
+  // Recheck after the blocking query and keep the callback/context pair consistent.
+  xSemaphoreTake(mdns->pairing_mutex, portMAX_DELAY);
+  const OnShipPairingEntriesFoundCallback cb = mdns->on_pairing_entries_found_cb;
+  void* const ctx                            = mdns->pairing_context;
+  xSemaphoreGive(mdns->pairing_mutex);
+
   // Whether a request is valid, addressed here and genuine is decided by the
   // evaluator, which is the only thing holding the secret.
-  if (VectorGetSize(found) > 0) {
-    mdns->on_pairing_entries_found_cb(found, mdns->pairing_context);
+  if ((cb != NULL) && (VectorGetSize(found) > 0)) {
+    cb(found, ctx);
   } else {
     VectorFreeElements(found);
     VectorDestruct(found);
