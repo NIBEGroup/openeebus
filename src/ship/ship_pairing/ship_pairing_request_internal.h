@@ -22,6 +22,7 @@
 #define SRC_SHIP_SHIP_PAIRING_SHIP_PAIRING_REQUEST_INTERNAL_H_
 
 #include "src/common/api/eebus_timer_interface.h"
+#include "src/common/api/eebus_mutex_interface.h"
 #include "src/ship/ship_pairing/ship_pairing_request.h"
 
 #ifdef __cplusplus
@@ -34,6 +35,9 @@ struct ShipPairingRequest {
 
   /** Whether the request is still to be announced, section 4.2 */
   bool announcing;
+
+  /** Protects announcing across the timer worker and callers */
+  EebusMutexObject* announcing_mutex;
 
   /** Counts the fifteen minutes of uninterrupted connection of section 4.2 */
   EebusTimerObject* settled_timer;

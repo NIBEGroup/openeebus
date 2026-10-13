@@ -25,6 +25,7 @@
 #include "src/common/api/eebus_timer_interface.h"
 #include "src/common/debug.h"
 #include "src/common/eebus_timer/eebus_timer.h"
+#include "src/common/eebus_mutex/eebus_mutex.h"
 #include "src/common/string_util.h"
 #include "src/ship/ship_pairing/ship_pairing_digest.h"
 #include "src/ship/ship_pairing/ship_pairing_request_internal.h"
@@ -102,11 +103,13 @@ ShipPairingRequest* ShipPairingRequestCreate(const ShipPairingRequestConfig* con
     return NULL;
   }
 
-  self->announcing    = false;
+  self->announcing_mutex = EebusMutexCreate();
+  self->announcing       = false;
   self->settled_timer = EebusTimerCreate(ShipPairingRequestTimeoutCallback, self);
   self->entry         = ShipPairingEntryCreate(config->instance_name, SHIP_PAIRING_DOMAIN, 0);
 
-  if ((self->settled_timer == NULL) || (self->entry == NULL) || !ShipPairingRequestBuildEntry(self->entry, config)) {
+  if ((self->announcing_mutex == NULL) || (self->settled_timer == NULL) || (self->entry == NULL)
+      || !ShipPairingRequestBuildEntry(self->entry, config)) {
     ShipPairingRequestDelete(self);
     return NULL;
   }
@@ -114,7 +117,9 @@ ShipPairingRequest* ShipPairingRequestCreate(const ShipPairingRequestConfig* con
   // Section 4.2: the request is announced from the moment it exists, and keeps
   // being announced until a connection with the addressed node has held for
   // fifteen minutes.
+  EEBUS_MUTEX_LOCK(self->announcing_mutex);
   self->announcing = true;
+  EEBUS_MUTEX_UNLOCK(self->announcing_mutex);
 
   return self;
 }
@@ -130,6 +135,7 @@ void ShipPairingRequestDelete(ShipPairingRequest* request) {
   }
 
   ShipPairingEntryDelete(request->entry);
+  EebusMutexDelete(request->announcing_mutex);
 
   EEBUS_FREE(request);
 }
@@ -145,7 +151,9 @@ void ShipPairingRequestTimeoutCallback(void* ctx) {
       __func__,
       SHIP_PAIRING_REQUEST_SETTLED_MINUTES
   );
+  EEBUS_MUTEX_LOCK(self->announcing_mutex);
   self->announcing = false;
+  EEBUS_MUTEX_UNLOCK(self->announcing_mutex);
 }
 
 const ShipPairingEntry* ShipPairingRequestGetEntry(const ShipPairingRequest* request) {
@@ -153,11 +161,18 @@ const ShipPairingEntry* ShipPairingRequestGetEntry(const ShipPairingRequest* req
 }
 
 bool ShipPairingRequestIsAnnouncing(const ShipPairingRequest* request) {
-  return (request == NULL) ? false : request->announcing;
+  if (request == NULL) {
+    return false;
+  }
+
+  EEBUS_MUTEX_LOCK(request->announcing_mutex);
+  const bool announcing = request->announcing;
+  EEBUS_MUTEX_UNLOCK(request->announcing_mutex);
+  return announcing;
 }
 
 void ShipPairingRequestNotifyConnected(ShipPairingRequest* request) {
-  if ((request == NULL) || !request->announcing || (request->settled_timer == NULL)) {
+  if ((request == NULL) || !ShipPairingRequestIsAnnouncing(request) || (request->settled_timer == NULL)) {
     return;
   }
 
@@ -180,7 +195,9 @@ void ShipPairingRequestStop(ShipPairingRequest* request) {
     return;
   }
 
+  EEBUS_MUTEX_LOCK(request->announcing_mutex);
   request->announcing = false;
+  EEBUS_MUTEX_UNLOCK(request->announcing_mutex);
 
   if (request->settled_timer != NULL) {
     EEBUS_TIMER_STOP(request->settled_timer);

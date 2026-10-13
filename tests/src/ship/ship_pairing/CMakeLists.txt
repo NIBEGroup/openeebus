@@ -17,6 +17,7 @@ target_sources(
   ${GTEST_SOURCES}
 
   # Main project sources
+  ${MAIN_PROJ_SOURCES_PATH}/common/eebus_mutex/eebus_mutex.c
   ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
   ${MAIN_PROJ_SOURCES_PATH}/ship/tls_certificate/tls_certificate.c
   ${MAIN_PROJ_SOURCES_PATH}/ship/ship_pairing/ship_pairing_entry.c
