@@ -41,7 +41,7 @@
 #include "src/ship/tls_certificate/tls_certificate.h"
 #include "src/ship/websocket/websocket_debug.h"
 
-static const size_t kWriteQueueSize  = 50;
+static const size_t kWriteQueueSize  = EEBUS_WEBSOCKET_WRITE_QUEUE_SIZE;
 static const size_t kMaxInputMsgSize = EEBUS_WEBSOCKET_MAX_INPUT_MSG_SIZE;
 
 typedef struct WriteMessage WriteMessage;

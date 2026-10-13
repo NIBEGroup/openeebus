@@ -42,6 +42,21 @@
 #define EEBUS_WEBSOCKET_MAX_INPUT_MSG_SIZE (64 * 1024)
 #endif
 
+/**
+ * @brief Maximum number of outgoing messages queued per WebSocket connection.
+ *
+ * Messages are queued by WebsocketWrite() and written from the lws writeable
+ * callback. During SPINE discovery between devices with many entities and
+ * features, dozens of replies, subscriptions and bindings are queued at once;
+ * when the queue is full the write fails and the SHIP connection is closed.
+ * The queue preallocates this many WriteMessage entries (pointer + size), the
+ * payload itself is allocated per queued message. Builds with a tight heap
+ * budget can lower the value at compile time.
+ */
+#ifndef EEBUS_WEBSOCKET_WRITE_QUEUE_SIZE
+#define EEBUS_WEBSOCKET_WRITE_QUEUE_SIZE 1024
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
