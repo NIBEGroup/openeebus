@@ -23,6 +23,8 @@
 
 #include "src/common/eebus_malloc.h"
 #include "src/common/entity_address_list.h"
+#include "src/service/service/eebus_service.h"
+#include "src/ship/api/tls_certificate_interface.h"
 #include "src/spine/model/entity_types.h"
 #include "src/use_case/actor/cem/ohpcf/cem_ohpcf.h"
 #include "src/use_case/actor/compressor/ohpcf/compressor_ohpcf.h"
@@ -133,6 +135,20 @@ struct EebusCliInterface {
    */
   void (*set_ma_mgcp)(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_case, EntityAddressList* addr_list);
   /**
+   * @brief Set the SHIP Pairing Service command handler
+   * @param self Pointer to the EEBUS CLI instance
+   * @param service Service instance; NULL to tear down the handler
+   * @param tls_certificate TLS certificate; NULL to tear down the handler
+   * @param ship_id Local SHIP ID
+   * @note The service, TLS certificate and SHIP ID are borrowed and must outlive the CLI handler.
+   */
+  void (*set_pairing)(
+      EebusCliObject* self,
+      EebusServiceObject* service,
+      const TlsCertificateObject* tls_certificate,
+      const char* ship_id
+  );
+  /**
    * @brief Handle the command passed as a string
    * @param self Pointer to the EEBUS CLI handler instance
    * @param cmd Command string to be handled
@@ -218,6 +234,12 @@ struct EebusCliObject {
  */
 #define EEBUS_CLI_SET_MA_MGCP(obj, ma_mgcp_use_case, addr_list) \
   (EEBUS_CLI_INTERFACE(obj)->set_ma_mgcp(obj, ma_mgcp_use_case, addr_list))
+
+/**
+ * @brief EEBUS CLI Set Pairing caller definition
+ */
+#define EEBUS_CLI_SET_PAIRING(obj, service, tls_certificate, ship_id) \
+  (EEBUS_CLI_INTERFACE(obj)->set_pairing(obj, service, tls_certificate, ship_id))
 
 /**
  * @brief EEBUS CLI Handle Cmd caller definition
