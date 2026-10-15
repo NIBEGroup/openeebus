@@ -50,8 +50,12 @@ Start the node that wants to be trusted, and give it what was just printed:
 ./hems 4713 "" devZ.crt devZ.key
 ```
 
+Replace the example fingerprint below with the full 64 hexadecimal digits
+printed by your heat pump's `pairing info` command. Generating new certificates
+changes the fingerprint.
+
 ```
-pairing announce NIBE-HeatPump-123456789 59F1E88493...23D3 7A37DCF81BDB50F8E92CFA4160CCB3DE
+pairing announce NIBE-HeatPump-123456789 59F1E884938BF792459452F4413723E05DBAFE66D9615FED6BA42CCEB6DB23D3 7A37DCF81BDB50F8E92CFA4160CCB3DE
 Announcing a request for NIBE-HeatPump-123456789
   nonce:  0F3B47B304ABC83CFD66881473DA3D05
   digest: AD4BC63A0D48EE6C728B278B49706CEA7569B5BC0BEC4A6248C878D5B1BB2492
