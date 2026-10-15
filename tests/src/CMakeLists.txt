@@ -81,6 +81,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cs/lpc_lpp
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cem/ohpcf
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cem/ohpcf)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cem/ohpcf/two_remote
+    ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cem/ohpcf/two_remote)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/compressor/ohpcf
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/compressor/ohpcf)
 
