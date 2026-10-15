@@ -32,6 +32,7 @@
 #include "src/common/string_util.h"
 #include "src/ship/api/ship_mdns_interface.h"
 #include "src/ship/api/tls_certificate_interface.h"
+#include "src/ship/api/trust_mode.h"
 #include "src/spine/model/device_types.h"
 #include "src/spine/model/entity_types.h"
 #include "src/spine/model/feature_types.h"
@@ -115,6 +116,13 @@ struct EebusServiceConfig {
   bool register_auto_accept;
 
   /**
+   * When a foreign SKI is trusted, see EebusTrustMode
+   * Defaults to kEebusTrustModePreTrust.
+   * Has to be set on configuring the service!
+   */
+  EebusTrustMode trust_mode;
+
+  /**
    * Generated identifier. Format: brand-model-serial_number.
    * Can be used for both SHIP Id and mDNS service name if corresponding alternate
    * name has not been specified (see alternate_ship_id and alternate_mdns_service_name).
@@ -191,6 +199,10 @@ static inline void EebusServiceConfigSetRegisterAutoAccept(EebusServiceConfig* c
   cfg->register_auto_accept = auto_accept;
 }
 
+static inline void EebusServiceConfigSetTrustMode(EebusServiceConfig* cfg, EebusTrustMode mode) {
+  cfg->trust_mode = mode;
+}
+
 /**
  * @brief Get the SHIP ID
  * Return the first valid identifier found in order:
@@ -219,6 +231,10 @@ static inline int32_t EebusServiceConfigGetPort(const EebusServiceConfig* cfg) {
 
 static inline bool EebusServiceConfigGetRegisterAutoAccept(const EebusServiceConfig* cfg) {
   return cfg->register_auto_accept;
+}
+
+static inline EebusTrustMode EebusServiceConfigGetTrustMode(const EebusServiceConfig* cfg) {
+  return cfg->trust_mode;
 }
 
 #ifdef __cplusplus

@@ -21,6 +21,8 @@
 #ifndef SRC_SERVICE_API_EEBUS_SERVICE_INTERFACE_H_
 #define SRC_SERVICE_API_EEBUS_SERVICE_INTERFACE_H_
 
+#include <stdint.h>
+
 #include "src/common/service_details.h"
 #include "src/service/api/eebus_service_config.h"
 #include "src/ship/api/ship_node_reader_interface.h"
@@ -59,6 +61,8 @@ struct EebusServiceInterface {
   void (*register_remote_ski)(EebusServiceObject* self, const char* ski, bool enable);
   void (*unregister_remote_ski)(EebusServiceObject* self, const char* ski);
   void (*cancel_pairing_with_ski)(EebusServiceObject* self, const char* ski);
+  void (*approve_pending_handshake_with_ski)(EebusServiceObject* self, const char* ski);
+  uint32_t (*get_pending_waiting_ms_with_ski)(EebusServiceObject* self, const char* ski);
   void (*set_pairing_possible)(EebusServiceObject* self, bool is_pairing_possible);
   const char* (*get_local_ski)(EebusServiceObject* self);
   const char* (*get_qr_code_string)(EebusServiceObject* self);
@@ -129,6 +133,18 @@ struct EebusServiceObject {
  */
 #define EEBUS_SERVICE_CANCEL_PAIRING_WITH_SKI(obj, ski) \
   (EEBUS_SERVICE_INTERFACE(obj)->cancel_pairing_with_ski(obj, ski))
+
+/**
+ * @brief EEBUS Service Approve Pending Handshake With Ski caller definition
+ */
+#define EEBUS_SERVICE_APPROVE_PENDING_HANDSHAKE_WITH_SKI(obj, ski) \
+  (EEBUS_SERVICE_INTERFACE(obj)->approve_pending_handshake_with_ski(obj, ski))
+
+/**
+ * @brief EEBUS Service Get Pending Waiting Ms With Ski caller definition
+ */
+#define EEBUS_SERVICE_GET_PENDING_WAITING_MS_WITH_SKI(obj, ski) \
+  (EEBUS_SERVICE_INTERFACE(obj)->get_pending_waiting_ms_with_ski(obj, ski))
 
 /**
  * @brief EEBUS Service Set Pairing Possible caller definition

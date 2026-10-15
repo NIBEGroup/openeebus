@@ -29,6 +29,7 @@
 #include "src/cli/eebus_cli_ma_mgcp.h"
 #include "src/cli/eebus_cli_ma_mpc.h"
 #include "src/cli/eebus_cli_mu_mpc.h"
+#include "src/cli/eebus_cli_pairing.h"
 #include "src/common/array_util.h"
 #include "src/common/eebus_errors.h"
 #include "src/common/eebus_malloc.h"
@@ -60,6 +61,8 @@ struct EebusCli {
   EebusCliHandlerObject* gcp_mgcp_cli;
   /** MA MGCP CLI instance to deal with */
   EebusCliHandlerObject* ma_mgcp_cli;
+  /** SHIP Pairing Service CLI instance to deal with */
+  EebusCliHandlerObject* pairing_cli;
 };
 
 #define EEBUS_CLI(obj) ((EebusCli*)(obj))
@@ -80,6 +83,12 @@ static void
 SetCemOhpcf(EebusCliObject* self, CemOhpcfUseCaseObject* cem_ohpcf_use_case, const EntityAddressList* addr_list);
 static void SetGcpMgcp(EebusCliObject* self, GcpMgcpUseCaseObject* gcp_mgcp_use_case);
 static void SetMaMgcp(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_case, EntityAddressList* addr_list);
+static void SetPairing(
+    EebusCliObject* self,
+    EebusServiceObject* service,
+    const TlsCertificateObject* tls_certificate,
+    const char* ship_id
+);
 static void HandleCmd(const EebusCliObject* self, char* cmd);
 
 static const EebusCliInterface eebus_cli_methods = {
@@ -94,6 +103,7 @@ static const EebusCliInterface eebus_cli_methods = {
     .set_cem_ohpcf        = SetCemOhpcf,
     .set_gcp_mgcp         = SetGcpMgcp,
     .set_ma_mgcp          = SetMaMgcp,
+    .set_pairing          = SetPairing,
     .handle_cmd           = HandleCmd,
 };
 
@@ -113,6 +123,7 @@ EebusError EebusCliConstruct(EebusCli* self) {
   self->cem_ohpcf_cli        = NULL;
   self->gcp_mgcp_cli         = NULL;
   self->ma_mgcp_cli          = NULL;
+  self->pairing_cli          = NULL;
 
   return kEebusErrorOk;
 }
@@ -133,6 +144,9 @@ EebusCliObject* EebusCliCreate(void) {
 
 void Destruct(EebusCliObject* self) {
   EebusCli* const eebus_cli = EEBUS_CLI(self);
+
+  PairingCliDelete(eebus_cli->pairing_cli);
+  eebus_cli->pairing_cli = NULL;
 
   CompressorOhpcfCliDelete(eebus_cli->compressor_ohpcf_cli);
   eebus_cli->compressor_ohpcf_cli = NULL;
@@ -272,6 +286,22 @@ static void SetMaMgcp(EebusCliObject* self, MaMgcpUseCaseObject* ma_mgcp_use_cas
   }
 }
 
+static void SetPairing(
+    EebusCliObject* self,
+    EebusServiceObject* service,
+    const TlsCertificateObject* tls_certificate,
+    const char* ship_id
+) {
+  EebusCli* const eebus_cli = EEBUS_CLI(self);
+
+  PairingCliDelete(eebus_cli->pairing_cli);
+  eebus_cli->pairing_cli = NULL;
+
+  if ((service != NULL) && (tls_certificate != NULL)) {
+    eebus_cli->pairing_cli = PairingCliCreate(service, tls_certificate, ship_id);
+  }
+}
+
 void HandleCmd(const EebusCliObject* self, char* cmd) {
   const EebusCli* const eebus_cli = EEBUS_CLI(self);
 
@@ -315,13 +345,15 @@ void HandleCmd(const EebusCliObject* self, char* cmd) {
     handler = eebus_cli->gcp_mgcp_cli;
   } else if (strcmp(tokens[0], "ma_mgcp") == 0) {
     handler = eebus_cli->ma_mgcp_cli;
+  } else if (strcmp(tokens[0], "pairing") == 0) {
+    handler = eebus_cli->pairing_cli;
   } else {
     printf("Unknown command: %s\n", tokens[0]);
     return;
   }
 
   if (handler == NULL) {
-    printf("%s use case not set in CLI handler\n", tokens[0]);
+    printf("%s CLI handler not set\n", tokens[0]);
     return;
   }
 

@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "src/common/api/eebus_mutex_interface.h"
 #include "src/common/api/eebus_queue_interface.h"
 #include "src/common/api/eebus_timer_interface.h"
 #include "src/common/eebus_errors.h"
@@ -31,6 +32,7 @@
 #include "src/ship/api/websocket_creator_interface.h"
 #include "src/ship/api/websocket_interface.h"
 #include "src/ship/ship_connection/ship_connection_debug.h"
+#include "src/ship/ship_connection/ship_connection_trust.h"
 #include "src/ship/ship_connection/types.h"
 
 #ifdef __cplusplus
@@ -51,15 +53,29 @@ enum ShipConnectionQueueMsgType {
   kShipConnectionQueueMsgTypeWebsocketError,
   kShipConnectionQueueMsgTypeWebsocketClose,
   kShipConnectionQueueMsgTypeCancel,
+  kShipConnectionQueueMsgTypeTrustGranted,
+  kShipConnectionQueueMsgTypeTrustDenied,
 };
 
 typedef enum ShipConnectionQueueMsgType ShipConnectionQueueMsgType;
 
 typedef struct ShipConnectionQueueMessage ShipConnectionQueueMessage;
 
+/**
+ * @brief The application's trust decision about a peer in "hello" PENDING
+ */
+typedef enum {
+  kShipConnectionTrustDecisionNone = 0,
+  kShipConnectionTrustDecisionGranted,
+  kShipConnectionTrustDecisionDenied,
+} ShipConnectionTrustDecision;
+
 struct ShipConnectionQueueMessage {
   ShipConnectionQueueMsgType type;
   MessageBuffer msg_buf;
+  uint64_t approval_id;
+  ShipConnectionTrustAcceptanceCallback accept_cb;
+  void* accept_ctx;
 };
 
 typedef struct {
@@ -75,6 +91,8 @@ typedef struct {
   InfoProviderObject* info_provider;
   DataReaderObject* data_reader;
   WebsocketObject* websocket;
+  /** Protects state and waiting values exposed to callers on other threads. */
+  EebusMutexObject* state_mutex;
   SmeState sme_state;
   EebusError sme_error;
   bool is_access_methods_req_sent;
@@ -82,6 +100,13 @@ typedef struct {
   EebusTimerObject* send_prolongation_request_timer;
   EebusTimerObject* prolongation_request_reply_timer;
   uint32_t last_received_waiting_value;
+  /** Only ever set while sme_state is kSmeHelloStatePendingListen */
+  ShipConnectionTrustDecision trust_decision;
+  uint64_t trust_decision_id;
+  ShipConnectionTrustAcceptanceCallback trust_accept_cb;
+  void* trust_accept_ctx;
+  /** Whether the peer has announced hello phase "ready", which it does once */
+  bool remote_hello_ready;
   // TODO: investigate better approach for call once in POSIX, e.g.
   // pthread_once_t shutdownOnce;
   bool shutdown_once;

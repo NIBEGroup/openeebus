@@ -18,6 +18,11 @@
  * @brief Tls Certificate mbedTLS based implementation
  */
 
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/ecp.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/md.h>
+#include <mbedtls/sha256.h>
 #include <mbedtls/x509.h>
 #include <mbedtls/x509_crt.h>
 #include <stdbool.h>
@@ -378,4 +383,133 @@ const char* TlsCertificateCalcPublicKeySki(const uint8_t* cert, size_t cert_size
   const char* const ski = CalcSubjectKeyIdString(&x509_cert);
   mbedtls_x509_crt_free(&x509_cert);
   return ski;
+}
+
+const char* TlsCertificateCalcFingerprintSha256(const uint8_t* cert, size_t cert_size) {
+  if ((cert == NULL) || (cert_size == 0)) {
+    return NULL;
+  }
+
+  mbedtls_x509_crt x509_cert;
+  mbedtls_x509_crt_init(&x509_cert);
+
+  int ret = mbedtls_x509_crt_parse_der(&x509_cert, cert, cert_size);
+  if (ret != 0) {
+    TLS_CERTIFICATE_MBEDTLS_DEBUG_PRINTF("mbedtls_x509_crt_parse_der failed: -0x%04X\n", -ret);
+    mbedtls_x509_crt_free(&x509_cert);
+    return NULL;
+  }
+
+  // raw is the certificate's own DER encoding, which is what a fingerprint is
+  // defined over (SHIP Pairing Service TS 1.0.0, section 6.2). Hashing it rather
+  // than the caller's buffer keeps the result correct if the buffer holds more
+  // than the certificate.
+  uint8_t sha256[TLS_CERTIFICATE_SHA256_SIZE];
+  ret = mbedtls_sha256(x509_cert.raw.p, x509_cert.raw.len, sha256, 0);
+  mbedtls_x509_crt_free(&x509_cert);
+
+  if (ret != 0) {
+    TLS_CERTIFICATE_MBEDTLS_DEBUG_PRINTF("mbedtls_sha256 failed: -0x%04X\n", -ret);
+    return NULL;
+  }
+
+  return StringWithHexUpper(sha256, sizeof(sha256));
+}
+
+const char* TlsCertificateGetCurveName(const uint8_t* cert, size_t cert_size) {
+  if ((cert == NULL) || (cert_size == 0)) {
+    return NULL;
+  }
+
+  mbedtls_x509_crt x509_cert;
+  mbedtls_x509_crt_init(&x509_cert);
+
+  const int ret = mbedtls_x509_crt_parse_der(&x509_cert, cert, cert_size);
+  if (ret != 0) {
+    TLS_CERTIFICATE_MBEDTLS_DEBUG_PRINTF("mbedtls_x509_crt_parse_der failed: -0x%04X\n", -ret);
+    mbedtls_x509_crt_free(&x509_cert);
+    return NULL;
+  }
+
+  if (!mbedtls_pk_can_do(&x509_cert.pk, MBEDTLS_PK_ECKEY)) {
+    mbedtls_x509_crt_free(&x509_cert);
+    return NULL;
+  }
+
+  // The group id is mapped onto the spelling the EEBUS specifications use rather
+  // than being reported as mbedTLS names it.
+  const mbedtls_ecp_group_id grp_id = mbedtls_ecp_keypair_get_group_id(mbedtls_pk_ec(x509_cert.pk));
+  mbedtls_x509_crt_free(&x509_cert);
+
+  switch (grp_id) {
+    case MBEDTLS_ECP_DP_SECP256R1: return TLS_CERTIFICATE_CURVE_SECP256R1;
+    case MBEDTLS_ECP_DP_BP256R1: return TLS_CERTIFICATE_CURVE_BRAINPOOLP256R1;
+    case MBEDTLS_ECP_DP_BP384R1: return TLS_CERTIFICATE_CURVE_BRAINPOOLP384R1;
+    default: return NULL;
+  }
+}
+
+EebusError TlsCertificateRandomBytes(uint8_t* buf, size_t buf_size) {
+  if (buf == NULL) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  if (buf_size == 0) {
+    return kEebusErrorInputArgumentOutOfRange;
+  }
+
+  // Seeded per call rather than kept as a shared generator: this is called for
+  // one-off values only, and a file scope generator would need the locking that
+  // the library deliberately leaves to its platform backends.
+  //
+  // Seeding fails when the mbedTLS entropy pool has no source, which is the
+  // default on a bare metal target (MBEDTLS_NO_PLATFORM_ENTROPY without
+  // MBEDTLS_ENTROPY_HARDWARE_ALT). The integrator must register one with
+  // mbedtls_entropy_add_source(). Failing is deliberate: predictable octets here
+  // would defeat the values this exists to produce.
+  mbedtls_entropy_context entropy;
+  mbedtls_ctr_drbg_context ctr_drbg;
+  mbedtls_entropy_init(&entropy);
+  mbedtls_ctr_drbg_init(&ctr_drbg);
+
+  EebusError error = kEebusErrorOk;
+
+  int ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, NULL, 0);
+  if (ret != 0) {
+    TLS_CERTIFICATE_MBEDTLS_DEBUG_PRINTF("mbedtls_ctr_drbg_seed failed: -0x%04X\n", -ret);
+    error = kEebusErrorNotAvailable;
+  } else {
+    ret = mbedtls_ctr_drbg_random(&ctr_drbg, buf, buf_size);
+    if (ret != 0) {
+      TLS_CERTIFICATE_MBEDTLS_DEBUG_PRINTF("mbedtls_ctr_drbg_random failed: -0x%04X\n", -ret);
+      error = kEebusErrorOther;
+    }
+  }
+
+  mbedtls_ctr_drbg_free(&ctr_drbg);
+  mbedtls_entropy_free(&entropy);
+
+  return error;
+}
+
+EebusError
+TlsCertificateHmacSha256(const uint8_t* key, size_t key_size, const uint8_t* msg, size_t msg_size, uint8_t* digest) {
+  if ((key == NULL) || (msg == NULL) || (digest == NULL)) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  if (key_size == 0) {
+    return kEebusErrorInputArgumentOutOfRange;
+  }
+
+  const mbedtls_md_info_t* const md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+  if (md_info == NULL) {
+    return kEebusErrorNotSupported;
+  }
+
+  if (mbedtls_md_hmac(md_info, key, key_size, msg, msg_size, digest) != 0) {
+    return kEebusErrorOther;
+  }
+
+  return kEebusErrorOk;
 }

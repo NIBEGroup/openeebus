@@ -21,6 +21,7 @@
 
 #include "src/common/array_util.h"
 #include "src/common/eebus_thread/eebus_thread.h"
+#include "src/ship/api/info_provider_interface.h"
 #include "src/ship/ship_connection/ship_connection.h"
 #include "src/ship/ship_connection/ship_message_deserialize.h"
 #include "src/ship/ship_connection/ship_message_serialize.h"
@@ -43,7 +44,13 @@ void ClientHandleState(ShipConnection* self) {
     }
 
     case kSmeHelloState: {
-      ShipConnectionSetSmeState(self, kSmeHelloStateReadyInit);
+      // SHIP 13.4.4.1.2: READY "MUST ONLY be entered if the communication partner
+      // is already trusted". An untrusted peer waits in PENDING instead.
+      if (INFO_PROVIDER_IS_REMOTE_SERVICE_FOR_SKI_PAIRED(self->info_provider, self->remote_ski)) {
+        ShipConnectionSetSmeState(self, kSmeHelloStateReadyInit);
+      } else {
+        ShipConnectionSetSmeState(self, kSmeHelloStatePendingInit);
+      }
       break;
     }
 

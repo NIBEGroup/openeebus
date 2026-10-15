@@ -36,6 +36,8 @@ static void Stop(ShipNodeObject* self);
 static void RegisterRemoteSki(ShipNodeObject* self, const char* ski, bool is_trusted);
 static void UnregisterRemoteSki(ShipNodeObject* self, const char* ski);
 static void CancelPairingWithSki(ShipNodeObject* self, const char* ski);
+static void ApprovePendingHandshakeWithSki(ShipNodeObject* self, const char* ski);
+static uint32_t GetPendingWaitingMsWithSki(ShipNodeObject* self, const char* ski);
 
 static const ShipNodeInterface ship_node_methods = {
     .info_provider_interface = {
@@ -48,11 +50,13 @@ static const ShipNodeInterface ship_node_methods = {
         .setup_remote_device              = SetupRemoteDevice,
     },
 
-    .start                   = Start,
-    .stop                    = Stop,
-    .register_remote_ski     = RegisterRemoteSki,
-    .unregister_remote_ski   = UnregisterRemoteSki,
-    .cancel_pairing_with_ski = CancelPairingWithSki,
+    .start                              = Start,
+    .stop                               = Stop,
+    .register_remote_ski                = RegisterRemoteSki,
+    .unregister_remote_ski              = UnregisterRemoteSki,
+    .cancel_pairing_with_ski            = CancelPairingWithSki,
+    .approve_pending_handshake_with_ski = ApprovePendingHandshakeWithSki,
+    .get_pending_waiting_ms_with_ski    = GetPendingWaitingMsWithSki,
 };
 
 static EebusError ShipNodeMockConstruct(ShipNodeMock* self);
@@ -142,4 +146,14 @@ void UnregisterRemoteSki(ShipNodeObject* self, const char* ski) {
 void CancelPairingWithSki(ShipNodeObject* self, const char* ski) {
   ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
   mock->gmock->CancelPairingWithSki(self, ski);
+}
+
+void ApprovePendingHandshakeWithSki(ShipNodeObject* self, const char* ski) {
+  ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
+  mock->gmock->ApprovePendingHandshakeWithSki(self, ski);
+}
+
+uint32_t GetPendingWaitingMsWithSki(ShipNodeObject* self, const char* ski) {
+  ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
+  return mock->gmock->GetPendingWaitingMsWithSki(self, ski);
 }

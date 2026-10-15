@@ -29,6 +29,13 @@
  * @endcode
  *
  * Commands examples
+ * SHIP Pairing Service (register with EEBUS_CLI_SET_PAIRING first):
+ * pairing info
+ * pairing secret <32 hex digits>
+ * pairing announce <shipId> <fingerprint> <secret>
+ * pairing stop
+ * pairing status
+ *
  * CS LPC:
  * cs_lpc set power_limit 3500.5 false true
  * cs_lpc get power_limit
