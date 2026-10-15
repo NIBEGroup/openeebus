@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "src/common/debug.h"
+#include "src/common/eebus_mutex/eebus_mutex.h"
 #include "src/common/eebus_timer/eebus_timer.h"
 #include "src/common/string_util.h"
 #include "src/ship/ship_pairing/ship_pairing_digest.h"
@@ -55,6 +56,8 @@ static void SetSupportedCurves(ShipPairingObject* self, uint32_t curves);
 static void SetEnabledCallback(ShipPairingObject* self, OnShipPairingEnabledCallback cb, void* ctx);
 static bool IsEnabled(const ShipPairingObject* self);
 static void ShipPairingReportEnabled(ShipPairing* self);
+static ShipPairingResult ShipPairingEvaluateLocked(ShipPairing* ship_pairing, const ShipPairingEntry* entry);
+static bool ShipPairingHasTrustedPeerLocked(const ShipPairing* self);
 
 static const ShipPairingInterface interface = {
     .destruct                = Destruct,
@@ -117,10 +120,16 @@ ShipPairingObject* ShipPairingCreate(const char* own_ship_id, const TlsCertifica
     return NULL;
   }
 
-  self->obj.interface_  = &interface;
-  self->own_ship_id     = StringCopy(own_ship_id);
-  self->own_fingerprint = fingerprint;
-  self->secret_size     = 0;
+  self->obj.interface_    = &interface;
+  self->reporting_enabled = false;
+  self->own_ship_id       = StringCopy(own_ship_id);
+  self->own_fingerprint   = fingerprint;
+  self->secret_size       = 0;
+
+  self->mutex                     = EebusMutexCreate();
+  self->timer_mutex               = EebusMutexCreate();
+  self->activation_revision       = 0;
+  self->timer_restart_in_progress = false;
   memset(self->secret, 0, sizeof(self->secret));
 
   self->supported_curves
@@ -142,7 +151,8 @@ ShipPairingObject* ShipPairingCreate(const char* own_ship_id, const TlsCertifica
   // starts and any later change is worth reporting.
   self->reported_enabled = false;
 
-  if ((self->own_ship_id == NULL) || (self->reactivation_timer == NULL)) {
+  if ((self->own_ship_id == NULL) || (self->reactivation_timer == NULL) || (self->mutex == NULL)
+      || (self->timer_mutex == NULL)) {
     Destruct(SHIP_PAIRING_OBJECT(self));
     EEBUS_FREE(self);
     return NULL;
@@ -168,6 +178,9 @@ void Destruct(ShipPairingObject* self) {
   // The secret outlives neither the object nor a core dump of it.
   memset(ship_pairing->secret, 0, sizeof(ship_pairing->secret));
   ship_pairing->secret_size = 0;
+
+  EebusMutexDelete(ship_pairing->timer_mutex);
+  EebusMutexDelete(ship_pairing->mutex);
 }
 
 void ShipPairingTimeoutCallback(void* ctx) {
@@ -176,12 +189,30 @@ void ShipPairingTimeoutCallback(void* ctx) {
   // Section 4.3.1, item a.i: an idle but functional connection does not meet
   // the condition for automatic reactivation. Its eventual close will start
   // a fresh interval through NotifyMessageExchange().
-  const bool message_exchange_available = (self->message_exchange_available_cb != NULL)
-                                          && self->message_exchange_available_cb(self->message_exchange_ctx);
+  EEBUS_MUTEX_LOCK(self->mutex);
+  if (self->timer_restart_in_progress) {
+    EEBUS_MUTEX_UNLOCK(self->mutex);
+    return;
+  }
+
+  const uint64_t revision                              = self->activation_revision;
+  const ShipPairingMessageExchangeAvailableCallback cb = self->message_exchange_available_cb;
+  void* const callback_ctx                             = self->message_exchange_ctx;
+  EEBUS_MUTEX_UNLOCK(self->mutex);
+
+  const bool message_exchange_available = (cb != NULL) && cb(callback_ctx);
+
+  EEBUS_MUTEX_LOCK(self->mutex);
+  if ((revision != self->activation_revision) || self->timer_restart_in_progress) {
+    EEBUS_MUTEX_UNLOCK(self->mutex);
+    return;
+  }
 
   self->add_cu_activated = !message_exchange_available;
+  ++self->activation_revision;
+  EEBUS_MUTEX_UNLOCK(self->mutex);
 
-  if (self->add_cu_activated) {
+  if (!message_exchange_available) {
     SHIP_PAIRING_DEBUG_PRINTF(
         "%s(), no message exchange for %d minutes, processing addCu-requests again\n",
         __func__,
@@ -193,16 +224,21 @@ void ShipPairingTimeoutCallback(void* ctx) {
 }
 
 void ShipPairingRestartReactivationTimer(ShipPairing* self) {
-  if (self->reactivation_timer == NULL) {
-    return;
-  }
-
+  // The caller holds timer_mutex from before its state update. Stop can wait
+  // for the timeout callback, so the state mutex must be unlocked here.
   EEBUS_TIMER_STOP(self->reactivation_timer);
 
-  // Only meaningful while there is a pairing that could be discontinued.
-  if (HasTrustedPeer(SHIP_PAIRING_OBJECT(self))) {
+  EEBUS_MUTEX_LOCK(self->mutex);
+  const bool has_trusted_peer = ShipPairingHasTrustedPeerLocked(self);
+  EEBUS_MUTEX_UNLOCK(self->mutex);
+
+  if (has_trusted_peer) {
     EEBUS_TIMER_START(self->reactivation_timer, SECONDS(SHIP_PAIRING_REACTIVATION_MINUTES * 60), false);
   }
+
+  EEBUS_MUTEX_LOCK(self->mutex);
+  self->timer_restart_in_progress = false;
+  EEBUS_MUTEX_UNLOCK(self->mutex);
 }
 
 bool ShipPairingIsCurveSupported(const ShipPairing* self, const char* curve) {
@@ -274,6 +310,25 @@ void ShipPairingAddDigest(ShipPairing* self, const ShipPairingEntry* entry) {
 ShipPairingResult Evaluate(ShipPairingObject* self, const ShipPairingEntry* entry) {
   ShipPairing* const ship_pairing = SHIP_PAIRING(self);
 
+  EEBUS_MUTEX_LOCK(ship_pairing->timer_mutex);
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
+  const ShipPairingResult result = ShipPairingEvaluateLocked(ship_pairing, entry);
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
+
+  if (result == kShipPairingResultAccepted) {
+    ShipPairingRestartReactivationTimer(ship_pairing);
+  }
+
+  EEBUS_MUTEX_UNLOCK(ship_pairing->timer_mutex);
+
+  if (result == kShipPairingResultAccepted) {
+    ShipPairingReportEnabled(ship_pairing);
+  }
+
+  return result;
+}
+
+static ShipPairingResult ShipPairingEvaluateLocked(ShipPairing* ship_pairing, const ShipPairingEntry* entry) {
   if (entry == NULL) {
     return kShipPairingResultError;
   }
@@ -326,8 +381,8 @@ ShipPairingResult Evaluate(ShipPairingObject* self, const ShipPairingEntry* entr
 
   // Section 4.2, step 3: having accepted one, stop processing further ones.
   ship_pairing->add_cu_activated = false;
-  ShipPairingRestartReactivationTimer(ship_pairing);
-  ShipPairingReportEnabled(ship_pairing);
+  ++ship_pairing->activation_revision;
+  ship_pairing->timer_restart_in_progress = true;
 
   return kShipPairingResultAccepted;
 }
@@ -335,8 +390,10 @@ ShipPairingResult Evaluate(ShipPairingObject* self, const ShipPairingEntry* entr
 void SetEnabledCallback(ShipPairingObject* self, OnShipPairingEnabledCallback cb, void* ctx) {
   ShipPairing* const ship_pairing = SHIP_PAIRING(self);
 
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
   ship_pairing->on_enabled_cb = cb;
   ship_pairing->enabled_ctx   = ctx;
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
 }
 
 bool IsEnabled(const ShipPairingObject* self) {
@@ -344,7 +401,11 @@ bool IsEnabled(const ShipPairingObject* self) {
 
   // Without a secret nothing can be authenticated, and with addCu-requests no
   // longer being processed nothing would be accepted even if it were.
-  return (ship_pairing->secret_size > 0) && ship_pairing->add_cu_activated;
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
+  const bool enabled = (ship_pairing->secret_size > 0) && ship_pairing->add_cu_activated;
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
+
+  return enabled;
 }
 
 /**
@@ -355,47 +416,79 @@ bool IsEnabled(const ShipPairingObject* self) {
  * stopping work rather than by counting.
  */
 void ShipPairingReportEnabled(ShipPairing* self) {
-  const bool enabled = IsEnabled(SHIP_PAIRING_OBJECT(self));
-  if (enabled == self->reported_enabled) {
+  EEBUS_MUTEX_LOCK(self->mutex);
+  if (self->reporting_enabled) {
+    EEBUS_MUTEX_UNLOCK(self->mutex);
     return;
   }
 
-  self->reported_enabled = enabled;
+  self->reporting_enabled = true;
+  for (;;) {
+    const bool enabled = (self->secret_size > 0) && self->add_cu_activated;
+    if (enabled == self->reported_enabled) {
+      break;
+    }
 
-  if (self->on_enabled_cb != NULL) {
-    self->on_enabled_cb(enabled, self->enabled_ctx);
+    self->reported_enabled                = enabled;
+    const OnShipPairingEnabledCallback cb = self->on_enabled_cb;
+    void* const ctx                       = self->enabled_ctx;
+    EEBUS_MUTEX_UNLOCK(self->mutex);
+    if (cb != NULL) {
+      cb(enabled, ctx);
+    }
+
+    EEBUS_MUTEX_LOCK(self->mutex);
   }
+
+  self->reporting_enabled = false;
+  EEBUS_MUTEX_UNLOCK(self->mutex);
 }
 
 bool IsAddCuActivated(const ShipPairingObject* self) {
-  return SHIP_PAIRING(self)->add_cu_activated;
+  const ShipPairing* const ship_pairing = SHIP_PAIRING(self);
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
+  const bool activated = ship_pairing->add_cu_activated;
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
+  return activated;
 }
 
 void ActivateAddCu(ShipPairingObject* self) {
   // The ring buffer is deliberately left alone. It is not a trust store
   // (section 10.4) but a record of what has already been seen, and forgetting
   // it here would let a request that was accepted once be replayed.
-  SHIP_PAIRING(self)->add_cu_activated = true;
-  ShipPairingReportEnabled(SHIP_PAIRING(self));
+  ShipPairing* const ship_pairing = SHIP_PAIRING(self);
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
+  ship_pairing->add_cu_activated = true;
+  ++ship_pairing->activation_revision;
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
+  ShipPairingReportEnabled(ship_pairing);
 }
 
 void DeactivateAddCu(ShipPairingObject* self) {
-  SHIP_PAIRING(self)->add_cu_activated = false;
-  ShipPairingReportEnabled(SHIP_PAIRING(self));
+  ShipPairing* const ship_pairing = SHIP_PAIRING(self);
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
+  ship_pairing->add_cu_activated = false;
+  ++ship_pairing->activation_revision;
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
+  ShipPairingReportEnabled(ship_pairing);
 }
 
 void NotifyMessageExchange(ShipPairingObject* self) {
   ShipPairing* const ship_pairing = SHIP_PAIRING(self);
 
-  // Finish a timeout already in progress before deactivating processing.
-  ShipPairingRestartReactivationTimer(ship_pairing);
-
+  EEBUS_MUTEX_LOCK(ship_pairing->timer_mutex);
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
   // Section 4.3.1, item b.ii: the trusted node is reachable after all, so the
   // pairing stands and no replacement is accepted.
-  if (HasTrustedPeer(self)) {
+  if (ShipPairingHasTrustedPeerLocked(ship_pairing)) {
     ship_pairing->add_cu_activated = false;
   }
 
+  ++ship_pairing->activation_revision;
+  ship_pairing->timer_restart_in_progress = true;
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
+  ShipPairingRestartReactivationTimer(ship_pairing);
+  EEBUS_MUTEX_UNLOCK(ship_pairing->timer_mutex);
   ShipPairingReportEnabled(ship_pairing);
 }
 
@@ -404,14 +497,24 @@ void ShipPairingSetMessageExchangeAvailableCallback(
     ShipPairingMessageExchangeAvailableCallback cb,
     void* ctx
 ) {
-  ShipPairing* const ship_pairing             = SHIP_PAIRING(self);
+  ShipPairing* const ship_pairing = SHIP_PAIRING(self);
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
   ship_pairing->message_exchange_available_cb = cb;
   ship_pairing->message_exchange_ctx          = ctx;
+  ++ship_pairing->activation_revision;
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
 }
 
 bool HasTrustedPeer(const ShipPairingObject* self) {
   const ShipPairing* const ship_pairing = SHIP_PAIRING(self);
 
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
+  const bool has_trusted_peer = ShipPairingHasTrustedPeerLocked(ship_pairing);
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
+  return has_trusted_peer;
+}
+
+static bool ShipPairingHasTrustedPeerLocked(const ShipPairing* ship_pairing) {
   if (ship_pairing->ring_buffer.next == 0) {
     return false;
   }
@@ -424,7 +527,10 @@ void GetRingBuffer(const ShipPairingObject* self, ShipPairingRingBuffer* ring_bu
     return;
   }
 
-  *ring_buffer = SHIP_PAIRING(self)->ring_buffer;
+  const ShipPairing* const ship_pairing = SHIP_PAIRING(self);
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
+  *ring_buffer = ship_pairing->ring_buffer;
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
 }
 
 static bool ShipPairingRingEntryIsValid(const ShipPairingRingEntry* entry) {
@@ -468,6 +574,8 @@ void SetRingBuffer(ShipPairingObject* self, const ShipPairingRingBuffer* ring_bu
     valid = ShipPairingRingEntryIsValid(&ring_buffer->entries[i]);
   }
 
+  EEBUS_MUTEX_LOCK(ship_pairing->timer_mutex);
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
   if (valid) {
     ship_pairing->ring_buffer = *ring_buffer;
   } else {
@@ -477,28 +585,34 @@ void SetRingBuffer(ShipPairingObject* self, const ShipPairingRingBuffer* ring_bu
 
   // A restored pairing is a pairing: it is protected until the fifteen minutes
   // of section 4.3.1 elapse, counted from this node starting up.
-  ship_pairing->add_cu_activated = !HasTrustedPeer(self);
+  ship_pairing->add_cu_activated = !ShipPairingHasTrustedPeerLocked(ship_pairing);
+  ++ship_pairing->activation_revision;
+  ship_pairing->timer_restart_in_progress = true;
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
   ShipPairingRestartReactivationTimer(ship_pairing);
+  EEBUS_MUTEX_UNLOCK(ship_pairing->timer_mutex);
   ShipPairingReportEnabled(ship_pairing);
 }
 
 void SetSecret(ShipPairingObject* self, const uint8_t* secret, size_t secret_size) {
   ShipPairing* const ship_pairing = SHIP_PAIRING(self);
 
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
   memset(ship_pairing->secret, 0, sizeof(ship_pairing->secret));
   ship_pairing->secret_size = 0;
 
-  if ((secret == NULL) || (secret_size != SHIP_PAIRING_SECRET_SIZE)) {
-    ShipPairingReportEnabled(ship_pairing);
-    return;
+  if ((secret != NULL) && (secret_size == SHIP_PAIRING_SECRET_SIZE)) {
+    memcpy(ship_pairing->secret, secret, secret_size);
+    ship_pairing->secret_size = secret_size;
   }
 
-  memcpy(ship_pairing->secret, secret, secret_size);
-  ship_pairing->secret_size = secret_size;
-
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
   ShipPairingReportEnabled(ship_pairing);
 }
 
 void SetSupportedCurves(ShipPairingObject* self, uint32_t curves) {
-  SHIP_PAIRING(self)->supported_curves = curves;
+  ShipPairing* const ship_pairing = SHIP_PAIRING(self);
+  EEBUS_MUTEX_LOCK(ship_pairing->mutex);
+  ship_pairing->supported_curves = curves;
+  EEBUS_MUTEX_UNLOCK(ship_pairing->mutex);
 }

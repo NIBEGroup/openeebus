@@ -19,6 +19,11 @@
  */
 #include "tests/src/ship/ship_pairing/ship_pairing_test_suite.h"
 
+#include <barrier>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+
 extern "C" {
 #include "src/common/string_util.h"
 #include "src/ship/ship_pairing/ship_pairing_digest.h"
@@ -463,6 +468,23 @@ TEST_F(ShipPairingTestSuite, KeepsTheReturningPeerIfExpiryCompletesDuringTimerRe
   EXPECT_FALSE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
 }
 
+TEST_F(ShipPairingTestSuite, IgnoresTimeoutUntilTimerRestartCompletes) {
+  Evaluator evaluator;
+  ASSERT_NE(evaluator.Get(), nullptr);
+  evaluator.SetAnnexASecret();
+  const EntryPtr entry = AnnexAEntry();
+  ASSERT_NE(entry, nullptr);
+
+  EXPECT_CALL(*evaluator.Timer()->gmock, Start(_, kReactivationMs, false))
+      .WillOnce([&](EebusTimerObject*, uint32_t, bool) { EebusTimerMockExpire(evaluator.Timer()); });
+  EXPECT_EQ(SHIP_PAIRING_EVALUATE(evaluator.Get(), entry.get()), kShipPairingResultAccepted);
+  EXPECT_FALSE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
+
+  // Once the restart completes, a subsequent expiry can reactivate pairing.
+  EebusTimerMockExpire(evaluator.Timer());
+  EXPECT_TRUE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
+}
+
 TEST_F(ShipPairingTestSuite, KeepsTheReplayHistoryWhenTheUserRemovesThePairing) {
   Evaluator evaluator;
   ASSERT_NE(evaluator.Get(), nullptr);
@@ -577,5 +599,138 @@ TEST_F(ShipPairingTestSuite, ReportsThatItCanNoLongerAcceptWhenTheSecretIsCleare
 
   ASSERT_EQ(log.transitions.size(), 1u);
   EXPECT_FALSE(log.transitions[0]);
+  EXPECT_FALSE(SHIP_PAIRING_IS_ENABLED(evaluator.Get()));
+}
+
+TEST_F(ShipPairingTestSuite, AcceptsOnlyOneConcurrentRequest) {
+  Evaluator evaluator;
+  ASSERT_NE(evaluator.Get(), nullptr);
+  evaluator.SetAnnexASecret();
+  const EntryPtr entry = AnnexAEntry();
+  ASSERT_NE(entry, nullptr);
+
+  std::barrier ready(3);
+  ShipPairingResult results[2];
+  auto evaluate = [&](size_t index) {
+    ready.arrive_and_wait();
+    results[index] = SHIP_PAIRING_EVALUATE(evaluator.Get(), entry.get());
+  };
+  std::thread first(evaluate, 0);
+  std::thread second(evaluate, 1);
+  ready.arrive_and_wait();
+  first.join();
+  second.join();
+
+  EXPECT_EQ((results[0] == kShipPairingResultAccepted) + (results[1] == kShipPairingResultAccepted), 1);
+  EXPECT_EQ((results[0] == kShipPairingResultNotProcessing) + (results[1] == kShipPairingResultNotProcessing), 1);
+}
+
+TEST_F(ShipPairingTestSuite, EnabledCallbackCanReadAndChangeActivation) {
+  Evaluator evaluator;
+  ASSERT_NE(evaluator.Get(), nullptr);
+  struct Context {
+    ShipPairingObject* pairing;
+    std::vector<bool> transitions;
+  } context{evaluator.Get(), {}};
+  SHIP_PAIRING_SET_ENABLED_CALLBACK(
+      evaluator.Get(),
+      [](bool enabled, void* ctx) {
+        auto& context = *static_cast<Context*>(ctx);
+        context.transitions.push_back(enabled);
+        EXPECT_EQ(SHIP_PAIRING_IS_ENABLED(context.pairing), enabled);
+        if (enabled) {
+          SHIP_PAIRING_DEACTIVATE_ADD_CU(context.pairing);
+        }
+      },
+      &context
+  );
+
+  evaluator.SetAnnexASecret();
+  EXPECT_EQ(context.transitions, (std::vector<bool>{true, false}));
+  EXPECT_FALSE(SHIP_PAIRING_IS_ENABLED(evaluator.Get()));
+}
+
+namespace {
+
+struct CallbackGate {
+  std::mutex mutex;
+  std::condition_variable condition;
+  bool entered  = false;
+  bool released = false;
+
+  void Block() {
+    std::unique_lock lock(mutex);
+    entered = true;
+    condition.notify_all();
+    condition.wait(lock, [&] { return released; });
+  }
+
+  void WaitForCallback() {
+    std::unique_lock lock(mutex);
+    condition.wait(lock, [&] { return entered; });
+  }
+
+  void Release() {
+    std::lock_guard lock(mutex);
+    released = true;
+    condition.notify_all();
+  }
+};
+
+}  // namespace
+
+TEST_F(ShipPairingTestSuite, ReportsLatestStateAfterConcurrentChangeDuringCallback) {
+  Evaluator evaluator;
+  ASSERT_NE(evaluator.Get(), nullptr);
+  struct Context {
+    CallbackGate gate;
+    std::vector<bool> transitions;
+  } context;
+  SHIP_PAIRING_SET_ENABLED_CALLBACK(
+      evaluator.Get(),
+      [](bool enabled, void* ctx) {
+        auto& context = *static_cast<Context*>(ctx);
+        if (enabled) {
+          context.gate.Block();
+        }
+        context.transitions.push_back(enabled);
+      },
+      &context
+  );
+
+  std::thread reporter([&] { evaluator.SetAnnexASecret(); });
+  context.gate.WaitForCallback();
+  SHIP_PAIRING_DEACTIVATE_ADD_CU(evaluator.Get());
+  context.gate.Release();
+  reporter.join();
+
+  EXPECT_EQ(context.transitions, (std::vector<bool>{true, false}));
+}
+
+TEST_F(ShipPairingTestSuite, TimeoutDoesNotOverwriteActivationChangedDuringAvailabilityCallback) {
+  Evaluator evaluator;
+  ASSERT_NE(evaluator.Get(), nullptr);
+  evaluator.SetAnnexASecret();
+  const EntryPtr entry = AnnexAEntry();
+  ASSERT_NE(entry, nullptr);
+  ASSERT_EQ(SHIP_PAIRING_EVALUATE(evaluator.Get(), entry.get()), kShipPairingResultAccepted);
+
+  CallbackGate gate;
+  ShipPairingSetMessageExchangeAvailableCallback(
+      evaluator.Get(),
+      [](void* ctx) {
+        static_cast<CallbackGate*>(ctx)->Block();
+        return false;
+      },
+      &gate
+  );
+
+  std::thread timer([&] { EebusTimerMockExpire(evaluator.Timer()); });
+  gate.WaitForCallback();
+  SHIP_PAIRING_DEACTIVATE_ADD_CU(evaluator.Get());
+  gate.Release();
+  timer.join();
+
+  EXPECT_FALSE(SHIP_PAIRING_IS_ADD_CU_ACTIVATED(evaluator.Get()));
   EXPECT_FALSE(SHIP_PAIRING_IS_ENABLED(evaluator.Get()));
 }

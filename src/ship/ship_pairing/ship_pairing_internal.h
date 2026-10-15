@@ -21,6 +21,7 @@
 #ifndef SRC_SHIP_SHIP_PAIRING_SHIP_PAIRING_INTERNAL_H_
 #define SRC_SHIP_SHIP_PAIRING_SHIP_PAIRING_INTERNAL_H_
 
+#include "src/common/api/eebus_mutex_interface.h"
 #include "src/common/api/eebus_timer_interface.h"
 #include "src/ship/ship_pairing/ship_pairing.h"
 
@@ -33,6 +34,21 @@ typedef struct ShipPairing ShipPairing;
 struct ShipPairing {
   /** Implements the shippairing Interface */
   ShipPairingObject obj;
+
+  /** Protects mutable evaluator state; never held while calling external code. */
+  EebusMutexObject* mutex;
+
+  /** Serializes restart operations, acquired before the state mutex. */
+  EebusMutexObject* timer_mutex;
+
+  /** Invalidates timeout snapshots when activation or timer state changes. */
+  uint64_t activation_revision;
+  
+  /** Suppresses old timeouts until the serialized restart finishes. */
+  bool timer_restart_in_progress;
+
+  /** One reporter delivers enabled changes, including changes made by callbacks. */
+  bool reporting_enabled;
 
   /** SHIP ID of this node, the value a request's "forId" must hold */
   const char* own_ship_id;
