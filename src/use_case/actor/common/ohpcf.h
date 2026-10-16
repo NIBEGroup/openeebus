@@ -41,20 +41,6 @@ const PowerSequenceNodeScheduleInformationDataType* OhpcfGetNodeScheduleAnnounce
 const PowerSequenceNodeScheduleInformationDataType* OhpcfGetNodeScheduleClearProcessData(void);
 
 /**
- * @brief Check if provided node schedule information matches OHPCF Announce criteria
- * @param node_schedule_info Pointer to node schedule information data to check
- * @return true if matches OHPCF Announce criteria, false otherwise
- */
-bool OhpcfNodeScheduleAnnounceMatch(const PowerSequenceNodeScheduleInformationDataType* node_schedule_info);
-
-/**
- * @brief Check if provided node schedule information matches OHPCF Clear Process criteria
- * @param node_schedule_info Pointer to node schedule information data to check
- * @return true if matches OHPCF Clear Process criteria, false otherwise
- */
-bool OhpcfNodeScheduleClearProcessMatch(const PowerSequenceNodeScheduleInformationDataType* node_schedule_info);
-
-/**
  * @brief Get the alternative instance from Smart Energy Management PS data (if available)
  * @param sem_ps_data Smart Energy Management PS data to get the alternative from
  * @return Unique alternative instance on success, NULL otherwise
