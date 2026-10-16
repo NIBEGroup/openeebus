@@ -133,16 +133,3 @@ const SmartEnergyManagementPsPowerTimeSlotType* OhpcfSmartEnergyManagementPsPowe
 
   return power_sequence->power_time_slot[0];
 }
-
-const ScaledNumberType* OhpcfSmartEnergyManagementPsPowerSequenceGetPowerMax(
-    const SmartEnergyManagementPsPowerSequenceType* power_sequence
-) {
-  const SmartEnergyManagementPsPowerTimeSlotType* const power_time_slot
-      = OhpcfSmartEnergyManagementPsPowerSequenceGetPowerTimeSlot(power_sequence);
-
-  if (power_time_slot == NULL) {
-    return NULL;
-  }
-
-  return SmartEnergyManagementPsPowerTimeSlotGetPowerMax(power_time_slot);
-}

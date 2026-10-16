@@ -67,13 +67,22 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
     return kEebusErrorNotAvailable;
   }
 
-  const UnitOfMeasurementType measurement_unit = SmartEnergyManagementPsPowerSequenceGetUnit(power_sequence);
-  if (measurement_unit != kUnitOfMeasurementTypeW) {
+  // An absent powerUnit means "W"
+  const PowerSequenceDescriptionDataType* const description = power_sequence->description;
+  if ((description != NULL) && (description->power_unit != NULL)
+      && (*description->power_unit != kUnitOfMeasurementTypeW)) {
     return kEebusErrorNotAvailable;
   }
 
-  // 1. Get max power value
-  const ScaledNumberType* const max_power = OhpcfSmartEnergyManagementPsPowerSequenceGetPowerMax(power_sequence);
+  // 1. Get the maximum power [OHPCF-011/2/3], or the approximated power [OHPCF-011/2/2] if no maximum is given
+  const SmartEnergyManagementPsPowerTimeSlotType* const power_time_slot
+      = OhpcfSmartEnergyManagementPsPowerSequenceGetPowerTimeSlot(power_sequence);
+
+  const ScaledNumberType* max_power
+      = SmartEnergyManagementPsPowerTimeSlotGetValue(power_time_slot, kPowerTimeSlotValueTypeTypePowerMax);
+  if (max_power == NULL) {
+    max_power = SmartEnergyManagementPsPowerTimeSlotGetValue(power_time_slot, kPowerTimeSlotValueTypeTypePower);
+  }
 
   if ((max_power == NULL) || (max_power->number == NULL)) {
     return kEebusErrorNotAvailable;
@@ -94,15 +103,12 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
   optional_power_consumption->earliest_start_time = *earliest_start_time;
   optional_power_consumption->latest_end_time     = *latest_end_time;
 
-  // 3. Get active duration min
+  // 3. Get active duration min, optional for the Compressor
   const EebusDuration* const active_duration_min
       = SmartEnergyManagementPsPowerSequenceGetActiveDurationMin(power_sequence);
 
-  if (active_duration_min == NULL) {
-    return kEebusErrorNotAvailable;
-  }
-
-  optional_power_consumption->active_duration_min = *active_duration_min;
+  optional_power_consumption->active_duration_min
+      = (active_duration_min != NULL) ? *active_duration_min : (EebusDuration){0};
 
   // 4. Get pausable & stoppable
   optional_power_consumption->is_pausable  = SmartEnergyManagementPsPowerSequenceIsPausable(power_sequence);
