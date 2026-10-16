@@ -240,6 +240,11 @@ MdnsEntry* MdnsEntryCreateWithMdnsResult(mdns_result_t* result) {
     const char* key   = result->txt[i].key;
     const char* value = result->txt[i].value;
 
+    // ESP mDNS represents key-only TXT items with a NULL value.
+    if (value == NULL) {
+      continue;
+    }
+
     const EebusError err = MdnsEntrySetValue(entry, key, strlen(key), value, strlen(value));
 
     if (err != kEebusErrorOk) {
@@ -405,6 +410,10 @@ static ShipPairingEntry* ShipPairingEntryCreateWithMdnsResult(const mdns_result_
     // responder hands the keys over already parsed, in the order they arrived.
     if (i == 0) {
       entry->txtvers_is_first = (strcmp(key, "txtvers") == 0);
+    }
+
+    if (value == NULL) {
+      continue;
     }
 
     // A key outside table 1 is ignored, as the specification requires.
