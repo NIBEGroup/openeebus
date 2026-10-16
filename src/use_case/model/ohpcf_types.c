@@ -88,7 +88,11 @@ const char* CompressorOhpcfStateGetName(CompressorOhpcfState state) {
 
 void OptionalPowerConsumptionPrint(const OptionalPowerConsumption* opc) {
   printf("{\n");
-  ScaledValuePrint("  max_power_w         = %sW,\n", &opc->max_power_w);
+  printf(
+      "  power_type          = %s,\n",
+      opc->power_type == kPowerTimeSlotValueTypeTypePowerMax ? "max" : "approximated"
+  );
+  ScaledValuePrint("  power_w             = %sW,\n", &opc->power_w);
   EebusDurationPrint("  earliest_start_time = %s,\n", &opc->earliest_start_time);
   EebusDurationPrint("  latest_end_time     = %s,\n", &opc->latest_end_time);
   EebusDurationPrint("  active_duration_min = %s,\n", &opc->active_duration_min);

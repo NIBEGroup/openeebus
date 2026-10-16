@@ -44,10 +44,10 @@ EebusError CompressorOhpcfAnnounceInternal(
 
   // clang-format off
   const PowerTimeSlotValueDataType value = {
-      .value_type = &(const PowerTimeSlotValueTypeType){kPowerTimeSlotValueTypeTypePowerMax},
+      .value_type = &optional_power_consumption->power_type,
       .value      = &(const ScaledNumberType){
-          .number = &optional_power_consumption->max_power_w.value,
-          .scale  = &optional_power_consumption->max_power_w.scale,
+          .number = &optional_power_consumption->power_w.value,
+          .scale  = &optional_power_consumption->power_w.scale,
       },
   };
   // clang-format on
