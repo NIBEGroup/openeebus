@@ -60,11 +60,6 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
     return kEebusErrorNotAvailable;
   }
 
-  // 1. Check if node schedule information matches announce criteria
-  if (!OhpcfNodeScheduleAnnounceMatch(sem_ps_data->node_schedule_information)) {
-    return kEebusErrorNoChange;
-  }
-
   const SmartEnergyManagementPsPowerSequenceType* power_sequence
       = OhpcfSmartEnergyManagementPsGetPowerSequence(sem_ps_data);
 
@@ -77,7 +72,7 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
     return kEebusErrorNotAvailable;
   }
 
-  // 2. Get max power value
+  // 1. Get max power value
   const ScaledNumberType* const max_power = OhpcfSmartEnergyManagementPsPowerSequenceGetPowerMax(power_sequence);
 
   if ((max_power == NULL) || (max_power->number == NULL)) {
@@ -87,7 +82,7 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
   optional_power_consumption->max_power_w.value = *max_power->number;
   optional_power_consumption->max_power_w.scale = (max_power->scale != NULL) ? *max_power->scale : 0;
 
-  // 3. Get earliest start time & latest end time
+  // 2. Get earliest start time & latest end time
   const EebusDuration* const earliest_start_time
       = SmartEnergyManagementPsPowerSequenceGetEarliestStartTime(power_sequence);
   const EebusDuration* const latest_end_time = SmartEnergyManagementPsPowerSequenceGetLatestEndTime(power_sequence);
@@ -99,7 +94,7 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
   optional_power_consumption->earliest_start_time = *earliest_start_time;
   optional_power_consumption->latest_end_time     = *latest_end_time;
 
-  // 4. Get active duration min
+  // 3. Get active duration min
   const EebusDuration* const active_duration_min
       = SmartEnergyManagementPsPowerSequenceGetActiveDurationMin(power_sequence);
 
@@ -109,7 +104,7 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
 
   optional_power_consumption->active_duration_min = *active_duration_min;
 
-  // 5. Get pausable & stoppable
+  // 4. Get pausable & stoppable
   optional_power_consumption->is_pausable  = SmartEnergyManagementPsPowerSequenceIsPausable(power_sequence);
   optional_power_consumption->is_stoppable = SmartEnergyManagementPsPowerSequenceIsStoppable(power_sequence);
 
@@ -141,28 +136,33 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumption(
   return ret;
 }
 
-CompressorOhpcfState
-CemOhpcfGetCompressorStateInternal(const CemOhpcfUseCase* self, const EntityAddressType* remote_entity_addr) {
+const SmartEnergyManagementPsPowerSequenceType*
+CemOhpcfGetPowerSequenceInternal(const CemOhpcfUseCase* self, const EntityAddressType* remote_entity_addr) {
   const UseCase* const use_case = USE_CASE(self);
 
   EntityRemoteObject* const remote_entity
       = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
 
   if (remote_entity == NULL) {
-    return kCompressorOhpcfStateUndefined;
+    return NULL;
   }
 
   SmartEnergyManagementPsClient sem_ps_client;
   const EebusError err = SmartEnergyManagementPsClientConstruct(&sem_ps_client, use_case->local_entity, remote_entity);
   if (err != kEebusErrorOk) {
-    return kCompressorOhpcfStateUndefined;
+    return NULL;
   }
 
   const SmartEnergyManagementPsDataType* const sem_ps_data
       = SmartEnergyManagementPsCommonGetData(&sem_ps_client.sem_ps_common);
 
+  return OhpcfSmartEnergyManagementPsGetPowerSequence(sem_ps_data);
+}
+
+CompressorOhpcfState
+CemOhpcfGetCompressorStateInternal(const CemOhpcfUseCase* self, const EntityAddressType* remote_entity_addr) {
   const PowerSequenceStateType* const state
-      = SmartEnergyManagementPsPowerSequenceGetState(OhpcfSmartEnergyManagementPsGetPowerSequence(sem_ps_data));
+      = SmartEnergyManagementPsPowerSequenceGetState(CemOhpcfGetPowerSequenceInternal(self, remote_entity_addr));
 
   if (state == NULL) {
     return kCompressorOhpcfStateUndefined;

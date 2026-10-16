@@ -266,7 +266,8 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, CompressorStateIsTrackedPerCompressor) {
   EXPECT_EQ(CemOhpcfGetCompressorState(use_case_.get(), &kHp2CompressorAddr), kCompressorOhpcfStateUndefined);
 
   // HP1 announces an optional process, HP2 has none yet
-  EXPECT_CALL(*listener_mock_->gmock, OnAnnounce(_, _, EntityAddressEq(&kHp1CompressorAddr))).WillOnce(Return());
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, EntityAddressEq(&kHp1CompressorAddr)))
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, EntityAddressEq(&kHp1CompressorAddr))
@@ -278,7 +279,8 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, CompressorStateIsTrackedPerCompressor) {
   EXPECT_EQ(CemOhpcfGetCompressorState(use_case_.get(), &kHp2CompressorAddr), kCompressorOhpcfStateUndefined);
 
   // HP2 announces an optional process
-  EXPECT_CALL(*listener_mock_->gmock, OnAnnounce(_, _, EntityAddressEq(&kHp2CompressorAddr))).WillOnce(Return());
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, EntityAddressEq(&kHp2CompressorAddr)))
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, EntityAddressEq(&kHp2CompressorAddr))
@@ -297,6 +299,8 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, CompressorStateIsTrackedPerCompressor) {
       kEebusErrorOk
   );
 
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, EntityAddressEq(&kHp1CompressorAddr)))
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnStateReport(_, kCompressorOhpcfStateScheduled, _, EntityAddressEq(&kHp1CompressorAddr))
@@ -309,6 +313,8 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, CompressorStateIsTrackedPerCompressor) {
   EXPECT_EQ(CemOhpcfGetCompressorState(use_case_.get(), &kHp2CompressorAddr), kCompressorOhpcfStateAnnounced);
 
   // HP1 starts running
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, EntityAddressEq(&kHp1CompressorAddr)))
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnStateReport(_, kCompressorOhpcfStateRunning, nullptr, EntityAddressEq(&kHp1CompressorAddr))
@@ -320,6 +326,8 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, CompressorStateIsTrackedPerCompressor) {
   EXPECT_EQ(CemOhpcfGetCompressorState(use_case_.get(), &kHp2CompressorAddr), kCompressorOhpcfStateAnnounced);
 
   // HP1 completes its process
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, EntityAddressEq(&kHp1CompressorAddr)))
+      .WillOnce(Return());
   EXPECT_CALL(
       *listener_mock_->gmock,
       OnStateReport(_, kCompressorOhpcfStateCompleted, nullptr, EntityAddressEq(&kHp1CompressorAddr))
@@ -345,7 +353,7 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, PauseIsOnlySentToARunningCompressor) {
   RunDiscovery(HeatPump::kHp2);
 
   // HP1 and HP2 announce an optional process
-  EXPECT_CALL(*listener_mock_->gmock, OnAnnounce(_, _, _)).Times(2);
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, _)).Times(2);
   EXPECT_CALL(*listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _)).Times(2);
   HandleMessage(HeatPump::kHp1, cem_ohpcf_test::receive::sem_ps_announce_notify_1);
   HandleMessage(HeatPump::kHp2, cem_ohpcf_test::receive::sem_ps_announce_notify_2);
@@ -358,10 +366,12 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, PauseIsOnlySentToARunningCompressor) {
       kEebusErrorOk
   );
 
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, _)).WillOnce(Return());
   EXPECT_CALL(*listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateScheduled, _, _)).WillOnce(Return());
   HandleMessage(HeatPump::kHp1, cem_ohpcf_test::receive::sem_ps_report_state_scheduled_notify_1);
   HandleMessage(HeatPump::kHp1, cem_ohpcf_test::receive::result_data_msg_cnt_ref_10);
 
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, _)).WillOnce(Return());
   EXPECT_CALL(*listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateRunning, nullptr, _)).WillOnce(Return());
   HandleMessage(HeatPump::kHp1, cem_ohpcf_test::receive::sem_ps_report_state_running_notify_1);
 
@@ -381,7 +391,7 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, ResumeIsOnlySentToAPausedCompressor) {
   RunDiscovery(HeatPump::kHp2);
 
   // HP1 and HP2 announce an optional process
-  EXPECT_CALL(*listener_mock_->gmock, OnAnnounce(_, _, _)).Times(2);
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, _)).Times(2);
   EXPECT_CALL(*listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _)).Times(2);
   HandleMessage(HeatPump::kHp1, cem_ohpcf_test::receive::sem_ps_announce_notify_1);
   HandleMessage(HeatPump::kHp2, cem_ohpcf_test::receive::sem_ps_announce_notify_2);
@@ -394,10 +404,12 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, ResumeIsOnlySentToAPausedCompressor) {
       kEebusErrorOk
   );
 
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, _)).WillOnce(Return());
   EXPECT_CALL(*listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateScheduled, _, _)).WillOnce(Return());
   HandleMessage(HeatPump::kHp1, cem_ohpcf_test::receive::sem_ps_report_state_scheduled_notify_1);
   HandleMessage(HeatPump::kHp1, cem_ohpcf_test::receive::result_data_msg_cnt_ref_10);
 
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, _)).WillOnce(Return());
   EXPECT_CALL(*listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateRunning, nullptr, _)).WillOnce(Return());
   HandleMessage(HeatPump::kHp1, cem_ohpcf_test::receive::sem_ps_report_state_running_notify_1);
 
@@ -405,6 +417,7 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, ResumeIsOnlySentToAPausedCompressor) {
   ExpectSend(HeatPump::kHp1, send::sem_ps_pause_write_msg_cnt_11);
   EXPECT_EQ(CemOhpcfWritePauseCommand(use_case_.get(), &kHp1CompressorAddr, nullptr, nullptr), kEebusErrorOk);
 
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, _)).WillOnce(Return());
   EXPECT_CALL(*listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStatePaused, nullptr, _)).WillOnce(Return());
   HandleMessage(HeatPump::kHp1, cem_ohpcf_test::receive::sem_ps_pause_notify);
 
@@ -424,7 +437,7 @@ TEST_F(TwoRemoteCemOhpcfTestFixture, StopIsOnlySentToACompressorWithAProcess) {
   RunDiscovery(HeatPump::kHp2);
 
   // HP2 and HP1 announce an optional process
-  EXPECT_CALL(*listener_mock_->gmock, OnAnnounce(_, _, _)).Times(2);
+  EXPECT_CALL(*listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, _)).Times(2);
   EXPECT_CALL(*listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _)).Times(2);
   HandleMessage(HeatPump::kHp2, cem_ohpcf_test::receive::sem_ps_announce_notify_2);
   HandleMessage(HeatPump::kHp1, cem_ohpcf_test::receive::sem_ps_announce_notify_1);
