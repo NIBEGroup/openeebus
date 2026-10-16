@@ -27,7 +27,7 @@
 static void Destruct(CemOhpcfListenerObject* self);
 static void OnRemoteCompressorAdded(CemOhpcfListenerObject* self, const EntityAddressType* entity_addr);
 static void OnRemoteCompressorRemoved(CemOhpcfListenerObject* self, const EntityAddressType* entity_addr);
-static void OnAnnounce(
+static void OnOptionalPowerConsumptionUpdate(
     CemOhpcfListenerObject* self,
     const OptionalPowerConsumption* optional_power_consumption,
     const EntityAddressType* entity_addr
@@ -41,12 +41,12 @@ static void OnStateReport(
 static void OnClearProcess(CemOhpcfListenerObject* self, const EntityAddressType* entity_addr);
 
 static const CemOhpcfListenerInterface cem_ohpcf_listener_methods = {
-    .destruct                     = Destruct,
-    .on_remote_compressor_added   = OnRemoteCompressorAdded,
-    .on_remote_compressor_removed = OnRemoteCompressorRemoved,
-    .on_announce                  = OnAnnounce,
-    .on_state_report              = OnStateReport,
-    .on_clear_process             = OnClearProcess,
+    .destruct                             = Destruct,
+    .on_remote_compressor_added           = OnRemoteCompressorAdded,
+    .on_remote_compressor_removed         = OnRemoteCompressorRemoved,
+    .on_optional_power_consumption_update = OnOptionalPowerConsumptionUpdate,
+    .on_state_report                      = OnStateReport,
+    .on_clear_process                     = OnClearProcess,
 };
 
 static EebusError CemOhpcfListenerMockConstruct(CemOhpcfListenerMock* self);
@@ -93,13 +93,13 @@ void OnRemoteCompressorRemoved(CemOhpcfListenerObject* self, const EntityAddress
   mock->gmock->OnRemoteCompressorRemoved(self, entity_addr);
 }
 
-void OnAnnounce(
+void OnOptionalPowerConsumptionUpdate(
     CemOhpcfListenerObject* self,
     const OptionalPowerConsumption* optional_power_consumption,
     const EntityAddressType* entity_addr
 ) {
   CemOhpcfListenerMock* const mock = CEM_OHPCF_LISTENER_MOCK(self);
-  mock->gmock->OnAnnounce(self, optional_power_consumption, entity_addr);
+  mock->gmock->OnOptionalPowerConsumptionUpdate(self, optional_power_consumption, entity_addr);
 }
 
 void OnStateReport(
