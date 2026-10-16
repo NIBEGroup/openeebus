@@ -48,3 +48,24 @@ TEST_F(ServiceDetailsTest, CreateWithInvalidArgumentsReturnsNull) {
   EXPECT_EQ(ServiceDetailsCreate("ski", "", "EnergyManagementSystem", false), nullptr);
   EXPECT_EQ(ServiceDetailsCreate("ski", "ship-id", nullptr, false), nullptr);
 }
+
+TEST_F(ServiceDetailsTest, Ipv4SetterAcceptsItsOwnValueAndNull) {
+  ServiceDetails sd{};
+  ServiceDetailsSetIpv4(&sd, "192.0.2.1");
+  ServiceDetailsSetIpv4(&sd, ServiceDetailsGetIpv4(&sd));
+  EXPECT_STREQ(ServiceDetailsGetIpv4(&sd), "192.0.2.1");
+
+  ServiceDetailsSetIpv4(&sd, nullptr);
+  EXPECT_EQ(ServiceDetailsGetIpv4(&sd), nullptr);
+}
+
+TEST_F(ServiceDetailsTest, CertFingerprintSetterAcceptsItsOwnValueAndNull) {
+  ServiceDetails sd{};
+  const char* const fingerprint = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
+  ServiceDetailsSetCertFingerprint(&sd, fingerprint);
+  ServiceDetailsSetCertFingerprint(&sd, ServiceDetailsGetCertFingerprint(&sd));
+  EXPECT_STREQ(ServiceDetailsGetCertFingerprint(&sd), fingerprint);
+
+  ServiceDetailsSetCertFingerprint(&sd, nullptr);
+  EXPECT_EQ(ServiceDetailsGetCertFingerprint(&sd), nullptr);
+}
