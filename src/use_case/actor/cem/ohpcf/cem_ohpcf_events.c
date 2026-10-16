@@ -84,10 +84,16 @@ void OnOptionalPowerConsumptionUpdate(CemOhpcfUseCase* self, const EntityAddress
 }
 
 void OnClearProcess(CemOhpcfUseCase* self, const EntityAddressType* entity_addr) {
-  CEM_OHPCF_LISTENER_ON_CLEAR_PROCESS(self->cem_ohpcf_listener, entity_addr);
+  if (self->cem_ohpcf_listener != NULL) {
+    CEM_OHPCF_LISTENER_ON_CLEAR_PROCESS(self->cem_ohpcf_listener, entity_addr);
+  }
 }
 
 void OnCompressorStateReport(CemOhpcfUseCase* self, CompressorOhpcfState state, const EntityAddressType* entity_addr) {
+  if (self->cem_ohpcf_listener == NULL) {
+    return;
+  }
+
   const AbsoluteOrRelativeTimeType* start_time = NULL;
 
   if (state == kCompressorOhpcfStateScheduled) {
