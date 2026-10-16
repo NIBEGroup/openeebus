@@ -34,14 +34,16 @@ struct OhpcfStateMapping {
   PowerSequenceStateType ps_state;
 };
 
+// "undefined" shares kPowerSequenceStateTypeInvalid with "stopped" and must stay last,
+// so that a received "invalid" maps to "stopped"
 OhpcfStateMapping ohpcf_state_lut[] = {
-    {kCompressorOhpcfStateUndefined, "undefined",   kPowerSequenceStateTypeInvalid},
-    {kCompressorOhpcfStateAnnounced, "announced",   kPowerSequenceStateTypeInvalid},
+    {kCompressorOhpcfStateAnnounced, "announced",  kPowerSequenceStateTypeInactive},
     {kCompressorOhpcfStateScheduled, "scheduled", kPowerSequenceStateTypeScheduled},
     {  kCompressorOhpcfStateRunning,   "running",   kPowerSequenceStateTypeRunning},
     {   kCompressorOhpcfStatePaused,    "paused",    kPowerSequenceStateTypePaused},
     {  kCompressorOhpcfStateStopped,   "stopped",   kPowerSequenceStateTypeInvalid},
     {kCompressorOhpcfStateCompleted, "completed", kPowerSequenceStateTypeCompleted},
+    {kCompressorOhpcfStateUndefined, "undefined",   kPowerSequenceStateTypeInvalid},
 };
 
 PowerSequenceStateType CompressorOhpcfStateGetPowerSequenceState(CompressorOhpcfState ohpcf_state) {

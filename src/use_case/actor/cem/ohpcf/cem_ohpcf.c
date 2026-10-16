@@ -103,7 +103,6 @@ EebusError CemOhpcfUseCaseConstruct(
   USE_CASE_INTERFACE(self) = &cem_ohpcf_use_case_methods;
 
   self->cem_ohpcf_listener = cem_ohpcf_listener;
-  self->state              = kCompressorOhpcfStateUndefined;
 
   return AddFeatures(local_entity);
 }

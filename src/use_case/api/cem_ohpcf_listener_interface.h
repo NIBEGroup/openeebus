@@ -49,7 +49,7 @@ struct CemOhpcfListenerInterface {
   void (*destruct)(CemOhpcfListenerObject* self);
   void (*on_remote_compressor_added)(CemOhpcfListenerObject* self, const EntityAddressType* entity_addr);
   void (*on_remote_compressor_removed)(CemOhpcfListenerObject* self, const EntityAddressType* entity_addr);
-  void (*on_announce)(
+  void (*on_optional_power_consumption_update)(
       CemOhpcfListenerObject* self,
       const OptionalPowerConsumption* optional_power_consumption,
       const EntityAddressType* entity_addr
@@ -98,10 +98,11 @@ struct CemOhpcfListenerObject {
   (CEM_OHPCF_LISTENER_INTERFACE(obj)->on_remote_compressor_removed(obj, entity_addr))
 
 /**
- * @brief Cem Ohpcf Listener On Announce caller definition
+ * @brief Cem Ohpcf Listener On Optional Power Consumption Update caller definition
  */
-#define CEM_OHPCF_LISTENER_ON_ANNOUNCE(obj, optional_power_consumption, entity_addr) \
-  (CEM_OHPCF_LISTENER_INTERFACE(obj)->on_announce(obj, optional_power_consumption, entity_addr))
+#define CEM_OHPCF_LISTENER_ON_OPTIONAL_POWER_CONSUMPTION_UPDATE(obj, optional_power_consumption, entity_addr) \
+  (CEM_OHPCF_LISTENER_INTERFACE(obj)                                                                          \
+       ->on_optional_power_consumption_update(obj, optional_power_consumption, entity_addr))
 
 /**
  * @brief Cem Ohpcf Listener On State Report caller definition

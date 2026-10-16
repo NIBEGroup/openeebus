@@ -53,6 +53,22 @@ static constexpr char sem_ps_report_state_scheduled_notify_1[] = R"({
           "cmd": [
             [
               {
+                "function": "smartEnergyManagementPsData"
+              },
+              {
+                "filter": [
+                  [
+                    {
+                      "cmdControl": [
+                        {
+                          "partial": []
+                        }
+                      ]
+                    }
+                  ]
+                ]
+              },
+              {
                 "smartEnergyManagementPsData": [
                   {
                     "alternatives": [

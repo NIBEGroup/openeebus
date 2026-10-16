@@ -18,10 +18,8 @@
  * @brief Customer Energy Manager OHPCF events handling implementation
  */
 
-#include "src/common/eebus_arguments.h"
 #include "src/spine/events/events.h"
 #include "src/use_case/actor/cem/ohpcf/cem_ohpcf_internal.h"
-#include "src/use_case/actor/common/ohpcf.h"
 #include "src/use_case/specialization/smart_energy_management_ps/smart_energy_management_ps_client.h"
 
 static void
@@ -70,81 +68,54 @@ void OnRemoteCompressorChange(CemOhpcfUseCase* self, const EventPayload* payload
   }
 }
 
-void OnAnnounce(
-    CemOhpcfUseCase* self,
-    const SmartEnergyManagementPsDataType* sem_ps_data,
-    const EntityAddressType* entity_addr
-) {
-  UNUSED(sem_ps_data);
-
+void OnOptionalPowerConsumptionUpdate(CemOhpcfUseCase* self, const EntityAddressType* entity_addr) {
   OptionalPowerConsumption optional_power_consumption = {0};
 
   const EebusError err
       = CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(self, entity_addr, &optional_power_consumption);
 
-  if (err == kEebusErrorOk) {
-    self->state = kCompressorOhpcfStateAnnounced;
-    if (self->cem_ohpcf_listener != NULL) {
-      CEM_OHPCF_LISTENER_ON_ANNOUNCE(self->cem_ohpcf_listener, &optional_power_consumption, entity_addr);
-      CEM_OHPCF_LISTENER_ON_STATE_REPORT(self->cem_ohpcf_listener, self->state, NULL, entity_addr);
-    }
+  if ((err == kEebusErrorOk) && (self->cem_ohpcf_listener != NULL)) {
+    CEM_OHPCF_LISTENER_ON_OPTIONAL_POWER_CONSUMPTION_UPDATE(
+        self->cem_ohpcf_listener,
+        &optional_power_consumption,
+        entity_addr
+    );
   }
 }
 
 void OnClearProcess(CemOhpcfUseCase* self, const EntityAddressType* entity_addr) {
-  self->state = kCompressorOhpcfStateUndefined;
   CEM_OHPCF_LISTENER_ON_CLEAR_PROCESS(self->cem_ohpcf_listener, entity_addr);
 }
 
-void OnCompressorStateReport(
-    CemOhpcfUseCase* self,
-    const SmartEnergyManagementPsDataType* sem_ps_data,
-    const EntityAddressType* entity_addr
-) {
-  const SmartEnergyManagementPsPowerSequenceType* const power_sequence
-      = OhpcfSmartEnergyManagementPsGetPowerSequence(sem_ps_data);
-
-  if (power_sequence == NULL) {
-    return;
-  }
-
-  const PowerSequenceStateType* const state = SmartEnergyManagementPsPowerSequenceGetState(power_sequence);
-  if (state == NULL) {
-    return;
-  }
-
+void OnCompressorStateReport(CemOhpcfUseCase* self, CompressorOhpcfState state, const EntityAddressType* entity_addr) {
   const AbsoluteOrRelativeTimeType* start_time = NULL;
 
-  if (*state == kPowerSequenceStateTypeScheduled) {
-    start_time = SmartEnergyManagementPsPowerSequenceGetStartTime(power_sequence);
+  if (state == kCompressorOhpcfStateScheduled) {
+    start_time = SmartEnergyManagementPsPowerSequenceGetStartTime(CemOhpcfGetPowerSequenceInternal(self, entity_addr));
     if ((start_time == NULL) || (start_time->type != kAbsoluteOrRelativeTimeTypeDuration)) {
       return;
     }
   }
 
-  self->state = CompressorOhpcfStateGetStateWithPowerSequenceState(*state);
-
   const EebusDuration* start_time_duration = (start_time != NULL) ? &start_time->duration : NULL;
-  CEM_OHPCF_LISTENER_ON_STATE_REPORT(self->cem_ohpcf_listener, self->state, start_time_duration, entity_addr);
+  CEM_OHPCF_LISTENER_ON_STATE_REPORT(self->cem_ohpcf_listener, state, start_time_duration, entity_addr);
 }
 
+// The payload may only hold the changed elements of a partial notify,
+// so the phase is taken from the merged data of the remote feature
 void OnSmartEnergyManagementPsDataUpdate(CemOhpcfUseCase* self, const EventPayload* payload) {
-  const SmartEnergyManagementPsDataType* const sem_ps_data
-      = (const SmartEnergyManagementPsDataType*)payload->function_data;
+  const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
 
-  if (sem_ps_data == NULL) {
+  const CompressorOhpcfState state = CemOhpcfGetCompressorStateInternal(self, entity_addr);
+  if (state == kCompressorOhpcfStateUndefined) {
+    OnClearProcess(self, entity_addr);
     return;
   }
 
-  const EntityAddressType* const entity_addr = ENTITY_GET_ADDRESS(ENTITY_OBJECT(payload->entity));
-
-  if (OhpcfNodeScheduleClearProcessMatch(sem_ps_data->node_schedule_information)) {
-    OnClearProcess(self, entity_addr);
-  } else if (OhpcfNodeScheduleAnnounceMatch(sem_ps_data->node_schedule_information)) {
-    OnAnnounce(self, sem_ps_data, entity_addr);
-  } else {
-    OnCompressorStateReport(self, sem_ps_data, entity_addr);
-  }
+  // Reported in every phase, so that a CEM connecting to an already scheduled or running
+  // process learns about it, and before the state so that it is known when the state is handled
+  OnOptionalPowerConsumptionUpdate(self, entity_addr);
+  OnCompressorStateReport(self, state, entity_addr);
 }
 
 void OnDataChange(CemOhpcfUseCase* self, const EventPayload* payload) {
