@@ -142,10 +142,48 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumption(
 }
 
 CompressorOhpcfState
-CemOhpcfGetCompressorState(const CemOhpcfUseCaseObject* self, const EntityAddressType* remote_entity_addr) {
-  UNUSED(remote_entity_addr);
+CemOhpcfGetCompressorStateInternal(const CemOhpcfUseCase* self, const EntityAddressType* remote_entity_addr) {
+  const UseCase* const use_case = USE_CASE(self);
 
-  return CEM_OHPCF_USE_CASE(self)->state;
+  EntityRemoteObject* const remote_entity
+      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+
+  if (remote_entity == NULL) {
+    return kCompressorOhpcfStateUndefined;
+  }
+
+  SmartEnergyManagementPsClient sem_ps_client;
+  const EebusError err = SmartEnergyManagementPsClientConstruct(&sem_ps_client, use_case->local_entity, remote_entity);
+  if (err != kEebusErrorOk) {
+    return kCompressorOhpcfStateUndefined;
+  }
+
+  const SmartEnergyManagementPsDataType* const sem_ps_data
+      = SmartEnergyManagementPsCommonGetData(&sem_ps_client.sem_ps_common);
+
+  const PowerSequenceStateType* const state
+      = SmartEnergyManagementPsPowerSequenceGetState(OhpcfSmartEnergyManagementPsGetPowerSequence(sem_ps_data));
+
+  if (state == NULL) {
+    return kCompressorOhpcfStateUndefined;
+  }
+
+  return CompressorOhpcfStateGetStateWithPowerSequenceState(*state);
+}
+
+CompressorOhpcfState
+CemOhpcfGetCompressorState(const CemOhpcfUseCaseObject* self, const EntityAddressType* remote_entity_addr) {
+  UseCase* const use_case = USE_CASE(self);
+
+  if (remote_entity_addr == NULL) {
+    return kCompressorOhpcfStateUndefined;
+  }
+
+  DEVICE_LOCAL_LOCK(use_case->local_device);
+  const CompressorOhpcfState state = CemOhpcfGetCompressorStateInternal(CEM_OHPCF_USE_CASE(self), remote_entity_addr);
+  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+
+  return state;
 }
 
 static EebusError CemOhpcfReadSmartDataInternal(
@@ -335,7 +373,8 @@ EebusError CemOhpcfWriteStopCommand(
 
   DEVICE_LOCAL_LOCK(use_case->local_device);
 
-  if (CEM_OHPCF_USE_CASE(self)->state == kCompressorOhpcfStateUndefined) {
+  if (CemOhpcfGetCompressorStateInternal(CEM_OHPCF_USE_CASE(self), remote_entity_addr)
+      == kCompressorOhpcfStateUndefined) {
     err = kEebusErrorNoChange;
   } else {
     err = CemOhpcfWriteState(CEM_OHPCF_USE_CASE(self), remote_entity_addr, kPowerSequenceStateTypeInvalid, cb, ctx);
@@ -362,7 +401,8 @@ EebusError CemOhpcfWritePauseCommand(
 
   DEVICE_LOCAL_LOCK(use_case->local_device);
 
-  if (CEM_OHPCF_USE_CASE(self)->state != kCompressorOhpcfStateRunning) {
+  if (CemOhpcfGetCompressorStateInternal(CEM_OHPCF_USE_CASE(self), remote_entity_addr)
+      != kCompressorOhpcfStateRunning) {
     err = kEebusErrorNoChange;
   } else {
     err = CemOhpcfWriteState(CEM_OHPCF_USE_CASE(self), remote_entity_addr, kPowerSequenceStateTypePaused, cb, ctx);
@@ -389,7 +429,7 @@ EebusError CemOhpcfWriteResumeCommand(
 
   DEVICE_LOCAL_LOCK(use_case->local_device);
 
-  if (CEM_OHPCF_USE_CASE(self)->state != kCompressorOhpcfStatePaused) {
+  if (CemOhpcfGetCompressorStateInternal(CEM_OHPCF_USE_CASE(self), remote_entity_addr) != kCompressorOhpcfStatePaused) {
     err = kEebusErrorNoChange;
   } else {
     err = CemOhpcfWriteState(CEM_OHPCF_USE_CASE(self), remote_entity_addr, kPowerSequenceStateTypeRunning, cb, ctx);
