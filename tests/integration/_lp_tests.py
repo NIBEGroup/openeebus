@@ -17,12 +17,8 @@ def _check_failsafe_limit(hp, hems, uc, expected):
     pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send(f"cs_{uc} get failsafe_limit")
     hems.send(f"eg_{uc} get failsafe_limit")
-    cs_line = hp.wait_for_new_line(
-        f"CS {uc_up} Failsafe Active Power Limit: value=", pos_hp, _SETTLE
-    )
-    eg_line = hems.wait_for_new_line(
-        f"EG {uc_up} Failsafe Active Power Limit: value=", pos_hems, _SETTLE
-    )
+    cs_line = hp.wait_for_new_line(f"CS {uc_up} Failsafe Active Power Limit: value=", pos_hp, _SETTLE)
+    eg_line = hems.wait_for_new_line(f"EG {uc_up} Failsafe Active Power Limit: value=", pos_hems, _SETTLE)
     cs = parse_field(cs_line, "value")
     eg = parse_field(eg_line, "value")
     print(f"  failsafe_limit (W): CS={cs}  EG={eg}")
@@ -35,12 +31,8 @@ def _check_failsafe_duration(hp, hems, uc, expected):
     pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send(f"cs_{uc} get failsafe_duration")
     hems.send(f"eg_{uc} get failsafe_duration")
-    cs_line = hp.wait_for_new_line(
-        f"CS {uc_up} Failsafe Duration Minimum:", pos_hp, _SETTLE
-    )
-    eg_line = hems.wait_for_new_line(
-        f"EG {uc_up} Failsafe Duration Minimum:", pos_hems, _SETTLE
-    )
+    cs_line = hp.wait_for_new_line(f"CS {uc_up} Failsafe Duration Minimum:", pos_hp, _SETTLE)
+    eg_line = hems.wait_for_new_line(f"EG {uc_up} Failsafe Duration Minimum:", pos_hems, _SETTLE)
     cs = parse_pt(cs_line)
     eg = parse_pt(eg_line)
     print(f"  failsafe_duration: CS={cs}  EG={eg}")
@@ -69,12 +61,8 @@ def _check_active_power_limit(hp, hems, uc, value, *, check_duration=False):
     pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send(f"cs_{uc} get power_limit")
     hems.send(f"eg_{uc} get power_limit")
-    cs = hp.wait_for_new_line(
-        f"CS {uc_up} Active Power Limit: value=", pos_hp, _SETTLE
-    )
-    eg = hems.wait_for_new_line(
-        f"EG {uc_up} Active Power Limit: value=", pos_hems, _SETTLE
-    )
+    cs = hp.wait_for_new_line(f"CS {uc_up} Active Power Limit: value=", pos_hp, _SETTLE)
+    eg = hems.wait_for_new_line(f"EG {uc_up} Active Power Limit: value=", pos_hems, _SETTLE)
     cs_val = parse_field(cs, "value")
     eg_val = parse_field(eg, "value")
     cs_act = parse_field(cs, "is active")  # CS log uses "is active"

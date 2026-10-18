@@ -6,7 +6,7 @@ interface, and verifies protocol behaviour by polling their log output.
 
 CTest registers all eight modules: four EEBUS use cases, simultaneous-open
 (SIMOPEN) stress, three-node HEMS + heat-pump + EV scenarios and stress, and
-service shutdown timing. Direct pytest commands remain available.
+service shutdown timing. Direct pytest commands available as well.
 
 **Supported platforms: Linux, macOS, and Windows.**
 
@@ -37,7 +37,7 @@ cmake -S . -B build -DOPTION_OPENEEBUS_TESTS=ON -DOPTION_INTEGRATION_TESTS=ON
 The demos use mutual TLS authentication. The `test_identities` session fixture
 calls `tests/integration/_certificates.py` to generate fresh HP, HEMS, and EV
 certificates and private keys in a unique system temporary directory. Both CTest
-and direct pytest use this fixture; there are no checked-in integration keys.
+and direct pytest use this fixture.
 
 Each identity uses a self-signed P-256 EC certificate compatible with the
 configured TLS 1.2 ECDHE-ECDSA cipher suites, SHA-256 signing, a
