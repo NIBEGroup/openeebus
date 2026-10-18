@@ -21,7 +21,7 @@ and ensure `heat_pump`, `hems`, and `ev_charger` binaries exist in `build/`.
 
 ### Python dependencies
 
-Python 3.8 or newer with venv support is required. All integration runs, through
+Python 3.10 or newer with venv support is required. All integration runs, through
 CTest or direct pytest, require the OpenSSL command-line tool on `PATH` to
 generate temporary certificates.
 Enable integration-test support:

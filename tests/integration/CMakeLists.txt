@@ -7,7 +7,7 @@ endif()
 # The close-timing and SIMOPEN modules consume debug output from the library.
 target_compile_definitions(openeebus PRIVATE EEBUS_SERVICE_DEBUG=1 SHIP_NODE_DEBUG=1)
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
 
 set(ITEST_VENV_DIR "${CMAKE_CURRENT_BINARY_DIR}/itest_venv")
 set(ITEST_REQUIREMENTS "${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt")
