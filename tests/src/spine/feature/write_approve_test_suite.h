@@ -82,4 +82,7 @@ void TryApproveShouldFail(const Message* msg, void* ctx);
 void DenyShouldPass(const Message* msg, void* ctx);
 void DenyShouldFail(const Message* msg, void* ctx);
 
+void TryApproveShouldBePending(const Message* msg, void* ctx);
+void TryApproveShouldFinalize(const Message* msg, void* ctx);
+
 #endif  // TESTS_SRC_SPINE_FEATURE_WRITE_APPROVE_TEST_SUITE_H

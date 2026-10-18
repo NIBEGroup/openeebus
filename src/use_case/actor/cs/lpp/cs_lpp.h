@@ -193,6 +193,24 @@ static inline ElectricalConnectionCharacteristicTypeType CsLppGetElectricalConne
   return CsLpGetElectricalConnectionCharacteristicType(CS_LP_USE_CASE_OBJECT(self));
 }
 
+/**
+ * @brief Check if an active power production limit (LPP) value and its duration are valid.
+ *
+ * The limit uses the "signDependentAbsValueLimit" type with the passive sign convention:
+ * a production limit is zero or negative, its absolute value is the maximum production
+ * ("The APPL SHALL always be lower than or equal to zero", EEBus LPP TestSpec V1.0.0,
+ * [LPP-TS-001]). A positive value has to be rejected. CsLpIsLimitValid() checks the
+ * opposite sign and is meant for consumption limits (LPC).
+ *
+ * The failsafe production limit is zero or positive ([LPP-TS-038]),
+ * use CsLpIsFailsafeValueValid() for it.
+ *
+ * @param limit Limit value to validate
+ * @param duration Duration (in seconds) to validate
+ * @return true if limit is not positive and duration is not negative, false otherwise
+ */
+bool CsLppIsLimitValid(double limit, int32_t duration);
+
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

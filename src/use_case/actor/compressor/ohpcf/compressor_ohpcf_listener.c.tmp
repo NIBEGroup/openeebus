@@ -1,0 +1,8 @@
+CompressorOhpcfListener
+void Destruct()
+void OnRemoteCemAdded()
+void OnRemoteCemRemoved()
+void OnScheduleOptionalPowerConsumption(const EebusDuration* start_time)
+void OnStop()
+void OnPause()
+void OnResume()

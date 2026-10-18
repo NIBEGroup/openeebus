@@ -5,6 +5,7 @@ void SetFunctionOperations(FunctionType type, bool read, bool write)
 EebusError AddResponseCallback(MsgCounterType msg_counter_ref, ResponseMessageCallback cb, void* ctx)
 void AddResultCallback(ResponseMessageCallback cb, void* ctx)
 EebusError AddWriteApprovalCallback(WriteApprovalCallback cb, void* ctx)
+void AddWriteExpiryCallback(PendingWriteRequestExpiredCb cb, void* ctx)
 EebusError TryApproveWrite(const char* ski, MsgCounterType msg_cnt)
 EebusError DenyWrite(const char* ski, MsgCounterType msg_cnt, const ErrorType* err)
 FunctionData* DataCopy(FunctionType function_type) const

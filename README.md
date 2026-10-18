@@ -32,19 +32,15 @@ The source code in this repository implements the EEBUS protocol, based on the [
 
 ### Supported Use Cases
 
-| Use Case |  Actors  | Scenarios | Description                          |
-|----------|----------|-----------|--------------------------------------|
-| LPC      |  EG, CS  |   1 - 4   | Limitation of power consumption      |
-| LPP      |  EG, CS  |   1 - 4   | Limitation of power production       |
-| MPC      |  MA, MU  |   1 - 5   | Monitoring of power consumption      |
-| MGCP     |  MA, GCP |   1 - 7   | Monitoring of grid connection point  |
+| Use Case |      Actors     | Scenarios | Description                                                          |
+|----------|-----------------|-----------|----------------------------------------------------------------------|
+| LPC      |  EG, CS         |   1 - 4   | Limitation of power consumption                                      |
+| LPP      |  EG, CS         |   1 - 4   | Limitation of power production                                       |
+| MPC      |  MA, MU         |   1 - 5   | Monitoring of power consumption                                      |
+| MGCP     |  MA, GCP        |   1 - 7   | Monitoring of grid connection point                                  |
+| OHPCF(*) | Compressor, CEM |   1 - 2   | Optimization of self consumption by heat pump compressor flexibility |
 
-### Limitations
-
-The current implementation of the OpenEEBUS by NIBE library supports a subset of the EEBUS protocol features. Notably, it does not yet include support for:
-
-* Multiple remote SHIP node connections
-* SPINE message approve/deny procedure
+\* Note: OHPCF is currently in draft state!
 
 ## Documentation
 
@@ -60,6 +56,7 @@ The current implementation of the OpenEEBUS by NIBE library supports a subset of
 * [Building on Linux](docs/build_linux.md)
 * [Building on macOS](docs/build_macos.md)
 * [Building on Windows](docs/build_windows.md)
+* [Integration Tests](docs/integration_tests.md)
 
 ### Configuration
 

@@ -28,6 +28,7 @@
 #include "src/spine/api/feature_interface.h"
 #include "src/spine/api/feature_remote_interface.h"
 #include "src/spine/api/message.h"
+#include "src/spine/api/pending_write_request_container_interface.h"
 #include "src/spine/api/sender_interface.h"
 #include "src/spine/model/feature_types.h"
 #include "src/spine/model/function_types.h"
@@ -86,6 +87,7 @@ struct FeatureLocalInterface {
   const void* (*get_data)(const FeatureLocalObject* self, FunctionType function_type);
   void (*set_function_operations)(FeatureLocalObject* self, FunctionType type, bool read, bool write);
   EebusError (*add_write_approval_callback)(FeatureLocalObject* self, WriteApprovalCallback cb, void* ctx);
+  void (*set_write_expiry_callback)(FeatureLocalObject* self, PendingWriteRequestExpiredCb cb, void* ctx);
   EebusError (*try_approve_write)(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt);
   EebusError (*deny_write)(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err);
   void (*clean_remote_device_caches)(FeatureLocalObject* self, const DeviceAddressType* remote_addr, const char* ski);
@@ -173,6 +175,12 @@ struct FeatureLocalObject {
  */
 #define FEATURE_LOCAL_ADD_WRITE_APPROVAL_CALLBACK(obj, cb, ctx) \
   (FEATURE_LOCAL_INTERFACE(obj)->add_write_approval_callback(obj, cb, ctx))
+
+/**
+ * @brief Feature Local Add Write Expiry Callback caller definition
+ */
+#define FEATURE_LOCAL_SET_WRITE_EXPIRY_CALLBACK(obj, cb, ctx) \
+  (FEATURE_LOCAL_INTERFACE(obj)->set_write_expiry_callback(obj, cb, ctx))
 
 /**
  * @brief Feature Local Try Approve Write caller definition

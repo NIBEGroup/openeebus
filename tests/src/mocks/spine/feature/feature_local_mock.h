@@ -36,6 +36,7 @@ class FeatureLocalGMockInterface : public FeatureGMockInterface {
   virtual const void* GetData(const FeatureLocalObject* self, FunctionType function_type)                    = 0;
   virtual void SetFunctionOperations(FeatureLocalObject* self, FunctionType type, bool read, bool write)     = 0;
   virtual EebusError AddWriteApprovalCallback(FeatureLocalObject* self, WriteApprovalCallback cb, void* ctx) = 0;
+  virtual void SetWriteExpiryCallback(FeatureLocalObject* self, PendingWriteRequestExpiredCb cb, void* ctx)  = 0;
   virtual EebusError TryApproveWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt)      = 0;
   virtual EebusError DenyWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err)
       = 0;
@@ -97,6 +98,7 @@ class FeatureLocalGMock : public FeatureLocalGMockInterface {
   MOCK_METHOD2(GetData, const void*(const FeatureLocalObject*, FunctionType));
   MOCK_METHOD4(SetFunctionOperations, void(FeatureLocalObject*, FunctionType, bool, bool));
   MOCK_METHOD3(AddWriteApprovalCallback, EebusError(FeatureLocalObject*, WriteApprovalCallback, void*));
+  MOCK_METHOD3(SetWriteExpiryCallback, void(FeatureLocalObject*, PendingWriteRequestExpiredCb, void*));
   MOCK_METHOD3(TryApproveWrite, EebusError(FeatureLocalObject*, const char*, MsgCounterType));
   MOCK_METHOD4(DenyWrite, EebusError(FeatureLocalObject*, const char*, MsgCounterType, const ErrorType*));
   MOCK_METHOD2(CleanRemoteDeviceCaches, void(FeatureLocalObject*, const DeviceAddressType*));

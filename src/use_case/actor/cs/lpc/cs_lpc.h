@@ -193,6 +193,39 @@ static inline ElectricalConnectionCharacteristicTypeType CsLpcGetElectricalConne
   return CsLpGetElectricalConnectionCharacteristicType(CS_LP_USE_CASE_OBJECT(self));
 }
 
+/**
+ * @brief Set a write approver interface. Set NULL to remove.
+ * @param self CS LPC Use Case instance
+ * @param approver approver interface to set, or NULL to remove
+ */
+static inline void CsLpcSetWriteApprover(CsLpUseCaseObject* self, CsLpcApproverObject* approver) {
+  CsLpSetWriteApprover(CS_LP_USE_CASE_OBJECT(self), approver);
+}
+
+/**
+ * @brief Approve a pending write request identified by message counter.
+ * @param self CS LPC Use Case instance
+ * @param ski SKI of the remote entity that sent the write request
+ * @param msg_cnt Message counter of the pending write to approve
+ * @return kEebusErrorOk on success, kEebusErrorNoChange if not found
+ */
+static inline EebusError CsLpcApproveWrite(CsLpUseCaseObject* self, const char* ski, MsgCounterType msg_cnt) {
+  return CsLpApproveWrite(CS_LP_USE_CASE_OBJECT(self), ski, msg_cnt);
+}
+
+/**
+ * @brief Deny a pending write request identified by message counter.
+ * @param self CS LPC Use Case instance
+ * @param ski SKI of the remote entity that sent the write request
+ * @param msg_cnt Message counter of the pending write to deny
+ * @param err Error to send in the result message
+ * @return kEebusErrorOk on success, kEebusErrorNoChange if not found
+ */
+static inline EebusError
+CsLpcDenyWrite(CsLpUseCaseObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err) {
+  return CsLpDenyWrite(CS_LP_USE_CASE_OBJECT(self), ski, msg_cnt, err);
+}
+
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

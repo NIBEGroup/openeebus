@@ -18,12 +18,23 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <string_view>
 
+#include "src/common/string_util.h"
 #include "tests/src/memory_leak.inc"
 #include "tests/src/string_ptr.h"
 
 using namespace std::literals;
+
+using MdnsEntryPtr = std::unique_ptr<MdnsEntry, decltype(&MdnsEntryDelete)>;
+
+struct UriDeleter {
+  void operator()(const char* p) const {
+    StringDelete(const_cast<char*>(p));
+  }
+};
+using UriPtr = std::unique_ptr<const char, UriDeleter>;
 
 /**
  * Marker for txt record size to automatically detect size
@@ -56,10 +67,7 @@ class MdnsEntrySetResolveInfoTests : public ::testing::TestWithParam<MdnsEntrySe
 
 TEST_P(MdnsEntrySetResolveInfoTests, MdnsEntrySetResolveInfoTests) {
   // Arrange: Initialize the mDNS entry instance
-  std::unique_ptr<MdnsEntry, decltype(&MdnsEntryDelete)> mdns_entry{
-      MdnsEntryCreate("test_name", ".local", 0),
-      &MdnsEntryDelete
-  };
+  MdnsEntryPtr mdns_entry{MdnsEntryCreate("test_name", ".local", 0), &MdnsEntryDelete};
 
   // Act: Run the mDNS txt record parsing procedure
   const char* const txt_record = GetParam().txt_record.data();
@@ -85,6 +93,45 @@ TEST_P(MdnsEntrySetResolveInfoTests, MdnsEntrySetResolveInfoTests) {
 
   mdns_entry.reset();
 
+  EXPECT_EQ(heap_used, 0);
+  CheckForMemoryLeaks();
+}
+
+static MdnsEntryPtr MakeEntry(const char* host, int port, const char* path_txt_record) {
+  MdnsEntryPtr entry{MdnsEntryCreate("name", ".local", 0), &MdnsEntryDelete};
+  MdnsEntrySetHost(entry.get(), host);
+  MdnsEntrySetPort(entry.get(), port);
+  if (path_txt_record != nullptr) {
+    MdnsEntryParseTxtRecord(entry.get(), path_txt_record, (uint16_t)strlen(path_txt_record));
+  }
+
+  return entry;
+}
+
+TEST(MdnsEntryToUriTest, NormalHostPortPath) {
+  MdnsEntryPtr entry{MakeEntry("myhost.local", 4769, "\013path=/ship/")};
+  UriPtr uri{MdnsEntryToUri(entry.get())};
+  EXPECT_STREQ(uri.get(), "wss://myhost.local:4769/ship/");
+  uri.reset();
+  entry.reset();
+  EXPECT_EQ(heap_used, 0);
+  CheckForMemoryLeaks();
+}
+
+TEST(MdnsEntryToUriTest, TrailingDotStripped) {
+  MdnsEntryPtr entry{MakeEntry("myhost.local.", 4769, "\013path=/ship/")};
+  UriPtr uri{MdnsEntryToUri(entry.get())};
+  EXPECT_STREQ(uri.get(), "wss://myhost.local:4769/ship/");
+  uri.reset();
+  entry.reset();
+  EXPECT_EQ(heap_used, 0);
+  CheckForMemoryLeaks();
+}
+
+TEST(MdnsEntryToUriTest, NullHostReturnsNull) {
+  MdnsEntryPtr entry{MdnsEntryCreate("name", ".local", 0), &MdnsEntryDelete};
+  EXPECT_EQ(MdnsEntryToUri(entry.get()), nullptr);
+  entry.reset();
   EXPECT_EQ(heap_used, 0);
   CheckForMemoryLeaks();
 }

@@ -629,6 +629,10 @@ static void* MdnsThreadLoop(void* parameters) {
       avahi_entry_group_free(mdns->service_group);
       mdns->service_group = NULL;
     }
+    if (mdns->client != NULL) {
+      avahi_client_free(mdns->client);
+      mdns->client = NULL;
+    }
     if (mdns->poll != NULL) {
       if (mdns->notify_timeout != NULL) {
         const AvahiPoll* api = avahi_simple_poll_get(mdns->poll);
@@ -637,10 +641,6 @@ static void* MdnsThreadLoop(void* parameters) {
       }
       avahi_simple_poll_free(mdns->poll);
       mdns->poll = NULL;
-    }
-    if (mdns->client != NULL) {
-      avahi_client_free(mdns->client);
-      mdns->client = NULL;
     }
     mdns->poll = avahi_simple_poll_new();
     if (mdns->poll == NULL) {

@@ -191,7 +191,7 @@ void* ShipConnectionLoop(void* parameters) {
 }
 
 EebusError ShipConnectionTryStart(ShipConnection* self, WebsocketCreatorObject* websocket_creator) {
-  static const size_t kQueueMaxMsg = 30;
+  static const size_t kQueueMaxMsg = 60;
 
   self->msg_queue
       = EebusQueueCreate(kQueueMaxMsg, sizeof(ShipConnectionQueueMessage), ShipConnectionQueueMsgDeallocator);

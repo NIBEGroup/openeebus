@@ -101,6 +101,13 @@ void OnPowerLimitReceive(
   ScaledValuePrint("CS LPC Power Limit received %sW, ", power_limit);
   EebusDurationPrint("duration = %s, ", duration);
   printf("active = %s\n", is_active ? "true" : "false");
+
+  double limit_value = 0.0;
+  ScaledValueToDouble(power_limit, &limit_value);
+  const int32_t duration_seconds = (int32_t)EebusDurationToSeconds(duration);
+
+  const bool is_valid = CsLpIsLimitValid(limit_value, duration_seconds);
+  printf("CS LPC Power Limit is %s\n", is_valid ? "valid" : "invalid");
 }
 
 void OnFailsafePowerLimitReceive(CsLpListenerObject* self, const ScaledValue* power_limit) {

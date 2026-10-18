@@ -39,7 +39,7 @@ static constexpr char failsafe_duration_notify[] = R"({
           ]
         },
         {
-          "msgCounter": 27
+          "msgCounter": 25
         },
         {
           "cmdClassifier": "notify"

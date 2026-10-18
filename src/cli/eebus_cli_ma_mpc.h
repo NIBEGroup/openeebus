@@ -25,15 +25,15 @@
 
 #include "src/cli/eebus_cli_handler_interface.h"
 #include "src/common/eebus_malloc.h"
+#include "src/common/entity_address_list.h"
 #include "src/spine/model/common_data_types.h"
-#include "src/spine/model/entity_types.h"
 #include "src/use_case/actor/ma/mpc/ma_mpc.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
 
-EebusCliHandlerObject* MaMpcCliCreate(MaMpcUseCaseObject* ma_mpc, const EntityAddressType* entity_addr);
+EebusCliHandlerObject* MaMpcCliCreate(MaMpcUseCaseObject* ma_mpc, const EntityAddressList* addr_list);
 
 static inline void MaMpcCliDelete(EebusCliHandlerObject* ma_mpc_cli) {
   if (ma_mpc_cli != NULL) {

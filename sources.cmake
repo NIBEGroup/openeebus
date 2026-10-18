@@ -3,12 +3,15 @@ include(${CMAKE_CURRENT_LIST_DIR}/src/common/eebus_date_time/eebus_date_time_sou
 
 set(SOURCES
   src/cli/eebus_cli.c
+  src/cli/eebus_cli_cem_ohpcf.c
+  src/cli/eebus_cli_compressor_ohpcf.c
   src/cli/eebus_cli_cs_lp.c
   src/cli/eebus_cli_eg_lp.c
   src/cli/eebus_cli_ma_mpc.c
   src/cli/eebus_cli_mu_mpc.c
   src/cli/eebus_cli_ma_mgcp.c
   src/cli/eebus_cli_gcp_mgcp.c
+  src/cli/eebus_cli_remote_arg.c
   src/common/debug.c
   src/common/eebus_device_info.c
   src/common/eebus_math/eebus_math.c
@@ -19,6 +22,7 @@ set(SOURCES
   src/common/string_util.c
   src/common/uint64_lut.c
   src/common/vector.c
+  src/common/entity_address_list.c
   src/common/eebus_bool/eebus_bool.c
   src/service/service/eebus_service_config.c
   src/service/service/eebus_service.c
@@ -31,6 +35,8 @@ set(SOURCES
   src/ship/ship_connection/ship_message_serialize.c
   src/ship/ship_connection/client.c
   src/ship/ship_connection/server.c
+  src/ship/ship_node/node_connection.c
+  src/ship/ship_node/node_connection_container.c
   src/ship/ship_node/ship_node.c
   src/ship/websocket/websocket.c
   src/ship/websocket/websocket_client_creator.c
@@ -81,6 +87,8 @@ set(SOURCES
   src/spine/model/node_management_types.c
   src/spine/model/possible_operations_types.c
   src/spine/model/specification_version.c
+  src/spine/model/smart_energy_management_ps_cfg.c
+  src/spine/model/smart_energy_management_ps_types.c
   src/spine/model/subscription_management_types.c
   src/spine/model/usecase_information_types.c
   src/spine/node_management/node_management.c
@@ -95,9 +103,17 @@ set(SOURCES
   src/use_case/actor/common/eebus_monitor_base.c
   src/use_case/actor/common/eebus_monitor_container.c
   src/use_case/actor/common/eebus_monitor_features.c
+  src/use_case/actor/common/ohpcf.c
+  src/use_case/actor/cem/ohpcf/cem_ohpcf.c
+  src/use_case/actor/cem/ohpcf/cem_ohpcf_events.c
+  src/use_case/actor/cem/ohpcf/cem_ohpcf_public.c
+  src/use_case/actor/compressor/ohpcf/compressor_ohpcf.c
+  src/use_case/actor/compressor/ohpcf/compressor_ohpcf_events.c
+  src/use_case/actor/compressor/ohpcf/compressor_ohpcf_public.c
   src/use_case/actor/cs/lpc/cs_lpc.c
   src/use_case/actor/cs/lpp/cs_lpp.c
   src/use_case/actor/cs/cs_lp_events.c
+  src/use_case/actor/cs/cs_lp_write_approval_container.c
   src/use_case/actor/cs/cs_lp_public.c
   src/use_case/actor/cs/cs_lp.c
   src/use_case/actor/eg/lpc/eg_lpc.c
@@ -127,6 +143,7 @@ set(SOURCES
   src/use_case/model/load_limit_types.c
   src/use_case/model/mgcp_types.c
   src/use_case/model/mpc_types.c
+  src/use_case/model/ohpcf_types.c
   src/use_case/model/scaled_value.c
   src/use_case/specialization/device_configuration/device_configuration_client.c
   src/use_case/specialization/device_configuration/device_configuration_common.c
@@ -145,6 +162,9 @@ set(SOURCES
   src/use_case/specialization/measurement/measurement_client.c
   src/use_case/specialization/measurement/measurement_common.c
   src/use_case/specialization/measurement/measurement_server.c
+  src/use_case/specialization/smart_energy_management_ps/smart_energy_management_ps_client.c
+  src/use_case/specialization/smart_energy_management_ps/smart_energy_management_ps_common.c
+  src/use_case/specialization/smart_energy_management_ps/smart_energy_management_ps_server.c
   src/use_case/use_case.c
 )
 
@@ -153,6 +173,8 @@ list(APPEND SOURCES ${EEBUS_DATA_SOURCES})
 
 set(HEADERS
   src/cli/eebus_cli.h
+  src/cli/eebus_cli_compressor_ohpcf.h
+  src/cli/eebus_cli_cem_ohpcf.h
   src/cli/eebus_cli_cs_lp.h
   src/cli/eebus_cli_eg_lp.h
   src/cli/eebus_cli_handler_interface.h
@@ -161,6 +183,7 @@ set(HEADERS
   src/cli/eebus_cli_mu_mpc.h
   src/cli/eebus_cli_ma_mgcp.h
   src/cli/eebus_cli_gcp_mgcp.h
+  src/cli/eebus_cli_remote_arg.h
   src/common/api/eebus_mutex_interface.h
   src/common/api/eebus_queue_interface.h
   src/common/api/eebus_timer_interface.h
@@ -185,10 +208,12 @@ set(HEADERS
   src/common/struct_util.h
   src/common/uint64_lut.h
   src/common/vector.h
+  src/common/entity_address_list.h
   src/service/api/eebus_service_config.h
   src/service/api/eebus_service_interface.h
   src/service/api/service_reader_interface.h
   src/service/service/eebus_service.h
+  src/service/service/eebus_service_internal.h
   src/ship/api/connection_state.h
   src/ship/api/data_reader_interface.h
   src/ship/api/data_writer_interface.h
@@ -202,10 +227,15 @@ set(HEADERS
   src/ship/api/tls_certificate_interface.h
   src/ship/api/websocket_creator_interface.h
   src/ship/api/http_server_interface.h
+  src/ship/api/node_connection_container_interface.h
+  src/ship/api/node_connection_interface.h
   src/ship/api/websocket_interface.h
   src/ship/mdns/ship_mdns.h
   src/ship/model/model.h
   src/ship/model/types.h
+  src/ship/ship_node/node_connection.h
+  src/ship/ship_node/node_connection_internal.h
+  src/ship/ship_node/node_connection_container.h
   src/ship/ship_node/ship_node.h
   src/ship/ship_node/ship_node_internal.h
   src/ship/ship_connection/ship_connection.h
@@ -348,6 +378,7 @@ set(HEADERS
   src/spine/model/specification_version.h
   src/spine/model/state_information_types.h
   src/spine/model/state_information_types.inc
+  src/spine/model/smart_energy_management_ps_cfg.h
   src/spine/model/subscription_management_types.h
   src/spine/model/subscription_management_types.inc
   src/spine/model/supply_conditions_types.h
@@ -375,13 +406,23 @@ set(HEADERS
   src/use_case/api/ma_measurement_interface.h
   src/use_case/api/ma_mpc_listener_interface.h
   src/use_case/api/ma_mgcp_listener_interface.h
+  src/use_case/api/cs_lp_write_approval_container_interface.h
   src/use_case/api/eebus_monitor_interface.h
+  src/use_case/api/cs_lpc_approver_interface.h
   src/use_case/actor/common/eebus_measurement_base.h
   src/use_case/actor/common/eebus_monitor_base.h
   src/use_case/actor/common/eebus_monitor_container.h
   src/use_case/actor/common/eebus_monitor_features.h
+  src/use_case/actor/common/ohpcf.h
+  src/use_case/actor/cem/ohpcf/cem_ohpcf.h
+  src/use_case/actor/cem/ohpcf/cem_ohpcf_events.h
+  src/use_case/actor/cem/ohpcf/cem_ohpcf_internal.h
+  src/use_case/actor/compressor/ohpcf/compressor_ohpcf.h
+  src/use_case/actor/compressor/ohpcf/compressor_ohpcf_events.h
+  src/use_case/actor/compressor/ohpcf/compressor_ohpcf_internal.h
   src/use_case/actor/cs/cs_lp_events.h
   src/use_case/actor/cs/cs_lp_internal.h
+  src/use_case/actor/cs/cs_lp_write_approval_container.h
   src/use_case/actor/cs/cs_lp.h
   src/use_case/actor/cs/lpc/cs_lpc.h
   src/use_case/actor/cs/lpp/cs_lpp.h
@@ -411,6 +452,7 @@ set(HEADERS
   src/use_case/actor/gcp/mgcp/gcp_mgcp_monitor.h
   src/use_case/model/mgcp_types.h
   src/use_case/model/mpc_types.h
+  src/use_case/model/ohpcf_types.h
   src/use_case/model/scaled_value.h
   src/use_case/model/load_limit_types.h
   src/use_case/specialization/device_configuration/device_configuration_client.h
@@ -430,6 +472,8 @@ set(HEADERS
   src/use_case/specialization/measurement/measurement_client.h
   src/use_case/specialization/measurement/measurement_common.h
   src/use_case/specialization/measurement/measurement_server.h
+  src/use_case/specialization/smart_energy_management_ps/smart_energy_management_ps_common.h
+  src/use_case/specialization/smart_energy_management_ps/smart_energy_management_ps_server.h
   src/use_case/use_case.h
 )
 

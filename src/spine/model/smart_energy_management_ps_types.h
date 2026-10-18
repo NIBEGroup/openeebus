@@ -62,8 +62,8 @@ struct SmartEnergyManagementPsPowerSequenceType {
   const OperatingConstraintsInterruptDataType* operating_constraints_interrupt; /**< "operatingConstraintsInterrupt" */
   const OperatingConstraintsDurationDataType* operating_constraints_duration;   /**< "operatingConstraintsDuration" */
   const OperatingConstraintsResumeImplicationDataType*
-      operating_constraints_resume_implication;                     /**< "operatingConstraintsResumeImplication" */
-  SmartEnergyManagementPsPowerTimeSlotType* const* power_time_slot; /**< "powerTimeSlot" */
+      operating_constraints_resume_implication; /**< "operatingConstraintsResumeImplication" */
+  const SmartEnergyManagementPsPowerTimeSlotType* const* power_time_slot; /**< "powerTimeSlot" */
   size_t power_time_slot_size;
 };
 
@@ -186,6 +186,57 @@ struct SmartEnergyManagementPsPriceCalculationRequestCallElementsType {
   const PowerSequencePriceCalculationRequestCallElementsType*
       price_calculation_request; /**< "priceCalculationRequest" */
 };
+
+const SmartEnergyManagementPsAlternativesType* SmartEnergyManagementPsDataGetAlternativeWithId(
+    const SmartEnergyManagementPsDataType* sem_ps_data,
+    AlternativesIdType alternative_id
+);
+
+const SmartEnergyManagementPsPowerSequenceType* SmartEnergyManagementPsGetPowerSequenceWithId(
+    const SmartEnergyManagementPsDataType* sem_ps_data,
+    PowerSequenceIdType sequence_id
+);
+
+const PowerSequenceStateType* SmartEnergyManagementPsPowerSequenceGetState(
+    const SmartEnergyManagementPsPowerSequenceType* power_sequence
+);
+
+const AbsoluteOrRelativeTimeType* SmartEnergyManagementPsPowerSequenceGetStartTime(
+    const SmartEnergyManagementPsPowerSequenceType* power_sequence
+);
+
+UnitOfMeasurementType SmartEnergyManagementPsPowerSequenceGetUnit(
+    const SmartEnergyManagementPsPowerSequenceType* power_sequence
+);
+
+const EebusDuration* SmartEnergyManagementPsPowerSequenceGetEarliestStartTime(
+    const SmartEnergyManagementPsPowerSequenceType* power_sequence
+);
+
+const EebusDuration* SmartEnergyManagementPsPowerSequenceGetLatestEndTime(
+    const SmartEnergyManagementPsPowerSequenceType* power_sequence
+);
+
+const EebusDuration* SmartEnergyManagementPsPowerSequenceGetActiveDurationMin(
+    const SmartEnergyManagementPsPowerSequenceType* power_sequence
+);
+
+bool SmartEnergyManagementPsPowerSequenceIsPausable(const SmartEnergyManagementPsPowerSequenceType* power_sequence);
+
+bool SmartEnergyManagementPsPowerSequenceIsStoppable(const SmartEnergyManagementPsPowerSequenceType* power_sequence);
+
+const PowerTimeSlotNumberType* SmartEnergyManagementPsPowerSequenceGetActiveSlotNumber(
+    const SmartEnergyManagementPsPowerSequenceType* power_sequence
+);
+
+const ScaledNumberType* SmartEnergyManagementPsPowerTimeSlotGetPowerMax(
+    const SmartEnergyManagementPsPowerTimeSlotType* power_time_slot
+);
+
+const ScaledNumberType* SmartEnergyManagementPsPowerSequenceGetPowerMax(
+    const SmartEnergyManagementPsPowerSequenceType* power_sequence,
+    PowerTimeSlotNumberType slot_number
+);
 
 #ifdef __cplusplus
 }

@@ -59,6 +59,7 @@ static const FeatureLocalInterface feature_local_methods = {
      .get_data                               = FeatureLocalGetData,
      .set_function_operations                = FeatureLocalSetFunctionOperations,
      .add_write_approval_callback            = FeatureLocalAddWriteApprovalCallback,
+     .set_write_expiry_callback              = FeatureLocalSetWriteExpiryCallback,
      .try_approve_write                      = FeatureLocalTryApproveWrite,
      .deny_write                             = FeatureLocalDenyWrite,
      .clean_remote_device_caches             = FeatureLocalCleanRemoteDeviceCaches,
@@ -205,10 +206,13 @@ EebusError FeatureLocalAddWriteApprovalCallback(FeatureLocalObject* self, WriteA
   }
 
   FeatureLocal* const fl = FEATURE_LOCAL(self);
-
   VectorPushBack(&fl->wr_approval_cbs, WriteApprovalCbRecordCreate(cb, ctx));
 
   return kEebusErrorOk;
+}
+
+void FeatureLocalSetWriteExpiryCallback(FeatureLocalObject* fl, PendingWriteRequestExpiredCb cb, void* ctx) {
+  PENDING_WRITE_REQUEST_CONTAINER_SET_EXPIRED_CALLBACK(FEATURE_LOCAL(fl)->pending_write_requests, cb, ctx);
 }
 
 EebusError FeatureLocalTryApproveWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt) {
@@ -230,7 +234,7 @@ EebusError FeatureLocalTryApproveWrite(FeatureLocalObject* self, const char* ski
   // Check if there are enough approvals for the write
   const size_t num_req_approvals = VectorGetSize(&fl->wr_approval_cbs);
   if (num_req_approvals > PENDING_WRITE_REQUEST_GET_NUMBER_OF_APPROVALS(pending_write_request)) {
-    return kEebusErrorOk;
+    return kEebusErrorPending;
   }
 
   // If there are enough write approvals, remove pending request and process the write

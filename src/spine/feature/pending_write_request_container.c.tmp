@@ -1,0 +1,8 @@
+PendingWriteRequestContainer
+void Destruct()
+EebusError Add(const Message* msg)
+void Remove(PendingWriteRequestObject* item)
+PendingWriteRequestObject* Find(const char* ski, MsgCounterType msg_cnt)
+size_t GetSize()
+void Tick(FeatureLocalObject* fl)
+void SetExpiredCallback(PendingWriteRequestExpiredCb cb, void* ctx)

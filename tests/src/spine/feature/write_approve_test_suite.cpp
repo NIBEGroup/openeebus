@@ -216,8 +216,11 @@ void TryApproveShouldPass(const Message* msg, void* ctx) {
 
   MsgCounterType msg_cnt = *msg->request_header->msg_cnt;
 
+  // The vote is accepted whether or not it is the last one needed: kEebusErrorOk means the
+  // write was finalized, kEebusErrorPending means more approvals from other callbacks are
+  // still outstanding.
   EebusError ret = FEATURE_LOCAL_TRY_APPROVE_WRITE(FEATURE_LOCAL_OBJECT(ctx), ski, msg_cnt);
-  EXPECT_EQ(ret, kEebusErrorOk);
+  EXPECT_THAT(ret, ::testing::AnyOf(kEebusErrorOk, kEebusErrorPending));
 }
 
 void TryApproveShouldFail(const Message* msg, void* ctx) {
@@ -240,6 +243,28 @@ void DenyShouldPass(const Message* msg, void* ctx) {
   };
   EebusError ret = FEATURE_LOCAL_DENY_WRITE(FEATURE_LOCAL_OBJECT(ctx), ski, msg_cnt, &err);
   EXPECT_EQ(ret, kEebusErrorOk);
+}
+
+void TryApproveShouldBePending(const Message* msg, void* ctx) {
+  FeatureLocal* feature_local = FEATURE_LOCAL(ctx);
+  const char* ski             = DEVICE_REMOTE_GET_SKI(msg->device_remote);
+  MsgCounterType msg_cnt      = *msg->request_header->msg_cnt;
+
+  // Only one of the two registered callbacks has voted so far: the write must stay pending.
+  EebusError ret = FEATURE_LOCAL_TRY_APPROVE_WRITE(FEATURE_LOCAL_OBJECT(ctx), ski, msg_cnt);
+  EXPECT_EQ(ret, kEebusErrorPending);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 1);
+}
+
+void TryApproveShouldFinalize(const Message* msg, void* ctx) {
+  FeatureLocal* feature_local = FEATURE_LOCAL(ctx);
+  const char* ski             = DEVICE_REMOTE_GET_SKI(msg->device_remote);
+  MsgCounterType msg_cnt      = *msg->request_header->msg_cnt;
+
+  // This is the second of two registered callbacks voting: the write must now be applied.
+  EebusError ret = FEATURE_LOCAL_TRY_APPROVE_WRITE(FEATURE_LOCAL_OBJECT(ctx), ski, msg_cnt);
+  EXPECT_EQ(ret, kEebusErrorOk);
+  EXPECT_EQ(PENDING_WRITE_REQUEST_CONTAINER_GET_SIZE(feature_local->pending_write_requests), 0);
 }
 
 void DenyShouldFail(const Message* msg, void* ctx) {

@@ -1,0 +1,5 @@
+CsLpWriteApprovalContainer
+void Destruct()
+void Add(const char* ski, MsgCounterType msg_cnt, FeatureLocalObject* feature)
+CsLpPendingApproval* Find(const char* ski, MsgCounterType msg_cnt)
+void Remove(const char* ski, MsgCounterType msg_cnt)

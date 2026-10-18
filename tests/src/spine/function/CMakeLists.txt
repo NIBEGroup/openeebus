@@ -30,6 +30,7 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/feature_types.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/possible_operations_types.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/feature/operations.c
   ${MAIN_PROJ_SOURCES_PATH}/spine/function/function.c
 
@@ -47,6 +48,12 @@ target_sources(
   function_limit_control_create_reply_cmd_test.cpp
   function_limit_control_create_write_cmd_test.cpp
   function_limit_control_update_test.cpp
+  smart_energy_management_ps/write_partial/alternatives_id_test.cpp
+  smart_energy_management_ps/write_partial/compressor_announce_notify_test.cpp
+  smart_energy_management_ps/write_partial/power_sequence_id_test.cpp
+  smart_energy_management_ps/write_partial/power_time_slot_number.cpp
+  smart_energy_management_ps/write_partial/start_time_test.cpp
+  smart_energy_management_ps/write_partial/state_scheduled_test.cpp
   function_update_test.cpp
 )
 

@@ -29,6 +29,7 @@
 #include "src/common/eebus_mutex/eebus_mutex.h"
 #include "src/common/eebus_thread/eebus_thread.h"
 #include "src/common/string_util.h"
+#include "src/common/vector.h"
 #include "src/ship/api/http_server_interface.h"
 #include "src/ship/api/tls_certificate_interface.h"
 #include "src/ship/api/websocket_creator_interface.h"
@@ -58,6 +59,11 @@
 #define LWS_SERVER_OPTION_MBEDTLS_VERIFY_CLIENT_CERT_POST_HANDSHAKE 0
 #endif  // LWS_SERVER_OPTION_MBEDTLS_VERIFY_CLIENT_CERT_POST_HANDSHAKE
 
+typedef struct {
+  struct lws* wsi;
+  WebsocketObject* ws;
+} WsiWsEntry;
+
 typedef struct HttpServer HttpServer;
 
 struct HttpServer {
@@ -71,7 +77,7 @@ struct HttpServer {
   struct lws_context* lws_ctx;
   WebsocketServerCallbackType conn_establish_cb;
   void* conn_establish_ctx;
-  WebsocketObject* ws;
+  Vector wsi_ws_entries;
 
   int port;
   const TlsCertificateObject* tls_cert;
@@ -92,6 +98,9 @@ static const HttpServerInterface http_server_methods = {
     .stop     = Stop,
 };
 
+static WsiWsEntry* WsiWsEntryCreate(struct lws* wsi, WebsocketObject* ws);
+static void WsiWsEntryDelete(void* p);
+
 static void HttpServerConstruct(
     HttpServer* self,
     int port,
@@ -110,6 +119,22 @@ static int HttpServerOnWriteable(HttpServer* self, struct lws* wsi);
 static int HttpServerOnConnectionClose(HttpServer* self, struct lws* wsi);
 static int
 HttpServerServiceCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len);
+
+WsiWsEntry* WsiWsEntryCreate(struct lws* wsi, WebsocketObject* ws) {
+  WsiWsEntry* const ws_wsi_entry = (WsiWsEntry*)EEBUS_MALLOC(sizeof(WsiWsEntry));
+  if (ws_wsi_entry == NULL) {
+    return NULL;
+  }
+
+  ws_wsi_entry->wsi = wsi;
+  ws_wsi_entry->ws  = ws;
+
+  return ws_wsi_entry;
+}
+
+void WsiWsEntryDelete(void* p) {
+  EEBUS_FREE(p);
+}
 
 void HttpServerConstruct(
     HttpServer* self,
@@ -135,10 +160,10 @@ void HttpServerConstruct(
   self->conn_establish_cb  = conn_establish_cb;
   self->conn_establish_ctx = conn_establish_ctx;
 
-  self->port         = port;
-  self->ws           = NULL;
-
+  self->port    = port;
   self->lws_ctx = NULL;
+
+  VectorConstructWithDeallocator(&self->wsi_ws_entries, WsiWsEntryDelete);
 
   self->mutex = EebusMutexCreateRecursive();
 }
@@ -164,6 +189,9 @@ void Destruct(HttpServerObject* self) {
     srv->lws_ctx = NULL;
   }
 
+  VectorFreeElements(&srv->wsi_ws_entries);
+  VectorDestruct(&srv->wsi_ws_entries);
+
   if (srv->mutex != NULL) {
     EebusMutexDelete(srv->mutex);
     srv->mutex = NULL;
@@ -174,8 +202,11 @@ void HttpServerStaggerCallback(lws_sorted_usec_list_t* sul) {
   HttpServer* const srv = lws_container_of(sul, HttpServer, sul_stagger);
 
   EEBUS_MUTEX_LOCK(srv->mutex);
-  if ((srv->ws != NULL) && !WEBSOCKET_IS_CLOSED(srv->ws)) {
-    WEBSOCKET_SCHEDULE_WRITE(srv->ws);
+  for (size_t i = 0; i < VectorGetSize(&srv->wsi_ws_entries); ++i) {
+    const WsiWsEntry* const entry = (WsiWsEntry*)VectorGetElement(&srv->wsi_ws_entries, i);
+    if (!WEBSOCKET_IS_CLOSED(entry->ws)) {
+      WEBSOCKET_SCHEDULE_WRITE(entry->ws);
+    }
   }
   EEBUS_MUTEX_UNLOCK(srv->mutex);
 
@@ -274,23 +305,20 @@ void HttpServerUnbindWsi(HttpServerObject* self, struct lws* wsi) {
   }
 
   EEBUS_MUTEX_LOCK(srv->mutex);
-  srv->ws = NULL;
+  for (size_t i = 0; i < VectorGetSize(&srv->wsi_ws_entries); ++i) {
+    WsiWsEntry* const entry = (WsiWsEntry*)VectorGetElement(&srv->wsi_ws_entries, i);
+    if (entry->wsi == wsi) {
+      VectorRemove(&srv->wsi_ws_entries, entry);
+      EEBUS_FREE(entry);
+      break;
+    }
+  }
   lws_set_wsi_user(wsi, NULL);
   EEBUS_MUTEX_UNLOCK(srv->mutex);
 }
 
 // LWS Handlers
 int HttpServerOnClientConnect(HttpServer* self, struct lws* wsi) {
-  EEBUS_MUTEX_LOCK(self->mutex);
-  const bool already_active = (self->ws != NULL);
-  EEBUS_MUTEX_UNLOCK(self->mutex);
-
-  if (already_active) {
-    // Currently only a single connection is supported
-    HTTP_SERVER_DEBUG_PRINTF("%s(), websocket object is already created\n", __func__);
-    return -1;
-  }
-
   const char* ski = WebsocketGetSkiWithWsi(wsi);
   if (ski == NULL) {
     HTTP_SERVER_DEBUG_PRINTF("%s(), WebsocketGetSkiWithWsi() failed\n", __func__);
@@ -319,8 +347,14 @@ int HttpServerOnClientConnect(HttpServer* self, struct lws* wsi) {
     return -1;
   }
 
+  WsiWsEntry* const entry = WsiWsEntryCreate(wsi, ws);
+  if (entry == NULL) {
+    HTTP_SERVER_DEBUG_PRINTF("%s(), EEBUS_MALLOC failed\n", __func__);
+    return -1;
+  }
+
   EEBUS_MUTEX_LOCK(self->mutex);
-  self->ws = ws;
+  VectorPushBack(&self->wsi_ws_entries, entry);
   EEBUS_MUTEX_UNLOCK(self->mutex);
 
   lws_sul_schedule(self->lws_ctx, 0, &self->sul_stagger, HttpServerStaggerCallback, kWebsocketStaggerDelay);

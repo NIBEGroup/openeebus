@@ -92,6 +92,7 @@ void Destruct(MaMpcListenerObject* self) {
 void OnRemoteMuAdded(MaMpcListenerObject* self, const EntityAddressType* entity_addr) {
   MaMpcListener* const ma_mpc_listener = MA_MPC_LISTENER(self);
 
+  printf("MA MPC remote entity connected\n");
   HemsAddMaMpcRemoteEntity(ma_mpc_listener->hems, entity_addr);
 }
 

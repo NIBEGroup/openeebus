@@ -47,6 +47,7 @@ static const FeatureLocalInterface node_management_methods = {
     .get_data                              = FeatureLocalGetData,
     .set_function_operations               = FeatureLocalSetFunctionOperations,
     .add_write_approval_callback           = FeatureLocalAddWriteApprovalCallback,
+    .set_write_expiry_callback             = FeatureLocalSetWriteExpiryCallback,
     .try_approve_write                     = FeatureLocalTryApproveWrite,
     .deny_write                            = FeatureLocalDenyWrite,
     .clean_remote_device_caches            = NodeManagementCleanRemoteDeviceCaches,

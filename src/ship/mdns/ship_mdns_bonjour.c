@@ -541,6 +541,7 @@ static void MdnsResolveServiceCallback(
     // Transfer ownership of entry to found_entries vector
     VectorPushBack(mdns->found_entries, entry);
     resolve->entry = NULL;
+    MdnsNotifyFoundEntries(mdns);
   } else {
     MDNS_DEBUG_PRINTF("Ignoring invalid or own entry\n");
   }
@@ -580,6 +581,7 @@ static void MdnsBrowseServicesCallback(
   if (!(flags & kDNSServiceFlagsAdd)) {
     MDNS_DEBUG_PRINTF("Removed service: %s.%s%s\n", name, type, domain);
     MdnsRemoveEntryByName(mdns->found_entries, name);
+    MdnsNotifyFoundEntries(mdns);
     return;
   }
 

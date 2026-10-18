@@ -23,12 +23,14 @@
 #include <gmock/gmock.h>
 
 #include "src/spine/api/feature_local_interface.h"
+#include "src/spine/api/pending_write_request_container_interface.h"
 
 static DeviceLocalObject* GetDevice(const FeatureLocalObject* self);
 static EntityLocalObject* GetEntity(const FeatureLocalObject* self);
 static const void* GetData(const FeatureLocalObject* self, FunctionType function_type);
 static void SetFunctionOperations(FeatureLocalObject* self, FunctionType type, bool read, bool write);
 static EebusError AddWriteApprovalCallback(FeatureLocalObject* self, WriteApprovalCallback cb, void* ctx);
+static void SetWriteExpiryCallback(FeatureLocalObject* self, PendingWriteRequestExpiredCb cb, void* ctx);
 static EebusError TryApproveWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt);
 static EebusError DenyWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt, const ErrorType* err);
 static void CleanRemoteDeviceCaches(FeatureLocalObject* self, const DeviceAddressType* remote_addr);
@@ -89,6 +91,7 @@ static const FeatureLocalInterface feature_local_methods = {
     .get_data                              = GetData,
     .set_function_operations               = SetFunctionOperations,
     .add_write_approval_callback           = AddWriteApprovalCallback,
+    .set_write_expiry_callback             = SetWriteExpiryCallback,
     .try_approve_write                     = TryApproveWrite,
     .deny_write                            = DenyWrite,
     .clean_remote_device_caches            = CleanRemoteDeviceCaches,
@@ -202,6 +205,11 @@ void SetFunctionOperations(FeatureLocalObject* self, FunctionType type, bool rea
 EebusError AddWriteApprovalCallback(FeatureLocalObject* self, WriteApprovalCallback cb, void* ctx) {
   FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
   return mock->gmock->AddWriteApprovalCallback(self, cb, ctx);
+}
+
+void SetWriteExpiryCallback(FeatureLocalObject* self, PendingWriteRequestExpiredCb cb, void* ctx) {
+  FeatureLocalMock* const mock = FEATURE_LOCAL_MOCK(self);
+  mock->gmock->SetWriteExpiryCallback(self, cb, ctx);
 }
 
 EebusError TryApproveWrite(FeatureLocalObject* self, const char* ski, MsgCounterType msg_cnt) {

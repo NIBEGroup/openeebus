@@ -19,12 +19,14 @@
  */
 
 #include "src/spine/feature/pending_write_request.h"
+
 #include "src/common/api/eebus_data_interface.h"
 #include "src/common/api/eebus_timer_interface.h"
 #include "src/common/eebus_countdown/eebus_countdown.h"
 #include "src/common/eebus_malloc.h"
 #include "src/common/string_util.h"
 #include "src/spine/api/device_local_interface.h"
+#include "src/spine/api/message.h"
 #include "src/spine/api/pending_write_request_interface.h"
 #include "src/spine/feature/feature.h"
 #include "src/spine/model/cmd.h"

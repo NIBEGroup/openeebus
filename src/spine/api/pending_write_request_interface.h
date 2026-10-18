@@ -23,7 +23,11 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "src/spine/api/message.h"
+
+#include "src/common/eebus_errors.h"
+
+typedef struct Message Message;
+typedef struct FeatureLocalObject FeatureLocalObject;
 
 #ifdef __cplusplus
 extern "C" {
