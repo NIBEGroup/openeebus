@@ -111,6 +111,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/ma/two_remote
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/mu/mpc
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/mu/mpc)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/model/ohpcf_types
+    ${EXECUTABLE_OUTPUT_PATH}/use_case/model/ohpcf_types)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/model/scaled_value
     ${EXECUTABLE_OUTPUT_PATH}/use_case/model/scaled_value)
 
