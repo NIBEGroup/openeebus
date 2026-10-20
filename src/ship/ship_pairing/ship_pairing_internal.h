@@ -43,7 +43,7 @@ struct ShipPairing {
 
   /** Invalidates timeout snapshots when activation or timer state changes. */
   uint64_t activation_revision;
-  
+
   /** Suppresses old timeouts until the serialized restart finishes. */
   bool timer_restart_in_progress;
 
