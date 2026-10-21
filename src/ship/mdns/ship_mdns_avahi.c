@@ -75,6 +75,10 @@ static void Stop(ShipMdnsObject* self);
 static EebusError RegisterService(ShipMdnsObject* self);
 static void DeregisterService(ShipMdnsObject* self);
 static void SetAutoaccept(ShipMdnsObject* self, bool autoaccept);
+static EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesFoundCallback cb, void* ctx);
+static void StopPairingBrowse(ShipMdnsObject* self);
+static EebusError RegisterPairingService(ShipMdnsObject* self, const ShipPairingEntry* entry);
+static void DeregisterPairingService(ShipMdnsObject* self);
 
 static const ShipMdnsInterface mdns_methods = {
     .destruct           = Destruct,
@@ -84,17 +88,10 @@ static const ShipMdnsInterface mdns_methods = {
     .deregister_service = DeregisterService,
     .set_autoaccept     = SetAutoaccept,
 
-    // SHIP Pairing Service is deliberately not implemented here yet. The
-    // methods for it are the last members of the table and are left unset, so
-    // this backend keeps behaving exactly as it did and callers are told the
-    // feature is unsupported rather than calling through a null pointer.
-    //
-    // This backend is built only when OPTION_MDNS_USE_AVAHI_CLIENT is on, which
-    // is off by default and is not set by CI, so an implementation added here
-    // would be compiled by nothing and verified by nobody. It is a contained
-    // piece of work for someone who can build and run it: browse
-    // "_shippairing._tcp", parse each TXT record into a ShipPairingEntry, and
-    // publish one with an unused port, mirroring ship_mdns_bonjour.c.
+    .start_pairing_browse       = StartPairingBrowse,
+    .stop_pairing_browse        = StopPairingBrowse,
+    .register_pairing_service   = RegisterPairingService,
+    .deregister_pairing_service = DeregisterPairingService,
 };
 
 static ActiveResolveEntry* MdnsActiveResolveEntryCreate(Mdns* owner, MdnsEntry* entry) {
@@ -714,4 +711,25 @@ static void DeregisterService(ShipMdnsObject* self) {
 static void SetAutoaccept(ShipMdnsObject* self, bool autoaccept) {
   Mdns* const mdns = MDNS(self);
   mdns->autoaccept = autoaccept;
+}
+
+static EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesFoundCallback cb, void* ctx) {
+  UNUSED(self);
+  UNUSED(cb);
+  UNUSED(ctx);
+  return kEebusErrorNotImplemented;
+}
+
+static void StopPairingBrowse(ShipMdnsObject* self) {
+  UNUSED(self);
+}
+
+static EebusError RegisterPairingService(ShipMdnsObject* self, const ShipPairingEntry* entry) {
+  UNUSED(self);
+  UNUSED(entry);
+  return kEebusErrorNotImplemented;
+}
+
+static void DeregisterPairingService(ShipMdnsObject* self) {
+  UNUSED(self);
 }
