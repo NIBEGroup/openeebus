@@ -37,8 +37,8 @@ class ShipNodeGMockInterface : public InfoProviderMock {
   virtual void RegisterRemoteSki(ShipNodeObject* self, const char* ski, bool is_trusted) = 0;
   virtual void UnregisterRemoteSki(ShipNodeObject* self, const char* ski)                = 0;
   virtual void CancelPairingWithSki(ShipNodeObject* self, const char* ski)               = 0;
-  virtual void ApprovePendingHandshakeWithSki(ShipNodeObject* self, const char* ski)     = 0;
-  virtual uint32_t GetPendingWaitingMsWithSki(ShipNodeObject* self, const char* ski)     = 0;
+  virtual void ApprovePendingHandshakeWithSki(ShipNodeObject* self, const char* ski)                 = 0;
+  virtual uint32_t GetPendingWaitingMsWithSki(ShipNodeObject* self, const char* ski)                 = 0;
   virtual void RegisterRemoteFingerprint(ShipNodeObject* self, const char* fingerprint)              = 0;
   virtual ShipPairingObject* GetShipPairing(ShipNodeObject* self)                                    = 0;
   virtual EebusError AnnounceShipPairingRequest(ShipNodeObject* self, const ShipPairingEntry* entry) = 0;
