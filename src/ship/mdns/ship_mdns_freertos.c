@@ -102,6 +102,7 @@ static EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesF
 static void StopPairingBrowse(ShipMdnsObject* self);
 static EebusError RegisterPairingService(ShipMdnsObject* self, const ShipPairingEntry* entry);
 static void DeregisterPairingService(ShipMdnsObject* self);
+static bool SupportsPairing(ShipMdnsObject* self);
 static void MdnsQueryPairingServices(Mdns* mdns);
 
 static const ShipMdnsInterface mdns_methods = {
@@ -116,6 +117,7 @@ static const ShipMdnsInterface mdns_methods = {
     .stop_pairing_browse        = StopPairingBrowse,
     .register_pairing_service   = RegisterPairingService,
     .deregister_pairing_service = DeregisterPairingService,
+    .supports_pairing           = SupportsPairing,
 };
 
 static EebusError MdnsConstruct(
@@ -654,4 +656,9 @@ void Stop(ShipMdnsObject* self) {
 void SetAutoaccept(ShipMdnsObject* self, bool autoaccept) {
   Mdns* const mdns = MDNS(self);
   mdns->autoaccept = autoaccept;
+}
+
+bool SupportsPairing(ShipMdnsObject* self) {
+  UNUSED(self);
+  return true;
 }

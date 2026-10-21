@@ -84,12 +84,9 @@ struct ShipMdnsInterface {
    * Discovering and announcing "_shippairing._tcp" service instances
    * (SHIP Pairing Service TS 1.0.0, chapter 5).
    *
-   * These are appended to the end of the table and may be NULL. A backend that
-   * predates them, or that has no use for them, leaves them unset and keeps
-   * working exactly as before; the helpers below report
-   * kEebusErrorNotSupported rather than calling through a null pointer. Nothing
-   * may be inserted before them, and no signature above them may change, or
-   * every backend implemented outside this repository breaks.
+   * Every backend provides these methods. Backends without pairing support
+   * return kEebusErrorNotSupported from browse and registration methods and
+   * provide no-op stop and deregistration methods.
    * @{
    */
 
@@ -120,6 +117,11 @@ struct ShipMdnsInterface {
    * @brief Withdraws the announced shippairing service instance
    */
   void (*deregister_pairing_service)(ShipMdnsObject* self);
+
+  /**
+   * @brief Reports whether the backend supports SHIP Pairing Service discovery
+   */
+  bool (*supports_pairing)(ShipMdnsObject* self);
   /** @} */
 };
 
@@ -173,50 +175,37 @@ struct ShipMdnsObject {
 /**
  * @defgroup ShipMdnsPairingCallers SHIP Pairing Service callers
  *
- * Caller definitions rather than plain macros, because each has to check whether the backend implements the method
- * before calling it.
  * @{
  */
 
 /**
  * @brief SHIP mDNS Start Pairing Browse caller definition
- * @return kEebusErrorNotSupported if the backend does not implement it
+ * @return kEebusErrorNotSupported if the backend does not support pairing discovery
  */
-#define SHIP_MDNS_START_PAIRING_BROWSE(obj, cb, ctx)                  \
-  ((SHIP_MDNS_INTERFACE(obj)->start_pairing_browse != NULL)           \
-       ? SHIP_MDNS_INTERFACE(obj)->start_pairing_browse(obj, cb, ctx) \
-       : kEebusErrorNotSupported)
+#define SHIP_MDNS_START_PAIRING_BROWSE(obj, cb, ctx) (SHIP_MDNS_INTERFACE(obj)->start_pairing_browse(obj, cb, ctx))
 
 /**
  * @brief SHIP mDNS Stop Pairing Browse caller definition
  */
-#define SHIP_MDNS_STOP_PAIRING_BROWSE(obj)                                                                      \
-  ((SHIP_MDNS_INTERFACE(obj)->stop_pairing_browse != NULL) ? SHIP_MDNS_INTERFACE(obj)->stop_pairing_browse(obj) \
-                                                           : (void)0)
+#define SHIP_MDNS_STOP_PAIRING_BROWSE(obj) (SHIP_MDNS_INTERFACE(obj)->stop_pairing_browse(obj))
 
 /**
  * @brief SHIP mDNS Register Pairing Service caller definition
- * @return kEebusErrorNotSupported if the backend does not implement it
+ * @return kEebusErrorNotSupported if the backend does not support pairing announcements
  */
-#define SHIP_MDNS_REGISTER_PAIRING_SERVICE(obj, entry)                  \
-  ((SHIP_MDNS_INTERFACE(obj)->register_pairing_service != NULL)         \
-       ? SHIP_MDNS_INTERFACE(obj)->register_pairing_service(obj, entry) \
-       : kEebusErrorNotSupported)
+#define SHIP_MDNS_REGISTER_PAIRING_SERVICE(obj, entry) (SHIP_MDNS_INTERFACE(obj)->register_pairing_service(obj, entry))
 
 /**
  * @brief SHIP mDNS Deregister Pairing Service caller definition
  */
-#define SHIP_MDNS_DEREGISTER_PAIRING_SERVICE(obj)                  \
-  ((SHIP_MDNS_INTERFACE(obj)->deregister_pairing_service != NULL)  \
-       ? SHIP_MDNS_INTERFACE(obj)->deregister_pairing_service(obj) \
-       : (void)0)
+#define SHIP_MDNS_DEREGISTER_PAIRING_SERVICE(obj) (SHIP_MDNS_INTERFACE(obj)->deregister_pairing_service(obj))
 
 /**
  * @brief SHIP mDNS Supports Pairing caller definition
  *
  * Reports whether the backend implements SHIP Pairing Service discovery.
  */
-#define SHIP_MDNS_SUPPORTS_PAIRING(obj) (SHIP_MDNS_INTERFACE(obj)->start_pairing_browse != NULL)
+#define SHIP_MDNS_SUPPORTS_PAIRING(obj) (SHIP_MDNS_INTERFACE(obj)->supports_pairing(obj))
 /** @} */
 
 #ifdef __cplusplus

@@ -79,6 +79,7 @@ static EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesF
 static void StopPairingBrowse(ShipMdnsObject* self);
 static EebusError RegisterPairingService(ShipMdnsObject* self, const ShipPairingEntry* entry);
 static void DeregisterPairingService(ShipMdnsObject* self);
+static bool SupportsPairing(ShipMdnsObject* self);
 
 static const ShipMdnsInterface mdns_methods = {
     .destruct           = Destruct,
@@ -92,6 +93,7 @@ static const ShipMdnsInterface mdns_methods = {
     .stop_pairing_browse        = StopPairingBrowse,
     .register_pairing_service   = RegisterPairingService,
     .deregister_pairing_service = DeregisterPairingService,
+    .supports_pairing           = SupportsPairing,
 };
 
 static ActiveResolveEntry* MdnsActiveResolveEntryCreate(Mdns* owner, MdnsEntry* entry) {
@@ -717,7 +719,7 @@ static EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesF
   UNUSED(self);
   UNUSED(cb);
   UNUSED(ctx);
-  return kEebusErrorNotImplemented;
+  return kEebusErrorNotSupported;
 }
 
 static void StopPairingBrowse(ShipMdnsObject* self) {
@@ -727,9 +729,14 @@ static void StopPairingBrowse(ShipMdnsObject* self) {
 static EebusError RegisterPairingService(ShipMdnsObject* self, const ShipPairingEntry* entry) {
   UNUSED(self);
   UNUSED(entry);
-  return kEebusErrorNotImplemented;
+  return kEebusErrorNotSupported;
 }
 
 static void DeregisterPairingService(ShipMdnsObject* self) {
   UNUSED(self);
+}
+
+static bool SupportsPairing(ShipMdnsObject* self) {
+  UNUSED(self);
+  return false;
 }
