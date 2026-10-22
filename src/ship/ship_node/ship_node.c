@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "node_connection.h"
 #include "node_connection_container.h"
 #include "ship_node_internal.h"
 #include "src/common/eebus_arguments.h"
@@ -333,11 +334,13 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
 
   const char* ski          = NULL;
   uint32_t retry_delay     = 0;
+  bool pairing_cancelled   = false;
   NodeConnectionObject* nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SHIP_CONNECTION(self->connections, sc);
   if (nc != NULL) {
-    retry_delay = NODE_CONNECTION_ON_CONNECTION_CLOSED(nc);
-    ski         = NODE_CONNECTION_GET_SKI(nc);
-    if (!self->cancel && (retry_delay > 0)) {
+    pairing_cancelled = NodeConnectionIsPairingCancelled(nc);
+    retry_delay       = NODE_CONNECTION_ON_CONNECTION_CLOSED(nc);
+    ski               = NODE_CONNECTION_GET_SKI(nc);
+    if (!self->cancel && !pairing_cancelled && (retry_delay > 0)) {
       NODE_CONNECTION_SCHEDULE_RETRY(nc, retry_delay);
     }
   }
@@ -350,7 +353,11 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
     SHIP_NODE_READER_ON_REMOTE_SKI_DISCONNECTED(self->ship_node_reader, ski);
     ShipConnectionDelete(sc);
 
-    if (!self->cancel && (retry_delay == 0)) {
+    if (pairing_cancelled) {
+      EEBUS_MUTEX_LOCK(self->mutex);
+      NODE_CONNECTION_CONTAINER_REMOVE_WITH_SKI(self->connections, ski);
+      EEBUS_MUTEX_UNLOCK(self->mutex);
+    } else if (!self->cancel && (retry_delay == 0)) {
       ShipNodeConnectToPendingSki(self, ski);
     }
   }
@@ -436,6 +443,10 @@ static bool ShipNodeFindServiceForSki(ShipNode* self, const char* ski, MdnsEntry
 // Attempt a client connection for nc.  Must be called with mutex held;
 // nc must be non-NULL with no attempt already running.
 static void ShipNodeConnectToPendingSkiInternal(ShipNode* self, NodeConnectionObject* nc) {
+  if (NodeConnectionIsPairingCancelled(nc)) {
+    return;
+  }
+
   const char* const ski = NODE_CONNECTION_GET_SKI(nc);
 
   MdnsEntry found = {0};
@@ -697,16 +708,17 @@ void ShipNodeCancelPairingSki(ShipNodeObject* self, const char* ski) {
 
   EEBUS_MUTEX_LOCK(sn->mutex);
   NodeConnectionObject* nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SKI(sn->connections, ski);
-  if (nc != NULL) {
-    sc = NODE_CONNECTION_RELEASE_SHIP_CONNECTION(nc);
-    NODE_CONNECTION_CONTAINER_REMOVE_WITH_SKI(sn->connections, ski);
+  if ((nc != NULL) && !NodeConnectionIsPairingCancelled(nc)) {
+    sc = NodeConnectionCancelPairing(nc);
+    if (sc == NULL) {
+      NODE_CONNECTION_CONTAINER_REMOVE_WITH_SKI(sn->connections, ski);
+    }
   }
 
   EEBUS_MUTEX_UNLOCK(sn->mutex);
 
   if (sc != NULL) {
     SHIP_CONNECTION_CLOSE_CONNECTION(sc, true, 0, "pairing cancelled");
-    ShipConnectionDelete(sc);
   }
 }
 

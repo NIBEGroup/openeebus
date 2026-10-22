@@ -126,3 +126,33 @@ TEST(NodeConnectionTimerTest, DeleteWithArmedTimerNoCrash) {
   EXPECT_EQ(heap_used, 0);
   CheckForMemoryLeaks();
 }
+
+TEST_F(NodeConnectionTest, CancelPairingRetainsConnectionUntilClose) {
+  NODE_CONNECTION_SERVER_CONNECT(nc_, nullptr, "ship_id");
+  ShipConnectionMockGuard sc_guard{ship_connection_mock};
+  ShipConnectionObject* connection = SHIP_CONNECTION_OBJECT(ship_connection_mock);
+
+  EXPECT_FALSE(NodeConnectionIsPairingCancelled(nc_));
+  EXPECT_EQ(NodeConnectionCancelPairing(nc_), connection);
+  EXPECT_TRUE(NodeConnectionIsPairingCancelled(nc_));
+  EXPECT_TRUE(NODE_CONNECTION_OWNS_CONNECTION(nc_, connection));
+  EXPECT_TRUE(NODE_CONNECTION_IS_ATTEMPT_RUNNING(nc_));
+  EXPECT_FALSE(NODE_CONNECTION_ON_HANDSHAKE_COMPLETE(nc_));
+
+  NODE_CONNECTION_ON_CONNECTION_CLOSED(nc_);
+  EXPECT_FALSE(NODE_CONNECTION_OWNS_CONNECTION(nc_, connection));
+  EXPECT_TRUE(NodeConnectionIsPairingCancelled(nc_));
+
+  WebsocketCreatorObject dummy_wsc{nullptr};
+  EXPECT_EQ(NODE_CONNECTION_CLIENT_CONNECT(nc_, &dummy_wsc, "ship_id"), kEebusErrorCommunicationBusy);
+  EXPECT_EQ(NODE_CONNECTION_SERVER_CONNECT(nc_, &dummy_wsc, "ship_id"), kEebusErrorCommunicationBusy);
+}
+
+TEST_F(NodeConnectionTest, CancelPairingWithoutConnectionIsIdempotent) {
+  NODE_CONNECTION_SCHEDULE_RETRY(nc_, 3000);
+  EXPECT_EQ(NodeConnectionCancelPairing(nc_), nullptr);
+  EXPECT_EQ(NodeConnectionCancelPairing(nc_), nullptr);
+  EXPECT_TRUE(NodeConnectionIsPairingCancelled(nc_));
+  EXPECT_FALSE(NODE_CONNECTION_IS_ATTEMPT_RUNNING(nc_));
+  NODE_CONNECTION_SCHEDULE_RETRY(nc_, 3000);
+}

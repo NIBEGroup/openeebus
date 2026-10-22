@@ -37,6 +37,7 @@ struct NodeConnection {
   int attempt_cnt;
   bool is_attempt_running;
   bool handshake_complete;
+  bool pairing_cancelled;
   ServiceDetails* service_details;
   struct ShipNode* owner;
   EebusTimerObject* retry_timer;

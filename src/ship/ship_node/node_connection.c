@@ -69,6 +69,7 @@ NodeConnectionConstruct(NodeConnection* nc, const char* ski, struct ShipNode* ow
   nc->attempt_cnt        = 0;
   nc->is_attempt_running = false;
   nc->handshake_complete = false;
+  nc->pairing_cancelled  = false;
   nc->service_details    = NULL;
   nc->owner              = owner;
   nc->retry_timer        = NULL;
@@ -114,6 +115,17 @@ void Destruct(NodeConnectionObject* self) {
   }
 
   StringDelete((char*)nc->ski);
+}
+
+ShipConnectionObject* NodeConnectionCancelPairing(NodeConnectionObject* self) {
+  NodeConnection* const nc = NODE_CONNECTION(self);
+  nc->pairing_cancelled    = true;
+  StopRetryTimer(self);
+  return nc->connection;
+}
+
+bool NodeConnectionIsPairingCancelled(const NodeConnectionObject* self) {
+  return NODE_CONNECTION(self)->pairing_cancelled;
 }
 
 const char* GetSki(const NodeConnectionObject* self) {
@@ -177,7 +189,7 @@ void StopRetryTimer(NodeConnectionObject* self) {
 void ScheduleRetry(NodeConnectionObject* self, uint32_t delay_ms) {
   const NodeConnection* const nc = NODE_CONNECTION(self);
 
-  if (nc->retry_timer == NULL) {
+  if ((nc->retry_timer == NULL) || nc->pairing_cancelled) {
     return;
   }
 
@@ -188,7 +200,7 @@ void ScheduleRetry(NodeConnectionObject* self, uint32_t delay_ms) {
 bool OnHandshakeComplete(NodeConnectionObject* self) {
   NodeConnection* const nc = NODE_CONNECTION(self);
 
-  if (nc->handshake_complete) {
+  if (nc->handshake_complete || nc->pairing_cancelled) {
     return false;
   }
 
@@ -205,7 +217,7 @@ EebusError ClientConnect(NodeConnectionObject* self, WebsocketCreatorObject* wsc
     return kEebusErrorInputArgumentNull;
   }
 
-  if (nc->is_attempt_running) {
+  if (nc->is_attempt_running || nc->pairing_cancelled) {
     return kEebusErrorCommunicationBusy;
   }
 
@@ -227,6 +239,10 @@ EebusError ClientConnect(NodeConnectionObject* self, WebsocketCreatorObject* wsc
 
 EebusError ServerConnect(NodeConnectionObject* self, WebsocketCreatorObject* wsc, const char* ship_id) {
   NodeConnection* const nc = NODE_CONNECTION(self);
+
+  if (nc->pairing_cancelled) {
+    return kEebusErrorCommunicationBusy;
+  }
 
   nc->connection = ShipConnectionCreate(INFO_PROVIDER_OBJECT(nc->owner), kShipRoleServer, ship_id, nc->ski, "");
   if (nc->connection == NULL) {

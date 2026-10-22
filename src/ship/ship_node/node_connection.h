@@ -30,6 +30,9 @@ extern "C" {
 
 NodeConnectionObject* NodeConnectionCreate(const char* ski, struct ShipNode* owner, NodeConnectionRetryFn retry_fn);
 
+ShipConnectionObject* NodeConnectionCancelPairing(NodeConnectionObject* self);
+bool NodeConnectionIsPairingCancelled(const NodeConnectionObject* self);
+
 static inline void NodeConnectionDelete(NodeConnectionObject* node_connection) {
   if (node_connection != NULL) {
     NODE_CONNECTION_DESTRUCT(node_connection);
