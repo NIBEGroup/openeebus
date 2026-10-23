@@ -48,9 +48,9 @@ target_sources(
   ${MOCKS_SOURCES_PATH}/spine/events/event_handler_mock.cpp
 
   # Test helpers
-  ${CMAKE_SOURCE_DIR}/src/spine/function_data.c
-  ${CMAKE_SOURCE_DIR}/src/spine/function/filter_test_data.cpp
-  ${CMAKE_SOURCE_DIR}/src/spine/function/function_data_test_data.cpp
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/function_data.c
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/function/filter_test_data.cpp
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/function/function_data_test_data.cpp
 
   node_management_remote_test.cpp
 )

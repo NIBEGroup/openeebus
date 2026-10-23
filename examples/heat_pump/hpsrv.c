@@ -21,6 +21,7 @@
 #include "hpsrv.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "src/common/array_util.h"
@@ -491,6 +492,10 @@ static EebusError HpsrvStart(Hpsrv* hpsrv, int32_t port, const char* role, TlsCe
   }
 
   EebusServiceConfigSetAlternateIdentifier(hpsrv->cfg, "NIBE-HeatPump-123456789");
+  const char* const mdns_service_name = getenv("EEBUS_MDNS_SERVICE_NAME");
+  if (mdns_service_name != NULL && mdns_service_name[0] != '\0') {
+    EebusServiceConfigSetAlternateMdnsServiceName(hpsrv->cfg, mdns_service_name);
+  }
 
   hpsrv->service = EebusServiceCreate(hpsrv->cfg, role, tls_certificate, SERVICE_READER_OBJECT(hpsrv));
 
@@ -598,8 +603,10 @@ void Destruct(ServiceReaderObject* self) {
   UseCaseDelete(USE_CASE_OBJECT(hpsrv->gcp_mgcp));
   hpsrv->gcp_mgcp = NULL;
 
-  EebusServiceDelete(hpsrv->service);
-  hpsrv->service = NULL;
+  if (hpsrv->service != NULL) {
+    EebusServiceDelete(hpsrv->service);
+    hpsrv->service = NULL;
+  }
 
   EebusServiceConfigDelete(hpsrv->cfg);
   hpsrv->cfg = NULL;

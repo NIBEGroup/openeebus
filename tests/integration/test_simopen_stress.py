@@ -17,6 +17,7 @@ import pytest
 from conftest import (
     NodeProcess,
     make_node_pair,
+    stop_nodes,
     require_binaries,
     SHIP_CONNECTED_MARKER,
 )
@@ -60,17 +61,16 @@ def _branch_of(node: NodeProcess) -> str:
     return "unknown"
 
 
-def _start_pair():
-    return make_node_pair()
+def _start_pair(test_identities):
+    return make_node_pair(test_identities)
 
 
 def _stop_pair(hp, hems):
-    hp.stop()
-    hems.stop()
+    stop_nodes(hp, hems)
 
 
 @pytest.mark.simopen
-def test_simopen_stress():
+def test_simopen_stress(test_identities):
     require_binaries()
 
     passed   = 0
@@ -84,18 +84,20 @@ def test_simopen_stress():
     print(f"{'='*70}")
 
     for i in range(1, TOTAL + 1):
-        hp, hems = _start_pair()
-        start = time.monotonic()
+        hp, hems = _start_pair(test_identities)
+        try:
+            start = time.monotonic()
 
-        connected = (
-            hp.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT) and
-            hems.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT)
-        )
-        elapsed = time.monotonic() - start
+            connected = (
+                hp.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT) and
+                hems.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT)
+            )
+            elapsed = time.monotonic() - start
 
-        hp_b   = _branch_of(hp)
-        hems_b = _branch_of(hems)
-        _stop_pair(hp, hems)
+            hp_b = _branch_of(hp)
+            hems_b = _branch_of(hems)
+        finally:
+            _stop_pair(hp, hems)
 
         if connected:
             passed += 1

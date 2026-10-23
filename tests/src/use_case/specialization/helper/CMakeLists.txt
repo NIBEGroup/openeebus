@@ -29,8 +29,8 @@ target_sources(
   ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
 
   # Test helpers
-  ${CMAKE_SOURCE_DIR}/src/spine/function_data.c
-  ${CMAKE_SOURCE_DIR}/src/spine/function/function_data_test_data.cpp
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/function_data.c
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/function/function_data_test_data.cpp
 
   helper_test.cpp
 )

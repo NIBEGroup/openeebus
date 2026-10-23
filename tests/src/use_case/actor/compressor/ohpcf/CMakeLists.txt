@@ -104,8 +104,8 @@ target_sources(
   ${MOCKS_SOURCES_PATH}/use_case/api/compressor_ohpcf_listener_mock.cpp
 
   # Test helpers
-  ${CMAKE_SOURCE_DIR}/src/use_case/use_case_test_fixture.cpp
-  ${CMAKE_SOURCE_DIR}/src/spine/function_data.c
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/use_case/use_case_test_fixture.cpp
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/function_data.c
 
   compressor_ohpcf_test.cpp
 )

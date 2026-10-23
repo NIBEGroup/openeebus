@@ -11,14 +11,15 @@ MA MPC remote list — allowing unambiguous entity targeting.
 import os
 import random
 import time
+from contextlib import ExitStack
 
 import pytest
 
 from conftest import (
     NodeProcess,
-    HP_BINARY, HP_PORT, HP_REMOTE_SKI, HP_CERT, HP_KEY,
-    HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY,
-    EV_BINARY, EV_PORT, EV_SKI, EV_CERT, EV_KEY,
+    HP_BINARY, HP_PORT,
+    HEMS_BINARY, HEMS_PORT,
+    EV_BINARY, EV_PORT,
     SHIP_CONNECTED_MARKER,
     DEFAULT_PROPAGATION,
     parse_field, require_binaries,
@@ -32,7 +33,7 @@ _MPC_READY_MARKER = "MA MPC remote entity connected"
 
 
 @pytest.mark.three_node
-def test_hems_hp_ev_stress():
+def test_hems_hp_ev_stress(test_identities):
     require_binaries(EV_BINARY)
 
     passed = 0
@@ -45,38 +46,48 @@ def test_hems_hp_ev_stress():
 
     for i in range(1, TOTAL + 1):
         t_start = time.monotonic()
-        hp   = NodeProcess(HP_BINARY,   HP_PORT,   HP_REMOTE_SKI,   HP_CERT,   HP_KEY)
-        hems = NodeProcess(HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY,
-                           extra_args=("--remote", EV_SKI))
+        with ExitStack() as stack:
+            hp = stack.enter_context(NodeProcess(
+                HP_BINARY, HP_PORT, test_identities.hems.ski,
+                test_identities.heat_pump.certificate, test_identities.heat_pump.key,
+            ))
+            hems = stack.enter_context(NodeProcess(
+                HEMS_BINARY, HEMS_PORT, test_identities.heat_pump.ski,
+                test_identities.hems.certificate, test_identities.hems.key,
+                extra_args=("--remote", test_identities.ev_charger.ski),
+            ))
 
-        connected_pair = (
-            hp.wait_for(SHIP_CONNECTED_MARKER,   CONNECT_TIMEOUT) and
-            hems.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT)
-        )
+            connected_pair = (
+                hp.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT) and
+                hems.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT)
+            )
 
-        ev = NodeProcess(EV_BINARY, EV_PORT, HP_REMOTE_SKI, EV_CERT, EV_KEY)
-        connected_ev = connected_pair and (
-            ev.wait_for(SHIP_CONNECTED_MARKER,             CONNECT_TIMEOUT) and
-            hems.wait_for_count(SHIP_CONNECTED_MARKER, 2, CONNECT_TIMEOUT)
-        )
-        elapsed = time.monotonic() - t_start
+            ev = stack.enter_context(NodeProcess(
+                EV_BINARY, EV_PORT, test_identities.hems.ski,
+                test_identities.ev_charger.certificate, test_identities.ev_charger.key,
+            ))
+            connected_ev = connected_pair and (
+                ev.wait_for(SHIP_CONNECTED_MARKER, CONNECT_TIMEOUT) and
+                hems.wait_for_count(SHIP_CONNECTED_MARKER, 2, CONNECT_TIMEOUT)
+            )
+            elapsed = time.monotonic() - t_start
 
-        if not connected_ev:
-            fail_reason = "connection-timeout"
-        elif not hems.wait_for_count(_MPC_READY_MARKER, 2, ENTITY_TIMEOUT):
-            fail_reason = "entity-list-timeout"
-        else:
-            addrs = wait_for_entity_addresses(hems, 2, ENTITY_TIMEOUT)
-            if len(addrs) < 2:
+            if not connected_ev:
+                fail_reason = "connection-timeout"
+            elif not hems.wait_for_count(_MPC_READY_MARKER, 2, ENTITY_TIMEOUT):
                 fail_reason = "entity-list-timeout"
             else:
-                fail_reason = _run_data_check(hp, hems, ev, addrs[0], addrs[1])
+                addrs = wait_for_entity_addresses(hems, 2, ENTITY_TIMEOUT)
+                if len(addrs) < 2:
+                    fail_reason = "entity-list-timeout"
+                else:
+                    fail_reason = _run_data_check(hp, hems, ev, addrs[0], addrs[1])
 
-        nodes = [hp, hems, ev]
-        random.shuffle(nodes)
-        for node in nodes:
-            node.stop()
-            time.sleep(random.randint(1, 3))
+            nodes = [hp, hems, ev]
+            random.shuffle(nodes)
+            for node in nodes:
+                node.stop()
+                time.sleep(random.randint(1, 3))
 
         if not fail_reason:
             passed += 1

@@ -21,6 +21,7 @@ import pytest
 from conftest import (
     NodeProcess,
     make_node_pair,
+    stop_nodes,
     require_binaries,
     SHIP_CONNECTED_MARKER,
 )
@@ -128,7 +129,7 @@ def _connect_and_close(hp: NodeProcess, hems: NodeProcess) -> str:
 
 
 @pytest.mark.debug_flags
-def test_close_timing(request):
+def test_close_timing(request, test_identities):
     require_binaries()
     max_iter = request.config.getoption("--close-timing-iter", default=DEFAULT_ITER)
 
@@ -143,13 +144,12 @@ def test_close_timing(request):
     for it in range(1, max_iter + 1):
         print(f"\n=== Iteration {it} / {max_iter} ===")
 
-        hp, hems = make_node_pair()
+        hp, hems = make_node_pair(test_identities)
 
         try:
             status = _connect_and_close(hp, hems)
         finally:
-            hp.stop(timeout=2.0)
-            hems.stop(timeout=2.0)
+            stop_nodes(hp, hems, timeout=2.0)
 
         statuses.append(status)
 
@@ -173,3 +173,7 @@ def test_close_timing(request):
     conn_timeouts = statuses.count("CONN_TIMEOUT")
     assert force_kills == 0, f"{force_kills} iteration(s) required force-kill"
     assert conn_timeouts == 0, f"{conn_timeouts} iteration(s) timed out on connection"
+    assert all(value is not None for value in hp_times), \
+        "heat_pump: missing close timestamps; build with EEBUS_SERVICE_DEBUG=1"
+    assert all(value is not None for value in hems_times), \
+        "hems: missing close timestamps; build with EEBUS_SERVICE_DEBUG=1"

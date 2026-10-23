@@ -17,10 +17,10 @@ def _check_failsafe_limit(hp, hems, uc, expected):
     pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send(f"cs_{uc} get failsafe_limit")
     hems.send(f"eg_{uc} get failsafe_limit")
-    hp.wait_for_new(f"CS {uc_up} Failsafe Active Power Limit: value", pos_hp, _SETTLE)
-    hems.wait_for_new(f"EG {uc_up} Failsafe Active Power Limit: value", pos_hems, _SETTLE)
-    cs = parse_field(hp.last_line_with(f"CS {uc_up} Failsafe Active Power Limit"), "value")
-    eg = parse_field(hems.last_line_with(f"EG {uc_up} Failsafe Active Power Limit"), "value")
+    cs_line = hp.wait_for_new_line(f"CS {uc_up} Failsafe Active Power Limit: value=", pos_hp, _SETTLE)
+    eg_line = hems.wait_for_new_line(f"EG {uc_up} Failsafe Active Power Limit: value=", pos_hems, _SETTLE)
+    cs = parse_field(cs_line, "value")
+    eg = parse_field(eg_line, "value")
     print(f"  failsafe_limit (W): CS={cs}  EG={eg}")
     assert cs == str(expected), f"CS failsafe limit: expected {expected}, got {cs!r}"
     assert eg == str(expected), f"EG failsafe limit: expected {expected}, got {eg!r}"
@@ -31,10 +31,10 @@ def _check_failsafe_duration(hp, hems, uc, expected):
     pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send(f"cs_{uc} get failsafe_duration")
     hems.send(f"eg_{uc} get failsafe_duration")
-    hp.wait_for_new(f"CS {uc_up} Failsafe Duration Minimum:", pos_hp, _SETTLE)
-    hems.wait_for_new(f"EG {uc_up} Failsafe Duration Minimum:", pos_hems, _SETTLE)
-    cs = parse_pt(hp.last_line_with(f"CS {uc_up} Failsafe Duration Minimum"))
-    eg = parse_pt(hems.last_line_with(f"EG {uc_up} Failsafe Duration Minimum"))
+    cs_line = hp.wait_for_new_line(f"CS {uc_up} Failsafe Duration Minimum:", pos_hp, _SETTLE)
+    eg_line = hems.wait_for_new_line(f"EG {uc_up} Failsafe Duration Minimum:", pos_hems, _SETTLE)
+    cs = parse_pt(cs_line)
+    eg = parse_pt(eg_line)
     print(f"  failsafe_duration: CS={cs}  EG={eg}")
     assert cs == expected, f"CS failsafe duration: expected {expected}, got {cs!r}"
     assert eg == expected, f"EG failsafe duration: expected {expected}, got {eg!r}"
@@ -61,10 +61,8 @@ def _check_active_power_limit(hp, hems, uc, value, *, check_duration=False):
     pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send(f"cs_{uc} get power_limit")
     hems.send(f"eg_{uc} get power_limit")
-    hp.wait_for_new(f"CS {uc_up} Active Power Limit: value", pos_hp, _SETTLE)
-    hems.wait_for_new(f"EG {uc_up} Active Power Limit: value", pos_hems, _SETTLE)
-    cs = hp.last_line_with(f"CS {uc_up} Active Power Limit", exclude="Failsafe")
-    eg = hems.last_line_with(f"EG {uc_up} Active Power Limit", exclude="Failsafe")
+    cs = hp.wait_for_new_line(f"CS {uc_up} Active Power Limit: value=", pos_hp, _SETTLE)
+    eg = hems.wait_for_new_line(f"EG {uc_up} Active Power Limit: value=", pos_hems, _SETTLE)
     cs_val = parse_field(cs, "value")
     eg_val = parse_field(eg, "value")
     cs_act = parse_field(cs, "is active")  # CS log uses "is active"
@@ -116,11 +114,14 @@ def lp_s4_nominal_max(hp, hems, uc, value):
     pos_hp, pos_hems = hp.line_count(), hems.line_count()
     hp.send(f"cs_{uc} get nominal_max")
     hems.send(f"eg_{uc} get power_nominal_max")
-    hp.wait_for_new(f"CS {uc_up} Nominal Max: value", pos_hp, _SETTLE)
-    hems.wait_for_new(f"EG {uc_up} Power Nominal Max: value", pos_hems, _SETTLE)
-
-    cs = parse_field(hp.last_line_with(f"CS {uc_up} Nominal Max"), "value")
-    eg = parse_field(hems.last_line_with(f"EG {uc_up} Power Nominal Max"), "value")
+    cs_line = hp.wait_for_new_line(
+        f"CS {uc_up} Nominal Max: value=", pos_hp, _SETTLE
+    )
+    eg_line = hems.wait_for_new_line(
+        f"EG {uc_up} Power Nominal Max: value=", pos_hems, _SETTLE
+    )
+    cs = parse_field(cs_line, "value")
+    eg = parse_field(eg_line, "value")
     print(f"  nominal_max (W): CS={cs}  EG={eg}")
     assert cs == str(value), f"CS nominal max: expected {value}, got {cs!r}"
     assert eg == str(value), f"EG nominal max: expected {value}, got {eg!r}"

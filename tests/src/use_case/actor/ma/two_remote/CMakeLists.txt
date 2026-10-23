@@ -106,7 +106,7 @@ target_sources(
   ${MOCKS_SOURCES_PATH}/use_case/api/ma_mpc_listener_mock.cpp
 
   # Test helpers
-  ${CMAKE_SOURCE_DIR}/src/spine/function_data.c
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/function_data.c
 
   two_remote_test.cpp
 )

@@ -39,8 +39,8 @@ target_sources(
   ${MOCKS_SOURCES_PATH}/ship/ship_connection/data_writer_mock.cpp
 
   # Test helpers
-  ${CMAKE_SOURCE_DIR}/src/string_ptr.cpp
-  ${CMAKE_SOURCE_DIR}/src/spine/model/feature_address_test_data.cpp
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/string_ptr.cpp
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/model/feature_address_test_data.cpp
 
   sender_test_suite.cpp
   sender_read_test.cpp

@@ -110,7 +110,7 @@ target_sources(
   ${MOCKS_SOURCES_PATH}/use_case/api/eg_lp_listener_mock.cpp
 
   # Test helpers
-  ${CMAKE_SOURCE_DIR}/src/spine/function_data.c
+  ${OPENEEBUS_TESTS_SOURCE_DIR}/src/spine/function_data.c
 
   two_remote_eg_lpc_test.cpp
 )

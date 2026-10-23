@@ -13,13 +13,15 @@ Scenarios:
   4. EV disconnects — HP and HEMS LPC continue unaffected
 """
 
+from contextlib import ExitStack
+
 import pytest
 
 from conftest import (
     NodeProcess,
-    HP_BINARY, HP_PORT, HP_REMOTE_SKI, HP_CERT, HP_KEY,
-    HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY,
-    EV_BINARY, EV_PORT, EV_SKI, EV_CERT, EV_KEY,
+    HP_BINARY, HP_PORT,
+    HEMS_BINARY, HEMS_PORT,
+    EV_BINARY, EV_PORT,
     SHIP_CONNECTED_MARKER, NODES_CONNECT_TIMEOUT, UC_READY_TIMEOUT,
     DEFAULT_PROPAGATION, DEFAULT_SETTLE,
     parse_field, require_binaries,
@@ -32,27 +34,32 @@ _ENTITY_TIMEOUT   = 30.0
 
 
 @pytest.fixture(scope="module")
-def nodes_three():
+def nodes_three(test_identities):
     """Start HP+HEMS, wait for first SHIP connection, then start EV.
 
     Sequential startup guarantees HP registers first in HEMS's MPC remote
     list, so entity[0] is always HP and entity[1] is always EV.
     """
     require_binaries(EV_BINARY)
-    hp   = NodeProcess(HP_BINARY,   HP_PORT,   HP_REMOTE_SKI,   HP_CERT,   HP_KEY)
-    hems = NodeProcess(HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY,
-                       extra_args=("--remote", EV_SKI))
-    assert hp.wait_for(SHIP_CONNECTED_MARKER,   NODES_CONNECT_TIMEOUT), "HP: SHIP connection timeout"
-    assert hems.wait_for(SHIP_CONNECTED_MARKER, NODES_CONNECT_TIMEOUT), "HEMS: first SHIP connection timeout"
-    ev = NodeProcess(EV_BINARY, EV_PORT, HP_REMOTE_SKI, EV_CERT, EV_KEY)
-    try:
+    with ExitStack() as stack:
+        hp = stack.enter_context(NodeProcess(
+            HP_BINARY, HP_PORT, test_identities.hems.ski,
+            test_identities.heat_pump.certificate, test_identities.heat_pump.key,
+        ))
+        hems = stack.enter_context(NodeProcess(
+            HEMS_BINARY, HEMS_PORT, test_identities.heat_pump.ski,
+            test_identities.hems.certificate, test_identities.hems.key,
+            extra_args=("--remote", test_identities.ev_charger.ski),
+        ))
+        assert hp.wait_for(SHIP_CONNECTED_MARKER, NODES_CONNECT_TIMEOUT), "HP: SHIP connection timeout"
+        assert hems.wait_for(SHIP_CONNECTED_MARKER, NODES_CONNECT_TIMEOUT), "HEMS: first SHIP connection timeout"
+        ev = stack.enter_context(NodeProcess(
+            EV_BINARY, EV_PORT, test_identities.hems.ski,
+            test_identities.ev_charger.certificate, test_identities.ev_charger.key,
+        ))
         assert ev.wait_for(SHIP_CONNECTED_MARKER, NODES_CONNECT_TIMEOUT), "EV: SHIP connection timeout"
         assert hems.wait_for_count(SHIP_CONNECTED_MARKER, 2, NODES_CONNECT_TIMEOUT), "HEMS: second SHIP connection timeout"
         yield hp, hems, ev
-    finally:
-        hp.stop()
-        hems.stop()
-        ev.stop()
 
 
 @pytest.fixture(scope="module")

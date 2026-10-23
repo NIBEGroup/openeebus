@@ -4,35 +4,24 @@ import shutil
 import subprocess
 import tempfile
 import time
+from contextlib import ExitStack
 from pathlib import Path
 
 import pytest
 from pytest_html import extras as html_extras
 
-ROOT      = Path(__file__).parent.parent
+from _certificates import TestIdentities, generate_test_identities
+
+ROOT      = Path(__file__).parent.parent.parent
 BUILD_DIR = ROOT / "build"
-CERTS_DIR = ROOT / "integration_tests" / "certificates"
 
 HP_BINARY   = str(BUILD_DIR / "heat_pump")
 HEMS_BINARY = str(BUILD_DIR / "hems")
 EV_BINARY   = str(BUILD_DIR / "ev_charger")
 
-# Each node is started with the OTHER node's certificate SKI as its trusted remote.
-# heat_pump registers hems.crt's SKI; hems registers heat_pump.crt's SKI.
-# ev_charger also trusts hems.crt, so its remote SKI equals HP_REMOTE_SKI.
-HP_REMOTE_SKI   = os.environ.get("EEBUS_HP_SKI",   "22ba544730c19c61676c35e1aefe444b36674b5b")
-HEMS_REMOTE_SKI = os.environ.get("EEBUS_HEMS_SKI", "40c61c3526f271e8e1547851c46f6ea20d4c6f83")
-EV_SKI          = os.environ.get("EEBUS_EV_SKI",   "5a139a8131d0b65b3078878bafd7ff71b84721a4")
-HP_CERT         = os.environ.get("EEBUS_HP_CERT",   str(CERTS_DIR / "heat_pump.crt"))
-HP_KEY          = os.environ.get("EEBUS_HP_KEY",    str(CERTS_DIR / "heat_pump.key"))
-HEMS_CERT       = os.environ.get("EEBUS_HEMS_CERT", str(CERTS_DIR / "hems.crt"))
-HEMS_KEY        = os.environ.get("EEBUS_HEMS_KEY",  str(CERTS_DIR / "hems.key"))
-EV_CERT         = os.environ.get("EEBUS_EV_CERT",   str(CERTS_DIR / "ev_charger.crt"))
-EV_KEY          = os.environ.get("EEBUS_EV_KEY",    str(CERTS_DIR / "ev_charger.key"))
-
-HP_PORT   = 4712
-HEMS_PORT = 4710
-EV_PORT   = 4714
+HP_PORT   = int(os.environ.get("EEBUS_HP_PORT", "4712"))
+HEMS_PORT = int(os.environ.get("EEBUS_HEMS_PORT", "4710"))
+EV_PORT   = int(os.environ.get("EEBUS_EV_PORT", "4714"))
 
 SHIP_CONNECTED_MARKER = "Remote SKI connected"
 NODES_CONNECT_TIMEOUT = 120.0
@@ -42,6 +31,14 @@ DEFAULT_PROPAGATION = 3.0
 DEFAULT_SETTLE      = 2.0
 
 _STDBUF = shutil.which("stdbuf")
+_INSTANCE = os.environ.get("EEBUS_INTEGRATION_INSTANCE")
+
+
+@pytest.fixture(scope="session")
+def test_identities():
+    """Generate TLS identities on demand and remove them after node teardown."""
+    with generate_test_identities() as identities:
+        yield identities
 
 
 def _cmd(binary: str, port: int, remote_ski: str, cert: str, key: str, extra_args: tuple = ()) -> list:
@@ -53,15 +50,30 @@ class NodeProcess:
     """Manages a single heat_pump, hems, or ev_charger process."""
 
     def __init__(self, binary: str, port: int, remote_ski: str, cert: str, key: str,
-                 extra_args: tuple = ()):
+                 extra_args: tuple = (), mdns_service_name: str = None):
+        if _INSTANCE and mdns_service_name is None:
+            node_name = Path(binary).stem.replace("_", "-")
+            mdns_service_name = f"openeebus-{_INSTANCE}-{node_name}"
         fd, self.log_path = tempfile.mkstemp(suffix=".log")
         self._log_fd = os.fdopen(fd, "w")
-        self.proc = subprocess.Popen(
-            _cmd(binary, port, remote_ski, cert, key, extra_args),
-            stdin=subprocess.PIPE,
-            stdout=self._log_fd,
-            stderr=self._log_fd,
-        )
+        try:
+            self.proc = subprocess.Popen(
+                _cmd(binary, port, remote_ski, cert, key, extra_args),
+                stdin=subprocess.PIPE,
+                stdout=self._log_fd,
+                stderr=self._log_fd,
+                env={**os.environ, "EEBUS_MDNS_SERVICE_NAME": mdns_service_name} if mdns_service_name else None,
+            )
+        except BaseException:
+            self._log_fd.close()
+            os.unlink(self.log_path)
+            raise
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop()
 
     def send(self, cmd: str) -> None:
         self.proc.stdin.write(f"{cmd}\n".encode())
@@ -87,6 +99,16 @@ class NodeProcess:
                 return True
             time.sleep(0.1)
         return False
+
+    def wait_for_new_line(self, marker: str, after: int, timeout: float) -> str:
+        """Return the first matching log line at index >= after, or time out."""
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            for line in self.log_lines()[after:]:
+                if marker in line:
+                    return line.rstrip()
+            time.sleep(0.1)
+        raise TimeoutError(f"No new log line containing {marker!r}")
 
     def log_lines(self) -> list:
         with open(self.log_path) as f:
@@ -121,6 +143,8 @@ class NodeProcess:
             return False
 
     def stop(self, timeout: float = 5.0) -> None:
+        if self._log_fd.closed and self.proc.poll() is not None:
+            return
         try:
             self.send("exit")
         except (OSError, ValueError):
@@ -137,6 +161,13 @@ class NodeProcess:
         self._log_fd.close()
 
 
+def stop_nodes(*nodes: NodeProcess, timeout: float = 5.0) -> None:
+    """Stop every node, even if stopping an earlier node raises an error."""
+    with ExitStack() as stack:
+        for node in reversed(nodes):
+            stack.callback(node.stop, timeout=timeout)
+
+
 def parse_field(line: str, field: str) -> str:
     """Extract 'field=VALUE' from a log line (stops at space, comma, or newline)."""
     m = re.search(rf'{re.escape(field)}=([^ ,\r\n]+)', line)
@@ -150,26 +181,42 @@ def parse_pt(line: str) -> str:
 
 
 
-def make_node_pair():
-    """Create a fresh heat_pump + hems NodeProcess pair on the standard ports."""
-    return (
-        NodeProcess(HP_BINARY,   HP_PORT,   HP_REMOTE_SKI,   HP_CERT,   HP_KEY),
-        NodeProcess(HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY),
-    )
+def make_node_pair(identities: TestIdentities):
+    """Create a fresh heat_pump + hems pair with this test process's identity."""
+    with ExitStack() as stack:
+        hp = stack.enter_context(NodeProcess(
+            HP_BINARY, HP_PORT, identities.hems.ski,
+            identities.heat_pump.certificate, identities.heat_pump.key,
+        ))
+        hems = stack.enter_context(NodeProcess(
+            HEMS_BINARY, HEMS_PORT, identities.heat_pump.ski,
+            identities.hems.certificate, identities.hems.key,
+        ))
+        stack.pop_all()
+        return hp, hems
 
 
-def make_three_node_group():
+def make_three_node_group(identities: TestIdentities):
     """Create fresh heat_pump + hems + ev_charger NodeProcess triple.
 
-    HEMS is started with --remote EV_SKI so it accepts the EV connection.
-    ev_charger trusts the same HEMS cert as heat_pump (HP_REMOTE_SKI).
+    HEMS trusts both HP and EV; HP and EV each trust HEMS.
     """
-    return (
-        NodeProcess(HP_BINARY,   HP_PORT,   HP_REMOTE_SKI,   HP_CERT,   HP_KEY),
-        NodeProcess(HEMS_BINARY, HEMS_PORT, HEMS_REMOTE_SKI, HEMS_CERT, HEMS_KEY,
-                    extra_args=("--remote", EV_SKI)),
-        NodeProcess(EV_BINARY,   EV_PORT,   HP_REMOTE_SKI,   EV_CERT,   EV_KEY),
-    )
+    with ExitStack() as stack:
+        hp = stack.enter_context(NodeProcess(
+            HP_BINARY, HP_PORT, identities.hems.ski,
+            identities.heat_pump.certificate, identities.heat_pump.key,
+        ))
+        hems = stack.enter_context(NodeProcess(
+            HEMS_BINARY, HEMS_PORT, identities.heat_pump.ski,
+            identities.hems.certificate, identities.hems.key,
+            extra_args=("--remote", identities.ev_charger.ski),
+        ))
+        ev = stack.enter_context(NodeProcess(
+            EV_BINARY, EV_PORT, identities.hems.ski,
+            identities.ev_charger.certificate, identities.ev_charger.key,
+        ))
+        stack.pop_all()
+        return hp, hems, ev
 
 
 def await_uc_ready(nodes, ready_marker: str):
@@ -183,21 +230,22 @@ def await_uc_ready(nodes, ready_marker: str):
 def require_binaries(*extra: str):
     missing = [b for b in (HP_BINARY, HEMS_BINARY, *extra) if not os.path.isfile(b)]
     if missing:
+        if _INSTANCE:
+            pytest.fail(f"Binaries not found: {missing!r} — build the project first")
         pytest.skip(f"Binaries not found: {missing!r}  — build the project first")
 
 
 @pytest.fixture(scope="module")
-def nodes(request):
+def nodes(request, test_identities):
     """Start heat_pump + hems and wait for the SHIP connection; tear down after the test."""
     require_binaries()
-    hp, hems = make_node_pair()
+    hp, hems = make_node_pair(test_identities)
     try:
         assert hp.wait_for(SHIP_CONNECTED_MARKER, NODES_CONNECT_TIMEOUT),   "heat_pump: SHIP connection timeout"
         assert hems.wait_for(SHIP_CONNECTED_MARKER, NODES_CONNECT_TIMEOUT), "hems: SHIP connection timeout"
         yield hp, hems
     finally:
-        hp.stop()
-        hems.stop()
+        stop_nodes(hp, hems)
         # Attach the last 40 lines of each log to the HTML report on failure.
         rep_call = getattr(request.node, "rep_call", None)
         if rep_call is not None and rep_call.failed:

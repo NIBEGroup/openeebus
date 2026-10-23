@@ -1,11 +1,12 @@
 # Integration Tests
 
-The `integration_tests/` directory contains a pytest-based end-to-end test suite that runs
-the `heat_pump` and `hems` demo binaries as subprocesses, drives them via their CLI stdin
+The `tests/integration/` directory contains a pytest-based end-to-end test suite that runs
+the `heat_pump`, `hems`, and `ev_charger` demo binaries as subprocesses, drives them via their CLI stdin
 interface, and verifies protocol behaviour by polling their log output.
 
-The suite covers four EEBUS use cases, simultaneous-open (SIMOPEN) tiebreaker logic, and
-service shutdown timing.
+CTest registers all eight modules: four EEBUS use cases, simultaneous-open
+(SIMOPEN) stress, three-node HEMS + heat-pump + EV scenarios and stress, and
+service shutdown timing. Direct pytest commands available as well.
 
 **Supported platforms: Linux, macOS, and Windows.**
 
@@ -16,73 +17,109 @@ service shutdown timing.
 ### Build the demo binaries
 
 Follow the platform-specific build guide in [Building and Running](../README.md#building-and-running)
-and ensure both `heat_pump` and `hems` binaries exist in `build/`.
+and ensure `heat_pump`, `hems`, and `ev_charger` binaries exist in `build/`.
 
 ### Python dependencies
 
-Python 3.8 or newer is required. Install the test dependencies:
+Python 3.10 or newer with venv support is required. All integration runs, through
+CTest or direct pytest, require the OpenSSL command-line tool on `PATH` to
+generate temporary certificates.
+Enable integration-test support:
 
 ```sh
-pip install pytest pytest-html
+cmake -S . -B build -DOPTION_OPENEEBUS_TESTS=ON -DOPTION_INTEGRATION_TESTS=ON
 ```
 
 ---
 
 ## TLS certificates
 
-The demos use mutual TLS authentication. Development certificates are included in
-`integration_tests/certificates/`:
+The demos use mutual TLS authentication. The `test_identities` session fixture
+calls `tests/integration/_certificates.py` to generate fresh HP, HEMS, and EV
+certificates and private keys in a unique system temporary directory. Both CTest
+and direct pytest use this fixture.
 
-| File | Node | Purpose |
-|---|---|---|
-| `integration_tests/certificates/heat_pump.crt` | heat_pump (CS/EV) | TLS certificate |
-| `integration_tests/certificates/heat_pump.key` | heat_pump (CS/EV) | Private key |
-| `integration_tests/certificates/hems.crt` | hems (EG/grid) | TLS certificate |
-| `integration_tests/certificates/hems.key` | hems (EG/grid) | Private key |
+Each identity uses a self-signed P-256 EC certificate compatible with the
+configured TLS 1.2 ECDHE-ECDSA cipher suites, SHA-256 signing, a
+one-day validity period, and an unencrypted PEM private key. Trusted SKIs are
+read from the generated certificates: HP and EV trust HEMS, while HEMS trusts
+HP and, in three-node scenarios, EV.
 
-The tests use these files by default — no configuration needed on a fresh checkout.
+One bundle is generated per pytest process and reused across its modules and
+stress iterations. Each CTest module runs in a separate pytest process and
+therefore receives distinct identities. Generation starts only when a test
+requests the fixture; collection alone does not invoke OpenSSL.
 
-To use different certificates, override the paths via environment variables before running:
-
-```sh
-# heat_pump (CS / EV side)
-export EEBUS_HP_SKI="<40-char hex SKI>"
-export EEBUS_HP_CERT="/path/to/heat_pump.crt"
-export EEBUS_HP_KEY="/path/to/heat_pump.key"
-
-# hems (EG / grid side)
-export EEBUS_HEMS_SKI="<40-char hex SKI>"
-export EEBUS_HEMS_CERT="/path/to/hems.crt"
-export EEBUS_HEMS_KEY="/path/to/hems.key"
-```
+The temporary directory is removed after node teardown, including test failures
+and partial generation failures. Missing OpenSSL, generation errors, and commands
+exceeding 30 seconds are reported as setup errors.
 
 ---
 
 ## Running the tests
 
-Run the full suite (excluding the debug-only close-timing test) from the repository root:
+Configure once to create the isolated Python environment and install its
+requirements, then build the demo binaries before running CTest:
 
 ```sh
-pytest integration_tests/ --ignore=integration_tests/test_close_timing.py
+cmake --build build
+ctest --test-dir build -L integration --output-on-failure
 ```
+
+CTest gives each module distinct ports, mDNS names, and TLS identities, so the
+suite can be run in parallel, for example with
+`ctest --test-dir build -L integration -j 8 --output-on-failure`.
+
+The EV stress module runs 20 iterations by default (`STRESS_TOTAL` overrides
+this for pytest or CTest). Close timing runs 50 iterations. EV stress and close
+timing have thirty-minute timeouts; other entries use ten minutes.
+
+A standalone unit-test configuration (`cmake -S tests -B tests/build`) does
+not register integration tests because it does not build the demo targets.
 
 Run a single use-case module:
 
 ```sh
-pytest integration_tests/test_lpc.py
+ctest --test-dir build -R '^integration_lpc$' --output-on-failure
+```
+
+Run the EV modules or the close-timing module:
+
+```sh
+ctest --test-dir build -L three_node --output-on-failure
+ctest --test-dir build -R '^integration_close_timing$' --output-on-failure
+```
+
+To run integration tests without stress and timing measurements:
+
+```sh
+ctest --test-dir build -L integration -LE 'stress|debug_flags' --output-on-failure
 ```
 
 Generate an HTML report:
 
 ```sh
-pytest integration_tests/ --ignore=integration_tests/test_close_timing.py --html=report.html --self-contained-html
+build/tests/integration/itest_venv/bin/python -m pytest tests/integration/ --ignore=tests/integration/test_close_timing.py --html=report.html --self-contained-html
 ```
 
 Run with verbose output:
 
 ```sh
-pytest integration_tests/test_lpc.py -v
+ctest --test-dir build -L integration -V
 ```
+
+Run the three-node scenarios directly (build `ev_charger` along with the other demos):
+
+```sh
+build/tests/integration/itest_venv/bin/python -m pytest tests/integration/test_hems_hp_ev.py -v
+```
+
+The three-node stress module is `tests/integration/test_hems_hp_ev_stress.py`.
+Both three-node modules have the CTest label `three_node`; stress modules also
+have `stress`, and close timing has `debug_flags`. All have `integration`.
+
+On Windows, replace `build/tests/integration/itest_venv/bin/python` in the direct
+pytest commands with `build/tests/integration/itest_venv/Scripts/python.exe`.
 
 ---
 
@@ -99,6 +136,8 @@ so setup cost is paid once per file rather than once per test.
 | `test_mgcp.py` | Monitoring of Grid Connection Point | 7 |
 | `test_simopen_stress.py` | SIMOPEN tiebreaker stress test | 1 |
 | `test_close_timing.py` | Service shutdown timing | 1 (debug flags required) |
+| `test_hems_hp_ev.py` | Three-node MPC/LPC and EV disconnect | 4 |
+| `test_hems_hp_ev_stress.py` | Three-node MPC/LPC and shutdown stress | 1 |
 
 ### Close-timing test
 
@@ -109,7 +148,7 @@ process pairs independently of the shared-connection fixture used by other modul
 The number of iterations can be overridden:
 
 ```sh
-pytest integration_tests/test_close_timing.py --close-timing-iter=20
+build/tests/integration/itest_venv/bin/python -m pytest tests/integration/test_close_timing.py --close-timing-iter=20
 ```
 
 **Required compile-time flags:** `EEBUS_SERVICE_DEBUG=1` and `SHIP_NODE_DEBUG=1`
@@ -119,20 +158,16 @@ pytest integration_tests/test_close_timing.py --close-timing-iter=20
 
 ## Enabling debug flags
 
-The debug flags are guarded with `#ifndef` and default to `1` in the current source. If they
-have been switched off, re-enable them by passing them as compile definitions.
+The debug flags default to `0` in the source. Configuring integration tests
+through the repository root automatically sets `EEBUS_SERVICE_DEBUG=1` and
+`SHIP_NODE_DEBUG=1` on the `openeebus` library, where these logs are produced.
+This enables shutdown timestamps and SIMOPEN diagnostics for every demo.
 
-CMake (add to the target that builds the demo):
-
-```cmake
-target_compile_definitions(heat_pump PRIVATE EEBUS_SERVICE_DEBUG=1 SHIP_NODE_DEBUG=1)
-target_compile_definitions(hems      PRIVATE EEBUS_SERVICE_DEBUG=1 SHIP_NODE_DEBUG=1)
-```
-
-Or pass them on the `cmake` command line:
+For a build without CTest integration support, enable them explicitly before
+running the debug modules through pytest:
 
 ```sh
-cmake -DCMAKE_C_FLAGS="-DEEBUS_SERVICE_DEBUG=1 -DSHIP_NODE_DEBUG=1" ..
+cmake -S . -B build -DOPTION_INTEGRATION_TESTS=OFF -DCMAKE_C_FLAGS="-DEEBUS_SERVICE_DEBUG=1 -DSHIP_NODE_DEBUG=1"
 ```
 
 The flags are defined in:
