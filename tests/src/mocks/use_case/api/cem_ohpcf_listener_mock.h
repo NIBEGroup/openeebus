@@ -34,7 +34,7 @@ class CemOhpcfListenerGMockInterface {
   virtual void Destruct(CemOhpcfListenerObject* self)                                                        = 0;
   virtual void OnRemoteCompressorAdded(CemOhpcfListenerObject* self, const EntityAddressType* entity_addr)   = 0;
   virtual void OnRemoteCompressorRemoved(CemOhpcfListenerObject* self, const EntityAddressType* entity_addr) = 0;
-  virtual void OnAnnounce(
+  virtual void OnOptionalPowerConsumptionUpdate(
       CemOhpcfListenerObject* self,
       const OptionalPowerConsumption* optional_power_consumption,
       const EntityAddressType* entity_addr
@@ -54,7 +54,10 @@ class CemOhpcfListenerGMock : public CemOhpcfListenerGMockInterface {
   MOCK_METHOD1(Destruct, void(CemOhpcfListenerObject*));
   MOCK_METHOD2(OnRemoteCompressorAdded, void(CemOhpcfListenerObject*, const EntityAddressType*));
   MOCK_METHOD2(OnRemoteCompressorRemoved, void(CemOhpcfListenerObject*, const EntityAddressType*));
-  MOCK_METHOD3(OnAnnounce, void(CemOhpcfListenerObject*, const OptionalPowerConsumption*, const EntityAddressType*));
+  MOCK_METHOD3(
+      OnOptionalPowerConsumptionUpdate,
+      void(CemOhpcfListenerObject*, const OptionalPowerConsumption*, const EntityAddressType*)
+  );
   MOCK_METHOD4(
       OnStateReport,
       void(CemOhpcfListenerObject*, CompressorOhpcfState, const EebusDuration*, const EntityAddressType*)

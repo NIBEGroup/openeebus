@@ -49,11 +49,17 @@
 #include "tests/src/use_case/actor/cem/ohpcf/receive/result_data_msg_cnt_ref_6.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_1.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_2.inc"
+#include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_multi_slot.inc"
+#include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_power_value.inc"
+#include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_without_active_duration_min.inc"
+#include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_without_power_unit.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_clear_process_notify_1.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_clear_process_notify_2.inc"
+#include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_invalid_full_notify.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_pause_notify.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_read_reply.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_read_reply_ref_15.inc"
+#include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_read_reply_running.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_report_state_completed_notify.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_report_state_running_notify_1.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_report_state_running_notify_2.inc"
@@ -132,6 +138,34 @@ class CemOhpcfTestFixture : public UseCaseTestFixture {
     ExpectSendMessage(send::discovery_read);
   };
 
+  // Stand-in for the heat pump: detailed discovery, use case discovery, subscription and binding,
+  // up to the reply to the initial read which is left to the test
+  void RunDiscoveryUntilInitialRead() {
+    ExpectSendMessage(send::discovery_reply);
+    HandleMessage(receive::discovery_request);
+
+    ExpectSendMessage(send::node_management_subscription_call);
+    ExpectSendMessage(send::use_case_data_read);
+    EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorAdded(_, _)).WillOnce(Return());
+    HandleMessage(receive::discovery_response);
+
+    ExpectSendMessage(send::result_data_msg_cnt_ref_27);
+    HandleMessage(receive::node_management_subscription_request);
+
+    HandleMessage(receive::result_data_msg_cnt_ref_3);
+
+    ExpectSendMessage(send::sem_ps_subscription_call);
+    ExpectSendMessage(send::sem_ps_binding_call);
+    ExpectSendMessage(send::sem_ps_data_read);
+    HandleMessage(receive::use_case_reply);
+
+    ExpectSendMessage(send::use_case_data_reply);
+    HandleMessage(receive::use_case_request);
+
+    HandleMessage(receive::result_data_msg_cnt_ref_5);
+    HandleMessage(receive::result_data_msg_cnt_ref_6);
+  }
+
   void TearDownUseCase() override {
     EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, Destruct(_)).WillOnce(Return());
     use_case_.reset();
@@ -139,6 +173,12 @@ class CemOhpcfTestFixture : public UseCaseTestFixture {
   };
 
  protected:
+  static constexpr uint32_t kCompressorEntityId                 = 3;
+  static constexpr uint32_t kCompressorSubEntityId              = 1;
+  static constexpr const uint32_t* const kCompressorEntityIds[] = {&kCompressorEntityId, &kCompressorSubEntityId};
+  static constexpr EntityAddressType kCompressorAddr
+      = {"d:_n:HeatPump_123456789", kCompressorEntityIds, ARRAY_SIZE(kCompressorEntityIds)};
+
   std::unique_ptr<CemOhpcfListenerMock, decltype(&CemOhpcfListenerMockDelete)> cem_ohpcf_listener_mock_{
       nullptr,
       CemOhpcfListenerMockDelete
@@ -202,7 +242,7 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
 
   EXPECT_CALL(
       *cem_ohpcf_listener_mock_->gmock,
-      OnAnnounce(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
   )
       .WillOnce(Return());
   EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
@@ -228,6 +268,11 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
   static constexpr EebusDuration compressor_start_time = {.seconds = 10};
   EXPECT_CALL(
       *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
       OnStateReport(_, kCompressorOhpcfStateScheduled, EebusDurationEq(&compressor_start_time), _)
   )
       .WillOnce(Return());
@@ -235,10 +280,20 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
   HandleMessage(receive::sem_ps_report_state_scheduled_notify_1);
   HandleMessage(receive::result_data_msg_cnt_ref_10);
 
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
   EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateRunning, nullptr, _))
       .WillOnce(Return());
   HandleMessage(receive::sem_ps_report_state_running_notify_1);
 
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
   EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateCompleted, nullptr, _))
       .WillOnce(Return());
 
@@ -264,7 +319,7 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
 
   EXPECT_CALL(
       *cem_ohpcf_listener_mock_->gmock,
-      OnAnnounce(_, OptionalPowerConsumptionEq(&optional_power_consumption_2), _)
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption_2), _)
   )
       .WillOnce(Return());
   EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
@@ -282,6 +337,11 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
   static constexpr EebusDuration compressor_start_time_2 = {.minutes = 5};
   EXPECT_CALL(
       *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption_2), _)
+  )
+      .WillOnce(Return());
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
       OnStateReport(_, kCompressorOhpcfStateScheduled, EebusDurationEq(&compressor_start_time_2), _)
   )
       .WillOnce(Return());
@@ -289,6 +349,11 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
   HandleMessage(receive::sem_ps_report_state_scheduled_notify_2);
   HandleMessage(receive::result_data_msg_cnt_ref_11);
 
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption_2), _)
+  )
+      .WillOnce(Return());
   EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateRunning, nullptr, _))
       .WillOnce(Return());
   HandleMessage(receive::sem_ps_report_state_running_notify_2);
@@ -296,6 +361,11 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
   ExpectSendMessage(send::sem_ps_pause_write);
   EXPECT_EQ(CemOhpcfWritePauseCommand(use_case_.get(), &remote_entity_addr, nullptr, nullptr), kEebusErrorOk);
 
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption_2), _)
+  )
+      .WillOnce(Return());
   EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStatePaused, nullptr, _))
       .WillOnce(Return());
   HandleMessage(receive::sem_ps_pause_notify);
@@ -304,6 +374,11 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
   ExpectSendMessage(send::sem_ps_resume_write);
   EXPECT_EQ(CemOhpcfWriteResumeCommand(use_case_.get(), &remote_entity_addr, nullptr, nullptr), kEebusErrorOk);
 
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption_2), _)
+  )
+      .WillOnce(Return());
   EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateRunning, nullptr, _))
       .WillOnce(Return());
   HandleMessage(receive::sem_ps_running_notify);
@@ -325,6 +400,175 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
   HandleMessage(receive::sem_ps_read_reply_ref_15);
 
   // 14. Expect the remote compressor removed callback while tearing down the use case
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
+}
+
+// A compressor that is already running when the CEM connects (e.g. after a reconnect) answers the
+// initial read with its full data, including the nodeScheduleInformation of an announced process.
+// The CEM never saw the announcement, so it is given the parameters before the state.
+TEST_F(CemOhpcfTestFixture, RunningCompressorIsReportedAsRunningOnConnection) {
+  RunDiscoveryUntilInitialRead();
+
+  const OptionalPowerConsumption optional_power_consumption = {
+      .max_power_w         = {2000, 0},
+      .earliest_start_time = {0},
+      .latest_end_time     = {.days = 1},
+      .active_duration_min = {.minutes = 3},
+      .is_stoppable        = true,
+      .is_pausable         = false,
+  };
+
+  {
+    testing::InSequence in_sequence;
+    EXPECT_CALL(
+        *cem_ohpcf_listener_mock_->gmock,
+        OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+    )
+        .WillOnce(Return());
+    EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateRunning, nullptr, _))
+        .WillOnce(Return());
+  }
+  HandleMessage(receive::sem_ps_read_reply_running);
+
+  EXPECT_EQ(CemOhpcfGetCompressorState(use_case_.get(), &kCompressorAddr), kCompressorOhpcfStateRunning);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
+}
+
+// The use case does not prescribe supportsSingleSlotSchedulingOnly, an inactive sequence is an announcement
+TEST_F(CemOhpcfTestFixture, AnnouncementIsRecognisedWithAnyNodeScheduleInformation) {
+  RunDiscoveryUntilInitialRead();
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnClearProcess(_, _)).WillOnce(Return());
+  HandleMessage(receive::sem_ps_read_reply);
+
+  const OptionalPowerConsumption optional_power_consumption = {
+      .max_power_w         = {2000, 0},
+      .earliest_start_time = {0},
+      .latest_end_time     = {.days = 1},
+      .active_duration_min = {.minutes = 3},
+      .is_stoppable        = true,
+      .is_pausable         = false,
+  };
+
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
+      .WillOnce(Return());
+  HandleMessage(receive::sem_ps_announce_notify_multi_slot);
+
+  EXPECT_EQ(CemOhpcfGetCompressorState(use_case_.get(), &kCompressorAddr), kCompressorOhpcfStateAnnounced);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
+}
+
+// "W" SHALL be assumed when powerUnit is absent (Table 6)
+TEST_F(CemOhpcfTestFixture, AnnouncementWithoutPowerUnitIsInWatts) {
+  RunDiscoveryUntilInitialRead();
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnClearProcess(_, _)).WillOnce(Return());
+  HandleMessage(receive::sem_ps_read_reply);
+
+  const OptionalPowerConsumption optional_power_consumption = {
+      .max_power_w         = {2000, 0},
+      .earliest_start_time = {0},
+      .latest_end_time     = {.days = 1},
+      .active_duration_min = {.minutes = 3},
+      .is_stoppable        = true,
+      .is_pausable         = false,
+  };
+
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
+      .WillOnce(Return());
+  HandleMessage(receive::sem_ps_announce_notify_without_power_unit);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
+}
+
+// [OHPCF-011/2/2] The power may be given as a good approximation ("power") instead of a maximum ("powerMax")
+TEST_F(CemOhpcfTestFixture, AnnouncementWithApproximatedPowerIsRecognised) {
+  RunDiscoveryUntilInitialRead();
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnClearProcess(_, _)).WillOnce(Return());
+  HandleMessage(receive::sem_ps_read_reply);
+
+  const OptionalPowerConsumption optional_power_consumption = {
+      .max_power_w         = {2000, 0},
+      .earliest_start_time = {0},
+      .latest_end_time     = {.days = 1},
+      .active_duration_min = {.minutes = 3},
+      .is_stoppable        = true,
+      .is_pausable         = false,
+  };
+
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
+      .WillOnce(Return());
+  HandleMessage(receive::sem_ps_announce_notify_power_value);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
+}
+
+// [OHPCF-008] operatingConstraintsDuration is optional for the Compressor (Table 11)
+TEST_F(CemOhpcfTestFixture, AnnouncementWithoutActiveDurationMinIsRecognised) {
+  RunDiscoveryUntilInitialRead();
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnClearProcess(_, _)).WillOnce(Return());
+  HandleMessage(receive::sem_ps_read_reply);
+
+  const OptionalPowerConsumption optional_power_consumption = {
+      .max_power_w         = {2000, 0},
+      .earliest_start_time = {0},
+      .latest_end_time     = {.days = 1},
+      .active_duration_min = {0},
+      .is_stoppable        = true,
+      .is_pausable         = false,
+  };
+
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionUpdate(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
+      .WillOnce(Return());
+  HandleMessage(receive::sem_ps_announce_notify_without_active_duration_min);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
+}
+
+// [OHPCF-006/1] A compressor sending full notifies keeps the nodeScheduleInformation of an announced process
+// when it aborts it
+TEST_F(CemOhpcfTestFixture, AbortedProcessIsReportedAsStopped) {
+  RunDiscoveryUntilInitialRead();
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnClearProcess(_, _)).WillOnce(Return());
+  HandleMessage(receive::sem_ps_read_reply);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, _)).WillOnce(Return());
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
+      .WillOnce(Return());
+  HandleMessage(receive::sem_ps_announce_notify_1);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnOptionalPowerConsumptionUpdate(_, _, _)).WillOnce(Return());
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateStopped, nullptr, _))
+      .WillOnce(Return());
+  HandleMessage(receive::sem_ps_invalid_full_notify);
+
+  EXPECT_EQ(CemOhpcfGetCompressorState(use_case_.get(), &kCompressorAddr), kCompressorOhpcfStateStopped);
+
   EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
 }
 

@@ -60,11 +60,6 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
     return kEebusErrorNotAvailable;
   }
 
-  // 1. Check if node schedule information matches announce criteria
-  if (!OhpcfNodeScheduleAnnounceMatch(sem_ps_data->node_schedule_information)) {
-    return kEebusErrorNoChange;
-  }
-
   const SmartEnergyManagementPsPowerSequenceType* power_sequence
       = OhpcfSmartEnergyManagementPsGetPowerSequence(sem_ps_data);
 
@@ -72,13 +67,22 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
     return kEebusErrorNotAvailable;
   }
 
-  const UnitOfMeasurementType measurement_unit = SmartEnergyManagementPsPowerSequenceGetUnit(power_sequence);
-  if (measurement_unit != kUnitOfMeasurementTypeW) {
+  // An absent powerUnit means "W"
+  const PowerSequenceDescriptionDataType* const description = power_sequence->description;
+  if ((description != NULL) && (description->power_unit != NULL)
+      && (*description->power_unit != kUnitOfMeasurementTypeW)) {
     return kEebusErrorNotAvailable;
   }
 
-  // 2. Get max power value
-  const ScaledNumberType* const max_power = OhpcfSmartEnergyManagementPsPowerSequenceGetPowerMax(power_sequence);
+  // 1. Get the maximum power [OHPCF-011/2/3], or the approximated power [OHPCF-011/2/2] if no maximum is given
+  const SmartEnergyManagementPsPowerTimeSlotType* const power_time_slot
+      = OhpcfSmartEnergyManagementPsPowerSequenceGetPowerTimeSlot(power_sequence);
+
+  const ScaledNumberType* max_power
+      = SmartEnergyManagementPsPowerTimeSlotGetValue(power_time_slot, kPowerTimeSlotValueTypeTypePowerMax);
+  if (max_power == NULL) {
+    max_power = SmartEnergyManagementPsPowerTimeSlotGetValue(power_time_slot, kPowerTimeSlotValueTypeTypePower);
+  }
 
   if ((max_power == NULL) || (max_power->number == NULL)) {
     return kEebusErrorNotAvailable;
@@ -87,7 +91,7 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
   optional_power_consumption->max_power_w.value = *max_power->number;
   optional_power_consumption->max_power_w.scale = (max_power->scale != NULL) ? *max_power->scale : 0;
 
-  // 3. Get earliest start time & latest end time
+  // 2. Get earliest start time & latest end time
   const EebusDuration* const earliest_start_time
       = SmartEnergyManagementPsPowerSequenceGetEarliestStartTime(power_sequence);
   const EebusDuration* const latest_end_time = SmartEnergyManagementPsPowerSequenceGetLatestEndTime(power_sequence);
@@ -99,17 +103,14 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(
   optional_power_consumption->earliest_start_time = *earliest_start_time;
   optional_power_consumption->latest_end_time     = *latest_end_time;
 
-  // 4. Get active duration min
+  // 3. Get active duration min, optional for the Compressor
   const EebusDuration* const active_duration_min
       = SmartEnergyManagementPsPowerSequenceGetActiveDurationMin(power_sequence);
 
-  if (active_duration_min == NULL) {
-    return kEebusErrorNotAvailable;
-  }
+  optional_power_consumption->active_duration_min
+      = (active_duration_min != NULL) ? *active_duration_min : (EebusDuration){0};
 
-  optional_power_consumption->active_duration_min = *active_duration_min;
-
-  // 5. Get pausable & stoppable
+  // 4. Get pausable & stoppable
   optional_power_consumption->is_pausable  = SmartEnergyManagementPsPowerSequenceIsPausable(power_sequence);
   optional_power_consumption->is_stoppable = SmartEnergyManagementPsPowerSequenceIsStoppable(power_sequence);
 
@@ -141,11 +142,54 @@ EebusError CemOhpcfGetAnnouncedOptionalPowerConsumption(
   return ret;
 }
 
+const SmartEnergyManagementPsPowerSequenceType*
+CemOhpcfGetPowerSequenceInternal(const CemOhpcfUseCase* self, const EntityAddressType* remote_entity_addr) {
+  const UseCase* const use_case = USE_CASE(self);
+
+  EntityRemoteObject* const remote_entity
+      = USE_CASE_GET_REMOTE_ENTITY_WITH_ADDRESS(USE_CASE_OBJECT(self), remote_entity_addr);
+
+  if (remote_entity == NULL) {
+    return NULL;
+  }
+
+  SmartEnergyManagementPsClient sem_ps_client;
+  const EebusError err = SmartEnergyManagementPsClientConstruct(&sem_ps_client, use_case->local_entity, remote_entity);
+  if (err != kEebusErrorOk) {
+    return NULL;
+  }
+
+  const SmartEnergyManagementPsDataType* const sem_ps_data
+      = SmartEnergyManagementPsCommonGetData(&sem_ps_client.sem_ps_common);
+
+  return OhpcfSmartEnergyManagementPsGetPowerSequence(sem_ps_data);
+}
+
+CompressorOhpcfState
+CemOhpcfGetCompressorStateInternal(const CemOhpcfUseCase* self, const EntityAddressType* remote_entity_addr) {
+  const PowerSequenceStateType* const state
+      = SmartEnergyManagementPsPowerSequenceGetState(CemOhpcfGetPowerSequenceInternal(self, remote_entity_addr));
+
+  if (state == NULL) {
+    return kCompressorOhpcfStateUndefined;
+  }
+
+  return CompressorOhpcfStateGetStateWithPowerSequenceState(*state);
+}
+
 CompressorOhpcfState
 CemOhpcfGetCompressorState(const CemOhpcfUseCaseObject* self, const EntityAddressType* remote_entity_addr) {
-  UNUSED(remote_entity_addr);
+  UseCase* const use_case = USE_CASE(self);
 
-  return CEM_OHPCF_USE_CASE(self)->state;
+  if (remote_entity_addr == NULL) {
+    return kCompressorOhpcfStateUndefined;
+  }
+
+  DEVICE_LOCAL_LOCK(use_case->local_device);
+  const CompressorOhpcfState state = CemOhpcfGetCompressorStateInternal(CEM_OHPCF_USE_CASE(self), remote_entity_addr);
+  DEVICE_LOCAL_UNLOCK(use_case->local_device);
+
+  return state;
 }
 
 static EebusError CemOhpcfReadSmartDataInternal(
@@ -335,7 +379,8 @@ EebusError CemOhpcfWriteStopCommand(
 
   DEVICE_LOCAL_LOCK(use_case->local_device);
 
-  if (CEM_OHPCF_USE_CASE(self)->state == kCompressorOhpcfStateUndefined) {
+  if (CemOhpcfGetCompressorStateInternal(CEM_OHPCF_USE_CASE(self), remote_entity_addr)
+      == kCompressorOhpcfStateUndefined) {
     err = kEebusErrorNoChange;
   } else {
     err = CemOhpcfWriteState(CEM_OHPCF_USE_CASE(self), remote_entity_addr, kPowerSequenceStateTypeInvalid, cb, ctx);
@@ -362,7 +407,8 @@ EebusError CemOhpcfWritePauseCommand(
 
   DEVICE_LOCAL_LOCK(use_case->local_device);
 
-  if (CEM_OHPCF_USE_CASE(self)->state != kCompressorOhpcfStateRunning) {
+  if (CemOhpcfGetCompressorStateInternal(CEM_OHPCF_USE_CASE(self), remote_entity_addr)
+      != kCompressorOhpcfStateRunning) {
     err = kEebusErrorNoChange;
   } else {
     err = CemOhpcfWriteState(CEM_OHPCF_USE_CASE(self), remote_entity_addr, kPowerSequenceStateTypePaused, cb, ctx);
@@ -389,7 +435,7 @@ EebusError CemOhpcfWriteResumeCommand(
 
   DEVICE_LOCAL_LOCK(use_case->local_device);
 
-  if (CEM_OHPCF_USE_CASE(self)->state != kCompressorOhpcfStatePaused) {
+  if (CemOhpcfGetCompressorStateInternal(CEM_OHPCF_USE_CASE(self), remote_entity_addr) != kCompressorOhpcfStatePaused) {
     err = kEebusErrorNoChange;
   } else {
     err = CemOhpcfWriteState(CEM_OHPCF_USE_CASE(self), remote_entity_addr, kPowerSequenceStateTypeRunning, cb, ctx);
