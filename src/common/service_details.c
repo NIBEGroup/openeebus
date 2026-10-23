@@ -44,6 +44,8 @@ EebusError ServiceDetailsConstruct(
   // Initialise every pointer before the first early return: the caller frees
   // the struct via ServiceDetailsDelete() on any error, which would otherwise
   // free uninitialised pointers (GCC -Wmaybe-uninitialized at -O3).
+  service_details->cert_fingerprint_sha256 = NULL;
+
   service_details->ski         = NULL;
   service_details->ipv4        = NULL;
   service_details->ship_id     = NULL;
@@ -105,6 +107,10 @@ ServiceDetails* ServiceDetailsCopy(const ServiceDetails* src) {
     return NULL;
   }
 
+  // Copied without failing when there is none: a fingerprint is optional, since
+  // a service trusted by a classic SHIP mechanism may never have one.
+  service_details_copy->cert_fingerprint_sha256 = StringCopy(src->cert_fingerprint_sha256);
+
   service_details_copy->auto_accept = src->auto_accept;
   service_details_copy->is_trusted  = src->is_trusted;
   service_details_copy->state       = src->state;
@@ -117,6 +123,9 @@ void ServiceDetailsDestruct(ServiceDetails* service_details) {
 
   StringDelete((char*)service_details->ipv4);
   service_details->ipv4 = NULL;
+
+  StringDelete((char*)service_details->cert_fingerprint_sha256);
+  service_details->cert_fingerprint_sha256 = NULL;
 
   StringDelete((char*)service_details->ship_id);
   service_details->ship_id = NULL;

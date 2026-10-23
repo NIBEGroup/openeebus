@@ -234,11 +234,14 @@ EebusError HemsStart(Hems* hems, int32_t port, const char* role, TlsCertificateO
   EebusServiceConfigSetAlternateIdentifier(hems->cfg, "OpenEEBUS-HEMS-123456789");
 
   hems->service = EebusServiceCreate(hems->cfg, role, tls_certificate, SERVICE_READER_OBJECT(hems));
+
   if (hems->service == NULL) {
     EebusServiceConfigDelete(hems->cfg);
     hems->cfg = NULL;
     return kEebusErrorInit;
   }
+
+  EEBUS_CLI_SET_PAIRING(hems->cli, hems->service, tls_certificate, EebusServiceConfigGetShipId(hems->cfg));
 
   printf("Starting with SKI = %s\n", EEBUS_SERVICE_GET_LOCAL_SKI(hems->service));
 

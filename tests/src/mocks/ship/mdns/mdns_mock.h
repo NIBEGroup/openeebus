@@ -26,7 +26,7 @@
 #include <memory>
 
 #include "src/common/eebus_malloc.h"
-#include "src/ship/api/mdns_interface.h"
+#include "src/ship/api/ship_mdns_interface.h"
 
 class MdnsGMockInterface {
  public:
@@ -37,6 +37,11 @@ class MdnsGMockInterface {
   virtual EebusError RegisterService(ShipMdnsObject* self)          = 0;
   virtual void DeregisterService(ShipMdnsObject* self)              = 0;
   virtual void SetAutoaccept(ShipMdnsObject* self, bool autoaccept) = 0;
+  virtual EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesFoundCallback cb, void* ctx) = 0;
+  virtual void StopPairingBrowse(ShipMdnsObject* self)                                                         = 0;
+  virtual EebusError RegisterPairingService(ShipMdnsObject* self, const ShipPairingEntry* entry)               = 0;
+  virtual void DeregisterPairingService(ShipMdnsObject* self)                                                  = 0;
+  virtual bool SupportsPairing(ShipMdnsObject* self)                                                           = 0;
 };
 
 class MdnsGMock : public MdnsGMockInterface {
@@ -48,6 +53,11 @@ class MdnsGMock : public MdnsGMockInterface {
   MOCK_METHOD1(RegisterService, EebusError(ShipMdnsObject*));
   MOCK_METHOD1(DeregisterService, void(ShipMdnsObject*));
   MOCK_METHOD2(SetAutoaccept, void(ShipMdnsObject*, bool));
+  MOCK_METHOD3(StartPairingBrowse, EebusError(ShipMdnsObject*, OnShipPairingEntriesFoundCallback, void*));
+  MOCK_METHOD1(StopPairingBrowse, void(ShipMdnsObject*));
+  MOCK_METHOD2(RegisterPairingService, EebusError(ShipMdnsObject*, const ShipPairingEntry*));
+  MOCK_METHOD1(DeregisterPairingService, void(ShipMdnsObject*));
+  MOCK_METHOD1(SupportsPairing, bool(ShipMdnsObject*));
 };
 
 typedef struct MdnsMock {
@@ -62,7 +72,7 @@ MdnsMock* MdnsMockCreate(void);
 
 static inline void MdnsMockDelete(MdnsMock* self) {
   if (self != nullptr) {
-    MDNS_DESTRUCT(MDNS_OBJECT(self));
+    SHIP_MDNS_DESTRUCT(SHIP_MDNS_OBJECT(self));
     EEBUS_FREE(self);
   }
 }

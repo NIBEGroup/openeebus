@@ -1,0 +1,255 @@
+/*
+ * Copyright 2025 NIBE AB
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * @file
+ * @brief EEBUS CLI SHIP Pairing Service commands handling
+ */
+
+#include "src/cli/eebus_cli_pairing.h"
+
+#include <stdio.h>
+#include <string.h>
+
+#include "src/common/string_util.h"
+#include "src/ship/ship_pairing/ship_pairing_request.h"
+#include "src/ship/tls_certificate/tls_certificate.h"
+
+typedef struct PairingCli PairingCli;
+
+struct PairingCli {
+  /** Implements the EEBUS CLI Handler Interface */
+  EebusCliHandlerObject obj;
+
+  EebusServiceObject* service;
+  const TlsCertificateObject* tls_certificate;
+  const char* ship_id;
+  ShipPairingRequest* request;
+};
+
+#define PAIRING_CLI(obj) ((PairingCli*)(obj))
+
+static void Destruct(EebusCliHandlerObject* self);
+static void HandleCmd(const EebusCliHandlerObject* self, const char* const* tokens, size_t num_tokens);
+
+static const EebusCliHandlerInterface pairing_cli_methods = {
+    .destruct   = Destruct,
+    .handle_cmd = HandleCmd,
+};
+
+EebusError PairingCliConstruct(
+    PairingCli* self,
+    EebusServiceObject* service,
+    const TlsCertificateObject* tls_certificate,
+    const char* ship_id
+);
+
+EebusError PairingCliConstruct(
+    PairingCli* self,
+    EebusServiceObject* service,
+    const TlsCertificateObject* tls_certificate,
+    const char* ship_id
+) {
+  EEBUS_CLI_HANDLER_INTERFACE(self) = &pairing_cli_methods;
+  self->service                     = service;
+  self->tls_certificate             = tls_certificate;
+  self->ship_id                     = ship_id;
+  self->request                     = NULL;
+
+  if ((service == NULL) || (tls_certificate == NULL)) {
+    return kEebusErrorInputArgumentNull;
+  }
+
+  return kEebusErrorOk;
+}
+
+EebusCliHandlerObject*
+PairingCliCreate(EebusServiceObject* service, const TlsCertificateObject* tls_certificate, const char* ship_id) {
+  PairingCli* const pairing_cli = (PairingCli*)EEBUS_MALLOC(sizeof(PairingCli));
+  if (pairing_cli == NULL) {
+    return NULL;
+  }
+
+  if (PairingCliConstruct(pairing_cli, service, tls_certificate, ship_id) != kEebusErrorOk) {
+    PairingCliDelete(EEBUS_CLI_HANDLER_OBJECT(pairing_cli));
+    return NULL;
+  }
+
+  return EEBUS_CLI_HANDLER_OBJECT(pairing_cli);
+}
+
+static void Destruct(EebusCliHandlerObject* self) {
+  PairingCli* const pairing_cli = PAIRING_CLI(self);
+
+  if (pairing_cli->request != NULL) {
+    SHIP_NODE_ANNOUNCE_SHIP_PAIRING_REQUEST(EebusServiceGetShipNode(pairing_cli->service), NULL);
+    ShipPairingRequestDelete(pairing_cli->request);
+    pairing_cli->request = NULL;
+  }
+}
+
+static void HandlePairingCliPrintUsage(void) {
+  printf("SHIP Pairing Service commands:\n");
+  printf("  pairing info                                  what an administrator collects about this node\n");
+  printf("  pairing secret <32 hex digits>                the secret a request to this node is authenticated with\n");
+  printf("  pairing announce <shipId> <fingerprint> <secret>   ask that node to trust this one\n");
+  printf("  pairing stop                                  withdraw the announced request\n");
+  printf("  pairing status                                what this node is doing\n");
+}
+
+static const char* PairingCliOwnFingerprint(const PairingCli* self) {
+  return TlsCertificateCalcFingerprintSha256(
+      (const uint8_t*)TLS_CERTIFICATE_GET_CERTIFICATE(self->tls_certificate),
+      TLS_CERTIFICATE_GET_CERTIFICATE_SIZE(self->tls_certificate)
+  );
+}
+
+/**
+ * @brief Prints what an administrator has to carry to the other node
+ *
+ * The same values a QR code would carry (section 12), printed because these
+ * examples have no display.
+ */
+static void HandlePairingCliInfo(const PairingCli* self) {
+  const char* const fingerprint = PairingCliOwnFingerprint(self);
+  const char* const curve       = TlsCertificateGetCurveName(
+      (const uint8_t*)TLS_CERTIFICATE_GET_CERTIFICATE(self->tls_certificate),
+      TLS_CERTIFICATE_GET_CERTIFICATE_SIZE(self->tls_certificate)
+  );
+
+  printf("SHIP ID:     %s\n", (self->ship_id != NULL) ? self->ship_id : "(none)");
+  printf("Fingerprint: %s\n", (fingerprint != NULL) ? fingerprint : "(none)");
+  printf("Curve:       %s\n", (curve != NULL) ? curve : "(unsupported)");
+  printf("Secret:      set it with \"pairing secret <32 hex digits>\"\n");
+
+  StringDelete((char*)fingerprint);
+}
+
+static void HandlePairingCliSetSecret(const PairingCli* self, const char* secret_hex) {
+  ShipPairingObject* const pairing = SHIP_NODE_GET_SHIP_PAIRING(EebusServiceGetShipNode(self->service));
+  if (pairing == NULL) {
+    printf("This node has no shippairing evaluator\n");
+    return;
+  }
+
+  uint8_t secret[SHIP_PAIRING_SECRET_SIZE];
+  if (!StringHexToBytes(secret_hex, secret, sizeof(secret))) {
+    printf("The secret has to be exactly %d hexadecimal digits\n", SHIP_PAIRING_SECRET_SIZE * 2);
+    return;
+  }
+
+  SHIP_PAIRING_SET_SECRET(pairing, secret, sizeof(secret));
+  memset(secret, 0, sizeof(secret));
+
+  printf("Secret set. This node now evaluates requests addressed to it.\n");
+}
+
+static void
+HandlePairingCliAnnounce(PairingCli* self, const char* for_id, const char* for_par, const char* secret_hex) {
+  uint8_t secret[SHIP_PAIRING_SECRET_SIZE];
+  if (!StringHexToBytes(secret_hex, secret, sizeof(secret))) {
+    printf("The secret has to be exactly %d hexadecimal digits\n", SHIP_PAIRING_SECRET_SIZE * 2);
+    return;
+  }
+
+  const ShipPairingRequestConfig config = {
+      .instance_name   = self->ship_id,
+      .for_id          = for_id,
+      .for_par         = for_par,
+      .secret          = secret,
+      .secret_size     = sizeof(secret),
+      .trust_id        = self->ship_id,
+      .tls_certificate = self->tls_certificate,
+  };
+
+  ShipPairingRequest* const request = ShipPairingRequestCreate(&config);
+  memset(secret, 0, sizeof(secret));
+
+  if (request == NULL) {
+    printf("Could not build the request. Check the SHIP ID, fingerprint and secret.\n");
+    return;
+  }
+
+  // Section 4.2: devZ trusts devA before publishing the request.
+  if (SHIP_NODE_REGISTER_REMOTE_FINGERPRINT_WITH_SHIP_ID(EebusServiceGetShipNode(self->service), for_id, for_par)
+      != kEebusErrorOk) {
+    printf(
+        "Could not configure trust in the target node. Stop any existing connection before changing its fingerprint\n"
+    );
+    ShipPairingRequestDelete(request);
+    return;
+  }
+
+  // Section 5.5: announcing again replaces what was there, which is withdrawn first.
+  ShipPairingRequestDelete(self->request);
+  self->request = request;
+
+  const ShipPairingEntry* const entry = ShipPairingRequestGetEntry(request);
+  if (SHIP_NODE_ANNOUNCE_SHIP_PAIRING_REQUEST(EebusServiceGetShipNode(self->service), entry) != kEebusErrorOk) {
+    printf("Could not announce the request\n");
+    return;
+  }
+
+  printf("Announcing a request for %s\n", for_id);
+  printf("  nonce:  %s\n", ShipPairingEntryGetTrustNonce(entry));
+  printf("  digest: %s\n", ShipPairingEntryGetDigest(entry));
+}
+
+static void HandlePairingCliStop(PairingCli* self) {
+  if (self->request != NULL) {
+    ShipPairingRequestStop(self->request);
+  }
+
+  SHIP_NODE_ANNOUNCE_SHIP_PAIRING_REQUEST(EebusServiceGetShipNode(self->service), NULL);
+  printf("Request withdrawn\n");
+}
+
+static void HandlePairingCliStatus(const PairingCli* self) {
+  ShipPairingObject* const pairing = SHIP_NODE_GET_SHIP_PAIRING(EebusServiceGetShipNode(self->service));
+
+  if (pairing != NULL) {
+    printf("Processing addCu-requests: %s\n", SHIP_PAIRING_IS_ADD_CU_ACTIVATED(pairing) ? "yes" : "no");
+    printf("Paired by a request:       %s\n", SHIP_PAIRING_HAS_TRUSTED_PEER(pairing) ? "yes" : "no");
+  }
+
+  if (self->request != NULL) {
+    printf("Announcing a request:      %s\n", ShipPairingRequestIsAnnouncing(self->request) ? "yes" : "no");
+  }
+}
+
+static void HandleCmd(const EebusCliHandlerObject* self, const char* const* tokens, size_t num_tokens) {
+  PairingCli* const pairing_cli = PAIRING_CLI(self);
+
+  if (num_tokens < 2) {
+    HandlePairingCliPrintUsage();
+    return;
+  }
+
+  const char* const verb = tokens[1];
+
+  if ((strcmp(verb, "info") == 0) && (num_tokens == 2)) {
+    HandlePairingCliInfo(pairing_cli);
+  } else if ((strcmp(verb, "secret") == 0) && (num_tokens == 3)) {
+    HandlePairingCliSetSecret(pairing_cli, tokens[2]);
+  } else if ((strcmp(verb, "announce") == 0) && (num_tokens == 5)) {
+    HandlePairingCliAnnounce(pairing_cli, tokens[2], tokens[3], tokens[4]);
+  } else if ((strcmp(verb, "stop") == 0) && (num_tokens == 2)) {
+    HandlePairingCliStop(pairing_cli);
+  } else if ((strcmp(verb, "status") == 0) && (num_tokens == 2)) {
+    HandlePairingCliStatus(pairing_cli);
+  } else {
+    HandlePairingCliPrintUsage();
+  }
+}

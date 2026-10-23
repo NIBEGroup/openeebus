@@ -53,6 +53,19 @@ struct ServiceDetails {
    */
   const char* ship_id;
   /**
+   * @brief SHA-256 fingerprint of the service's certificate, has to be persisted
+   *
+   * The authentication parameter SHIP Pairing Service uses in place of an SKI
+   * (SHIP Pairing Service TS 1.0.0, section 6.2), as 64 uppercase hexadecimal
+   * digits. Optional: a service trusted by a classic SHIP mechanism has an SKI
+   * and may have no fingerprint, and one trusted from a shippairing request has
+   * a fingerprint before anything has established its SKI.
+   *
+   * Section 10.4 is explicit that this is not a second trust store. A service
+   * trusted either way is one entry here, and may carry both.
+   */
+  const char* cert_fingerprint_sha256;
+  /**
    * @brief The EEBUS device type of the device model
    */
   const char* device_type;
@@ -103,23 +116,58 @@ void ServiceDetailsDelete(ServiceDetails* service_details);
  * @param service_details Service Details instance to get the SKI
  * @return Service Details SKI
  */
-static inline const char* ServiceDetailsGetSki(const ServiceDetails* service_details) { return service_details->ski; }
+static inline const char* ServiceDetailsGetSki(const ServiceDetails* service_details) {
+  return service_details->ski;
+}
 
 /**
  * @brief Get the Service Details IPv4
  * @param service_details Service Details instance to get the IPv4
  * @return Service Details IPv4
  */
-static inline const char* ServiceDetailsGetIpv4(ServiceDetails* service_details) { return service_details->ipv4; }
+static inline const char* ServiceDetailsGetIpv4(ServiceDetails* service_details) {
+  return service_details->ipv4;
+}
 
 /**
  * @brief Set the Service Details IPv4. Creates a string copy
+ * Retains the current value if allocation fails. NULL clears the value.
  * @param service_details Service Details instance to set the IPv4
  * @param ipv4 IPv4 to be set
  */
 static inline void ServiceDetailsSetIpv4(ServiceDetails* service_details, const char* ipv4) {
+  char* const replacement = StringCopy(ipv4);
+  if ((ipv4 != NULL) && (replacement == NULL)) {
+    return;
+  }
+
   StringDelete((char*)service_details->ipv4);
-  service_details->ipv4 = StringCopy(ipv4);
+  service_details->ipv4 = replacement;
+}
+
+/**
+ * @brief Get the Service Details certificate fingerprint
+ * @param service_details Service Details instance to get the fingerprint
+ * @return SHA-256 fingerprint as uppercase hexadecimal digits, or NULL if none
+ */
+static inline const char* ServiceDetailsGetCertFingerprint(const ServiceDetails* service_details) {
+  return service_details->cert_fingerprint_sha256;
+}
+
+/**
+ * @brief Set the Service Details certificate fingerprint. Creates a string copy
+ * Retains the current value if allocation fails. NULL clears the value.
+ * @param service_details Service Details instance to set the fingerprint
+ * @param fingerprint SHA-256 fingerprint as uppercase hexadecimal digits
+ */
+static inline void ServiceDetailsSetCertFingerprint(ServiceDetails* service_details, const char* fingerprint) {
+  char* const replacement = StringCopy(fingerprint);
+  if ((fingerprint != NULL) && (replacement == NULL)) {
+    return;
+  }
+
+  StringDelete((char*)service_details->cert_fingerprint_sha256);
+  service_details->cert_fingerprint_sha256 = replacement;
 }
 
 /**
@@ -127,7 +175,9 @@ static inline void ServiceDetailsSetIpv4(ServiceDetails* service_details, const 
  * @param service_details Service Details instance to get the SHIP Id
  * @return Service Details SHIP Id
  */
-static inline const char* ServiceDetailsGetShipId(ServiceDetails* service_details) { return service_details->ship_id; }
+static inline const char* ServiceDetailsGetShipId(ServiceDetails* service_details) {
+  return service_details->ship_id;
+}
 
 /**
  * @brief Get the Service Details Device Type
@@ -143,7 +193,9 @@ static inline const char* ServiceDetailsGetDeviceType(ServiceDetails* service_de
  * @param service_details Service Details instance to get the Auto Accept flag
  * @return Service Details Auto Accept flag
  */
-static inline bool ServiceDetailsGetAutoAccept(ServiceDetails* service_details) { return service_details->auto_accept; }
+static inline bool ServiceDetailsGetAutoAccept(ServiceDetails* service_details) {
+  return service_details->auto_accept;
+}
 
 /**
  * @brief Set the Service Details Auto Accept flag
@@ -159,7 +211,9 @@ static inline void ServiceDetailsSetAutoAccept(ServiceDetails* service_details, 
  * @param service_details Service Details instance to get the Is Trusted flag
  * @return Service Details Is Trusted flag
  */
-static inline bool ServiceDetailsGetIsTrusted(ServiceDetails* service_details) { return service_details->is_trusted; }
+static inline bool ServiceDetailsGetIsTrusted(ServiceDetails* service_details) {
+  return service_details->is_trusted;
+}
 
 /**
  * @brief Set the Service Details Is Trusted flag
@@ -175,7 +229,9 @@ static inline void ServiceDetailsSetIsTrusted(ServiceDetails* service_details, b
  * @param service_details Service Details instance to get the Connection State
  * @return Service Details Connection State
  */
-static inline bool ServiceDetailsGetConnectionState(ServiceDetails* service_details) { return service_details->state; }
+static inline bool ServiceDetailsGetConnectionState(ServiceDetails* service_details) {
+  return service_details->state;
+}
 
 /**
  * @brief Set the Service Details Connection State

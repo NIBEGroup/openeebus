@@ -89,6 +89,10 @@ struct ShipConnectionInterface {
    * @brief Transformed from ShipHandshakeState()
    */
   SmeState (*get_state)(ShipConnectionObject* self, EebusError* err);
+  /**
+   * @brief The "waiting" value the peer last granted, in ms, or 0 if not pending
+   */
+  uint32_t (*get_pending_waiting_ms)(ShipConnectionObject* self);
 };
 
 /**
@@ -153,6 +157,12 @@ struct ShipConnectionObject {
  */
 #define SHIP_CONNECTION_ABORT_PENDING_HANDSHAKE(obj) \
   (SHIP_CONNECTION_INTERFACE(obj)->abort_pending_handshake(SHIP_CONNECTION_OBJECT(obj)))
+
+/**
+ * @brief Ship Connection Get Pending Waiting Ms caller definition
+ */
+#define SHIP_CONNECTION_GET_PENDING_WAITING_MS(obj) \
+  (SHIP_CONNECTION_INTERFACE(obj)->get_pending_waiting_ms(SHIP_CONNECTION_OBJECT(obj)))
 
 /**
  * @brief Ship Connection Get State caller definition

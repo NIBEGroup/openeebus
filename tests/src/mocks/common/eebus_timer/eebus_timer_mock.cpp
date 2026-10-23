@@ -52,6 +52,9 @@ EebusError EebusTimerMockConstruct(EebusTimerMock* self) {
     return kEebusErrorMemoryAllocate;
   }
 
+  self->cb  = nullptr;
+  self->ctx = nullptr;
+
   return kEebusErrorOk;
 }
 
@@ -70,9 +73,16 @@ EebusTimerMock* EebusTimerMockCreate(void) {
 }
 
 EebusTimerObject* EebusTimerCreate(EebusTimerTimeoutCallback cb, void* ctx) {
-  UNUSED(cb);
-  UNUSED(ctx);
-  return EEBUS_TIMER_OBJECT(EebusTimerMockCreate());
+  EebusTimerMock* const mock = EebusTimerMockCreate();
+  if (mock == nullptr) {
+    return nullptr;
+  }
+
+  // Retained so that a test can expire the timer with EebusTimerMockExpire().
+  mock->cb  = cb;
+  mock->ctx = ctx;
+
+  return EEBUS_TIMER_OBJECT(mock);
 }
 
 void Destruct(EebusTimerObject* self) {

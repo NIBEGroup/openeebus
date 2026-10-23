@@ -36,6 +36,13 @@ static void Stop(ShipNodeObject* self);
 static void RegisterRemoteSki(ShipNodeObject* self, const char* ski, bool is_trusted);
 static void UnregisterRemoteSki(ShipNodeObject* self, const char* ski);
 static void CancelPairingWithSki(ShipNodeObject* self, const char* ski);
+static void ApprovePendingHandshakeWithSki(ShipNodeObject* self, const char* ski);
+static uint32_t GetPendingWaitingMsWithSki(ShipNodeObject* self, const char* ski);
+static void RegisterRemoteFingerprint(ShipNodeObject* self, const char* fingerprint);
+static ShipPairingObject* GetShipPairing(ShipNodeObject* self);
+static EebusError AnnounceShipPairingRequest(ShipNodeObject* self, const ShipPairingEntry* entry);
+static EebusError
+RegisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint);
 
 static const ShipNodeInterface ship_node_methods = {
     .info_provider_interface = {
@@ -48,11 +55,17 @@ static const ShipNodeInterface ship_node_methods = {
         .setup_remote_device              = SetupRemoteDevice,
     },
 
-    .start                   = Start,
-    .stop                    = Stop,
-    .register_remote_ski     = RegisterRemoteSki,
-    .unregister_remote_ski   = UnregisterRemoteSki,
-    .cancel_pairing_with_ski = CancelPairingWithSki,
+    .start                              = Start,
+    .stop                               = Stop,
+    .register_remote_ski                = RegisterRemoteSki,
+    .unregister_remote_ski              = UnregisterRemoteSki,
+    .cancel_pairing_with_ski            = CancelPairingWithSki,
+    .approve_pending_handshake_with_ski = ApprovePendingHandshakeWithSki,
+    .get_pending_waiting_ms_with_ski    = GetPendingWaitingMsWithSki,
+    .register_remote_fingerprint        = RegisterRemoteFingerprint,
+    .get_ship_pairing                   = GetShipPairing,
+    .announce_ship_pairing_request      = AnnounceShipPairingRequest,
+    .register_remote_fingerprint_with_ship_id = RegisterRemoteFingerprintWithShipId,
 };
 
 static EebusError ShipNodeMockConstruct(ShipNodeMock* self);
@@ -142,4 +155,34 @@ void UnregisterRemoteSki(ShipNodeObject* self, const char* ski) {
 void CancelPairingWithSki(ShipNodeObject* self, const char* ski) {
   ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
   mock->gmock->CancelPairingWithSki(self, ski);
+}
+
+void ApprovePendingHandshakeWithSki(ShipNodeObject* self, const char* ski) {
+  ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
+  mock->gmock->ApprovePendingHandshakeWithSki(self, ski);
+}
+
+uint32_t GetPendingWaitingMsWithSki(ShipNodeObject* self, const char* ski) {
+  ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
+  return mock->gmock->GetPendingWaitingMsWithSki(self, ski);
+}
+
+void RegisterRemoteFingerprint(ShipNodeObject* self, const char* fingerprint) {
+  ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
+  mock->gmock->RegisterRemoteFingerprint(self, fingerprint);
+}
+
+ShipPairingObject* GetShipPairing(ShipNodeObject* self) {
+  ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
+  return mock->gmock->GetShipPairing(self);
+}
+
+EebusError AnnounceShipPairingRequest(ShipNodeObject* self, const ShipPairingEntry* entry) {
+  ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
+  return mock->gmock->AnnounceShipPairingRequest(self, entry);
+}
+
+EebusError RegisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint) {
+  ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
+  return mock->gmock->RegisterRemoteFingerprintWithShipId(self, ship_id, fingerprint);
 }

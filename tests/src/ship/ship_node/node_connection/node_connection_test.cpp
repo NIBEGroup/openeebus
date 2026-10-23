@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 
 #include "src/ship/ship_connection/ship_connection.h"
+#include "src/ship/ship_node/node_connection_internal.h"
 #include "tests/src/memory_leak.inc"
 #include "tests/src/mocks/common/eebus_timer/eebus_timer_mock.h"
 #include "tests/src/mocks/ship/ship_connection/ship_connection_mock.h"
@@ -71,6 +72,38 @@ TEST_F(NodeConnectionTest, OnConnectionClosedIncrements) {
   EXPECT_EQ(NODE_CONNECTION_ON_CONNECTION_CLOSED(nc_), 0u);
   EXPECT_EQ(NODE_CONNECTION_ON_CONNECTION_CLOSED(nc_), 3000u);
   EXPECT_FALSE(NODE_CONNECTION_IS_ATTEMPT_RUNNING(nc_));
+}
+
+TEST_F(NodeConnectionTest, ReleasedApprovalCannotAuthorizeAReplacementAtTheSameAddress) {
+  NodeConnection* peer = NODE_CONNECTION(nc_);
+  ShipConnectionObject connection{};
+  peer->connection          = &connection;
+  peer->pending_approval_id = 7;
+  EXPECT_TRUE(NodeConnectionHasPendingApproval(peer, &connection, 7));
+
+  EXPECT_EQ(NODE_CONNECTION_RELEASE_SHIP_CONNECTION(nc_), &connection);
+  EXPECT_EQ(peer->pending_approval_id, 0u);
+  // Model allocator address reuse: a replacement has a new approval token.
+  peer->connection          = &connection;
+  peer->pending_approval_id = 8;
+  EXPECT_FALSE(NodeConnectionHasPendingApproval(peer, &connection, 7));
+  EXPECT_TRUE(NodeConnectionHasPendingApproval(peer, &connection, 8));
+  NODE_CONNECTION_RELEASE_SHIP_CONNECTION(nc_);
+}
+
+TEST_F(NodeConnectionTest, ClosingUnapprovedConnectionClearsItsTokenWithoutGrantingTrust) {
+  NodeConnection* peer = NODE_CONNECTION(nc_);
+  ShipConnectionObject connection{};
+  peer->connection          = &connection;
+  peer->pending_approval_id = 7;
+  peer->provisional         = true;
+
+  NODE_CONNECTION_ON_CONNECTION_CLOSED(nc_);
+
+  EXPECT_EQ(peer->pending_approval_id, 0u);
+  EXPECT_FALSE(NodeConnectionHasPendingApproval(peer, &connection, 7));
+  EXPECT_FALSE(peer->is_trusted);
+  EXPECT_TRUE(peer->provisional);
 }
 
 TEST_F(NodeConnectionTest, OwnsConnection) {

@@ -51,7 +51,7 @@ struct EebusMutexInterface {
  * @brief EEBUS Mutex Object Structure
  */
 struct EebusMutexObject {
-  const EebusMutexInterface* interface;
+  const EebusMutexInterface* interface_;
 };
 
 /**
@@ -62,7 +62,7 @@ struct EebusMutexObject {
 /**
  * @brief EEBUS Mutex Interface class pointer typecast
  */
-#define EEBUS_MUTEX_INTERFACE(obj) (EEBUS_MUTEX_OBJECT(obj)->interface)
+#define EEBUS_MUTEX_INTERFACE(obj) (EEBUS_MUTEX_OBJECT(obj)->interface_)
 
 /**
  * @brief EEBUS Mutex Destruct caller definition
