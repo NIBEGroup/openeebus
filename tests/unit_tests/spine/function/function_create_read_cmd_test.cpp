@@ -45,7 +45,9 @@ TEST_P(FunctionCreateReadCmdTests, FunctionCreateReadCmdTests) {
   std::unique_ptr<char[], decltype(&JsonFree)> s_cmd{JsonUnformat(GetParam().cmd_txt), JsonFree};
   ASSERT_NE(GetParam().cmd_txt.size() != 0, s_cmd == nullptr) << "Wrong test input!";
   std::unique_ptr<FunctionObject, decltype(&FunctionDelete)> fcn{
-      FunctionCreate(GetParam().function_type), FunctionDelete};
+      FunctionCreate(GetParam().function_type),
+      FunctionDelete
+  };
   ASSERT_NE(fcn, nullptr);
 
   std::unique_ptr<FilterType, decltype(&FilterDelete)> filter_partial
@@ -54,7 +56,9 @@ TEST_P(FunctionCreateReadCmdTests, FunctionCreateReadCmdTests) {
 
   // Act: Create the read command
   std::unique_ptr<CmdType, decltype(&CmdDelete)> cmd{
-      FUNCTION_CREATE_READ_CMD(fcn.get(), filter_partial.get()), CmdDelete};
+      FUNCTION_CREATE_READ_CMD(fcn.get(), filter_partial.get()),
+      CmdDelete
+  };
   ASSERT_NE(cmd, nullptr);
 
   // Assert: Verify with expected command

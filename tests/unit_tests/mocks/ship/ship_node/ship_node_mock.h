@@ -32,11 +32,11 @@
 class ShipNodeGMockInterface : public InfoProviderMock {
  public:
   virtual ~ShipNodeGMockInterface() {};
-  virtual void Start(ShipNodeObject* self)                                               = 0;
-  virtual void Stop(ShipNodeObject* self)                                                = 0;
-  virtual void RegisterRemoteSki(ShipNodeObject* self, const char* ski, bool is_trusted) = 0;
-  virtual void UnregisterRemoteSki(ShipNodeObject* self, const char* ski)                = 0;
-  virtual void CancelPairingWithSki(ShipNodeObject* self, const char* ski)               = 0;
+  virtual void Start(ShipNodeObject* self)                                                           = 0;
+  virtual void Stop(ShipNodeObject* self)                                                            = 0;
+  virtual void RegisterRemoteSki(ShipNodeObject* self, const char* ski, bool is_trusted)             = 0;
+  virtual void UnregisterRemoteSki(ShipNodeObject* self, const char* ski)                            = 0;
+  virtual void CancelPairingWithSki(ShipNodeObject* self, const char* ski)                           = 0;
   virtual void ApprovePendingHandshakeWithSki(ShipNodeObject* self, const char* ski)                 = 0;
   virtual uint32_t GetPendingWaitingMsWithSki(ShipNodeObject* self, const char* ski)                 = 0;
   virtual void RegisterRemoteFingerprint(ShipNodeObject* self, const char* fingerprint)              = 0;

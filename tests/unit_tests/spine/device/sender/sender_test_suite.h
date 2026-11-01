@@ -33,7 +33,9 @@ class SenderTestSuite : public testing::Test {
  public:
   void SetUp();
   void TearDown();
-  static inline SenderObject* GetSender() { return sender_.get(); }
+  static inline SenderObject* GetSender() {
+    return sender_.get();
+  }
 
  protected:
   static void ExpectMessageWrite(const std::string_view& msg);

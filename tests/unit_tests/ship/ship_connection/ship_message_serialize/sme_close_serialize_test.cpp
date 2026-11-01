@@ -46,7 +46,9 @@ struct SmeCloseSerializeTestInput {
   std::string_view msg;
 };
 
-std::ostream& operator<<(std::ostream& os, SmeCloseSerializeTestInput Test) { return os << Test.description; }
+std::ostream& operator<<(std::ostream& os, SmeCloseSerializeTestInput Test) {
+  return os << Test.description;
+}
 
 class SmeCloseSerializeTests : public ::testing::TestWithParam<SmeCloseSerializeTestInput> {};
 

@@ -34,7 +34,9 @@ struct DataPersonTestInput {
   ValuePtr<AddressTestData> address = nullptr;
 };
 
-std::ostream& operator<<(std::ostream& os, DataPersonTestInput test_input) { return os << test_input.description; }
+std::ostream& operator<<(std::ostream& os, DataPersonTestInput test_input) {
+  return os << test_input.description;
+}
 
 class DataPersonTests : public ::testing::TestWithParam<DataPersonTestInput> {};
 
@@ -131,7 +133,9 @@ TEST_P(DataPersonReadElementsTests, DataPersonReadElementsTests) {
   std::unique_ptr<Person, decltype(&PersonDelete)> person_dst_in{PersonParse(s_dst_in.get()), PersonDelete};
   std::unique_ptr<Person, decltype(&PersonDelete)> person_src{PersonParse(s_src.get()), PersonDelete};
   std::unique_ptr<PersonElements, decltype(&PersonElementsDelete)> elements{
-      PersonElementsParse(s_elements.get()), PersonElementsDelete};
+      PersonElementsParse(s_elements.get()),
+      PersonElementsDelete
+  };
   std::unique_ptr<Person, decltype(&PersonDelete)> person_dst_out_expected{PersonParse(s_dst_out.get()), PersonDelete};
   ASSERT_NE(person_dst_in, nullptr);
   ASSERT_NE(person_src, nullptr);
@@ -140,9 +144,13 @@ TEST_P(DataPersonReadElementsTests, DataPersonReadElementsTests) {
 
   // Act: write elements
   std::unique_ptr<Person, decltype(&PersonDelete)> person_dst_out_obtained{
-      PersonReadElements(person_src.get(), person_dst_in.release(), elements.get()), PersonDelete};
+      PersonReadElements(person_src.get(), person_dst_in.release(), elements.get()),
+      PersonDelete
+  };
   std::unique_ptr<char[], decltype(&JsonFree)> s_dst_out_obtained{
-      PersonPrintUnformatted(person_dst_out_obtained.get()), JsonFree};
+      PersonPrintUnformatted(person_dst_out_obtained.get()),
+      JsonFree
+  };
 
   // Assert: Verify with expected output data
   EXPECT_STREQ(s_dst_out_obtained.get(), s_dst_out.get());
@@ -237,7 +245,9 @@ TEST_P(DataPersonDeleteElementsTests, DataPersonDeleteElementsTests) {
   ASSERT_NE(s_dst_out, nullptr) << "Wrong test input!";
   std::unique_ptr<Person, decltype(&PersonDelete)> person_dst_in{PersonParse(s_dst_in.get()), PersonDelete};
   std::unique_ptr<PersonElements, decltype(&PersonElementsDelete)> elements{
-      PersonElementsParse(s_elements.get()), PersonElementsDelete};
+      PersonElementsParse(s_elements.get()),
+      PersonElementsDelete
+  };
   std::unique_ptr<Person, decltype(&PersonDelete)> person_dst_out_expected{PersonParse(s_dst_out.get()), PersonDelete};
   ASSERT_NE(person_dst_in, nullptr);
   ASSERT_NE(elements, nullptr);
@@ -245,9 +255,13 @@ TEST_P(DataPersonDeleteElementsTests, DataPersonDeleteElementsTests) {
 
   // Act: write elements
   std::unique_ptr<Person, decltype(&PersonDelete)> person_dst_out_obtained{
-      PersonDeleteElements(person_dst_in.release(), elements.get()), PersonDelete};
+      PersonDeleteElements(person_dst_in.release(), elements.get()),
+      PersonDelete
+  };
   std::unique_ptr<char[], decltype(&JsonFree)> s_dst_out_obtained{
-      PersonPrintUnformatted(person_dst_out_obtained.get()), JsonFree};
+      PersonPrintUnformatted(person_dst_out_obtained.get()),
+      JsonFree
+  };
 
   // Assert: Verify with expected output data
   EXPECT_STREQ(s_dst_out_obtained.get(), s_dst_out.get());
@@ -346,15 +360,21 @@ TEST_P(DataPersonCopyElementsTests, DataPersonCopyElementsTests) {
   ASSERT_NE(s_ret, nullptr) << "Wrong test input!";
   std::unique_ptr<Person, decltype(&PersonDelete)> person_src{PersonParse(s_src.get()), PersonDelete};
   std::unique_ptr<PersonElements, decltype(&PersonElementsDelete)> elements{
-      PersonElementsParse(s_elements.get()), PersonElementsDelete};
+      PersonElementsParse(s_elements.get()),
+      PersonElementsDelete
+  };
   ASSERT_NE(person_src, nullptr);
   ASSERT_NE(elements, nullptr);
 
   // Act: copy elements
   std::unique_ptr<Person, decltype(&PersonDelete)> person_ret_obtained{
-      PersonCopyElements(person_src.get(), elements.get()), PersonDelete};
+      PersonCopyElements(person_src.get(), elements.get()),
+      PersonDelete
+  };
   std::unique_ptr<char[], decltype(&JsonFree)> s_ret_obtained{
-      PersonPrintUnformatted(person_ret_obtained.get()), JsonFree};
+      PersonPrintUnformatted(person_ret_obtained.get()),
+      JsonFree
+  };
 
   // Assert: Verify with expected output data
   EXPECT_STREQ(s_ret_obtained.get(), s_ret.get());

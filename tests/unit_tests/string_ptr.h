@@ -47,17 +47,21 @@ class StringPtr {
     }
   }
 
-  bool operator==(const char* s) const { return (s == nullptr) ? (_ps.get() == nullptr) : (*_ps == s); }
+  bool operator==(const char* s) const {
+    return (s == nullptr) ? (_ps.get() == nullptr) : (*_ps == s);
+  }
 
-  bool operator==(const StringPtr& p) const { return _ps == p._ps; }
+  bool operator==(const StringPtr& p) const {
+    return _ps == p._ps;
+  }
 
   StringPtr& operator=(const StringPtr& p) = delete;
   StringPtr& operator=(StringPtr&& p)      = delete;
 
   friend std::ostream& operator<<(std::ostream& os, const StringPtr& p);
   operator const char*() const {
-    return (_ps.get() != nullptr) ? (*_ps.get()).data() : nullptr; 
+    return (_ps.get() != nullptr) ? (*_ps.get()).data() : nullptr;
   }
 };
 
-#endif // TESTS_UNIT_TESTS_STRING_PTR_H
+#endif  // TESTS_UNIT_TESTS_STRING_PTR_H

@@ -45,7 +45,9 @@ struct DataSerializeTestInput {
   std::string_view msg;
 };
 
-std::ostream& operator<<(std::ostream& os, DataSerializeTestInput Test) { return os << Test.description; }
+std::ostream& operator<<(std::ostream& os, DataSerializeTestInput Test) {
+  return os << Test.description;
+}
 
 class DataSerializeTests : public ::testing::TestWithParam<DataSerializeTestInput> {};
 

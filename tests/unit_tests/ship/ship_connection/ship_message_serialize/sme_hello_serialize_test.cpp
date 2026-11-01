@@ -46,7 +46,9 @@ struct SmeHelloSerializeTestInput {
   std::string_view msg;
 };
 
-std::ostream& operator<<(std::ostream& os, SmeHelloSerializeTestInput Test) { return os << Test.description; }
+std::ostream& operator<<(std::ostream& os, SmeHelloSerializeTestInput Test) {
+  return os << Test.description;
+}
 
 class SmeHelloSerializeTests : public ::testing::TestWithParam<SmeHelloSerializeTestInput> {};
 

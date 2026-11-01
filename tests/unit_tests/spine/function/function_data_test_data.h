@@ -23,8 +23,8 @@
 
 #include "tests/unit_tests/spine/function_data.h"
 
-std::unique_ptr<FunctionData, decltype(&FunctionDataDelete)> FunctionDataTestDataParse(
-    FunctionType function_type, const std::string_view& s);
+std::unique_ptr<FunctionData, decltype(&FunctionDataDelete)>
+FunctionDataTestDataParse(FunctionType function_type, const std::string_view& s);
 std::unique_ptr<char[], decltype(&JsonFree)> FunctionDataTestDataPrint(const FunctionData* fd);
 
 #endif  // TESTS_UNIT_TESTS_SPINE_FUNCTION_FUNCTION_DATA_TEST_DATA_H_

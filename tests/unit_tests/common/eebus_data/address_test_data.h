@@ -39,15 +39,21 @@ class AddressTestData {
 
   AddressTestData(const Address& address) : street_(address.street), city_(address.city) {}
 
-  bool operator==(const Address& address) const { return (street_ == address.street) && (city_ == address.city); }
+  bool operator==(const Address& address) const {
+    return (street_ == address.street) && (city_ == address.city);
+  }
 
   bool operator==(const AddressTestData& address) const {
     return (street_ == address.street_) && (city_ == address.city_);
   }
 
   friend std::ostream& operator<<(std::ostream& os, const AddressTestData& address);
-  const StringPtr& get_street() const { return street_; }
-  const StringPtr& get_city() const { return city_; }
+  const StringPtr& get_street() const {
+    return street_;
+  }
+  const StringPtr& get_city() const {
+    return city_;
+  }
 };
 
 std::ostream& operator<<(std::ostream& os, const Address& address);

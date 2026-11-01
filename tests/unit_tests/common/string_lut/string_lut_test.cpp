@@ -21,7 +21,9 @@
 #include "tests/unit_tests/memory_leak.inc"
 #include "tests/unit_tests/value_ptr.h"
 
-static void DeleteNumber(void* n) { Uint32Delete(reinterpret_cast<uint32_t*>(n)); }
+static void DeleteNumber(void* n) {
+  Uint32Delete(reinterpret_cast<uint32_t*>(n));
+}
 
 TEST(StringLutTest, StringLutTest) {
   StringLut lut;

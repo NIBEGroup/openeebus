@@ -19,9 +19,13 @@
 #include "src/common/eebus_data/eebus_data.h"
 #include "src/common/eebus_malloc.h"
 
-Info* InfoParse(const char* s) { return (Info*)EEBUS_DATA_PARSE(&info_data_cfg, s); }
+Info* InfoParse(const char* s) {
+  return (Info*)EEBUS_DATA_PARSE(&info_data_cfg, s);
+}
 
-char* InfoPrintUnformatted(Info* info) { return EEBUS_DATA_PRINT_UNFORMATTED(&info_data_cfg, &info); }
+char* InfoPrintUnformatted(Info* info) {
+  return EEBUS_DATA_PRINT_UNFORMATTED(&info_data_cfg, &info);
+}
 
 Info* InfoCopy(const Info* info) {
   Info* info_copy = NULL;
@@ -33,7 +37,9 @@ bool InfoCompare(const Info* info_a, const Info* info_b) {
   return EEBUS_DATA_COMPARE(&info_data_cfg, &info_a, &info_data_cfg, &info_b);
 }
 
-void InfoDelete(Info* info) { EEBUS_DATA_DELETE(&info_data_cfg, &info); }
+void InfoDelete(Info* info) {
+  EEBUS_DATA_DELETE(&info_data_cfg, &info);
+}
 
 Employee* InfoEmployeeParse(const char* s) {
   return (Employee*)EEBUS_DATA_PARSE(&info_choice_data_cfg[kInfoEmployee], s);
@@ -49,7 +55,9 @@ Employee* InfoEmployeeCopy(const Employee* employee) {
   return employee_copy;
 }
 
-void InfoEmployeeDelete(Employee* employee) { EEBUS_DATA_DELETE(&info_choice_data_cfg[kInfoEmployee], &employee); }
+void InfoEmployeeDelete(Employee* employee) {
+  EEBUS_DATA_DELETE(&info_choice_data_cfg[kInfoEmployee], &employee);
+}
 
 InfoTag InfoTagCopy(InfoTag tag) {
   InfoTag tag_copy = NULL;

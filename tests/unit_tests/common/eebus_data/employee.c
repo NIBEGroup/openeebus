@@ -22,7 +22,9 @@
 #include "src/common/eebus_malloc.h"
 #include "src/common/string_util.h"
 
-Employee* EmployeeParse(const char* s) { return (Employee*)EEBUS_DATA_PARSE(&employee_data_cfg, s); }
+Employee* EmployeeParse(const char* s) {
+  return (Employee*)EEBUS_DATA_PARSE(&employee_data_cfg, s);
+}
 
 char* EmployeePrintUnformatted(Employee* employee) {
   return EEBUS_DATA_PRINT_UNFORMATTED(&employee_data_cfg, &employee);
@@ -31,7 +33,12 @@ char* EmployeePrintUnformatted(Employee* employee) {
 Employee* EmployeeCopyElements(const Employee* employee_src, const EmployeeElements* employee_elements) {
   Employee* employee_dst = NULL;
   EEBUS_DATA_READ_ELEMENTS(
-      &employee_data_cfg, &employee_src, &employee_dst, &employee_elements_cfg, &employee_elements);
+      &employee_data_cfg,
+      &employee_src,
+      &employee_dst,
+      &employee_elements_cfg,
+      &employee_elements
+  );
   return employee_dst;
 }
 
@@ -45,10 +52,15 @@ bool EmployeeCompare(const Employee* employee_a, const Employee* employee_b) {
   return EEBUS_DATA_COMPARE(&employee_data_cfg, &employee_a, &employee_data_cfg, &employee_b);
 }
 
-Employee* EmployeeReadElements(
-    const Employee* employee_src, Employee* employee_dst, const EmployeeElements* employee_elements) {
+Employee*
+EmployeeReadElements(const Employee* employee_src, Employee* employee_dst, const EmployeeElements* employee_elements) {
   EEBUS_DATA_READ_ELEMENTS(
-      &employee_data_cfg, &employee_src, &employee_dst, &employee_elements_cfg, &employee_elements);
+      &employee_data_cfg,
+      &employee_src,
+      &employee_dst,
+      &employee_elements_cfg,
+      &employee_elements
+  );
   return employee_dst;
 }
 
@@ -57,7 +69,9 @@ Employee* EmployeeDeleteElements(Employee* employee, const EmployeeElements* emp
   return employee;
 }
 
-void EmployeeDelete(Employee* employee) { EEBUS_DATA_DELETE(&employee_data_cfg, &employee); }
+void EmployeeDelete(Employee* employee) {
+  EEBUS_DATA_DELETE(&employee_data_cfg, &employee);
+}
 
 EmployeeElements* EmployeeElementsParse(const char* s) {
   return (EmployeeElements*)EEBUS_DATA_PARSE(&employee_elements_cfg, s);

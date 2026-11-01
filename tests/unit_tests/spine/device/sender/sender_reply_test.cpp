@@ -40,7 +40,9 @@ struct SenderReplyTestInput {
   std::string_view msg                                      = ""sv;
 };
 
-std::ostream& operator<<(std::ostream& os, SenderReplyTestInput test_input) { return os << test_input.description; }
+std::ostream& operator<<(std::ostream& os, SenderReplyTestInput test_input) {
+  return os << test_input.description;
+}
 
 class SenderReplyTests : public SenderTestSuite, public ::testing::WithParamInterface<SenderReplyTestInput> {};
 
@@ -48,13 +50,17 @@ TEST_P(SenderReplyTests, SenderReplyTests) {
   // Arrange: Initialize the sender address, destination address
   // and command with parameters from test input
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> header_src_addr{
-      TestDataToFeatureAddress(GetParam().request_header_src_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().request_header_src_addr.get()),
+      FeatureAddressDelete
+  };
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> header_dest_addr{
       TestDataToFeatureAddress(GetParam().request_header_dest_addr.get()),
       FeatureAddressDelete
   };
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> sender_addr{
-      TestDataToFeatureAddress(GetParam().sender_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().sender_addr.get()),
+      FeatureAddressDelete
+  };
 
   CmdType cmd = {
       .data_choice         = const_cast<NodeManagementDetailedDiscoveryDataType*>(&GetParam().data),

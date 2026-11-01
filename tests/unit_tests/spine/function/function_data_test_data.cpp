@@ -44,15 +44,17 @@ char* FunctionDataPrintUnformatted(const FunctionData* self) {
   return EEBUS_DATA_PRINT_UNFORMATTED(cfg, &self->data);
 }
 
-std::unique_ptr<FunctionData, decltype(&FunctionDataDelete)> FunctionDataTestDataParse(
-    FunctionType function_type, const std::string_view& s) {
+std::unique_ptr<FunctionData, decltype(&FunctionDataDelete)>
+FunctionDataTestDataParse(FunctionType function_type, const std::string_view& s) {
   std::unique_ptr<char[], decltype(&JsonFree)> s_unformatted{JsonUnformat(s), JsonFree};
   if (s_unformatted == nullptr) {
     return {nullptr, nullptr};
   }
 
   std::unique_ptr<FunctionData, decltype(&FunctionDataDelete)> fd{
-      FunctionDataCreate(function_type, NULL), FunctionDataDelete};
+      FunctionDataCreate(function_type, NULL),
+      FunctionDataDelete
+  };
   if (fd == nullptr) {
     return {nullptr, nullptr};
   }

@@ -23,7 +23,9 @@
 #include "tests/unit_tests/common/eebus_data/employee.h"
 #include "tests/unit_tests/common/eebus_data/person.h"
 
-Somebody* SomebodyParse(const char* s) { return (Somebody*)EEBUS_DATA_PARSE(&somebody_data_cfg, s); }
+Somebody* SomebodyParse(const char* s) {
+  return (Somebody*)EEBUS_DATA_PARSE(&somebody_data_cfg, s);
+}
 
 char* SomebodyPrintUnformatted(Somebody* somebody) {
   return EEBUS_DATA_PRINT_UNFORMATTED(&somebody_data_cfg, &somebody);
@@ -39,4 +41,6 @@ bool SomebodyCompare(const Somebody* somebody_a, const Somebody* somebody_b) {
   return EEBUS_DATA_COMPARE(&somebody_data_cfg, &somebody_a, &somebody_data_cfg, &somebody_b);
 }
 
-void SomebodyDelete(Somebody* somebody) { EEBUS_DATA_DELETE(&somebody_data_cfg, &somebody); }
+void SomebodyDelete(Somebody* somebody) {
+  EEBUS_DATA_DELETE(&somebody_data_cfg, &somebody);
+}

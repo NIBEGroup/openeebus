@@ -423,12 +423,17 @@ TEST_P(DataChoiceEmployeeCopyTests, DataChoiceEmployeeCopyTests) {
   // Arrange: Initialize the message buffers with parameters from test input
   std::unique_ptr<char[], decltype(&JsonFree)> s_src(JsonUnformat(GetParam().src_msg), JsonFree);
   ASSERT_NE(s_src, nullptr) << "Wrong test input!";
-  std::unique_ptr<Employee, decltype(&InfoEmployeeDelete)> employee_src{InfoEmployeeParse(s_src.get()), InfoEmployeeDelete};
+  std::unique_ptr<Employee, decltype(&InfoEmployeeDelete)> employee_src{
+      InfoEmployeeParse(s_src.get()),
+      InfoEmployeeDelete
+  };
   ASSERT_NE(employee_src, nullptr);
 
   // Act: copy
   std::unique_ptr<Employee, decltype(&InfoEmployeeDelete)> employee_copy{
-      InfoEmployeeCopy(employee_src.get()), InfoEmployeeDelete};
+      InfoEmployeeCopy(employee_src.get()),
+      InfoEmployeeDelete
+  };
   std::unique_ptr<char[], decltype(&JsonFree)> s_ret{InfoEmployeePrintUnformatted(employee_copy.get()), JsonFree};
 
   // Assert: Verify with expected output data

@@ -18,10 +18,10 @@
 
 #include <string_view>
 
+#include "src/common/eebus_data/eebus_data.h"
 #include "src/common/string_util.h"
 #include "src/spine/model/model.h"
 #include "src/spine/model/model_internal.h"
-#include "src/common/eebus_data/eebus_data.h"
 
 using std::literals::string_view_literals::operator""sv;
 
@@ -74,7 +74,10 @@ TEST(FunctionDataCfgTests, FunctionDataCfgNamesTest) {
 }
 
 void CheckSelectorsCfg(
-    const EebusDataCfg* selector_cfg, const EebusDataCfg* list_item_cfg_first, const char* selectors_choice_name) {
+    const EebusDataCfg* selector_cfg,
+    const EebusDataCfg* list_item_cfg_first,
+    const char* selectors_choice_name
+) {
   const size_t selectors_cfg_first_size = EebusDataGetCfgSize(selector_cfg);
 
   for (size_t i = 0; i < selectors_cfg_first_size; ++i) {

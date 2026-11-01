@@ -22,7 +22,9 @@
 #include "src/common/eebus_malloc.h"
 #include "src/common/string_util.h"
 
-Person* PersonParse(const char* s) { return (Person*)EEBUS_DATA_PARSE(&person_data_cfg,s); }
+Person* PersonParse(const char* s) {
+  return (Person*)EEBUS_DATA_PARSE(&person_data_cfg, s);
+}
 
 char* PersonPrintUnformatted(Person* person) {
   return EEBUS_DATA_PRINT_UNFORMATTED(&person_data_cfg, &person);
@@ -30,8 +32,7 @@ char* PersonPrintUnformatted(Person* person) {
 
 Person* PersonCopyElements(const Person* person_src, const PersonElements* person_elements) {
   Person* person_dst = NULL;
-  EEBUS_DATA_READ_ELEMENTS(
-      &person_data_cfg, &person_src, &person_dst, &person_elements_cfg, &person_elements);
+  EEBUS_DATA_READ_ELEMENTS(&person_data_cfg, &person_src, &person_dst, &person_elements_cfg, &person_elements);
   return person_dst;
 }
 
@@ -45,10 +46,8 @@ bool PersonCompare(const Person* person_a, const Person* person_b) {
   return EEBUS_DATA_COMPARE(&person_data_cfg, &person_a, &person_data_cfg, &person_b);
 }
 
-Person* PersonReadElements(
-    const Person* person_src, Person* person_dst, const PersonElements* person_elements) {
-  EEBUS_DATA_READ_ELEMENTS(
-      &person_data_cfg, &person_src, &person_dst, &person_elements_cfg, &person_elements);
+Person* PersonReadElements(const Person* person_src, Person* person_dst, const PersonElements* person_elements) {
+  EEBUS_DATA_READ_ELEMENTS(&person_data_cfg, &person_src, &person_dst, &person_elements_cfg, &person_elements);
   return person_dst;
 }
 
@@ -57,10 +56,12 @@ Person* PersonDeleteElements(Person* person, const PersonElements* person_elemen
   return person;
 }
 
-void PersonDelete(Person* person) { EEBUS_DATA_DELETE(&person_data_cfg, &person); }
+void PersonDelete(Person* person) {
+  EEBUS_DATA_DELETE(&person_data_cfg, &person);
+}
 
 PersonElements* PersonElementsParse(const char* s) {
-  return (PersonElements*)EEBUS_DATA_PARSE(&person_elements_cfg,s);
+  return (PersonElements*)EEBUS_DATA_PARSE(&person_elements_cfg, s);
 }
 
 void PersonElementsDelete(PersonElements* person_elements) {

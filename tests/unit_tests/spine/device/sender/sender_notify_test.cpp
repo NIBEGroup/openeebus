@@ -37,7 +37,9 @@ struct SenderNotifyTestInput {
   std::string_view msg                         = ""sv;
 };
 
-std::ostream& operator<<(std::ostream& os, SenderNotifyTestInput test_input) { return os << test_input.description; }
+std::ostream& operator<<(std::ostream& os, SenderNotifyTestInput test_input) {
+  return os << test_input.description;
+}
 
 class SenderNotifyTests : public SenderTestSuite, public ::testing::WithParamInterface<SenderNotifyTestInput> {};
 
@@ -45,9 +47,13 @@ TEST_P(SenderNotifyTests, SenderNotifyTests) {
   // Arrange: Initialize the sender address, destination address
   // and command with parameters from test input
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> sender_addr{
-      TestDataToFeatureAddress(GetParam().sender_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().sender_addr.get()),
+      FeatureAddressDelete
+  };
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> dest_addr{
-      TestDataToFeatureAddress(GetParam().dest_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().dest_addr.get()),
+      FeatureAddressDelete
+  };
 
   std::unique_ptr<void, std::function<void(void*)>> spine_data{
       ModelFunctionDataCreateEmpty(GetParam().data_type_id),

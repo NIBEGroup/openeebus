@@ -82,9 +82,15 @@ class FeatureAddressTestData {
 
   friend std::ostream& operator<<(std::ostream& os, const FeatureAddressTestData& addr);
   friend FeatureAddressType* TestDataToFeatureAddress(const FeatureAddressTestData* addr_data);
-  const StringPtr& get_device() const { return device; }
-  const std::vector<uint32_t>& get_entity() const { return entity; }
-  const ValuePtr<uint32_t>& get_feature() const { return feature; }
+  const StringPtr& get_device() const {
+    return device;
+  }
+  const std::vector<uint32_t>& get_entity() const {
+    return entity;
+  }
+  const ValuePtr<uint32_t>& get_feature() const {
+    return feature;
+  }
 };
 
 std::ostream& operator<<(std::ostream& os, const FeatureAddressType& addr);

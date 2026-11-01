@@ -48,11 +48,17 @@ class SenderResultSuccessTests : public SenderTestSuite,
 TEST_P(SenderResultSuccessTests, SenderResultSuccessTests) {
   // Arrange: Initialize the sender address and request header from test input
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> header_src_addr{
-      TestDataToFeatureAddress(GetParam().request_header_src_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().request_header_src_addr.get()),
+      FeatureAddressDelete
+  };
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> header_dst_addr{
-      TestDataToFeatureAddress(GetParam().request_header_dst_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().request_header_dst_addr.get()),
+      FeatureAddressDelete
+  };
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> sender_addr{
-      TestDataToFeatureAddress(GetParam().sender_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().sender_addr.get()),
+      FeatureAddressDelete
+  };
 
   HeaderType header = {
       .src_addr  = header_src_addr.get(),

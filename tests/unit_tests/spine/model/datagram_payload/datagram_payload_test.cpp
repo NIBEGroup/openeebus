@@ -21,14 +21,14 @@
 #include "src/spine/model/datagram.h"
 #include "src/spine/model/datagram_internal.h"
 #include "tests/unit_tests/json.h"
+#include "tests/unit_tests/spine/model/datagram_payload/sma_destination_list_data_read.inc"
+#include "tests/unit_tests/spine/model/datagram_payload/sma_destination_list_data_reply.inc"
 #include "tests/unit_tests/spine/model/datagram_payload/sma_discovery_data_read.inc"
 #include "tests/unit_tests/spine/model/datagram_payload/sma_discovery_data_reply.inc"
+#include "tests/unit_tests/spine/model/datagram_payload/sma_result_data_result.inc"
 #include "tests/unit_tests/spine/model/datagram_payload/sma_subscription_req_call.inc"
 #include "tests/unit_tests/spine/model/datagram_payload/sma_use_case_data_read.inc"
 #include "tests/unit_tests/spine/model/datagram_payload/sma_use_case_data_reply.inc"
-#include "tests/unit_tests/spine/model/datagram_payload/sma_result_data_result.inc"
-#include "tests/unit_tests/spine/model/datagram_payload/sma_destination_list_data_read.inc"
-#include "tests/unit_tests/spine/model/datagram_payload/sma_destination_list_data_reply.inc"
 
 using namespace std::literals;
 

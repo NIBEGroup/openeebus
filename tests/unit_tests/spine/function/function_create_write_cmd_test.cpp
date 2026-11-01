@@ -36,7 +36,9 @@ TEST_P(FunctionCreateWriteCmdTests, FunctionCreateWriteCmdTests) {
       = FunctionDataTestDataParse(GetParam().function_type, GetParam().data_txt);
   ASSERT_NE(GetParam().data_txt.size() != 0, function_data == nullptr) << "Wrong Function Data input!";
   std::unique_ptr<FunctionObject, decltype(&FunctionDelete)> fcn{
-      FunctionCreate(GetParam().function_type), FunctionDelete};
+      FunctionCreate(GetParam().function_type),
+      FunctionDelete
+  };
   ASSERT_NE(fcn, nullptr);
   // Write the initial data to function
   ASSERT_EQ(FUNCTION_UPDATE_DATA(fcn.get(), function_data->data, nullptr, nullptr, false, true), kEebusErrorOk);

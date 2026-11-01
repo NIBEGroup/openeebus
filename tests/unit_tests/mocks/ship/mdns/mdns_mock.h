@@ -31,12 +31,12 @@
 class MdnsGMockInterface {
  public:
   virtual ~MdnsGMockInterface() {};
-  virtual void Destruct(ShipMdnsObject* self)                       = 0;
-  virtual EebusError Start(ShipMdnsObject* self)                    = 0;
-  virtual void Stop(ShipMdnsObject* self)                           = 0;
-  virtual EebusError RegisterService(ShipMdnsObject* self)          = 0;
-  virtual void DeregisterService(ShipMdnsObject* self)              = 0;
-  virtual void SetAutoaccept(ShipMdnsObject* self, bool autoaccept) = 0;
+  virtual void Destruct(ShipMdnsObject* self)                                                                  = 0;
+  virtual EebusError Start(ShipMdnsObject* self)                                                               = 0;
+  virtual void Stop(ShipMdnsObject* self)                                                                      = 0;
+  virtual EebusError RegisterService(ShipMdnsObject* self)                                                     = 0;
+  virtual void DeregisterService(ShipMdnsObject* self)                                                         = 0;
+  virtual void SetAutoaccept(ShipMdnsObject* self, bool autoaccept)                                            = 0;
   virtual EebusError StartPairingBrowse(ShipMdnsObject* self, OnShipPairingEntriesFoundCallback cb, void* ctx) = 0;
   virtual void StopPairingBrowse(ShipMdnsObject* self)                                                         = 0;
   virtual EebusError RegisterPairingService(ShipMdnsObject* self, const ShipPairingEntry* entry)               = 0;

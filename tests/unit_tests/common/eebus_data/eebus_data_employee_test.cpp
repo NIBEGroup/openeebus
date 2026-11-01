@@ -18,8 +18,8 @@
 
 #include <string_view>
 
-#include "tests/unit_tests/common/eebus_data/employee.h"
 #include "src/common/eebus_data/eebus_data_tag.h"
+#include "tests/unit_tests/common/eebus_data/employee.h"
 #include "tests/unit_tests/json.h"
 #include "tests/unit_tests/string_ptr.h"
 #include "tests/unit_tests/value_ptr.h"
@@ -40,7 +40,9 @@ struct DataEmployeeTestInput {
   std::vector<uint8_t> report       = {};
 };
 
-std::ostream& operator<<(std::ostream& os, DataEmployeeTestInput test_input) { return os << test_input.description; }
+std::ostream& operator<<(std::ostream& os, DataEmployeeTestInput test_input) {
+  return os << test_input.description;
+}
 
 class DataEmployeeTests : public ::testing::TestWithParam<DataEmployeeTestInput> {};
 
@@ -404,9 +406,13 @@ TEST_P(DataEmployeeReadElementsTests, DataEmployeeReadElementsTests) {
   std::unique_ptr<Employee, decltype(&EmployeeDelete)> employee_dst_in{EmployeeParse(s_dst_in.get()), EmployeeDelete};
   std::unique_ptr<Employee, decltype(&EmployeeDelete)> employee_src{EmployeeParse(s_src.get()), EmployeeDelete};
   std::unique_ptr<EmployeeElements, decltype(&EmployeeElementsDelete)> elements{
-      EmployeeElementsParse(s_elements.get()), EmployeeElementsDelete};
+      EmployeeElementsParse(s_elements.get()),
+      EmployeeElementsDelete
+  };
   std::unique_ptr<Employee, decltype(&EmployeeDelete)> employee_dst_out_expected{
-      EmployeeParse(s_dst_out.get()), EmployeeDelete};
+      EmployeeParse(s_dst_out.get()),
+      EmployeeDelete
+  };
   ASSERT_NE(employee_dst_in, nullptr);
   ASSERT_NE(employee_src, nullptr);
   ASSERT_NE(elements, nullptr);
@@ -414,9 +420,13 @@ TEST_P(DataEmployeeReadElementsTests, DataEmployeeReadElementsTests) {
 
   // Act: write elements
   std::unique_ptr<Employee, decltype(&EmployeeDelete)> employee_dst_out_obtained{
-      EmployeeReadElements(employee_src.get(), employee_dst_in.release(), elements.get()), EmployeeDelete};
+      EmployeeReadElements(employee_src.get(), employee_dst_in.release(), elements.get()),
+      EmployeeDelete
+  };
   std::unique_ptr<char[], decltype(&JsonFree)> s_dst_out_obtained{
-      EmployeePrintUnformatted(employee_dst_out_obtained.get()), JsonFree};
+      EmployeePrintUnformatted(employee_dst_out_obtained.get()),
+      JsonFree
+  };
 
   // Assert: Verify with expected output data
   EXPECT_STREQ(s_dst_out_obtained.get(), s_dst_out.get());
@@ -575,18 +585,26 @@ TEST_P(DataEmployeeDeleteElementsTests, DataEmployeeDeleteElementsTests) {
   ASSERT_NE(s_dst_out, nullptr) << "Wrong test input!";
   std::unique_ptr<Employee, decltype(&EmployeeDelete)> employee_dst_in{EmployeeParse(s_dst_in.get()), EmployeeDelete};
   std::unique_ptr<EmployeeElements, decltype(&EmployeeElementsDelete)> elements{
-      EmployeeElementsParse(s_elements.get()), EmployeeElementsDelete};
+      EmployeeElementsParse(s_elements.get()),
+      EmployeeElementsDelete
+  };
   std::unique_ptr<Employee, decltype(&EmployeeDelete)> employee_dst_out_expected{
-      EmployeeParse(s_dst_out.get()), EmployeeDelete};
+      EmployeeParse(s_dst_out.get()),
+      EmployeeDelete
+  };
   ASSERT_NE(employee_dst_in, nullptr);
   ASSERT_NE(elements, nullptr);
   ASSERT_NE(employee_dst_out_expected, nullptr);
 
   // Act: write elements
   std::unique_ptr<Employee, decltype(&EmployeeDelete)> employee_dst_out_obtained{
-      EmployeeDeleteElements(employee_dst_in.release(), elements.get()), EmployeeDelete};
+      EmployeeDeleteElements(employee_dst_in.release(), elements.get()),
+      EmployeeDelete
+  };
   std::unique_ptr<char[], decltype(&JsonFree)> s_dst_out_obtained{
-      EmployeePrintUnformatted(employee_dst_out_obtained.get()), JsonFree};
+      EmployeePrintUnformatted(employee_dst_out_obtained.get()),
+      JsonFree
+  };
 
   // Assert: Verify with expected output data
   EXPECT_STREQ(s_dst_out_obtained.get(), s_dst_out.get());
@@ -729,15 +747,21 @@ TEST_P(DataEmployeeCopyElementsTests, DataEmployeeCopyElementsTests) {
   ASSERT_NE(s_ret, nullptr) << "Wrong test input!";
   std::unique_ptr<Employee, decltype(&EmployeeDelete)> employee_src{EmployeeParse(s_src.get()), EmployeeDelete};
   std::unique_ptr<EmployeeElements, decltype(&EmployeeElementsDelete)> elements{
-      EmployeeElementsParse(s_elements.get()), EmployeeElementsDelete};
+      EmployeeElementsParse(s_elements.get()),
+      EmployeeElementsDelete
+  };
   ASSERT_NE(employee_src, nullptr);
   ASSERT_NE(elements, nullptr);
 
   // Act: copy elements
   std::unique_ptr<Employee, decltype(&EmployeeDelete)> employee_ret_obtained{
-      EmployeeCopyElements(employee_src.get(), elements.get()), EmployeeDelete};
+      EmployeeCopyElements(employee_src.get(), elements.get()),
+      EmployeeDelete
+  };
   std::unique_ptr<char[], decltype(&JsonFree)> s_ret_obtained{
-      EmployeePrintUnformatted(employee_ret_obtained.get()), JsonFree};
+      EmployeePrintUnformatted(employee_ret_obtained.get()),
+      JsonFree
+  };
 
   // Assert: Verify with expected output data
   EXPECT_STREQ(s_ret_obtained.get(), s_ret.get());

@@ -24,7 +24,9 @@
 #include "tests/unit_tests/spine/function/filter_test_data.h"
 #include "tests/unit_tests/spine/function/function_data_test_data.h"
 
-std::ostream& operator<<(std::ostream& os, FunctionUpdateTestInput test_input) { return os << test_input.description; }
+std::ostream& operator<<(std::ostream& os, FunctionUpdateTestInput test_input) {
+  return os << test_input.description;
+}
 
 TEST_P(FunctionUpdateTests, FunctionUpdateTests) {
   // Arrange: Initialize the Function with parameters from test input
@@ -32,7 +34,9 @@ TEST_P(FunctionUpdateTests, FunctionUpdateTests) {
       = FunctionDataTestDataParse(GetParam().function_type, GetParam().data_txt);
   ASSERT_NE(GetParam().data_txt.size() != 0, function_data == nullptr) << "Wrong Function Data input!";
   std::unique_ptr<FunctionObject, decltype(&FunctionDelete)> fcn{
-      FunctionCreate(GetParam().function_type), FunctionDelete};
+      FunctionCreate(GetParam().function_type),
+      FunctionDelete
+  };
   ASSERT_NE(fcn, nullptr);
   // Write the initial data to function
   ASSERT_EQ(FUNCTION_UPDATE_DATA(fcn.get(), function_data->data, nullptr, nullptr, false, true), kEebusErrorOk);
@@ -53,7 +57,13 @@ TEST_P(FunctionUpdateTests, FunctionUpdateTests) {
 
   // Act: Run the data update
   FUNCTION_UPDATE_DATA(
-      fcn.get(), new_data, filter_partial.get(), filter_delete.get(), GetParam().wr_remote, GetParam().persist);
+      fcn.get(),
+      new_data,
+      filter_partial.get(),
+      filter_delete.get(),
+      GetParam().wr_remote,
+      GetParam().persist
+  );
   std::unique_ptr<FunctionData, decltype(&FunctionDataDelete)> function_data_obtained{
       FunctionDataCreate(FUNCTION_GET_FUNCTION_TYPE(fcn.get()), FUNCTION_DATA_COPY(fcn.get())),
       FunctionDataDelete

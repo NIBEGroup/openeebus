@@ -73,8 +73,8 @@ char* EmployeePrintUnformatted(Employee* employee);
 Employee* EmployeeCopyElements(const Employee* employee_src, const EmployeeElements* employee_elements);
 Employee* EmployeeCopy(const Employee* employee);
 bool EmployeeCompare(const Employee* employee_a, const Employee* employee_b);
-Employee* EmployeeReadElements(
-    const Employee* employee_src, Employee* employee_dst, const EmployeeElements* employee_elements);
+Employee*
+EmployeeReadElements(const Employee* employee_src, Employee* employee_dst, const EmployeeElements* employee_elements);
 Employee* EmployeeDeleteElements(Employee* employee, const EmployeeElements* employee_elements);
 void EmployeeDelete(Employee* employee);
 

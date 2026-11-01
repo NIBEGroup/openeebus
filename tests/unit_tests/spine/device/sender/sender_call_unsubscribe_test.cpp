@@ -45,9 +45,13 @@ TEST_P(SenderCallUnsubscribeTests, SenderCallUnsubscribeTests) {
   // Arrange: Initialize the sender address, destination address
   // and command with parameters from test input
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> sender_addr{
-      TestDataToFeatureAddress(GetParam().sender_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().sender_addr.get()),
+      FeatureAddressDelete
+  };
   std::unique_ptr<FeatureAddressType, decltype(&FeatureAddressDelete)> dest_addr{
-      TestDataToFeatureAddress(GetParam().dest_addr.get()), FeatureAddressDelete};
+      TestDataToFeatureAddress(GetParam().dest_addr.get()),
+      FeatureAddressDelete
+  };
 
   SenderObject* sender = GetSender();
   SenderSetMsgCounter(sender, GetParam().msg_cnt);

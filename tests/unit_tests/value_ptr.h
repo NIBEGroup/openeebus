@@ -39,7 +39,9 @@ class ValuePtr {
   std::unique_ptr<ValueType> _pv;
 
  public:
-  ValuePtr() { _pv = nullptr; }
+  ValuePtr() {
+    _pv = nullptr;
+  }
   ValuePtr(const ValueType* p) : _pv((p != nullptr) ? std::make_unique<ValueType>(*p) : nullptr) {}
   ValuePtr(const ValuePtr& p) : _pv((p._pv != nullptr) ? std::make_unique<ValueType>(*p._pv) : nullptr) {}
   ValuePtr(ValuePtr&& p) : _pv((p._pv != nullptr) ? std::move(p._pv) : nullptr) {}
@@ -54,7 +56,9 @@ class ValuePtr {
     return *this;
   }
 
-  void reset(const ValueType* p) { _pv = (p != nullptr) ? std::make_unique<ValueType>(*p) : nullptr; }
+  void reset(const ValueType* p) {
+    _pv = (p != nullptr) ? std::make_unique<ValueType>(*p) : nullptr;
+  }
 
   template <typename Tp>
   bool operator==(const Tp* p) const {
@@ -67,10 +71,16 @@ class ValuePtr {
   }
 
   // Check if both nonnull and pointed strings match
-  bool operator==(const ValuePtr<ValueType>& p) const { return *this == p.get(); }
+  bool operator==(const ValuePtr<ValueType>& p) const {
+    return *this == p.get();
+  }
 
-  ValueType operator*() const { return *_pv; }
-  const ValueType* get() const { return _pv.get(); }
+  ValueType operator*() const {
+    return *_pv;
+  }
+  const ValueType* get() const {
+    return _pv.get();
+  }
 };
 
 template <typename ValueType, typename... ArgTypes>
