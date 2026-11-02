@@ -20,6 +20,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(OPTION_ASAN "Enable AddressSanitizer" OFF)
 option(OPTION_MDNS_USE_AVAHI_CLIENT "Enable mDNS avahi-client implementation" OFF)
+option(OPTION_OPENEEBUS_TESTS "Enable openeebus tests to be built with the project" ON)
+option(OPTION_INTEGRATION_TESTS "Enable pytest-based integration tests" OFF)
 
 set(PROJECT_COMPILE_OPTIONS "")
 
@@ -245,31 +247,7 @@ add_subdirectory(examples/heat_pump)
 add_subdirectory(examples/hems)
 add_subdirectory(examples/ev_charger)
 
-# Integration tests — only when building in CI (ENV{CI} is set by GitHub Actions)
-if(DEFINED ENV{CI} AND NOT WIN32)
-  find_package(Python3 REQUIRED COMPONENTS Interpreter)
-
-  set(ITEST_VENV_DIR "${CMAKE_BINARY_DIR}/itest_venv")
-  set(ITEST_PYTHON   "${ITEST_VENV_DIR}/bin/python")
-  set(ITEST_PIP      "${ITEST_VENV_DIR}/bin/pip")
-
-  # Stamp file prevents re-creating the venv on every build.
-  add_custom_command(
-    OUTPUT  "${ITEST_VENV_DIR}/stamp"
-    COMMAND ${Python3_EXECUTABLE} -m venv "${ITEST_VENV_DIR}"
-    COMMAND "${ITEST_PIP}" install --quiet pytest pytest-html
-    COMMAND ${CMAKE_COMMAND} -E touch "${ITEST_VENV_DIR}/stamp"
-    COMMENT "Setting up Python venv for integration tests"
-    VERBATIM
-  )
-
-  add_custom_target(itest_venv DEPENDS "${ITEST_VENV_DIR}/stamp")
-
-  add_custom_target(integration-tests
-    COMMAND "${ITEST_PYTHON}" -m pytest "${CMAKE_SOURCE_DIR}/integration_tests" -v
-    DEPENDS heat_pump hems itest_venv
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/integration_tests"
-    USES_TERMINAL
-    COMMENT "Running integration tests"
-  )
+if(OPTION_OPENEEBUS_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
 endif()
