@@ -22,6 +22,7 @@
 
 #include <gmock/gmock.h>
 
+#include "src/common/eebus_errors.h"
 #include "src/ship/api/ship_node_reader_interface.h"
 
 static void Destruct(ShipNodeReaderObject* self);

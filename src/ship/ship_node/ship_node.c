@@ -68,6 +68,7 @@ enum ShipNodeQueueMsgType {
   kShipNodeQueueMsgTypePromoteFingerprint,
   kShipNodeQueueMsgTypeApprovePendingSki,
   kShipNodeQueueMsgTypeRevokePairingFingerprint,
+  kShipNodeQueueMsgTypeUnregisterFingerprint,
 };
 
 typedef enum ShipNodeQueueMsgType ShipNodeQueueMsgType;
@@ -86,6 +87,8 @@ struct ShipNodeQueueMessage {
   bool had_error;
   bool is_trusted;
   char* ski;
+  char* ship_id;
+  char* fingerprint;
   uint64_t approval_id;
 };
 
@@ -106,6 +109,9 @@ static EebusError
 RegisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint);
 static EebusError
 ShipNodeRegisterPeerTrust(ShipNode* self, const char* ship_id, const char* fingerprint, PeerTrustSource trust_source);
+static EebusError
+UnregisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint);
+static void ShipNodeUnregisterFingerprint(ShipNode* self, const char* ship_id, const char* fingerprint);
 static ShipPairingObject* GetShipPairing(ShipNodeObject* self);
 static EebusError AnnounceShipPairingRequest(ShipNodeObject* self, const ShipPairingEntry* entry);
 static void ShipNodeOnPairingEntriesFoundCallback(Vector* found_entries, void* ctx);
@@ -143,6 +149,7 @@ static const ShipNodeInterface ship_node_methods = {
     .get_ship_pairing                   = GetShipPairing,
     .announce_ship_pairing_request      = AnnounceShipPairingRequest,
     .register_remote_fingerprint_with_ship_id = RegisterRemoteFingerprintWithShipId,
+    .unregister_remote_fingerprint_with_ship_id = UnregisterRemoteFingerprintWithShipId,
 };
 
 static void ShipNodeConstruct(
@@ -195,6 +202,10 @@ static void ShipNodeQueueMsgDeallocator(void* msg) {
   ShipNodeQueueMessage* queue_msg = (ShipNodeQueueMessage*)msg;
   StringDelete(queue_msg->ski);
   queue_msg->ski = NULL;
+  StringDelete(queue_msg->ship_id);
+  queue_msg->ship_id = NULL;
+  StringDelete(queue_msg->fingerprint);
+  queue_msg->fingerprint = NULL;
 }
 
 static void ShipNodePostConnectionClose(ShipNode* sn, ShipConnectionObject* sc, bool had_error) {
@@ -923,8 +934,8 @@ void RegisterRemoteFingerprint(ShipNodeObject* self, const char* fingerprint) {
       = !StringIsEmpty(sn->remote_fingerprint) && !ShipNodeFingerprintMatches(sn->remote_fingerprint, fingerprint);
 
   ShipNodeQueueMessage revoke_msg = {
-      .type = kShipNodeQueueMsgTypeRevokePairingFingerprint,
-      .ski  = replacing ? StringCopy(sn->remote_fingerprint) : NULL,
+      .type        = kShipNodeQueueMsgTypeRevokePairingFingerprint,
+      .fingerprint = replacing ? StringCopy(sn->remote_fingerprint) : NULL,
   };
 
   if (replacing) {
@@ -942,7 +953,7 @@ void RegisterRemoteFingerprint(ShipNodeObject* self, const char* fingerprint) {
   sn->remote_fingerprint = StringCopy(fingerprint);
   EEBUS_MUTEX_UNLOCK(sn->mutex);
 
-  if (revoke_msg.ski != NULL) {
+  if (revoke_msg.fingerprint != NULL) {
     EEBUS_QUEUE_SEND(sn->msg_queue, &revoke_msg, kTimeoutInfinite);
   }
 
@@ -966,6 +977,66 @@ void ShipNodeRevokePairingFingerprint(ShipNode* sn, const char* fingerprint) {
     }
     ShipConnectionObject* sc = NODE_CONNECTION_RELEASE_SHIP_CONNECTION(nc);
     // Pairing can trust a peer before its SKI is known, so remove the entry directly.
+    NODE_CONNECTION_CONTAINER_REMOVE(sn->connections, nc);
+    if (sc != NULL) {
+      VectorPushBack(&to_remove, sc);
+    }
+  }
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
+  for (size_t i = 0; i < VectorGetSize(&to_remove); ++i) {
+    ShipConnectionObject* sc = VectorGetElement(&to_remove, i);
+    SHIP_CONNECTION_STOP(sc);
+    SHIP_NODE_READER_ON_REMOTE_SKI_DISCONNECTED(sn->ship_node_reader, SHIP_CONNECTION_GET_REMOTE_SKI(sc));
+    ShipConnectionDelete(sc);
+  }
+  VectorDestruct(&to_remove);
+}
+
+EebusError UnregisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint) {
+  ShipNode* const sn = SHIP_NODE(self);
+
+  uint8_t hash[32];
+  if (StringIsEmpty(ship_id) || (strlen(ship_id) > 63) || !StringHexToBytes(fingerprint, hash, sizeof(hash))) {
+    return kEebusErrorInputArgument;
+  }
+
+  ShipNodeQueueMessage queue_msg = {
+      .type        = kShipNodeQueueMsgTypeUnregisterFingerprint,
+      .ship_id     = StringCopy(ship_id),
+      .fingerprint = StringCopy(fingerprint),
+  };
+
+  if ((queue_msg.ship_id == NULL) || (queue_msg.fingerprint == NULL)) {
+    ShipNodeQueueMsgDeallocator(&queue_msg);
+    return kEebusErrorMemoryAllocate;
+  }
+
+  EEBUS_QUEUE_SEND(sn->msg_queue, &queue_msg, kTimeoutInfinite);
+  return kEebusErrorOk;
+}
+
+// Runs on the connection loop thread, which owns connection teardown. Removes
+// every matching entry, so that none is left behind if there are several.
+void ShipNodeUnregisterFingerprint(ShipNode* sn, const char* ship_id, const char* fingerprint) {
+  Vector to_remove;
+
+  VectorConstruct(&to_remove);
+  EEBUS_MUTEX_LOCK(sn->mutex);
+  for (size_t i = 0; i < NODE_CONNECTION_CONTAINER_GET_SIZE(sn->connections);) {
+    NodeConnectionObject* nc         = NODE_CONNECTION_CONTAINER_GET_WITH_INDEX(sn->connections, i);
+    const NodeConnection* const peer = NODE_CONNECTION(nc);
+    if (!ShipNodePeerMatches(
+            peer->trusted_by_pairing,
+            peer->ship_id,
+            peer->expected_fingerprint,
+            ship_id,
+            fingerprint
+        )) {
+      i += 1;
+      continue;
+    }
+    ShipConnectionObject* sc = NODE_CONNECTION_RELEASE_SHIP_CONNECTION(nc);
     NODE_CONNECTION_CONTAINER_REMOVE(sn->connections, nc);
     if (sc != NULL) {
       VectorPushBack(&to_remove, sc);
@@ -1172,7 +1243,9 @@ void* ShipNodeConnectionLoop(void* ctx) {
     } else if (queue_msg.type == kShipNodeQueueMsgTypeApprovePendingSki) {
       ShipNodeApprovePendingHandshake(sn, queue_msg.ship_connection, queue_msg.approval_id);
     } else if (queue_msg.type == kShipNodeQueueMsgTypeRevokePairingFingerprint) {
-      ShipNodeRevokePairingFingerprint(sn, queue_msg.ski);
+      ShipNodeRevokePairingFingerprint(sn, queue_msg.fingerprint);
+    } else if (queue_msg.type == kShipNodeQueueMsgTypeUnregisterFingerprint) {
+      ShipNodeUnregisterFingerprint(sn, queue_msg.ship_id, queue_msg.fingerprint);
     }
 
     ShipNodeQueueMsgDeallocator(&queue_msg);
