@@ -158,6 +158,21 @@ static inline bool ShipNodeIsPeerRecognised(
   return ShipNodeFingerprintMatches(peer_fingerprint, trusted_fingerprint);
 }
 
+static inline bool ShipNodePeerMatches(
+    bool peer_is_trusted_by_pairing,
+    const char* peer_ship_id,
+    const char* peer_fingerprint,
+    const char* ship_id,
+    const char* fingerprint
+) {
+  if (peer_is_trusted_by_pairing || StringIsEmpty(peer_ship_id) || StringIsEmpty(ship_id)
+      || (strcmp(peer_ship_id, ship_id) != 0)) {
+    return false;
+  }
+
+  return ShipNodeFingerprintMatches(fingerprint, peer_fingerprint);
+}
+
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

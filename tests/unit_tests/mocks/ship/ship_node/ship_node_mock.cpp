@@ -43,6 +43,8 @@ static ShipPairingObject* GetShipPairing(ShipNodeObject* self);
 static EebusError AnnounceShipPairingRequest(ShipNodeObject* self, const ShipPairingEntry* entry);
 static EebusError
 RegisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint);
+static EebusError
+UnregisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint);
 
 static const ShipNodeInterface ship_node_methods = {
     .info_provider_interface = {
@@ -66,6 +68,7 @@ static const ShipNodeInterface ship_node_methods = {
     .get_ship_pairing                   = GetShipPairing,
     .announce_ship_pairing_request      = AnnounceShipPairingRequest,
     .register_remote_fingerprint_with_ship_id = RegisterRemoteFingerprintWithShipId,
+    .unregister_remote_fingerprint_with_ship_id = UnregisterRemoteFingerprintWithShipId,
 };
 
 static EebusError ShipNodeMockConstruct(ShipNodeMock* self);
@@ -185,4 +188,9 @@ EebusError AnnounceShipPairingRequest(ShipNodeObject* self, const ShipPairingEnt
 EebusError RegisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint) {
   ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
   return mock->gmock->RegisterRemoteFingerprintWithShipId(self, ship_id, fingerprint);
+}
+
+EebusError UnregisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint) {
+  ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
+  return mock->gmock->UnregisterRemoteFingerprintWithShipId(self, ship_id, fingerprint);
 }

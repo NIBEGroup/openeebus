@@ -45,6 +45,9 @@ class ShipNodeGMockInterface : public InfoProviderMock {
   virtual EebusError
   RegisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint)
       = 0;
+  virtual EebusError
+  UnregisterRemoteFingerprintWithShipId(ShipNodeObject* self, const char* ship_id, const char* fingerprint)
+      = 0;
 };
 
 class ShipNodeGMock : public ShipNodeGMockInterface {
@@ -71,6 +74,7 @@ class ShipNodeGMock : public ShipNodeGMockInterface {
   MOCK_METHOD1(GetShipPairing, ShipPairingObject*(ShipNodeObject*));
   MOCK_METHOD2(AnnounceShipPairingRequest, EebusError(ShipNodeObject*, const ShipPairingEntry*));
   MOCK_METHOD3(RegisterRemoteFingerprintWithShipId, EebusError(ShipNodeObject*, const char*, const char*));
+  MOCK_METHOD3(UnregisterRemoteFingerprintWithShipId, EebusError(ShipNodeObject*, const char*, const char*));
 };
 
 typedef struct ShipNodeMock {

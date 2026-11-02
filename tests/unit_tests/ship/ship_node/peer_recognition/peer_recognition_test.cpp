@@ -127,6 +127,50 @@ TEST(ShipNodePromotePendingTest, ComparesTheWholeFingerprint) {
   EXPECT_TRUE(ShipNodeShouldPromotePendingPeer(true, ANNEX_A_FOR_PAR, ANNEX_A_FOR_PAR));
 }
 
+/*
+ * Which trust store entry unregister_remote_fingerprint_with_ship_id() removes.
+ * devZ trusts a peer by SHIP ID and fingerprint before it knows the peer's SKI,
+ * so this is the only way to stop trusting a peer that has not been seen yet.
+ */
+
+TEST(ShipNodeConfiguredPeerTest, MatchesTheEntryWithBothValues) {
+  EXPECT_TRUE(ShipNodePeerMatches(false, "devA", ANNEX_A_FOR_PAR, "devA", ANNEX_A_FOR_PAR));
+}
+
+TEST(ShipNodeConfiguredPeerTest, IgnoresTheCaseOfTheFingerprint) {
+  EXPECT_TRUE(ShipNodePeerMatches(false, "devA", "AABBCC", "devA", "aabbcc"));
+}
+
+/* The SHIP ID does not authenticate anybody, and a peer trusted by its SKI is
+ * given one when it connects. Matching on it alone could remove such a peer. */
+TEST(ShipNodeConfiguredPeerTest, DoesNotMatchOnTheShipIdAlone) {
+  EXPECT_FALSE(ShipNodePeerMatches(false, "devA", ANNEX_A_FOR_PAR, "devA", ANNEX_A_TRUST_PAR));
+  EXPECT_FALSE(ShipNodePeerMatches(false, "devA", nullptr, "devA", ANNEX_A_FOR_PAR));
+}
+
+TEST(ShipNodeConfiguredPeerTest, DoesNotMatchOnTheFingerprintAlone) {
+  EXPECT_FALSE(ShipNodePeerMatches(false, "devB", ANNEX_A_FOR_PAR, "devA", ANNEX_A_FOR_PAR));
+  EXPECT_FALSE(ShipNodePeerMatches(false, nullptr, ANNEX_A_FOR_PAR, "devA", ANNEX_A_FOR_PAR));
+}
+
+TEST(ShipNodeConfiguredPeerTest, ComparesTheWholeShipId) {
+  EXPECT_FALSE(ShipNodePeerMatches(false, "devA-1", ANNEX_A_FOR_PAR, "devA", ANNEX_A_FOR_PAR));
+  EXPECT_FALSE(ShipNodePeerMatches(false, "devA", ANNEX_A_FOR_PAR, "devA-1", ANNEX_A_FOR_PAR));
+}
+
+/* A peer trusted from an accepted shippairing request is withdrawn with
+ * register_remote_fingerprint(NULL), which also stops admitting it by its
+ * certificate. */
+TEST(ShipNodeConfiguredPeerTest, LeavesAPeerTrustedFromAPairingRequestAlone) {
+  EXPECT_FALSE(ShipNodePeerMatches(true, "devA", ANNEX_A_FOR_PAR, "devA", ANNEX_A_FOR_PAR));
+}
+
+TEST(ShipNodeConfiguredPeerTest, MatchesNothingWithNothingToCompare) {
+  EXPECT_FALSE(ShipNodePeerMatches(false, "devA", ANNEX_A_FOR_PAR, "", ANNEX_A_FOR_PAR));
+  EXPECT_FALSE(ShipNodePeerMatches(false, "devA", ANNEX_A_FOR_PAR, "devA", ""));
+  EXPECT_FALSE(ShipNodePeerMatches(false, "", "", "", ""));
+}
+
 TEST(ServiceDetailsFingerprintTest, HasNoFingerprintUntilOneIsSet) {
   ServiceDetails* const details = ServiceDetailsCreate("ski", "ship-id", "device-type", false);
   ASSERT_NE(details, nullptr);
