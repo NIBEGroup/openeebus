@@ -10,6 +10,9 @@ service shutdown timing. Direct pytest commands available as well.
 
 **Supported platforms: Linux, macOS, and Windows.**
 
+See [Testing](testing.md) for the test layout and general unit and integration
+test workflows.
+
 ---
 
 ## Prerequisites

@@ -47,22 +47,7 @@ cd build
 ./heat_pump
 ```
 
-# Building and Running the Unit Tests
+# Testing
 
-1. Start by creating a build subdirectory under the tests
-   ```sh
-   cd tests && mkdir build && cd build
-   ```
-1. Configure the project using CMake. In this example we use the `ninja` build tool.
-   ```sh
-   cmake -GNinja ..
-   ```
-1. Build the project
-   ```sh
-   ninja
-   ```
-1. Run the unit tests
-   ```sh
-   ctest
-   ```
+See [Testing](testing.md) for the test layout and commands to build and run unit and integration tests.
 

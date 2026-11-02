@@ -1,4 +1,10 @@
-# Tests
+# Testing
+
+Install the platform dependencies using the [Linux](build_linux.md),
+[macOS](build_macos.md), or [Windows](build_windows.md) build guide first.
+Run the commands below from the repository root.
+
+## Test layout
 
 The test suites are grouped by type:
 
@@ -46,10 +52,23 @@ ctest --test-dir tests/build -R '^string_util_test$' --output-on-failure
 Unit tests are also included in the root build when `OPTION_OPENEEBUS_TESTS=ON`
 (the default).
 
-## Unit and integration tests
+For a multi-configuration generator such as Visual Studio, select the same
+configuration when building and running tests:
 
-Build the library, demo applications, and unit tests together, with integration
-tests registered in CTest:
+```sh
+cmake --build tests/build --config Debug
+ctest --test-dir tests/build -C Debug --output-on-failure
+```
+
+The configure examples above use Ninja, a single-configuration generator.
+
+## Integration tests
+
+Integration tests require the root build and its demo applications. A standalone
+unit-test build does not register integration tests.
+
+Configure integration-test support, build the library, demos, and unit tests,
+then run all registered tests:
 
 ```sh
 cmake -S . -B build -G Ninja -DOPTION_OPENEEBUS_TESTS=ON -DOPTION_INTEGRATION_TESTS=ON
@@ -57,12 +76,15 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
+For a multi-configuration build, use `cmake --build build --config Debug` and add
+`-C Debug` to each `ctest --test-dir build` command.
+
 To run only integration tests:
 
 ```sh
 ctest --test-dir build -L integration --output-on-failure
 ```
 
-See [Integration Tests](../docs/integration_tests.md) for dependencies, configuration,
+See [Integration Tests](integration_tests.md) for dependencies, configuration,
 and direct pytest commands. Generated binaries and reports belong in the build
 directories.
