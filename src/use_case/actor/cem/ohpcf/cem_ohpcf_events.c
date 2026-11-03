@@ -82,17 +82,13 @@ void OnAnnounce(
   const EebusError err
       = CemOhpcfGetAnnouncedOptionalPowerConsumptionInternal(self, entity_addr, &optional_power_consumption);
 
-  if (err == kEebusErrorOk) {
-    self->state = kCompressorOhpcfStateAnnounced;
-    if (self->cem_ohpcf_listener != NULL) {
-      CEM_OHPCF_LISTENER_ON_ANNOUNCE(self->cem_ohpcf_listener, &optional_power_consumption, entity_addr);
-      CEM_OHPCF_LISTENER_ON_STATE_REPORT(self->cem_ohpcf_listener, self->state, NULL, entity_addr);
-    }
+  if ((err == kEebusErrorOk) && (self->cem_ohpcf_listener != NULL)) {
+    CEM_OHPCF_LISTENER_ON_ANNOUNCE(self->cem_ohpcf_listener, &optional_power_consumption, entity_addr);
+    CEM_OHPCF_LISTENER_ON_STATE_REPORT(self->cem_ohpcf_listener, kCompressorOhpcfStateAnnounced, NULL, entity_addr);
   }
 }
 
 void OnClearProcess(CemOhpcfUseCase* self, const EntityAddressType* entity_addr) {
-  self->state = kCompressorOhpcfStateUndefined;
   CEM_OHPCF_LISTENER_ON_CLEAR_PROCESS(self->cem_ohpcf_listener, entity_addr);
 }
 
@@ -122,10 +118,10 @@ void OnCompressorStateReport(
     }
   }
 
-  self->state = CompressorOhpcfStateGetStateWithPowerSequenceState(*state);
+  const CompressorOhpcfState ohpcf_state = CompressorOhpcfStateGetStateWithPowerSequenceState(*state);
 
   const EebusDuration* start_time_duration = (start_time != NULL) ? &start_time->duration : NULL;
-  CEM_OHPCF_LISTENER_ON_STATE_REPORT(self->cem_ohpcf_listener, self->state, start_time_duration, entity_addr);
+  CEM_OHPCF_LISTENER_ON_STATE_REPORT(self->cem_ohpcf_listener, ohpcf_state, start_time_duration, entity_addr);
 }
 
 void OnSmartEnergyManagementPsDataUpdate(CemOhpcfUseCase* self, const EventPayload* payload) {
