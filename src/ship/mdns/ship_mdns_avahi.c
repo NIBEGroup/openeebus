@@ -7,6 +7,8 @@
 #include <avahi-common/malloc.h>
 #include <avahi-common/simple-watch.h>
 #include <errno.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -35,10 +37,14 @@ static const char* kShipServiceTxtVer = "1";
 
 static const char* kShipPairingServiceType = SHIP_PAIRING_SERVICE_TYPE;
 
-// Section 5.3 recommends a TTL of two minutes for shippairing records. The
-// Avahi client API does not expose the TTL of the records a service publishes,
-// so the daemon's default applies. A withdrawn request is still removed at once
-// by the goodbye that freeing its entry group sends.
+// Section 5.3: the DNS-SD records of a shippairing instance should have a TTL
+// of two minutes. avahi_entry_group_add_service() publishes them with the
+// daemon's defaults (75 minutes for PTR and TXT), so they are added as records.
+// A withdrawn request is removed at once by the goodbye that freeing its entry
+// group sends; the TTL bounds how long a lost goodbye leaves it in caches.
+static const uint32_t kShipPairingTtlSeconds = 120;
+
+static const char* kDnsSdServicesName = "_services._dns-sd._udp.local";
 
 /**
  * Section 5.3: the port of a shippairing SRV record is unused. It must never be
@@ -933,6 +939,135 @@ static AvahiStringList* MdnsCreatePairingTextRecord(const ShipPairingEntry* entr
   return result;
 }
 
+/**
+ * @brief Writes a domain name in Avahi's escaped text form as DNS wire format
+ * @return Size written, or 0 if the name is malformed or does not fit
+ */
+static size_t MdnsEncodeDomainName(const char* name, uint8_t* data, size_t size) {
+  size_t used = 0;
+  while (*name != '\0') {
+    char label[AVAHI_LABEL_MAX];
+    if (avahi_unescape_label(&name, label, sizeof(label)) == NULL) {
+      return 0;
+    }
+
+    const size_t label_size = strlen(label);
+    if ((label_size == 0) || ((used + 1 + label_size + 1) > size)) {
+      return 0;
+    }
+
+    data[used++] = (uint8_t)label_size;
+    memcpy(data + used, label, label_size);
+    used += label_size;
+  }
+
+  if (used >= size) {
+    return 0;
+  }
+
+  data[used++] = 0;
+  return used;
+}
+
+static int MdnsAddPairingRecord(
+    Mdns* self,
+    AvahiPublishFlags flags,
+    const char* name,
+    uint16_t type,
+    const void* rdata,
+    size_t rdata_size
+) {
+  return avahi_entry_group_add_record(
+      self->pairing_group,
+      AVAHI_IF_UNSPEC,
+      AVAHI_PROTO_UNSPEC,
+      flags,
+      name,
+      AVAHI_DNS_CLASS_IN,
+      type,
+      kShipPairingTtlSeconds,
+      rdata,
+      rdata_size
+  );
+}
+
+/**
+ * @brief Adds the records avahi_entry_group_add_service() would, with the TTL of section 5.3
+ *
+ * RFC 6763: the PTR records of the service type and of service type
+ * enumeration, and the SRV and TXT records of the instance. The host name is
+ * the one the SHIP service is published with, as section 5.3 recommends.
+ */
+static int MdnsAddPairingRecords(Mdns* self, const ShipPairingEntry* entry) {
+  char service_type[AVAHI_DOMAIN_NAME_MAX];
+  char instance[AVAHI_DOMAIN_NAME_MAX];
+  snprintf(service_type, sizeof(service_type), "%s.%s", kShipPairingServiceType, SHIP_PAIRING_DOMAIN);
+  int ret = avahi_service_name_join(
+      instance,
+      sizeof(instance),
+      ShipPairingEntryGetName(entry),
+      kShipPairingServiceType,
+      SHIP_PAIRING_DOMAIN
+  );
+  if (ret < 0) {
+    return ret;
+  }
+
+  const char* const host = avahi_client_get_host_name_fqdn(self->client);
+  if (host == NULL) {
+    return AVAHI_ERR_INVALID_HOST_NAME;
+  }
+
+  uint8_t rdata[AVAHI_DOMAIN_NAME_MAX + 6];
+  size_t rdata_size = MdnsEncodeDomainName(instance, rdata, sizeof(rdata));
+  if (rdata_size == 0) {
+    return AVAHI_ERR_INVALID_SERVICE_NAME;
+  }
+
+  ret = MdnsAddPairingRecord(self, 0, service_type, AVAHI_DNS_TYPE_PTR, rdata, rdata_size);
+  if (ret < 0) {
+    return ret;
+  }
+
+  rdata_size = MdnsEncodeDomainName(service_type, rdata, sizeof(rdata));
+  if (rdata_size == 0) {
+    return AVAHI_ERR_INVALID_SERVICE_TYPE;
+  }
+
+  ret = MdnsAddPairingRecord(self, 0, kDnsSdServicesName, AVAHI_DNS_TYPE_PTR, rdata, rdata_size);
+  if (ret < 0) {
+    return ret;
+  }
+
+  // Priority and weight 0, then the port, all in network byte order.
+  memset(rdata, 0, 4);
+  rdata[4]   = (uint8_t)(kShipPairingUnusedPort >> 8);
+  rdata[5]   = (uint8_t)(kShipPairingUnusedPort & 0xFF);
+  rdata_size = MdnsEncodeDomainName(host, rdata + 6, sizeof(rdata) - 6);
+  if (rdata_size == 0) {
+    return AVAHI_ERR_INVALID_HOST_NAME;
+  }
+
+  ret = MdnsAddPairingRecord(self, AVAHI_PUBLISH_UNIQUE, instance, AVAHI_DNS_TYPE_SRV, rdata, rdata_size + 6);
+  if (ret < 0) {
+    return ret;
+  }
+
+  AvahiStringList* const txt_record = MdnsCreatePairingTextRecord(entry);
+  const size_t txt_size             = avahi_string_list_serialize(txt_record, NULL, 0);
+  uint8_t* const txt                = (uint8_t*)avahi_malloc(txt_size);
+  if (txt == NULL) {
+    avahi_string_list_free(txt_record);
+    return AVAHI_ERR_NO_MEMORY;
+  }
+
+  avahi_string_list_serialize(txt_record, txt, txt_size);
+  avahi_string_list_free(txt_record);
+  ret = MdnsAddPairingRecord(self, AVAHI_PUBLISH_UNIQUE, instance, AVAHI_DNS_TYPE_TXT, txt, txt_size);
+  avahi_free(txt);
+  return ret;
+}
+
 static void MdnsAnnouncePairingRequest(Mdns* self, const ShipPairingEntry* entry) {
   self->pairing_group = avahi_entry_group_new(self->client, MdnsPairingEntryGroupCallback, self);
   if (self->pairing_group == NULL) {
@@ -943,22 +1078,7 @@ static void MdnsAnnouncePairingRequest(Mdns* self, const ShipPairingEntry* entry
     return;
   }
 
-  AvahiStringList* const txt_record = MdnsCreatePairingTextRecord(entry);
-
-  int ret = avahi_entry_group_add_service_strlst(
-      self->pairing_group,
-      AVAHI_IF_UNSPEC,
-      AVAHI_PROTO_UNSPEC,
-      0,
-      ShipPairingEntryGetName(entry),
-      kShipPairingServiceType,
-      NULL,  // domain
-      NULL,  // host
-      kShipPairingUnusedPort,
-      txt_record
-  );
-  avahi_string_list_free(txt_record);
-
+  int ret = MdnsAddPairingRecords(self, entry);
   if (ret >= 0) {
     ret = avahi_entry_group_commit(self->pairing_group);
   }
