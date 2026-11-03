@@ -20,6 +20,9 @@
 #include "tests/unit_tests/ship/ship_pairing/ship_pairing_test_suite.h"
 
 #include <algorithm>
+#include <cctype>
+#include <string>
+#include <vector>
 
 namespace {
 
@@ -33,6 +36,37 @@ std::vector<TxtPair> WithValue(const std::string& key, const std::string& value)
   }
 
   return pairs;
+}
+
+/** @brief Parses strings of a TXT record given as they are, not as key-value pairs */
+ShipPairingTestSuite::EntryPtr ParseStrings(const std::vector<std::string>& strings) {
+  ShipPairingTestSuite::EntryPtr entry{
+      ShipPairingEntryCreate(TEST_INSTANCE_NAME, TEST_DOMAIN, 0),
+      ShipPairingEntryDelete
+  };
+  std::string record;
+  for (const auto& string : strings) {
+    record.push_back(static_cast<char>(string.size()));
+    record.append(string);
+  }
+
+  if (ShipPairingEntryParseTxtRecord(entry.get(), record.data(), static_cast<uint16_t>(record.size()))
+      != kEebusErrorOk) {
+    entry.reset();
+  }
+
+  return entry;
+}
+
+/** @brief The Annex A record as strings, with @p extra appended */
+std::vector<std::string> AnnexAStringsWith(const std::vector<std::string>& extra) {
+  std::vector<std::string> strings;
+  for (const auto& [key, value] : ShipPairingTestSuite::AnnexAPairs()) {
+    strings.push_back(key + "=" + value);
+  }
+
+  strings.insert(strings.end(), extra.begin(), extra.end());
+  return strings;
 }
 
 }  // namespace
@@ -83,6 +117,85 @@ TEST_F(ShipPairingTestSuite, IgnoresKeysOutsideTheSchema) {
   // Section 5.4: a key not listed in table 1 is ignored, so the record stays
   // valid. A future version of the specification may add keys.
   EXPECT_TRUE(ShipPairingEntryIsValid(entry.get()));
+}
+
+TEST_F(ShipPairingTestSuite, IgnoresAnUnknownKeyWithoutAValue) {
+  const EntryPtr entry = ParseStrings(AnnexAStringsWith({"futurekey="}));
+  ASSERT_NE(entry, nullptr);
+
+  EXPECT_TRUE(ShipPairingEntryIsValid(entry.get()));
+}
+
+TEST_F(ShipPairingTestSuite, IgnoresBooleanAttributes) {
+  // RFC 6763, section 6.4: a string without "=" is a key without a value. Short
+  // ones are no different from long ones.
+  const EntryPtr entry = ParseStrings(AnnexAStringsWith({"f", "fk", "futurekey"}));
+  ASSERT_NE(entry, nullptr);
+
+  EXPECT_TRUE(ShipPairingEntryIsValid(entry.get()));
+}
+
+TEST_F(ShipPairingTestSuite, IgnoresStringsWithoutAKeyAndEmptyStrings) {
+  const EntryPtr entry = ParseStrings(AnnexAStringsWith({"=value", ""}));
+  ASSERT_NE(entry, nullptr);
+
+  EXPECT_TRUE(ShipPairingEntryIsValid(entry.get()));
+}
+
+TEST_F(ShipPairingTestSuite, RejectsAKeyOfTheSchemaWithoutAValue) {
+  // Section 5.4: the key is present, and its value is not one it permits.
+  for (const auto& [key, value] : AnnexAPairs()) {
+    const EntryPtr entry = ParseEntry(WithValue(key, ""));
+    ASSERT_NE(entry, nullptr) << key;
+    EXPECT_FALSE(ShipPairingEntryIsValid(entry.get())) << key;
+  }
+}
+
+TEST_F(ShipPairingTestSuite, DoesNotLetARepeatedKeyFillInAnEmptyFirstValue) {
+  std::vector<TxtPair> pairs = WithValue("trustPar", "");
+  pairs.push_back({"trustPar", ANNEX_A_TRUST_PAR});
+
+  const EntryPtr entry = ParseEntry(pairs);
+  ASSERT_NE(entry, nullptr);
+
+  EXPECT_STREQ(ShipPairingEntryGetTrustPar(entry.get()), "");
+  EXPECT_FALSE(ShipPairingEntryIsValid(entry.get()));
+}
+
+TEST_F(ShipPairingTestSuite, MatchesKeyNamesIgnoringCase) {
+  // RFC 6763, section 6.4: key names are case insensitive.
+  std::vector<TxtPair> pairs = AnnexAPairs();
+  for (auto& pair : pairs) {
+    std::transform(pair.first.begin(), pair.first.end(), pair.first.begin(), [](unsigned char c) {
+      return static_cast<char>(std::toupper(c));
+    });
+  }
+
+  const EntryPtr entry = ParseEntry(pairs);
+  ASSERT_NE(entry, nullptr);
+
+  EXPECT_STREQ(ShipPairingEntryGetTrustPar(entry.get()), ANNEX_A_TRUST_PAR);
+  EXPECT_TRUE(ShipPairingEntryIsValid(entry.get()));
+}
+
+TEST_F(ShipPairingTestSuite, KeepsTheFirstValueOfAKeyRepeatedInAnotherCase) {
+  std::vector<TxtPair> pairs = AnnexAPairs();
+  pairs.push_back({"TrustPar", "0000000000000000000000000000000000000000000000000000000000000000"});
+
+  const EntryPtr entry = ParseEntry(pairs);
+  ASSERT_NE(entry, nullptr);
+
+  EXPECT_STREQ(ShipPairingEntryGetTrustPar(entry.get()), ANNEX_A_TRUST_PAR);
+}
+
+TEST_F(ShipPairingTestSuite, RejectsARecordWhoseFirstStringIsNotTxtvers) {
+  std::vector<std::string> strings = AnnexAStringsWith({});
+  strings.insert(strings.begin(), "futurekey");
+
+  const EntryPtr entry = ParseStrings(strings);
+  ASSERT_NE(entry, nullptr);
+
+  EXPECT_FALSE(ShipPairingEntryIsValid(entry.get()));
 }
 
 TEST_F(ShipPairingTestSuite, RejectsARecordWhoseFirstKeyIsNotTxtvers) {
