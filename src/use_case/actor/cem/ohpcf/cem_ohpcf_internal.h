@@ -39,6 +39,9 @@ struct CemOhpcfUseCase {
 
 #define CEM_OHPCF_USE_CASE(obj) ((CemOhpcfUseCase*)(obj))
 
+const SmartEnergyManagementPsPowerSequenceType*
+CemOhpcfGetPowerSequenceInternal(const CemOhpcfUseCase* self, const EntityAddressType* remote_entity_addr);
+
 CompressorOhpcfState
 CemOhpcfGetCompressorStateInternal(const CemOhpcfUseCase* self, const EntityAddressType* remote_entity_addr);
 
