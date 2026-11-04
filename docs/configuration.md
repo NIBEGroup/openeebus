@@ -48,3 +48,26 @@ with limited heap can lower it.
 ```cmake
 target_compile_definitions(my_target PRIVATE EEBUS_WEBSOCKET_MAX_INPUT_MSG_SIZE=131072)
 ```
+
+---
+
+## `EEBUS_WEBSOCKET_WRITE_QUEUE_SIZE`
+
+**Header:** `src/ship/websocket/websocket_internal.h`  
+**Default:** `1024`
+
+Maximum number of outgoing messages queued per WebSocket connection. `WebsocketWrite()` queues each
+message without waiting and the messages are written from the libwebsockets writeable callback. If
+the queue is full the write fails and the SHIP connection is closed (`kDataExchange: data exchange
+failed`). During SPINE discovery between devices with many entities and features, dozens of
+messages are queued at once.
+
+The queue preallocates one `WriteMessage` (pointer and size, 8 or 16 bytes depending on the
+platform) per entry, so the default costs about 8–16 KB per connection; the payload is allocated
+per queued message. Embedded builds with a tight heap budget can lower the value, as long as it
+covers the burst of the use cases in use.
+
+**CMake example:**
+```cmake
+target_compile_definitions(my_target PRIVATE EEBUS_WEBSOCKET_WRITE_QUEUE_SIZE=256)
+```
