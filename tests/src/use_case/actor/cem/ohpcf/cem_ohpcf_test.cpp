@@ -50,6 +50,10 @@
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_1.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_2.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_multi_slot.inc"
+#include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_power_and_power_max.inc"
+#include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_power_value.inc"
+#include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_without_active_duration_min.inc"
+#include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_announce_notify_without_power_unit.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_clear_process_notify_1.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_clear_process_notify_2.inc"
 #include "tests/src/use_case/actor/cem/ohpcf/receive/sem_ps_invalid_full_notify.inc"
@@ -100,8 +104,9 @@ MATCHER_P(OptionalPowerConsumptionEq, expected, "") {
 
   bool match = true;
 
-  match = match && (arg->max_power_w.value == expected->max_power_w.value);
-  match = match && (arg->max_power_w.scale == expected->max_power_w.scale);
+  match = match && (arg->power_w.value == expected->power_w.value);
+  match = match && (arg->power_w.scale == expected->power_w.scale);
+  match = match && (arg->power_type == expected->power_type);
   match = match && (EebusDurationCompare(&arg->earliest_start_time, &expected->earliest_start_time) == 0);
   match = match && (EebusDurationCompare(&arg->latest_end_time, &expected->latest_end_time) == 0);
   match = match && (EebusDurationCompare(&arg->active_duration_min, &expected->active_duration_min) == 0);
@@ -229,7 +234,8 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
   // kCemOhpcfStateCompleted and clears the process afterwards.
   //-------------------------------------------------------------------------------------------//
   const OptionalPowerConsumption optional_power_consumption = {
-      .max_power_w         = {2000, 0},
+      .power_w             = {2000, 0},
+      .power_type          = kPowerTimeSlotValueTypeTypePowerMax,
       .earliest_start_time = {0},
       .latest_end_time     = {.days = 1},
       .active_duration_min = {.minutes = 3},
@@ -306,7 +312,8 @@ TEST_F(CemOhpcfTestFixture, CemOhpcfTest) {
   // Finally Compressor reports state kCemOhpcfStateCompleted and clears the process afterwards.
   //-------------------------------------------------------------------------------------------//
   const OptionalPowerConsumption optional_power_consumption_2 = {
-      .max_power_w         = {3000, 0},
+      .power_w             = {3000, 0},
+      .power_type          = kPowerTimeSlotValueTypeTypePowerMax,
       .earliest_start_time = {.minutes = 5},
       .latest_end_time     = {.days = 1},
       .active_duration_min = {.minutes = 10},
@@ -407,7 +414,8 @@ TEST_F(CemOhpcfTestFixture, RunningCompressorIsReportedAsRunningOnConnection) {
   RunDiscoveryUntilInitialRead();
 
   const OptionalPowerConsumption optional_power_consumption = {
-      .max_power_w         = {2000, 0},
+      .power_w             = {2000, 0},
+      .power_type          = kPowerTimeSlotValueTypeTypePowerMax,
       .earliest_start_time = {0},
       .latest_end_time     = {.days = 1},
       .active_duration_min = {.minutes = 3},
@@ -440,7 +448,8 @@ TEST_F(CemOhpcfTestFixture, AnnouncementIsRecognisedWithAnyNodeScheduleInformati
   HandleMessage(receive::sem_ps_read_reply);
 
   const OptionalPowerConsumption optional_power_consumption = {
-      .max_power_w         = {2000, 0},
+      .power_w             = {2000, 0},
+      .power_type          = kPowerTimeSlotValueTypeTypePowerMax,
       .earliest_start_time = {0},
       .latest_end_time     = {.days = 1},
       .active_duration_min = {.minutes = 3},
@@ -458,6 +467,122 @@ TEST_F(CemOhpcfTestFixture, AnnouncementIsRecognisedWithAnyNodeScheduleInformati
   HandleMessage(receive::sem_ps_announce_notify_multi_slot);
 
   EXPECT_EQ(CemOhpcfGetCompressorState(use_case_.get(), &kCompressorAddr), kCompressorOhpcfStateAnnounced);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
+}
+
+// "W" SHALL be assumed when powerUnit is absent (Table 6)
+TEST_F(CemOhpcfTestFixture, AnnouncementWithoutPowerUnitIsInWatts) {
+  RunDiscoveryUntilInitialRead();
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnClearProcess(_, _)).WillOnce(Return());
+  HandleMessage(receive::sem_ps_read_reply);
+
+  const OptionalPowerConsumption optional_power_consumption = {
+      .power_w             = {2000, 0},
+      .power_type          = kPowerTimeSlotValueTypeTypePowerMax,
+      .earliest_start_time = {0},
+      .latest_end_time     = {.days = 1},
+      .active_duration_min = {.minutes = 3},
+      .is_stoppable        = true,
+      .is_pausable         = false,
+  };
+
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionReceive(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
+      .WillOnce(Return());
+  HandleMessage(receive::sem_ps_announce_notify_without_power_unit);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
+}
+
+// [OHPCF-011/2/2] The power may be given as a good approximation ("power") instead of a maximum ("powerMax")
+TEST_F(CemOhpcfTestFixture, AnnouncementWithApproximatedPowerIsRecognised) {
+  RunDiscoveryUntilInitialRead();
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnClearProcess(_, _)).WillOnce(Return());
+  HandleMessage(receive::sem_ps_read_reply);
+
+  const OptionalPowerConsumption optional_power_consumption = {
+      .power_w             = {2000, 0},
+      .power_type          = kPowerTimeSlotValueTypeTypePower,
+      .earliest_start_time = {0},
+      .latest_end_time     = {.days = 1},
+      .active_duration_min = {.minutes = 3},
+      .is_stoppable        = true,
+      .is_pausable         = false,
+  };
+
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionReceive(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
+      .WillOnce(Return());
+  HandleMessage(receive::sem_ps_announce_notify_power_value);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
+}
+
+// [OHPCF-011/2/3] The maximum power is used when the Compressor gives both, whatever their order
+TEST_F(CemOhpcfTestFixture, AnnouncementWithMaxAndApproximatedPowerUsesTheMax) {
+  RunDiscoveryUntilInitialRead();
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnClearProcess(_, _)).WillOnce(Return());
+  HandleMessage(receive::sem_ps_read_reply);
+
+  const OptionalPowerConsumption optional_power_consumption = {
+      .power_w             = {2000, 0},
+      .power_type          = kPowerTimeSlotValueTypeTypePowerMax,
+      .earliest_start_time = {0},
+      .latest_end_time     = {.days = 1},
+      .active_duration_min = {.minutes = 3},
+      .is_stoppable        = true,
+      .is_pausable         = false,
+  };
+
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionReceive(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
+      .WillOnce(Return());
+  HandleMessage(receive::sem_ps_announce_notify_power_and_power_max);
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
+}
+
+// [OHPCF-008] operatingConstraintsDuration is optional for the Compressor (Table 11)
+TEST_F(CemOhpcfTestFixture, AnnouncementWithoutActiveDurationMinIsRecognised) {
+  RunDiscoveryUntilInitialRead();
+
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnClearProcess(_, _)).WillOnce(Return());
+  HandleMessage(receive::sem_ps_read_reply);
+
+  const OptionalPowerConsumption optional_power_consumption = {
+      .power_w             = {2000, 0},
+      .power_type          = kPowerTimeSlotValueTypeTypePowerMax,
+      .earliest_start_time = {0},
+      .latest_end_time     = {.days = 1},
+      .active_duration_min = {0},
+      .is_stoppable        = true,
+      .is_pausable         = false,
+  };
+
+  EXPECT_CALL(
+      *cem_ohpcf_listener_mock_->gmock,
+      OnOptionalPowerConsumptionReceive(_, OptionalPowerConsumptionEq(&optional_power_consumption), _)
+  )
+      .WillOnce(Return());
+  EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnStateReport(_, kCompressorOhpcfStateAnnounced, nullptr, _))
+      .WillOnce(Return());
+  HandleMessage(receive::sem_ps_announce_notify_without_active_duration_min);
 
   EXPECT_CALL(*cem_ohpcf_listener_mock_->gmock, OnRemoteCompressorRemoved(_, _));
 }

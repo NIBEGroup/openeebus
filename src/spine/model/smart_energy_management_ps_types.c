@@ -289,8 +289,9 @@ bool PowerTimeSlotValueTypeMatch(const PowerTimeSlotValueDataType* power_value, 
   return *power_value->value_type == value_type;
 }
 
-const ScaledNumberType* SmartEnergyManagementPsPowerTimeSlotGetPowerMax(
-    const SmartEnergyManagementPsPowerTimeSlotType* power_time_slot
+const ScaledNumberType* SmartEnergyManagementPsPowerTimeSlotGetValue(
+    const SmartEnergyManagementPsPowerTimeSlotType* power_time_slot,
+    PowerTimeSlotValueTypeType value_type
 ) {
   if (power_time_slot == NULL) {
     return NULL;
@@ -307,12 +308,18 @@ const ScaledNumberType* SmartEnergyManagementPsPowerTimeSlotGetPowerMax(
 
   for (size_t i = 0; i < value_list->value_size; i++) {
     const PowerTimeSlotValueDataType* const power_value = value_list->value[i];
-    if (PowerTimeSlotValueTypeMatch(power_value, kPowerTimeSlotValueTypeTypePowerMax)) {
+    if (PowerTimeSlotValueTypeMatch(power_value, value_type)) {
       return power_value->value;
     }
   }
 
   return NULL;
+}
+
+const ScaledNumberType* SmartEnergyManagementPsPowerTimeSlotGetPowerMax(
+    const SmartEnergyManagementPsPowerTimeSlotType* power_time_slot
+) {
+  return SmartEnergyManagementPsPowerTimeSlotGetValue(power_time_slot, kPowerTimeSlotValueTypeTypePowerMax);
 }
 
 const ScaledNumberType* SmartEnergyManagementPsPowerSequenceGetPowerMax(

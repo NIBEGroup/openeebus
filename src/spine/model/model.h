@@ -23,8 +23,9 @@
 
 #include "src/common/api/eebus_data_interface.h"
 #include "src/spine/model/device_types.h"
-#include "src/spine/model/function_types.h"
 #include "src/spine/model/feature_types.h"
+#include "src/spine/model/function_types.h"
+#include "src/spine/model/power_sequences_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,6 +73,7 @@ void ModelDataListElementDelete(FunctionType function_type, void* element_data);
 const DeviceTypeType* ModelStringToDeviceType(const char* s);
 const char* ModelFeatureTypeToString(FeatureTypeType feature_type);
 const char* ModelRoleToString(RoleType role);
+const char* ModelPowerTimeSlotValueTypeToString(PowerTimeSlotValueTypeType value_type);
 /** @{ */
 
 /**

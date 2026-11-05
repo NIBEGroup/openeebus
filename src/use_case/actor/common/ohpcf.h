@@ -85,15 +85,6 @@ const SmartEnergyManagementPsPowerTimeSlotType* OhpcfSmartEnergyManagementPsPowe
     const SmartEnergyManagementPsPowerSequenceType* power_sequence
 );
 
-/**
- * @brief Get the Maximal Power from Power Sequence (if available)
- * @param power_sequence Power Sequence to get the Maximal Power from
- * @return Unique Maximal Power instance (Scaled Number type) on success, NULL otherwise
- */
-const ScaledNumberType* OhpcfSmartEnergyManagementPsPowerSequenceGetPowerMax(
-    const SmartEnergyManagementPsPowerSequenceType* power_sequence
-);
-
 #ifdef __cplusplus
 }  // extern "C"
 #endif

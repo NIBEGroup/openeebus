@@ -229,6 +229,11 @@ const PowerTimeSlotNumberType* SmartEnergyManagementPsPowerSequenceGetActiveSlot
     const SmartEnergyManagementPsPowerSequenceType* power_sequence
 );
 
+const ScaledNumberType* SmartEnergyManagementPsPowerTimeSlotGetValue(
+    const SmartEnergyManagementPsPowerTimeSlotType* power_time_slot,
+    PowerTimeSlotValueTypeType value_type
+);
+
 const ScaledNumberType* SmartEnergyManagementPsPowerTimeSlotGetPowerMax(
     const SmartEnergyManagementPsPowerTimeSlotType* power_time_slot
 );

@@ -185,7 +185,7 @@ void HandleCmdAnnounce(const CompressorOhpcfCli* self, const char* const* tokens
   }
 
   OptionalPowerConsumption optional_power_consumption = {0};
-  if (ScaledValueParse(tokens[2], &optional_power_consumption.max_power_w) != kEebusErrorOk) {
+  if (ScaledValueParse(tokens[2], &optional_power_consumption.power_w) != kEebusErrorOk) {
     printf("Compressor OHPCF invalid power consumption value: %s\n", tokens[2]);
     return;
   }
