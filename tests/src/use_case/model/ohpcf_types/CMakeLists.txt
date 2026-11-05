@@ -12,6 +12,7 @@ if(WIN32)
 endif()
 
 include(${MAIN_PROJ_SOURCES_PATH}/common/eebus_date_time/eebus_date_time_sources.cmake)
+include(${MAIN_PROJ_SOURCES_PATH}/common/eebus_data/eebus_data_sources.cmake)
 
 target_sources(
   ${TEST_NAME}
@@ -20,8 +21,13 @@ target_sources(
 
   # Main project sources
   ${EEBUS_DATE_TIME_SOURCES}
+  ${EEBUS_DATA_SOURCES}
   ${MAIN_PROJ_SOURCES_PATH}/common/eebus_math/eebus_math.c
+  ${MAIN_PROJ_SOURCES_PATH}/common/json_impl_cjson.c
   ${MAIN_PROJ_SOURCES_PATH}/common/string_util.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/model.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_cfg.c
+  ${MAIN_PROJ_SOURCES_PATH}/spine/model/smart_energy_management_ps_types.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/model/ohpcf_types.c
   ${MAIN_PROJ_SOURCES_PATH}/use_case/model/scaled_value.c
 
@@ -56,6 +62,7 @@ target_link_libraries(
   ${TEST_NAME}
   PRIVATE
   ${PROJECT_LINK_LIBRARIES}
+  cjson
 )
 
 add_test(

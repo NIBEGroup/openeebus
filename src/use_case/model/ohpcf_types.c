@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "src/common/array_util.h"
+#include "src/spine/model/model.h"
 #include "src/spine/model/power_sequences_types.h"
 #include "src/use_case/model/ohpcf_types.h"
 
@@ -87,11 +88,10 @@ const char* CompressorOhpcfStateGetName(CompressorOhpcfState state) {
 }
 
 void OptionalPowerConsumptionPrint(const OptionalPowerConsumption* opc) {
+  const char* const power_type = ModelPowerTimeSlotValueTypeToString(opc->power_type);
+
   printf("{\n");
-  printf(
-      "  power_type          = %s,\n",
-      opc->power_type == kPowerTimeSlotValueTypeTypePowerMax ? "max" : "approximated"
-  );
+  printf("  power_type          = %s,\n", (power_type != NULL) ? power_type : "unknown");
   ScaledValuePrint("  power_w             = %sW,\n", &opc->power_w);
   EebusDurationPrint("  earliest_start_time = %s,\n", &opc->earliest_start_time);
   EebusDurationPrint("  latest_end_time     = %s,\n", &opc->latest_end_time);
