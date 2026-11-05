@@ -181,10 +181,10 @@ EebusDateTime EebusDateTimeNow(void) {
   time(&now);
 
 #ifdef _WIN32
-  // Windows compatibility: localtime_s has different parameter order
-  localtime_s(&tm, &now);
+  // Windows compatibility: gmtime_s has different parameter order
+  gmtime_s(&tm, &now);
 #else
-  localtime_r(&now, &tm);
+  gmtime_r(&now, &tm);
 #endif  // _WIN32
 
   EebusDateTime date_time;
