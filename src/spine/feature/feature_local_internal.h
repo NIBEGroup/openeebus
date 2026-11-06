@@ -60,6 +60,7 @@ void FeatureLocalConstruct(
 );
 
 EebusError FeatureLocalProcessResult(FeatureLocal* self, const Message* msg);
+EebusError FeatureLocalProcessReply(FeatureLocal* self, const Message* msg);
 
 void FeatureLocalDestruct(FeatureObject* self);
 DeviceLocalObject* FeatureLocalGetDevice(const FeatureLocalObject* self);

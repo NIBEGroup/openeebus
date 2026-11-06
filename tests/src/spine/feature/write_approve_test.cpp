@@ -14,9 +14,67 @@
  * limitations under the License.
  */
 
+#include "src/spine/node_management/node_management_internal.h"
 #include "tests/src/spine/feature/write_approve_test_suite.h"
 
 using std::literals::string_view_literals::operator""sv;
+
+class NodeManagementTableReplyTests : public WriteApproveTestSuite,
+                                      public ::testing::WithParamInterface<FunctionType> {};
+
+TEST_P(NodeManagementTableReplyTests, DispatchesOnlyTheCorrelatedReplyOnce) {
+  const auto* address = FEATURE_GET_ADDRESS(FEATURE_OBJECT(feature_local_object_.get()));
+  EXPECT_CALL(*feature_remote_mock_->gmock, GetAddress(::testing::_)).WillRepeatedly(::testing::Return(address));
+  EXPECT_CALL(*feature_remote_mock_->gmock, GetEntity(::testing::_))
+      .WillRepeatedly(::testing::Return(ENTITY_REMOTE_OBJECT(entity_remote_mock_.get())));
+  EXPECT_CALL(
+      *feature_remote_mock_->gmock,
+      UpdateData(::testing::_, GetParam(), ::testing::_, ::testing::_, ::testing::_, true)
+  )
+      .WillRepeatedly(::testing::Return(kEebusErrorOk));
+
+  int replies = 0;
+  ASSERT_EQ(
+      PENDING_REPLY_CONTAINER_ADD(
+          FEATURE_LOCAL(feature_local_object_.get())->pending_replies,
+          42,
+          address,
+          GetParam(),
+          "mock_remote_device_ski",
+          [](const ReplyMessage* reply, const FeatureAddressType*, EebusError err, void* context) {
+            EXPECT_EQ(err, kEebusErrorOk);
+            ASSERT_NE(reply, nullptr);
+            EXPECT_EQ(reply->msg_cnt_ref, 42u);
+            ++*static_cast<int*>(context);
+          },
+          &replies
+      ),
+      kEebusErrorOk
+  );
+
+  Message message          = CreateTestMessage(GetParam(), 100);
+  message.cmd_classifier   = kCommandClassifierTypeReply;
+  MsgCounterType reference = 43;
+  header_mock_.msg_cnt_ref = &reference;
+  auto dispatch            = [&]() {
+    auto* node = NODE_MANAGEMENT(feature_local_object_.get());
+    return GetParam() == kFunctionTypeNodeManagementSubscriptionData ? HandleMsgSubscriptionData(node, &message)
+                                                                                : HandleMsgBindingData(node, &message);
+  };
+  EXPECT_EQ(dispatch(), kEebusErrorOk);
+  EXPECT_EQ(replies, 0);
+  reference = 42;
+  EXPECT_EQ(dispatch(), kEebusErrorOk);
+  EXPECT_EQ(replies, 1);
+  EXPECT_EQ(dispatch(), kEebusErrorOk);
+  EXPECT_EQ(replies, 1);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    NodeManagementTables,
+    NodeManagementTableReplyTests,
+    ::testing::Values(kFunctionTypeNodeManagementSubscriptionData, kFunctionTypeNodeManagementBindingData)
+);
 
 struct WriteApproveTestInput {
   std::string_view description = ""sv;
