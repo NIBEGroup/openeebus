@@ -100,7 +100,6 @@ static void PublishDataUpdateEvent(
 static EebusError ProcessNotify(FeatureLocal* self, const Message* msg);
 static EebusError ProcessWriteInternal(FeatureLocal* self, const Message* msg);
 static EebusError ProcessWrite(FeatureLocal* self, const Message* msg);
-static EebusError ProcessReply(FeatureLocal* self, const Message* msg);
 
 void FeatureLocalConstruct(
     FeatureLocal* self,
@@ -685,7 +684,7 @@ EebusError ProcessWrite(FeatureLocal* self, const Message* msg) {
   }
 }
 
-EebusError ProcessReply(FeatureLocal* self, const Message* msg) {
+EebusError FeatureLocalProcessReply(FeatureLocal* self, const Message* msg) {
   const FunctionType function_type       = msg->cmd->data_choice_type_id;
   const void* const new_data             = msg->cmd->data_choice;
   const FilterType* const filter_partial = msg->filter_partial;
@@ -730,7 +729,7 @@ EebusError HandleMessage(FeatureLocalObject* self, const Message* msg) {
   switch (msg->cmd_classifier) {
     case kCommandClassifierTypeResult: return FeatureLocalProcessResult(fl, msg);
     case kCommandClassifierTypeRead: return ProcessRead(fl, msg);
-    case kCommandClassifierTypeReply: return ProcessReply(fl, msg);
+    case kCommandClassifierTypeReply: return FeatureLocalProcessReply(fl, msg);
     case kCommandClassifierTypeNotify: return ProcessNotify(fl, msg);
     case kCommandClassifierTypeWrite: return ProcessWrite(fl, msg);
     default: return kEebusErrorNotImplemented;

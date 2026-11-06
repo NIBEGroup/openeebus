@@ -30,6 +30,10 @@ SubscriptionManagerObject* GetSubscriptionManager(NodeManagement* self) {
 }
 
 EebusError HandleMsgSubscriptionData(NodeManagement* self, const Message* msg) {
+  if (msg->cmd_classifier == kCommandClassifierTypeReply) {
+    return FeatureLocalProcessReply(FEATURE_LOCAL(self), msg);
+  }
+
   if (msg->cmd_classifier != kCommandClassifierTypeCall) {
     return kEebusErrorNotImplemented;
   }
@@ -57,7 +61,10 @@ EebusError HandleMsgSubscriptionRequestCall(NodeManagement* self, const Message*
       = (const NodeManagementSubscriptionRequestCallType*)msg->cmd->data_choice;
 
   return SUBSCRIPTION_MANAGER_ADD_SUBSCRIPTION(
-      GetSubscriptionManager(self), msg->device_remote, data->subscription_request);
+      GetSubscriptionManager(self),
+      msg->device_remote,
+      data->subscription_request
+  );
 }
 
 EebusError HandleMsgSubscriptionDeleteCall(NodeManagement* self, const Message* msg) {
@@ -68,5 +75,8 @@ EebusError HandleMsgSubscriptionDeleteCall(NodeManagement* self, const Message* 
   const NodeManagementSubscriptionDeleteCallType* const data
       = (const NodeManagementSubscriptionDeleteCallType*)msg->cmd->data_choice;
   return SUBSCRIPTION_MANAGER_REMOVE_SUBSCRIPTION(
-      GetSubscriptionManager(self), msg->device_remote, data->subscription_delete);
+      GetSubscriptionManager(self),
+      msg->device_remote,
+      data->subscription_delete
+  );
 }

@@ -29,6 +29,10 @@ BindingManagerObject* GetBindingManager(NodeManagement* self) {
 }
 
 EebusError HandleMsgBindingData(NodeManagement* self, const Message* msg) {
+  if (msg->cmd_classifier == kCommandClassifierTypeReply) {
+    return FeatureLocalProcessReply(FEATURE_LOCAL(self), msg);
+  }
+
   if (msg->cmd_classifier != kCommandClassifierTypeCall) {
     return kEebusErrorNotImplemented;
   }
