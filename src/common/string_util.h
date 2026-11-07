@@ -94,6 +94,24 @@ static inline bool StringEqualsIgnoreCase(const char* a, const char* b) {
 }
 
 /**
+ * @brief Case-insensitive string ordering, like strcasecmp() (which is not
+ * available on every platform)
+ * @param a First string (NULL sorts before any string)
+ * @param b Second string (NULL sorts before any string)
+ * @return <0, 0 or >0 if a is smaller than, equal to or bigger than b, ignoring case
+ */
+static inline int StringCompareIgnoreCase(const char* a, const char* b) {
+  if ((a == NULL) || (b == NULL)) {
+    return (a == b) ? 0 : ((a == NULL) ? -1 : 1);
+  }
+#ifdef _WIN32
+  return _stricmp(a, b);
+#else
+  return strcasecmp(a, b);
+#endif  // _WIN32
+}
+
+/**
  * @brief Dynamically allocates buffer and performs formatted sprintf() into it
  *
  * Transformed from Go fmt.Sprintf()

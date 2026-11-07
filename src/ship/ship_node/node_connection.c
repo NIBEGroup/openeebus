@@ -39,6 +39,18 @@ static void ScheduleRetry(NodeConnectionObject* self, uint32_t delay_ms);
 static bool OnHandshakeComplete(NodeConnectionObject* self);
 static EebusError ClientConnect(NodeConnectionObject* self, WebsocketCreatorObject* wsc, const char* ship_id);
 static EebusError ServerConnect(NodeConnectionObject* self, WebsocketCreatorObject* wsc, const char* ship_id);
+static bool IsOutboundInFlight(const NodeConnectionObject* self);
+static bool IsOutboundEstablished(const NodeConnectionObject* self);
+static bool ShouldYield(NodeConnectionObject* self);
+static ShipConnectionObject* SupersedeClient(NodeConnectionObject* self);
+static void RestoreSuperseded(NodeConnectionObject* self);
+static bool IsSuperseded(const NodeConnectionObject* self, const ShipConnectionObject* sc);
+static void ReleaseSuperseded(NodeConnectionObject* self, const ShipConnectionObject* sc);
+static ShipConnectionObject* TakeSuperseded(NodeConnectionObject* self);
+static ShipConnectionObject* DetachConnection(NodeConnectionObject* self, bool* was_established);
+static void ClearAttempt(NodeConnectionObject* self);
+static void OnInboundHandshake(NodeConnectionObject* self, bool started);
+static bool IsInboundHandshake(const NodeConnectionObject* self);
 
 static const NodeConnectionInterface node_connection_methods = {
     .destruct                = Destruct,
@@ -53,6 +65,18 @@ static const NodeConnectionInterface node_connection_methods = {
     .on_handshake_complete   = OnHandshakeComplete,
     .client_connect          = ClientConnect,
     .server_connect          = ServerConnect,
+    .is_outbound_in_flight   = IsOutboundInFlight,
+    .is_outbound_established = IsOutboundEstablished,
+    .should_yield            = ShouldYield,
+    .supersede_client        = SupersedeClient,
+    .restore_superseded      = RestoreSuperseded,
+    .is_superseded           = IsSuperseded,
+    .release_superseded      = ReleaseSuperseded,
+    .take_superseded         = TakeSuperseded,
+    .detach_connection       = DetachConnection,
+    .clear_attempt           = ClearAttempt,
+    .on_inbound_handshake    = OnInboundHandshake,
+    .is_inbound_handshake    = IsInboundHandshake,
 };
 
 static EebusError
@@ -70,7 +94,11 @@ NodeConnectionConstruct(NodeConnection* nc, const char* ski, struct ShipNode* ow
   nc->pending_approval_id  = 0;
   nc->attempt_cnt          = 0;
   nc->is_attempt_running   = false;
+  nc->is_outbound          = false;
   nc->handshake_complete   = false;
+  nc->yield_cnt            = 0;
+  nc->inbound_hs_cnt       = 0;
+  nc->superseded           = NULL;
   nc->is_trusted           = false;
   nc->provisional          = false;
   nc->trusted_by_pairing   = false;
@@ -139,7 +167,7 @@ bool IsAttemptRunning(const NodeConnectionObject* self) {
 }
 
 bool OwnsConnection(const NodeConnectionObject* self, const ShipConnectionObject* sc) {
-  return NODE_CONNECTION(self)->connection == sc;
+  return (NODE_CONNECTION(self)->connection == sc) || IsSuperseded(self, sc);
 }
 
 ShipConnectionObject* ReleaseShipConnection(NodeConnectionObject* self) {
@@ -171,6 +199,7 @@ uint32_t OnConnectionClosed(NodeConnectionObject* self) {
   nc->connection          = NULL;
   nc->pending_approval_id = 0;
   nc->is_attempt_running  = false;
+  nc->is_outbound         = false;
   nc->handshake_complete  = false;
   StringDelete(nc->peer_fingerprint);
   nc->peer_fingerprint = NULL;
@@ -207,6 +236,7 @@ bool OnHandshakeComplete(NodeConnectionObject* self) {
   }
 
   nc->handshake_complete = true;
+  nc->yield_cnt          = 0;
   nc->attempt_cnt        = 0;
 
   return true;
@@ -232,6 +262,7 @@ EebusError ClientConnect(NodeConnectionObject* self, WebsocketCreatorObject* wsc
   const EebusError start_err = SHIP_CONNECTION_START(nc->connection, wsc);
   if (start_err == kEebusErrorOk) {
     nc->is_attempt_running = true;
+    nc->is_outbound        = true;
     return kEebusErrorOk;
   }
 
@@ -250,6 +281,121 @@ EebusError ServerConnect(NodeConnectionObject* self, WebsocketCreatorObject* wsc
   }
 
   nc->is_attempt_running = true;
+  nc->is_outbound        = false;
+  nc->yield_cnt          = 0;
   SHIP_CONNECTION_START(nc->connection, wsc);
   return kEebusErrorOk;
+}
+
+bool IsOutboundInFlight(const NodeConnectionObject* self) {
+  const NodeConnection* const nc = NODE_CONNECTION(self);
+  return nc->is_attempt_running && nc->is_outbound && !nc->handshake_complete;
+}
+
+bool IsOutboundEstablished(const NodeConnectionObject* self) {
+  const NodeConnection* const nc = NODE_CONNECTION(self);
+  return nc->is_attempt_running && nc->is_outbound && nc->handshake_complete;
+}
+
+bool ShouldYield(NodeConnectionObject* self) {
+  NodeConnection* const nc = NODE_CONNECTION(self);
+
+  // Yield once. If the peer dials in again while our outbound attempt still has
+  // not completed, that attempt is going nowhere (e.g. a stale mDNS entry), so
+  // give way. The count is kept across our own attempts: they restart about as
+  // often as the peer retries, and a per-attempt count would refuse every
+  // inbound connection that lands on a fresh attempt.
+  if (nc->yield_cnt == 0) {
+    nc->yield_cnt++;
+    return true;
+  }
+
+  return false;
+}
+
+ShipConnectionObject* SupersedeClient(NodeConnectionObject* self) {
+  NodeConnection* const nc = NODE_CONNECTION(self);
+
+  if (!IsOutboundInFlight(self) || (nc->connection == NULL) || (nc->superseded != NULL)) {
+    return NULL;
+  }
+
+  ShipConnectionObject* const old_client = nc->connection;
+
+  // The outbound connection is being replaced: it no longer counts as a client,
+  // but the attempt stays marked as running so that no competing outbound
+  // attempt can start while the replacing server connection is set up.
+  nc->superseded  = old_client;
+  nc->connection  = NULL;
+  nc->is_outbound = false;
+  return old_client;
+}
+
+void RestoreSuperseded(NodeConnectionObject* self) {
+  NodeConnection* const nc = NODE_CONNECTION(self);
+
+  if (nc->superseded != NULL) {
+    nc->connection  = nc->superseded;
+    nc->superseded  = NULL;
+    nc->is_outbound = true;
+  }
+}
+
+bool IsSuperseded(const NodeConnectionObject* self, const ShipConnectionObject* sc) {
+  const NodeConnection* const nc = NODE_CONNECTION(self);
+  return (sc != NULL) && (nc->superseded == sc);
+}
+
+void ReleaseSuperseded(NodeConnectionObject* self, const ShipConnectionObject* sc) {
+  NodeConnection* const nc = NODE_CONNECTION(self);
+
+  if ((sc != NULL) && (nc->superseded == sc)) {
+    nc->superseded = NULL;
+  }
+}
+
+ShipConnectionObject* DetachConnection(NodeConnectionObject* self, bool* was_established) {
+  NodeConnection* const nc = NODE_CONNECTION(self);
+
+  ShipConnectionObject* const old_connection = nc->connection;
+  *was_established                           = (old_connection != NULL) && nc->handshake_complete;
+
+  // The replacing connection starts from scratch: its SHIP handshake completing
+  // must be reported to the application again (the old one is reported as
+  // disconnected by the caller). is_attempt_running stays as it is.
+  nc->connection         = NULL;
+  nc->is_outbound        = false;
+  nc->handshake_complete = false;
+  return old_connection;
+}
+
+void ClearAttempt(NodeConnectionObject* self) {
+  NodeConnection* const nc = NODE_CONNECTION(self);
+
+  nc->connection         = NULL;
+  nc->is_attempt_running = false;
+  nc->is_outbound        = false;
+  nc->handshake_complete = false;
+}
+
+ShipConnectionObject* TakeSuperseded(NodeConnectionObject* self) {
+  NodeConnection* const nc       = NODE_CONNECTION(self);
+  ShipConnectionObject* const sc = nc->superseded;
+  nc->superseded                 = NULL;
+  return sc;
+}
+
+void OnInboundHandshake(NodeConnectionObject* self, bool started) {
+  NodeConnection* const nc = NODE_CONNECTION(self);
+
+  if (started) {
+    nc->inbound_hs_cnt++;
+  } else if (nc->inbound_hs_cnt > 0) {
+    // Does not go below zero: the connection may have been created while the handshake was already running
+    nc->inbound_hs_cnt--;
+  }
+}
+
+bool IsInboundHandshake(const NodeConnectionObject* self) {
+  return NODE_CONNECTION(self)->inbound_hs_cnt > 0;
 }
