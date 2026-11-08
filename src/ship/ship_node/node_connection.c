@@ -280,10 +280,16 @@ EebusError ServerConnect(NodeConnectionObject* self, WebsocketCreatorObject* wsc
     return kEebusErrorMemoryAllocate;
   }
 
+  const EebusError start_err = SHIP_CONNECTION_START(nc->connection, wsc);
+  if (start_err != kEebusErrorOk) {
+    ShipConnectionDelete(nc->connection);
+    nc->connection = NULL;
+    return start_err;
+  }
+
   nc->is_attempt_running = true;
   nc->is_outbound        = false;
   nc->yield_cnt          = 0;
-  SHIP_CONNECTION_START(nc->connection, wsc);
   return kEebusErrorOk;
 }
 
