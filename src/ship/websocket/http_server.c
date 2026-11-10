@@ -369,13 +369,16 @@ int HttpServerOnClientConnect(HttpServer* self, struct lws* wsi) {
 
   WebsocketCreatorObject* websocket_creator = WebsocketServerCreatorCreate(HTTP_SERVER_OBJECT(self), wsi);
 
+  // kWebsocketServerEventHandshakeStarted / kWebsocketServerEventHandshakeFailed are not sent by this backend: lws
+  // runs the TLS handshake inside its service loop and exposes the peer SKI only here, after the handshake.
   // SHIP Pairing Service authenticates a peer by the fingerprint of the
   // certificate it presented rather than by its SKI (section 10.2). Both come
   // from this handshake, and the fingerprint is published only while the
   // decision that needs it is being taken.
   self->peer_fingerprint = WebsocketGetFingerprintWithWsi(wsi);
 
-  const int ret = self->conn_establish_cb(ski, websocket_creator, self->conn_establish_ctx);
+  const int ret
+      = self->conn_establish_cb(kWebsocketServerEventEstablished, ski, websocket_creator, self->conn_establish_ctx);
 
   StringDelete((char*)self->peer_fingerprint);
   self->peer_fingerprint = NULL;

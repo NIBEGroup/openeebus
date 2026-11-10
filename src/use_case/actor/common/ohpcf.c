@@ -59,14 +59,6 @@ bool NodeScheduleMatch(
   return EEBUS_DATA_SELECTORS_MATCH(cfg, &node_schedule_info1, cfg, &node_schedule_info2);
 }
 
-bool OhpcfNodeScheduleAnnounceMatch(const PowerSequenceNodeScheduleInformationDataType* node_schedule_info) {
-  return NodeScheduleMatch(node_schedule_info, &kNodeScheduleAnnounce);
-}
-
-bool OhpcfNodeScheduleClearProcessMatch(const PowerSequenceNodeScheduleInformationDataType* node_schedule_info) {
-  return NodeScheduleMatch(node_schedule_info, &kNodeScheduleClearProcess);
-}
-
 const SmartEnergyManagementPsAlternativesType* OhpcfSmartEnergyManagementPsGetAlternative(
     const SmartEnergyManagementPsDataType* sem_ps_data
 ) {
@@ -140,17 +132,4 @@ const SmartEnergyManagementPsPowerTimeSlotType* OhpcfSmartEnergyManagementPsPowe
   }
 
   return power_sequence->power_time_slot[0];
-}
-
-const ScaledNumberType* OhpcfSmartEnergyManagementPsPowerSequenceGetPowerMax(
-    const SmartEnergyManagementPsPowerSequenceType* power_sequence
-) {
-  const SmartEnergyManagementPsPowerTimeSlotType* const power_time_slot
-      = OhpcfSmartEnergyManagementPsPowerSequenceGetPowerTimeSlot(power_sequence);
-
-  if (power_time_slot == NULL) {
-    return NULL;
-  }
-
-  return SmartEnergyManagementPsPowerTimeSlotGetPowerMax(power_time_slot);
 }

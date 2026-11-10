@@ -39,7 +39,11 @@ struct NodeConnection {
   uint64_t pending_approval_id;
   int attempt_cnt;
   bool is_attempt_running;
+  bool is_outbound;  // the current connection is our own outbound (client) one
   bool handshake_complete;
+  int yield_cnt;                     // inbound connections refused in favour of our outbound attempt (see should_yield)
+  ShipConnectionObject* superseded;  // outbound connection replaced by an inbound one, awaiting its close
+  int inbound_hs_cnt;                // inbound handshakes from this SKI that are running
   bool is_trusted;
   bool provisional;
   bool trusted_by_pairing;

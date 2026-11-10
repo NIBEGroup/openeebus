@@ -65,6 +65,7 @@
 #include "tests/unit_tests/use_case/actor/compressor/ohpcf/send/sem_ps_data_announce.inc"
 #include "tests/unit_tests/use_case/actor/compressor/ohpcf/send/sem_ps_data_announce_2.inc"
 #include "tests/unit_tests/use_case/actor/compressor/ohpcf/send/sem_ps_data_announce_3.inc"
+#include "tests/unit_tests/use_case/actor/compressor/ohpcf/send/sem_ps_data_announce_power_value.inc"
 #include "tests/unit_tests/use_case/actor/compressor/ohpcf/send/sem_ps_data_reply.inc"
 #include "tests/unit_tests/use_case/actor/compressor/ohpcf/send/sem_ps_notify_invalid.inc"
 #include "tests/unit_tests/use_case/actor/compressor/ohpcf/send/sem_ps_notify_paused.inc"
@@ -190,7 +191,8 @@ TEST_F(CompressorOhpcfTestFixture, CompressorOhpcfTest) {
   // kCompressorOhpcfStateCompleted and clears the process afterwards.
   //-------------------------------------------------------------------------------------------//
   const OptionalPowerConsumption optional_power_consumption = {
-      .max_power_w         = {2000, 0},
+      .power_w             = {2000, 0},
+      .power_type          = kPowerTimeSlotValueTypeTypePowerMax,
       .earliest_start_time = {0},
       .latest_end_time     = {.days = 1},
       .active_duration_min = {.minutes = 3},
@@ -278,6 +280,47 @@ TEST_F(CompressorOhpcfTestFixture, CompressorOhpcfTest) {
   EXPECT_EQ(CompressorOhpcfReportState(use_case_.get(), kCompressorOhpcfStateCompleted, NULL), kEebusErrorOk);
   ExpectSendMessage(send::sem_ps_process_cleared_3);
   EXPECT_EQ(CompressorOhpcfClearProcess(use_case_.get()), kEebusErrorOk);
+}
+
+// [OHPCF-011/2/2] A Compressor that only knows a good approximation of its power announces it as "power"
+TEST_F(CompressorOhpcfTestFixture, AnnouncesApproximatedPowerAsPower) {
+  ExpectSendMessage(send::discovery_reply);
+  HandleMessage(receive::discovery_request);
+
+  ExpectSendMessage(send::node_management_subscription_call);
+  ExpectSendMessage(send::use_case_data_read);
+  HandleMessage(receive::discovery_response);
+
+  ExpectSendMessage(send::result_data_msg_cnt_ref_9);
+  HandleMessage(receive::node_management_subscription_request);
+
+  ExpectSendMessage(send::use_case_data_reply);
+  HandleMessage(receive::use_case_request);
+
+  HandleMessage(receive::result_data_msg_cnt_ref_3);
+  HandleMessage(receive::use_case_reply);
+
+  ExpectSendMessage(send::sem_ps_data_reply);
+  HandleMessage(receive::sem_ps_read_request);
+
+  ExpectSendMessage(send::result_data_msg_cnt_ref_14);
+  HandleMessage(receive::sem_ps_subscription_request);
+
+  ExpectSendMessage(send::result_data_msg_cnt_ref_15);
+  HandleMessage(receive::sem_ps_binding_request);
+
+  const OptionalPowerConsumption optional_power_consumption = {
+      .power_w             = {2000, 0},
+      .power_type          = kPowerTimeSlotValueTypeTypePower,
+      .earliest_start_time = {0},
+      .latest_end_time     = {.days = 1},
+      .active_duration_min = {.minutes = 3},
+      .is_stoppable        = true,
+      .is_pausable         = false,
+  };
+
+  ExpectSendMessage(send::sem_ps_data_announce_power_value);
+  EXPECT_EQ(CompressorOhpcfAnnounce(use_case_.get(), &optional_power_consumption), kEebusErrorOk);
 }
 
 }  // namespace compressor_ohpcf_test

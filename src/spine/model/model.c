@@ -261,6 +261,11 @@ const char* ModelRoleToString(RoleType role) {
   return (mapping != NULL) ? mapping->name : NULL;
 }
 
+const char* ModelPowerTimeSlotValueTypeToString(PowerTimeSlotValueTypeType value_type) {
+  const EnumMapping* mapping = EebusDataGetEnumMappingWithValue(power_time_slot_value_type_lut, value_type);
+  return (mapping != NULL) ? mapping->name : NULL;
+}
+
 //---------------------------------------------------------------------------//
 //
 // EEBUS SPINE RFE related Data Configuration Getters

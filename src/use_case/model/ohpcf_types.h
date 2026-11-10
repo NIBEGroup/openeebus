@@ -77,12 +77,15 @@ typedef struct OptionalPowerConsumption OptionalPowerConsumption;
  * @brief Optional power consumption parameters structure
  */
 struct OptionalPowerConsumption {
-  ScaledValue max_power_w;           /**< Maximum power in Watts [OHPCF-011/2/3] and [OHPCF-011/2/1] */
-  EebusDuration earliest_start_time; /**< Earliest start time [OHPCF-011/4] */
-  EebusDuration latest_end_time;     /**< Latest end time [OHPCF-011/4] */
-  EebusDuration active_duration_min; /**< Active duration minimum [OHPCF-008] */
-  bool is_stoppable;                 /**< Indicates whether the consumption may be stopped by the CEM [OHPCF-011/5] */
-  bool is_pausable; /**< Indicates whether the consumption may be paused and resumed by the CEM [OHPCF-011/6] */
+  /** Maximum power in Watts [OHPCF-011/2/3] and [OHPCF-011/2/1], or the approximated power [OHPCF-011/2/2] if the
+   * Compressor gives no maximum */
+  ScaledValue power_w;
+  PowerTimeSlotValueTypeType power_type; /**< Type of the power value (max or approximated) */
+  EebusDuration earliest_start_time;     /**< Earliest start time [OHPCF-011/4] */
+  EebusDuration latest_end_time;         /**< Latest end time [OHPCF-011/4] */
+  EebusDuration active_duration_min;     /**< Active duration minimum [OHPCF-008], zero if not given */
+  bool is_stoppable; /**< Indicates whether the consumption may be stopped by the CEM [OHPCF-011/5] */
+  bool is_pausable;  /**< Indicates whether the consumption may be paused and resumed by the CEM [OHPCF-011/6] */
 };
 
 /**
