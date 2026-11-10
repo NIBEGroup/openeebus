@@ -953,33 +953,33 @@ void RegisterRemoteFingerprint(ShipNodeObject* self, const char* fingerprint) {
 // The SHIP Pairing Service permits one current devZ. Keep classic SKI trust and
 // other active connections while withdrawing the previous pairing-derived one.
 void ShipNodeRevokePairingFingerprint(ShipNode* sn, const char* fingerprint) {
-  size_t i = 0;
-  while (true) {
-    EEBUS_MUTEX_LOCK(sn->mutex);
-    if (i >= NODE_CONNECTION_CONTAINER_GET_SIZE(sn->connections)) {
-      EEBUS_MUTEX_UNLOCK(sn->mutex);
-      return;
-    }
+  Vector to_remove;
 
-    NodeConnectionObject* nc   = NODE_CONNECTION_CONTAINER_GET_WITH_INDEX(sn->connections, i);
-    NodeConnection* connection = NODE_CONNECTION(nc);
+  VectorConstruct(&to_remove);
+  EEBUS_MUTEX_LOCK(sn->mutex);
+  for (size_t i = 0; i < NODE_CONNECTION_CONTAINER_GET_SIZE(sn->connections);) {
+    NodeConnectionObject* nc               = NODE_CONNECTION_CONTAINER_GET_WITH_INDEX(sn->connections, i);
+    const NodeConnection* const connection = NODE_CONNECTION(nc);
     if (!connection->trusted_by_pairing || !ShipNodeFingerprintMatches(connection->expected_fingerprint, fingerprint)) {
-      ++i;
-      EEBUS_MUTEX_UNLOCK(sn->mutex);
+      i += 1;
       continue;
     }
-
     ShipConnectionObject* sc = NODE_CONNECTION_RELEASE_SHIP_CONNECTION(nc);
     // Pairing can trust a peer before its SKI is known, so remove the entry directly.
     NODE_CONNECTION_CONTAINER_REMOVE(sn->connections, nc);
-    EEBUS_MUTEX_UNLOCK(sn->mutex);
-
     if (sc != NULL) {
-      SHIP_CONNECTION_STOP(sc);
-      SHIP_NODE_READER_ON_REMOTE_SKI_DISCONNECTED(sn->ship_node_reader, SHIP_CONNECTION_GET_REMOTE_SKI(sc));
-      ShipConnectionDelete(sc);
+      VectorPushBack(&to_remove, sc);
     }
   }
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
+  for (size_t i = 0; i < VectorGetSize(&to_remove); ++i) {
+    ShipConnectionObject* sc = VectorGetElement(&to_remove, i);
+    SHIP_CONNECTION_STOP(sc);
+    SHIP_NODE_READER_ON_REMOTE_SKI_DISCONNECTED(sn->ship_node_reader, SHIP_CONNECTION_GET_REMOTE_SKI(sc));
+    ShipConnectionDelete(sc);
+  }
+  VectorDestruct(&to_remove);
 }
 
 // Runs on the connection loop thread, which owns connection teardown. Each
