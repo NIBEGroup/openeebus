@@ -91,11 +91,7 @@ Building it on Windows may require some extra steps related to enabling mDNS and
    netsh advfirewall firewall add rule name="Heat Pump EEBUS" dir=in action=allow protocol=TCP localport=4711
    ```
 
-# Running the Unit Tests
+# Testing
 
-Running unit tests on Windows slightly differs from how it's done on other platforms.
-
-```pwsh
-cd .\build
-ctest run -C Debug
-```
+See [Testing](testing.md) for the test layout and commands to build and run unit and integration tests,
+including configuration selection for Visual Studio builds.

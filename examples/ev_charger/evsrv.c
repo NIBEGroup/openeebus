@@ -24,6 +24,7 @@
 #include "examples/ev_charger/evsrv.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "src/common/array_util.h"
@@ -235,6 +236,11 @@ static EebusError EvsrvStart(Evsrv* self, int32_t port, const char* role, TlsCer
   EebusServiceConfigSetAlternateIdentifier(self->cfg, "OpenEEBUS-EV-123456789");
   EebusServiceConfigSetAlternateMdnsServiceName(self->cfg, "OpenEEBUS-EV-123456789");
 
+  const char* const mdns_service_name = getenv("EEBUS_MDNS_SERVICE_NAME");
+  if (mdns_service_name != NULL && mdns_service_name[0] != '\0') {
+    EebusServiceConfigSetAlternateMdnsServiceName(self->cfg, mdns_service_name);
+  }
+
   self->service = EebusServiceCreate(self->cfg, role, tls_certificate, SERVICE_READER_OBJECT(self));
   if (self->service == NULL) {
     EebusServiceConfigDelete(self->cfg);
@@ -278,10 +284,10 @@ void Destruct(ServiceReaderObject* self) {
 
   if (evsrv->service != NULL) {
     EEBUS_SERVICE_STOP(evsrv->service);
-    EebusServiceDelete(evsrv->service);
-    evsrv->service = NULL;
   }
 
+  // Use cases unsubscribe from the service owned device event manager during destruction,
+  // so they must be released before the service and its local device are deleted.
   EebusCliDelete(evsrv->cli);
   evsrv->cli = NULL;
 
@@ -302,6 +308,11 @@ void Destruct(ServiceReaderObject* self) {
 
   CsLpcListenerDelete(evsrv->cs_lpc_listener);
   evsrv->cs_lpc_listener = NULL;
+
+  if (evsrv->service != NULL) {
+    EebusServiceDelete(evsrv->service);
+    evsrv->service = NULL;
+  }
 
   EebusServiceConfigDelete(evsrv->cfg);
   evsrv->cfg = NULL;
