@@ -22,6 +22,7 @@
 #include "src/ship/api/ship_mdns_interface.h"
 #include "src/ship/api/ship_pairing_entry.h"
 #include "src/ship/mdns/mdns_debug.h"
+#include "src/ship/mdns/ship_mdns.h"
 #include "src/ship/ship_connection/types.h"
 
 /** mDNS debug printf(), enabled whith MDNS_DEBUG = 1 */
@@ -396,13 +397,7 @@ ShipMdnsObject* ShipMdnsCreate(
   MdnsConstruct(mdns, ski, device_info, service_name, port, cb, ctx);
 
   if ((mdns->pairing_mutex == NULL) || (mdns->pairing_lookups == NULL) || (mdns->pairing_found_entries == NULL)) {
-    EebusMutexDelete(mdns->pairing_mutex);
-    MdnsVectorDelete(mdns->pairing_lookups);
-    MdnsVectorDelete(mdns->pairing_found_entries);
-    MdnsVectorDelete(mdns->found_entries);
-    MdnsVectorDelete(mdns->active_resolves);
-    EebusDeviceInfoDelete(mdns->device_info);
-    EEBUS_FREE(mdns);
+    MdnsDelete(SHIP_MDNS_OBJECT(mdns));
     return NULL;
   }
 
@@ -419,15 +414,19 @@ static void Destruct(ShipMdnsObject* self) {
 
   MdnsVectorDelete(mdns->found_entries);
   mdns->found_entries = NULL;
+
   MdnsVectorDelete(mdns->active_resolves);
   mdns->active_resolves = NULL;
+
   MdnsVectorDelete(mdns->pairing_lookups);
   mdns->pairing_lookups = NULL;
+
   MdnsVectorDelete(mdns->pairing_found_entries);
   mdns->pairing_found_entries = NULL;
 
   ShipPairingEntryDelete(mdns->pairing_announcement);
   mdns->pairing_announcement = NULL;
+
   EebusMutexDelete(mdns->pairing_mutex);
   mdns->pairing_mutex = NULL;
 
@@ -729,12 +728,20 @@ static void MdnsRegisterService(Mdns* self) {
   }
 }
 
-static bool MdnsIsPairingInstanceKnown(const Mdns* self, const char* name) {
+static PairingLookup* MdnsFindPairingLookup(Mdns* self, const char* name) {
   for (size_t i = 0; i < VectorGetSize(self->pairing_lookups); ++i) {
-    const PairingLookup* const lookup = (const PairingLookup*)VectorGetElement(self->pairing_lookups, i);
+    PairingLookup* const lookup = (PairingLookup*)VectorGetElement(self->pairing_lookups, i);
     if ((lookup != NULL) && (strcmp(ShipPairingEntryGetName(lookup->entry), name) == 0)) {
-      return true;
+      return lookup;
     }
+  }
+  return NULL;
+}
+
+static bool MdnsIsPairingInstanceKnown(const Mdns* self, const char* name) {
+  const PairingLookup* const lookup = MdnsFindPairingLookup((Mdns*)self, name);
+  if (lookup != NULL) {
+    return true;
   }
 
   for (size_t i = 0; i < VectorGetSize(self->pairing_found_entries); ++i) {
@@ -852,13 +859,11 @@ static void MdnsPairingBrowserNew(
 static void MdnsPairingBrowserRemove(Mdns* self, const char* name) {
   // A goodbye. Nothing is trusted on the strength of an announcement still
   // being there, so only a query that has not been answered yet is dropped.
-  for (size_t i = 0; i < VectorGetSize(self->pairing_lookups); ++i) {
-    PairingLookup* const lookup = (PairingLookup*)VectorGetElement(self->pairing_lookups, i);
-    if ((lookup != NULL) && (strcmp(ShipPairingEntryGetName(lookup->entry), name) == 0)) {
-      MdnsRemovePairingLookup(self, lookup);
-      return;
-    }
+  PairingLookup* const lookup = MdnsFindPairingLookup(self, name);
+  if (lookup == NULL) {
+    return;
   }
+  MdnsRemovePairingLookup(self, lookup);
 }
 
 static void MdnsPairingBrowserCallback(
@@ -1054,8 +1059,9 @@ static int MdnsAddPairingRecords(Mdns* self, const ShipPairingEntry* entry) {
   }
 
   AvahiStringList* const txt_record = MdnsCreatePairingTextRecord(entry);
-  const size_t txt_size             = avahi_string_list_serialize(txt_record, NULL, 0);
-  uint8_t* const txt                = (uint8_t*)avahi_malloc(txt_size);
+
+  const size_t txt_size = avahi_string_list_serialize(txt_record, NULL, 0);
+  uint8_t* const txt    = (uint8_t*)avahi_malloc(txt_size);
   if (txt == NULL) {
     avahi_string_list_free(txt_record);
     return AVAHI_ERR_NO_MEMORY;
@@ -1103,16 +1109,10 @@ static void MdnsApplyPairingRequests(Mdns* self) {
   EEBUS_MUTEX_LOCK(self->pairing_mutex);
 
   if ((self->on_pairing_entries_found_cb != NULL) && (self->pairing_browser == NULL)) {
-    self->pairing_browser = avahi_service_browser_new(
-        self->client,
-        AVAHI_IF_UNSPEC,
-        AVAHI_PROTO_UNSPEC,
-        kShipPairingServiceType,
-        NULL,
-        0,
-        MdnsPairingBrowserCallback,
-        self
-    );
+    const char* type               = kShipPairingServiceType;
+    AvahiServiceBrowserCallback cb = MdnsPairingBrowserCallback;
+    self->pairing_browser
+        = avahi_service_browser_new(self->client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, type, NULL, 0, cb, self);
     if (self->pairing_browser == NULL) {
       MDNS_DEBUG_PRINTF("Failed to browse shippairing: %s\n", avahi_strerror(avahi_client_errno(self->client)));
     }
@@ -1145,19 +1145,16 @@ static void MdnsWakeUp(Mdns* self) {
   }
 }
 
-static bool MdnsGetPairingCallback(Mdns* self, OnShipPairingEntriesFoundCallback* cb, void** ctx) {
-  EEBUS_MUTEX_LOCK(self->pairing_mutex);
-  *cb  = self->on_pairing_entries_found_cb;
-  *ctx = self->pairing_context;
-  EEBUS_MUTEX_UNLOCK(self->pairing_mutex);
-
-  return *cb != NULL;
-}
-
 static void MdnsNotifyFoundPairingEntries(Mdns* self) {
   OnShipPairingEntriesFoundCallback cb = NULL;
   void* ctx                            = NULL;
-  if (!MdnsGetPairingCallback(self, &cb, &ctx) || (VectorGetSize(self->pairing_found_entries) == 0)) {
+
+  EEBUS_MUTEX_LOCK(self->pairing_mutex);
+  cb  = self->on_pairing_entries_found_cb;
+  ctx = self->pairing_context;
+  EEBUS_MUTEX_UNLOCK(self->pairing_mutex);
+
+  if (cb == NULL || (VectorGetSize(self->pairing_found_entries) == 0)) {
     return;
   }
 
@@ -1233,7 +1230,7 @@ static void MdnsClientCallback(AvahiClient* c, AvahiClientState state, void* use
 static void* MdnsThreadLoop(void* parameters) {
   Mdns* const mdns = (Mdns*)parameters;
 
-  while (!mdns->cancel) {
+  for (;;) {
     MdnsFreeClientObjects(mdns);
     if (mdns->client != NULL) {
       avahi_client_free(mdns->client);
@@ -1249,6 +1246,10 @@ static void* MdnsThreadLoop(void* parameters) {
       }
       avahi_simple_poll_free(mdns->poll);
       mdns->poll = NULL;
+    }
+    if (mdns->cancel) {
+      EEBUS_MUTEX_UNLOCK(mdns->pairing_mutex);
+      break;
     }
     mdns->poll = avahi_simple_poll_new();
     EEBUS_MUTEX_UNLOCK(mdns->pairing_mutex);
@@ -1299,14 +1300,22 @@ static EebusError Start(ShipMdnsObject* self) {
 static void Stop(ShipMdnsObject* self) {
   Mdns* const mdns = MDNS(self);
 
-  mdns->cancel = true;
-  avahi_simple_poll_quit(mdns->poll);
-
-  if (mdns->thread != NULL) {
-    EEBUS_THREAD_JOIN(mdns->thread);
-    EebusThreadDelete(mdns->thread);
-    mdns->thread = NULL;
+  if (mdns->thread == NULL) {
+    return;
   }
+
+  // Under the lock that the mDNS thread replaces the poll with: either it sees
+  // the cancel before making a new poll, or the quit reaches the current one.
+  EEBUS_MUTEX_LOCK(mdns->pairing_mutex);
+  mdns->cancel = true;
+  if (mdns->poll != NULL) {
+    avahi_simple_poll_quit(mdns->poll);
+  }
+  EEBUS_MUTEX_UNLOCK(mdns->pairing_mutex);
+
+  EEBUS_THREAD_JOIN(mdns->thread);
+  EebusThreadDelete(mdns->thread);
+  mdns->thread = NULL;
 }
 
 static EebusError RegisterService(ShipMdnsObject* self) {

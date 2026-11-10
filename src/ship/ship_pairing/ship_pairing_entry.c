@@ -27,7 +27,6 @@
 
 #include "src/ship/api/ship_pairing_entry.h"
 
-#include <ctype.h>
 #include <stdint.h>
 
 #include "src/common/array_util.h"
@@ -78,26 +77,6 @@ static const ShipPairingEntryMapping ship_pairing_entry_lut[SHIP_PAIRING_TXT_PAI
 
 static void ShipPairingEntryConstruct(ShipPairingEntry* entry, const char* name, const char* domain, uint32_t iface);
 static bool ShipPairingEntryIsUppercaseHex(const char* s, size_t digits);
-
-/**
- * @brief Compares a key of a TXT record, not NUL terminated, with a key name
- *
- * RFC 6763, section 6.4: key names are case insensitive, so "TxtVers" is the
- * key "txtvers".
- */
-static bool ShipPairingEntryKeyMatches(const char* key_ptr, size_t key_size, const char* name) {
-  if (strlen(name) != key_size) {
-    return false;
-  }
-
-  for (size_t i = 0; i < key_size; ++i) {
-    if (tolower((unsigned char)key_ptr[i]) != tolower((unsigned char)name[i])) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 void ShipPairingEntryConstruct(ShipPairingEntry* entry, const char* name, const char* domain, uint32_t iface) {
   // Service instance fields
@@ -194,8 +173,9 @@ EebusError ShipPairingEntrySetValue(
   }
 
   const char** value = NULL;
+  // RFC 6763, section 6.4: key names are case insensitive, so "TxtVers" is the key "txtvers".
   for (size_t i = 0; i < ARRAY_SIZE(ship_pairing_entry_lut); ++i) {
-    if (ShipPairingEntryKeyMatches(key_ptr, key_size, ship_pairing_entry_lut[i].key)) {
+    if (StringBufferEqualsIgnoreCase(key_ptr, key_size, ship_pairing_entry_lut[i].key)) {
       value = (const char**)((uint8_t*)entry + ship_pairing_entry_lut[i].offset);
       break;
     }
@@ -238,7 +218,7 @@ EebusError ShipPairingEntryParseTxtRecord(ShipPairingEntry* entry, const char* t
     const size_t key_size        = (assign_ptr == NULL) ? record_size : (size_t)(assign_ptr - key_ptr);
 
     if (is_first_key) {
-      entry->txtvers_is_first = ShipPairingEntryKeyMatches(key_ptr, key_size, "txtvers");
+      entry->txtvers_is_first = StringBufferEqualsIgnoreCase(key_ptr, key_size, "txtvers");
       is_first_key            = false;
     }
 
