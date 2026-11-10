@@ -20,7 +20,7 @@
 
 #include "src/ship/ship_connection/ship_message_serialize.h"
 
-#ifdef __freertos__
+#if defined(__freertos__) || defined(ESP_PLATFORM)
 #include <cJSON.h>
 #else
 #include <cjson/cJSON.h>
