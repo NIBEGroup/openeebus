@@ -29,9 +29,40 @@ extern "C" {
 #endif  // __cplusplus
 
 /**
- * @brief On server connection established callback type definition
+ * @brief Server connection event type definition
  */
-typedef int (*WebsocketServerCallbackType)(const char* ski, WebsocketCreatorObject* wsc, void* ctx);
+typedef enum WebsocketServerEvent {
+  /**
+   * A peer started to connect in and its SKI is known, while the handshake is still running. The SKI is not yet proven
+   * to belong to the peer and wsc is NULL. A non-zero return value refuses the peer and aborts the handshake, which
+   * then ends with kWebsocketServerEventHandshakeFailed. Only a refusal that changes no state may be taken here,
+   * everything else waits for kWebsocketServerEventEstablished. Backends that cannot report this early (e.g.
+   * libwebsockets, which exposes the SKI only after the handshake) never send it.
+   */
+  kWebsocketServerEventHandshakeStarted,
+
+  /**
+   * The connection is established. wsc is valid and the return value decides: 0 accepts it, non-zero rejects it. It
+   * also ends a started handshake, no kWebsocketServerEventHandshakeFailed follows.
+   */
+  kWebsocketServerEventEstablished,
+
+  /**
+   * A handshake reported as started ended without reaching kWebsocketServerEventEstablished, also when it was refused
+   * at kWebsocketServerEventHandshakeStarted. Notification only, wsc is NULL and the return value is ignored.
+   */
+  kWebsocketServerEventHandshakeFailed,
+} WebsocketServerEvent;
+
+/**
+ * @brief On server connection event callback type definition
+ */
+typedef int (*WebsocketServerCallbackType)(
+    WebsocketServerEvent event,
+    const char* ski,
+    WebsocketCreatorObject* wsc,
+    void* ctx
+);
 
 /**
  * @brief Http Server Interface
