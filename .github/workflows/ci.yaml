@@ -76,12 +76,8 @@ jobs:
       - name: Build
         run: cmake --build build --parallel "$(nproc)"
 
-      - name: Run unit tests
-        run: ctest -j "$(nproc)" --test-dir build --output-on-failure -LE integration
-
-      - name: Run integration tests
-        # Temporarily serialize integration tests and exclude stress tests
-        run: ctest -j1 --test-dir build --output-on-failure -L integration -LE stress
+      - name: Run tests
+        run: ctest -j "$(nproc)" --test-dir build --output-on-failure
 
   build-linux:
     name: Build (Linux)
