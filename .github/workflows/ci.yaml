@@ -132,7 +132,7 @@ jobs:
             -DVCPKG_INSTALLED_DIR="$env:VCPKG_ROOT\installed"
 
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build build --config Release --parallel $env:NUMBER_OF_PROCESSORS
 
   build-macos:
     name: Build (macOS)
@@ -156,4 +156,4 @@ jobs:
             -DOPENSSL_SSL_LIBRARY=$(brew --prefix openssl@3)/lib/libssl.dylib
 
       - name: Build
-        run: cmake --build build
+        run: cmake --build build --parallel "$(sysctl -n hw.ncpu)"
