@@ -70,3 +70,50 @@ INSTANTIATE_TEST_SUITE_P(
         StringNCompareParams{"a", "", 0, false}
     )
 );
+
+struct StringBufferEqualsIgnoreCaseParams {
+  const char* buf;
+  size_t buf_len;
+  const char* s;
+  bool expected;
+};
+
+class StringBufferEqualsIgnoreCaseTest : public ::testing::TestWithParam<StringBufferEqualsIgnoreCaseParams> {};
+
+TEST_P(StringBufferEqualsIgnoreCaseTest, ReturnsExpected) {
+  const StringBufferEqualsIgnoreCaseParams& p = GetParam();
+  EXPECT_EQ(StringBufferEqualsIgnoreCase(p.buf, p.buf_len, p.s), p.expected);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    StringBufferEqualsIgnoreCase,
+    StringBufferEqualsIgnoreCaseTest,
+    ::testing::Values(
+        // --- Match ---
+
+        // Same characters
+        StringBufferEqualsIgnoreCaseParams{"txtvers", 7, "txtvers", true},
+        // Same characters in another case, either side
+        StringBufferEqualsIgnoreCaseParams{"TxtVers", 7, "txtvers", true},
+        StringBufferEqualsIgnoreCaseParams{"txtvers", 7, "TXTVERS", true},
+        // Only buf_len characters of the buffer count; the buffer need not end there,
+        // as with a key followed by "=value" in a TXT record
+        StringBufferEqualsIgnoreCaseParams{"txtvers=1", 7, "txtvers", true},
+        // Empty buffer and empty string
+        StringBufferEqualsIgnoreCaseParams{"", 0, "", true},
+
+        // --- No match ---
+
+        // Different characters
+        StringBufferEqualsIgnoreCaseParams{"txtvars", 7, "txtvers", false},
+        // The buffer holds only a prefix of the string
+        StringBufferEqualsIgnoreCaseParams{"txtver", 6, "txtvers", false},
+        // The buffer holds more than the string
+        StringBufferEqualsIgnoreCaseParams{"txtvers1", 8, "txtvers", false},
+        // Empty buffer, non-empty string
+        StringBufferEqualsIgnoreCaseParams{"", 0, "a", false},
+        // NULL on either side
+        StringBufferEqualsIgnoreCaseParams{nullptr, 0, "", false},
+        StringBufferEqualsIgnoreCaseParams{"", 0, nullptr, false}
+    )
+);

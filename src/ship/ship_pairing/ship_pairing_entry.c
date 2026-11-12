@@ -168,17 +168,14 @@ EebusError ShipPairingEntrySetValue(
     return kEebusErrorParse;
   }
 
-  if ((value_ptr == NULL) || (value_size == 0)) {
+  if ((value_ptr == NULL) && (value_size > 0)) {
     return kEebusErrorParse;
   }
 
   const char** value = NULL;
+  // RFC 6763, section 6.4: key names are case insensitive, so "TxtVers" is the key "txtvers".
   for (size_t i = 0; i < ARRAY_SIZE(ship_pairing_entry_lut); ++i) {
-    // The whole key has to match, not just its beginning, so that a truncated
-    // key is treated as the unknown key it is rather than as the one it is a
-    // prefix of.
-    if ((strlen(ship_pairing_entry_lut[i].key) == key_size)
-        && (strncmp(ship_pairing_entry_lut[i].key, key_ptr, key_size) == 0)) {
+    if (StringBufferEqualsIgnoreCase(key_ptr, key_size, ship_pairing_entry_lut[i].key)) {
       value = (const char**)((uint8_t*)entry + ship_pairing_entry_lut[i].offset);
       break;
     }
@@ -188,13 +185,15 @@ EebusError ShipPairingEntrySetValue(
     return kEebusErrorParse;
   }
 
-  // A key repeated within one record keeps its first value, so that a second
-  // occurrence cannot overwrite what the digest was calculated over.
+  // A key repeated within one record keeps its first value (RFC 6763, section
+  // 6.4), so that a second occurrence cannot overwrite what the digest was
+  // calculated over. An empty value is kept as well: the key is present, and
+  // ShipPairingEntryIsValid() rejects it (section 5.4).
   if (*value != NULL) {
     return kEebusErrorOk;
   }
 
-  *value = StringNCopy(value_ptr, value_size);
+  *value = (value_size == 0) ? StringCopy("") : StringNCopy(value_ptr, value_size);
 
   return kEebusErrorOk;
 }
@@ -210,34 +209,32 @@ EebusError ShipPairingEntryParseTxtRecord(ShipPairingEntry* entry, const char* t
 
   while (bytes_left > 0) {
     const size_t record_size = *(const uint8_t*)record_ptr;
-    if ((record_size >= bytes_left) || (record_size < 3)) {
+    if (record_size >= bytes_left) {
       return kEebusErrorParse;
     }
 
     const char* const key_ptr    = record_ptr + 1;
     const char* const assign_ptr = memchr(key_ptr, '=', record_size);
-    if (assign_ptr == NULL) {
+    const size_t key_size        = (assign_ptr == NULL) ? record_size : (size_t)(assign_ptr - key_ptr);
+
+    if (is_first_key) {
+      entry->txtvers_is_first = StringBufferEqualsIgnoreCase(key_ptr, key_size, "txtvers");
+      is_first_key            = false;
+    }
+
+    // RFC 6763, section 6.4: a string without "=" is a boolean attribute and one
+    // starting with "=" has no key. Neither is a key of table 1, and section 5.4
+    // has keys outside table 1 ignored rather than the record rejected.
+    if ((assign_ptr == NULL) || (key_size == 0)) {
       SHIP_PAIRING_ENTRY_DEBUG_PRINTF("%s, Warning! Skipping record: %.*s\n", __func__, (int)record_size, key_ptr);
       bytes_left -= record_size + 1;
       record_ptr += record_size + 1;
-      is_first_key = false;
       continue;
     }
 
     const char* const value_ptr = assign_ptr + 1;
+    const size_t value_size     = record_size - key_size - 1;
 
-    const size_t key_size   = assign_ptr - key_ptr;
-    const size_t value_size = record_size - key_size - 1;
-    if ((key_size == 0) || (value_size == 0)) {
-      return kEebusErrorParse;
-    }
-
-    if (is_first_key) {
-      entry->txtvers_is_first = (key_size == strlen("txtvers")) && (strncmp("txtvers", key_ptr, key_size) == 0);
-      is_first_key            = false;
-    }
-
-    // A key outside table 1 is ignored rather than rejected (section 5.4).
     if (ShipPairingEntrySetValue(entry, key_ptr, key_size, value_ptr, value_size) != kEebusErrorOk) {
       SHIP_PAIRING_ENTRY_DEBUG_PRINTF(
           "%s, Warning! Unsupported key: %.*s; value: %.*s\n",

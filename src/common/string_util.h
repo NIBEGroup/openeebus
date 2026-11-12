@@ -94,6 +94,19 @@ static inline bool StringEqualsIgnoreCase(const char* a, const char* b) {
 }
 
 /**
+ * @brief Case-insensitive equality of a buffer that is not NUL terminated and a string
+ *
+ * The whole of @p s has to match: a buffer holding only a prefix of it, or
+ * more than it, is not equal.
+ *
+ * @param buf Characters to compare, need not be NUL terminated (may be NULL)
+ * @param buf_len Number of characters in buf
+ * @param s NUL terminated string (may be NULL)
+ * @return true if buf holds exactly s, ignoring case
+ */
+bool StringBufferEqualsIgnoreCase(const char* buf, size_t buf_len, const char* s);
+
+/**
  * @brief Case-insensitive string ordering, like strcasecmp() (which is not
  * available on every platform)
  * @param a First string (NULL sorts before any string)

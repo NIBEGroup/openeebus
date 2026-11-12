@@ -70,6 +70,20 @@ bool StringNCompare(const char* a, const char* b, size_t n) {
   return a[n] == '\0' && b[n] == '\0';
 }
 
+bool StringBufferEqualsIgnoreCase(const char* buf, size_t buf_len, const char* s) {
+  if ((buf == NULL) || (s == NULL) || (strlen(s) != buf_len)) {
+    return false;
+  }
+
+  for (size_t i = 0; i < buf_len; ++i) {
+    if (tolower((unsigned char)buf[i]) != tolower((unsigned char)s[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 const char* StringFmtSprintf(const char* format, ...) {
   char* s = NULL;
   va_list args1;
