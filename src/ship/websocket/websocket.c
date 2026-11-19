@@ -179,24 +179,51 @@ int32_t WebsocketGetCloseError(const WebsocketObject* self) {
   return WEBSOCKET(self)->close_error;
 }
 
+struct lws* WebsocketGetWsi(Websocket* self) {
+  EEBUS_MUTEX_LOCK(self->wr_mutex);
+  struct lws* const wsi = self->wsi;
+  EEBUS_MUTEX_UNLOCK(self->wr_mutex);
+
+  return wsi;
+}
+
 void WebsocketScheduleWrite(WebsocketObject* self) {
   Websocket* const ws = WEBSOCKET(self);
 
-  if (!EEBUS_QUEUE_IS_EMPTY(ws->wr_queue)) {
-    lws_callback_on_writable(ws->wsi);
+  // Snapshot the wsi, the closed flag and the queue state under the mutex used
+  // by WebsocketClose(), then act on the snapshot only. Otherwise the wsi can
+  // be cleared between the check and the call, and lws_callback_on_writable()
+  // would walk a released struct lws.
+  EEBUS_MUTEX_LOCK(ws->wr_mutex);
+  struct lws* const wsi = ws->wsi;
+  const bool closed     = ws->is_closed;
+  const bool pending    = !EEBUS_QUEUE_IS_EMPTY(ws->wr_queue);
+  EEBUS_MUTEX_UNLOCK(ws->wr_mutex);
+
+  if (closed || (wsi == NULL) || !pending) {
+    return;
   }
+
+  lws_callback_on_writable(wsi);
 }
 
 void WebsocketStaggerCallback(lws_sorted_usec_list_t* sul) {
   Websocket* const ws = lws_container_of(sul, Websocket, sul_stagger);
 
-  if (ws != NULL) {
-    if (!WEBSOCKET_IS_CLOSED(WEBSOCKET_OBJECT(ws))) {
-      WEBSOCKET_SCHEDULE_WRITE(WEBSOCKET_OBJECT(ws));
-    }
+  EEBUS_MUTEX_LOCK(ws->wr_mutex);
+  struct lws* const wsi = ws->wsi;
+  const bool closed     = ws->is_closed;
+  EEBUS_MUTEX_UNLOCK(ws->wr_mutex);
 
-    lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
+  // Do not reschedule once the connection is gone. A timer that keeps running
+  // on a closed websocket only keeps a released wsi reachable.
+  if (closed || (wsi == NULL)) {
+    return;
   }
+
+  WEBSOCKET_SCHEDULE_WRITE(WEBSOCKET_OBJECT(ws));
+
+  lws_sul_schedule(ws->lws_ctx, 0, &ws->sul_stagger, WebsocketStaggerCallback, kWebsocketStaggerDelay);
 }
 
 // LWS event handlers
@@ -204,10 +231,9 @@ void WebsocketStaggerCallback(lws_sorted_usec_list_t* sul) {
 int WebsocketOnWritable(WebsocketObject* self) {
   Websocket* const ws = (Websocket*)WEBSOCKET(self);
 
-  // Snapshot wsi once: WebsocketClose() can set ws->wsi = NULL from another thread.
-  // If wsi is non-NULL here the LWS wsi object is still alive — lws_context_destroy
-  // runs only after the LWS service thread exits.
-  struct lws* const wsi = ws->wsi;
+  // The wsi is only valid on the LWS service thread, which is the thread this
+  // callback runs on. lws_context_destroy() runs only after that thread exits.
+  struct lws* const wsi = WebsocketGetWsi(ws);
   if (wsi == NULL) {
     return 0;
   }
@@ -267,7 +293,11 @@ void BufTmpRelease(Websocket* self) {
 
 int WebsocketOnReceive(WebsocketObject* self, void* in, size_t len) {
   Websocket* const ws = (Websocket*)WEBSOCKET(self);
-  if (ws->wsi == NULL) {
+
+  // The wsi is only valid on the LWS service thread, which is the thread this
+  // callback runs on. lws_context_destroy() runs only after that thread exits.
+  struct lws* const wsi = WebsocketGetWsi(ws);
+  if (wsi == NULL) {
     return -1;
   }
 
@@ -279,7 +309,7 @@ int WebsocketOnReceive(WebsocketObject* self, void* in, size_t len) {
 
   WEBSOCKET_DEBUG_HEXDUMP(in, len);
 
-  if (lws_is_final_fragment(ws->wsi) && !lws_remaining_packet_payload(ws->wsi)) {
+  if (lws_is_final_fragment(wsi) && !lws_remaining_packet_payload(wsi)) {
     if (ws->buf_tmp != NULL) {
       BufTmpAppend(ws, (const uint8_t*)in, len);
       WebsocketUserCallback(ws, kWebsocketCallbackTypeRead, ws->buf_tmp, ws->buf_tmp_size);

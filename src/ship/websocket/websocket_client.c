@@ -75,7 +75,8 @@ static struct lws_context* WebsocketClientLwsContextCreate(WebsocketClient* self
 static EebusError WebsocketClientParse(WebsocketClient* self);
 static EebusError WebsocketClientTryStart(WebsocketClient* self);
 static int WebsocketClientOnClientEstablished(WebsocketClient* self);
-static int WebsocketClientOnClientConnectionError(WebsocketClient* self, const char* in, size_t len);
+static void WebsocketClientForgetWsi(Websocket* ws, struct lws* wsi);
+static int WebsocketClientOnClientConnectionError(WebsocketClient* self, struct lws* wsi, const char* in, size_t len);
 static int WebsocketClientOnWsiDestroy(WebsocketClient* self);
 static int
 WebsocketClientServiceCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len);
@@ -390,12 +391,9 @@ int WebsocketClientOnClientEstablished(WebsocketClient* self) {
     return -1;
   }
 
-  // Snapshot ws->wsi once. WebsocketClose() can set ws->wsi = NULL from another
-  // thread (SIMOPEN superseded connection cleanup path). Reading it once and using only the
-  // snapshot eliminates the race window between the two uses below: if it is already
-  // NULL we bail out early; if it becomes NULL after the snapshot the LWS wsi object
-  // itself is still alive (lws_context_destroy runs only after this thread exits).
-  struct lws* const wsi = ws->wsi;
+  // The wsi is only valid on the LWS service thread, which is the thread this
+  // callback runs on. lws_context_destroy() runs only after that thread exits.
+  struct lws* const wsi = WebsocketGetWsi(ws);
   if (wsi == NULL) {
     WEBSOCKET_DEBUG_PRINTF("%s(), ws->wsi is NULL\n", __func__);
     return -1;
@@ -428,9 +426,37 @@ int WebsocketClientOnClientEstablished(WebsocketClient* self) {
   return 0;
 }
 
-int WebsocketClientOnClientConnectionError(WebsocketClient* self, const char* in, size_t len) {
+/**
+ * @brief Drop the reference to an LWS wsi that is going away.
+ *
+ * Must be called from the LWS service thread (the thread that owns the wsi).
+ * WebsocketClose() may already have cleared ws->wsi from another thread, so the
+ * reference is only cleared when it still points at the wsi being released.
+ */
+static void WebsocketClientForgetWsi(Websocket* ws, struct lws* wsi) {
+  EEBUS_MUTEX_LOCK(ws->wr_mutex);
+  if ((wsi != NULL) && (ws->wsi != wsi)) {
+    // Somebody already bound a different wsi: leave that reference alone.
+    EEBUS_MUTEX_UNLOCK(ws->wr_mutex);
+    return;
+  }
+
+  ws->wsi = NULL;
+  EEBUS_MUTEX_UNLOCK(ws->wr_mutex);
+}
+
+int WebsocketClientOnClientConnectionError(WebsocketClient* self, struct lws* wsi, const char* in, size_t len) {
   Websocket* const ws = WEBSOCKET(self);
   WEBSOCKET_DEBUG_PRINTF("client connection error: %s\n", (in != NULL) ? in : "(null)");
+
+  // The connection attempt is finished: LWS calls lws_close_free_wsi() right
+  // after this callback returns. For a connection that never got established
+  // (e.g. a failed TLS handshake) LWS does not deliver LWS_CALLBACK_CLIENT_CLOSED,
+  // so this is the only chance to drop the reference before the wsi is freed.
+  // Without it ws->wsi stays dangling while the stagger timer keeps calling
+  // lws_callback_on_writable() on it.
+  WebsocketClientForgetWsi(ws, wsi);
+
   WebsocketUserCallback(ws, kWebsocketCallbackTypeError, in, len);
   return 0;
 }
@@ -460,7 +486,7 @@ int WebsocketClientServiceCallback(
     }
 
     case LWS_CALLBACK_CLIENT_CONNECTION_ERROR: {
-      return WebsocketClientOnClientConnectionError(ws, (const char*)in, len);
+      return WebsocketClientOnClientConnectionError(ws, wsi, (const char*)in, len);
     }
 
     case LWS_CALLBACK_CLIENT_WRITEABLE: {
@@ -472,7 +498,17 @@ int WebsocketClientServiceCallback(
     }
 
     case LWS_CALLBACK_CLIENT_CLOSED: {
+      WebsocketClientForgetWsi(WEBSOCKET(ws), wsi);
       return WebsocketClientOnWsiDestroy(ws);
+    }
+
+    case LWS_CALLBACK_WSI_DESTROY: {
+      // Delivered from __lws_destroy_wsi() on the service thread, immediately
+      // before LWS frees the wsi. This is the authoritative hook: it also
+      // covers the paths that never deliver LWS_CALLBACK_CLIENT_CLOSED, e.g. a
+      // failed TLS handshake closed with lws_close_free_wsi().
+      WebsocketClientForgetWsi(WEBSOCKET(ws), wsi);
+      return 0;
     }
 
     default: {
