@@ -174,19 +174,18 @@ struct lws_client_connect_info* WebsocketClientConnectInfoCreate(WebsocketClient
 }
 
 struct lws_context* WebsocketClientLwsContextCreate(WebsocketClient* self) {
-  // Since we know this lws context is only ever going to be used with
-  // a few client wsis / fds / sockets at a time, let lws know it doesn't
-  // have to use the default allocations for fd tables up to ulimit -n.
-  // It will just allocate for 2 internal and 4 that we might use.
-  static const uint32_t kFdLmitPerThread = 2 + 4;
-
+  // Do not limit the fd tables of this context. On platforms where the socket
+  // descriptors are process-global (for example lwIP), the descriptors used by
+  // this context are not contiguous starting at zero and are shared with other
+  // contexts and sockets. A per-context limit would make lws reject descriptors
+  // above that limit and size its lookup tables too small for the real fd
+  // numbers.
   const struct lws_context_creation_info lws_ctx_creation_info = (struct lws_context_creation_info){
       .port      = CONTEXT_PORT_NO_LISTEN,
       .protocols = self->protocols,
       .gid       = (gid_t)-1,
       .uid       = (uid_t)-1,
 
-      .fd_limit_per_thread = kFdLmitPerThread,
       .options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT | LWS_SERVER_OPTION_H2_JUST_FIX_WINDOW_UPDATE_OVERFLOW,
 
       .client_ssl_cipher_list
