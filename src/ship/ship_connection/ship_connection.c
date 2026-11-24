@@ -250,8 +250,12 @@ void Stop(ShipConnectionObject* self) {
 
   sc->cancel = true;
 
+  // A blocking send is not safe here: once the cancel flag is set, the
+  // connection thread may exit before consuming the message, leaving a full
+  // queue with no reader. The non-blocking wake-up is sufficient because a full
+  // queue means the thread still has messages to process.
   ShipConnectionQueueMessage queue_msg = {.type = kShipConnectionQueueMsgTypeCancel};
-  EEBUS_QUEUE_SEND(sc->msg_queue, &queue_msg, kTimeoutInfinite);
+  EEBUS_QUEUE_SEND(sc->msg_queue, &queue_msg, 0);
 
   if (sc->thread != NULL) {
     EEBUS_THREAD_JOIN(sc->thread);
