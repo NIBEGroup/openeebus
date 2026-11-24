@@ -106,6 +106,74 @@ TEST_F(NodeConnectionTest, ClosingUnapprovedConnectionClearsItsTokenWithoutGrant
   EXPECT_TRUE(peer->provisional);
 }
 
+TEST_F(NodeConnectionTest, DeferredEventCannotMatchAReplacementAtTheSameAddress) {
+  NodeConnection* peer = NODE_CONNECTION(nc_);
+  ShipConnectionObject connection{};
+
+  peer->connection    = &connection;
+  peer->connection_id = 11;
+  EXPECT_TRUE(NodeConnectionIsCurrentConnection(peer, &connection, 11));
+  EXPECT_FALSE(NodeConnectionIsCurrentConnection(peer, &connection, 10));
+
+  // Model allocator address reuse: the replacement gets a new connection id.
+  peer->connection_id = 12;
+  EXPECT_FALSE(NodeConnectionIsCurrentConnection(peer, &connection, 11));
+  EXPECT_TRUE(NodeConnectionIsCurrentConnection(peer, &connection, 12));
+
+  peer->connection    = nullptr;
+  peer->connection_id = 0;
+}
+
+TEST_F(NodeConnectionTest, SupersededEventOnlyMatchesItsOwnConnectionId) {
+  NodeConnection* peer = NODE_CONNECTION(nc_);
+  ShipConnectionObject connection{};
+
+  peer->superseded    = &connection;
+  peer->superseded_id = 7;
+  EXPECT_TRUE(NodeConnectionIsSupersededConnection(peer, &connection, 7));
+  EXPECT_FALSE(NodeConnectionIsSupersededConnection(peer, &connection, 8));
+  EXPECT_FALSE(NodeConnectionIsSupersededConnection(peer, &connection, 0));
+
+  peer->superseded    = nullptr;
+  peer->superseded_id = 0;
+}
+
+TEST_F(NodeConnectionTest, SupersedeMovesTheConnectionId) {
+  ship_connection_mock = nullptr;
+  NODE_CONNECTION_SERVER_CONNECT(nc_, nullptr, "ship_id");
+  ShipConnectionMockGuard sc_guard{ship_connection_mock};
+  ShipConnectionObject* sc = SHIP_CONNECTION_OBJECT(ship_connection_mock);
+  ASSERT_NE(sc, nullptr);
+
+  NodeConnection* peer     = NODE_CONNECTION(nc_);
+  peer->is_attempt_running = true;
+  peer->is_outbound        = true;
+  peer->handshake_complete = false;
+  peer->connection_id      = 42;
+
+  EXPECT_EQ(NODE_CONNECTION_SUPERSEDE_CLIENT(nc_), sc);
+  EXPECT_EQ(peer->connection, nullptr);
+  EXPECT_EQ(peer->connection_id, 0u);
+  EXPECT_EQ(peer->superseded, sc);
+  EXPECT_EQ(peer->superseded_id, 42u);
+
+  NODE_CONNECTION_RESTORE_SUPERSEDED(nc_);
+  EXPECT_EQ(peer->connection, sc);
+  EXPECT_EQ(peer->connection_id, 42u);
+  EXPECT_EQ(peer->superseded, nullptr);
+  EXPECT_EQ(peer->superseded_id, 0u);
+
+  ASSERT_EQ(NODE_CONNECTION_SUPERSEDE_CLIENT(nc_), sc);
+  NODE_CONNECTION_RELEASE_SUPERSEDED(nc_, sc);
+  EXPECT_EQ(peer->superseded, nullptr);
+  EXPECT_EQ(peer->superseded_id, 0u);
+
+  // Give the current connection back to the fixture so it is released cleanly.
+  peer->connection    = sc;
+  peer->connection_id = 42;
+  EXPECT_EQ(NODE_CONNECTION_RELEASE_SHIP_CONNECTION(nc_), sc);
+}
+
 TEST_F(NodeConnectionTest, OwnsConnection) {
   ship_connection_mock = nullptr;
   NODE_CONNECTION_SERVER_CONNECT(nc_, nullptr, "ship_id");

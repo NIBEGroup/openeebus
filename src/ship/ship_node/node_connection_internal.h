@@ -36,6 +36,14 @@ struct NodeConnection {
   const char* ski;
   char* ship_id;
   ShipConnectionObject* connection;
+  /**
+   * Id of the connection currently held in connection, 0 if there is none.
+   *
+   * Deferred events carry the id they were created with. The node compares it
+   * together with the pointer, so that an event for a freed connection is not
+   * mistaken for one about a new connection that reuses the same address.
+   */
+  uint64_t connection_id;
   uint64_t pending_approval_id;
   int attempt_cnt;
   bool is_attempt_running;
@@ -43,7 +51,9 @@ struct NodeConnection {
   bool handshake_complete;
   int yield_cnt;                     // inbound connections refused in favour of our outbound attempt (see should_yield)
   ShipConnectionObject* superseded;  // outbound connection replaced by an inbound one, awaiting its close
-  int inbound_hs_cnt;                // inbound handshakes from this SKI that are running
+  /** Id of the connection in the superseded slot, 0 if there is none. */
+  uint64_t superseded_id;
+  int inbound_hs_cnt;  // inbound handshakes from this SKI that are running
   bool is_trusted;
   bool provisional;
   bool trusted_by_pairing;
@@ -63,6 +73,32 @@ static inline bool
 NodeConnectionHasPendingApproval(const NodeConnection* self, const ShipConnectionObject* sc, uint64_t approval_id) {
   return (self != NULL) && (sc != NULL) && (self->connection == sc) && (approval_id != 0)
          && (self->pending_approval_id == approval_id);
+}
+
+/**
+ * @brief Whether a deferred event refers to the connection currently held by the peer.
+ *
+ * Caller holds the node mutex. The id also distinguishes a freed connection from
+ * a replacement that was allocated at the same address.
+ */
+static inline bool
+NodeConnectionIsCurrentConnection(const NodeConnection* self, const ShipConnectionObject* sc, uint64_t connection_id) {
+  return (self != NULL) && (sc != NULL) && (connection_id != 0) && (self->connection == sc)
+         && (self->connection_id == connection_id);
+}
+
+/**
+ * @brief Whether a deferred event refers to the connection in the superseded slot.
+ *
+ * Caller holds the node mutex.
+ */
+static inline bool NodeConnectionIsSupersededConnection(
+    const NodeConnection* self,
+    const ShipConnectionObject* sc,
+    uint64_t connection_id
+) {
+  return (self != NULL) && (sc != NULL) && (connection_id != 0) && (self->superseded == sc)
+         && (self->superseded_id == connection_id);
 }
 
 #ifdef __cplusplus

@@ -50,6 +50,8 @@ struct ShipNode {
   bool search_for_remote_ski;
   bool cancel;
   uint64_t next_approval_id;
+  /** Monotonic id handed to each connection this node assigns to a peer. */
+  uint64_t next_connection_id;
   EebusThreadObject* connection_thread;
 
   NodeConnectionContainerObject* connections;
