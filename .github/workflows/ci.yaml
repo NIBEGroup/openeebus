@@ -24,8 +24,7 @@ jobs:
 
       - name: Install clang-format
         run: |
-          # clang-format-18 ships in Ubuntu's own archive (24.04 and 26.04),
-          # so no third-party LLVM repository is needed.
+          # From Ubuntu's archive; apt.llvm.org lacks LLVM 18 for newer Ubuntu releases.
           sudo apt-get update
           sudo apt-get install -y clang-format-18
 
