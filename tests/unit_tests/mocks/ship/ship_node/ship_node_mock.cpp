@@ -27,9 +27,20 @@
 void Destruct(InfoProviderObject* self);
 bool IsRemoteServiceForSkiPaired(InfoProviderObject* self, const char* ski);
 void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, bool had_error);
-void ReportServiceShipId(InfoProviderObject* self, const char* service_id, const char* ship_id);
+void ReportServiceShipId(
+    InfoProviderObject* self,
+    ShipConnectionObject* sc,
+    const char* service_id,
+    const char* ship_id
+);
 bool IsWaitingForTrustAllowed(InfoProviderObject*, const char* ski);
-void HandleShipStateUpdate(InfoProviderObject* self, const char* ski, SmeState state, const char* err);
+void HandleShipStateUpdate(
+    InfoProviderObject* self,
+    ShipConnectionObject* sc,
+    const char* ski,
+    SmeState state,
+    const char* err
+);
 DataReaderObject* SetupRemoteDevice(InfoProviderObject* self, const char* ski, DataWriterObject* data_writer);
 static void Start(ShipNodeObject* self);
 static void Stop(ShipNodeObject* self);
@@ -112,9 +123,14 @@ void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, 
   mock->gmock->HandleConnectionClosed(self, sc, had_error);
 }
 
-void ReportServiceShipId(InfoProviderObject* self, const char* service_id, const char* ship_id) {
+void ReportServiceShipId(
+    InfoProviderObject* self,
+    ShipConnectionObject* sc,
+    const char* service_id,
+    const char* ship_id
+) {
   ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
-  mock->gmock->ReportServiceShipId(self, service_id, ship_id);
+  mock->gmock->ReportServiceShipId(self, sc, service_id, ship_id);
 }
 
 bool IsWaitingForTrustAllowed(InfoProviderObject* self, const char* ski) {
@@ -122,9 +138,15 @@ bool IsWaitingForTrustAllowed(InfoProviderObject* self, const char* ski) {
   return mock->gmock->IsWaitingForTrustAllowed(self, ski);
 }
 
-void HandleShipStateUpdate(InfoProviderObject* self, const char* ski, SmeState state, const char* err) {
+void HandleShipStateUpdate(
+    InfoProviderObject* self,
+    ShipConnectionObject* sc,
+    const char* ski,
+    SmeState state,
+    const char* err
+) {
   ShipNodeMock* const mock = SHIP_NODE_MOCK(self);
-  mock->gmock->HandleShipStateUpdate(self, ski, state, err);
+  mock->gmock->HandleShipStateUpdate(self, sc, ski, state, err);
 }
 
 DataReaderObject* SetupRemoteDevice(InfoProviderObject* self, const char* ski, DataWriterObject* data_writer) {

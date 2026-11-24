@@ -94,9 +94,16 @@ static bool IsRemoteServiceForSkiPaired(InfoProviderObject* self, const char* sk
 static bool ShipNodeAcceptPendingTrust(ShipConnectionObject* sc, uint64_t approval_id, void* ctx);
 static void ShipNodeDiscardPendingTrust(ShipNode* self, ShipConnectionObject* sc, uint64_t approval_id);
 static void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, bool had_error);
-static void ReportServiceShipId(InfoProviderObject* self, const char* service_id, const char* ship_id);
+static void
+ReportServiceShipId(InfoProviderObject* self, ShipConnectionObject* sc, const char* service_id, const char* ship_id);
 static bool IsWaitingForTrustAllowed(InfoProviderObject* self, const char* ski);
-static void HandleShipStateUpdate(InfoProviderObject* self, const char* ski, SmeState state, const char* err);
+static void HandleShipStateUpdate(
+    InfoProviderObject* self,
+    ShipConnectionObject* sc,
+    const char* ski,
+    SmeState state,
+    const char* err
+);
 static DataReaderObject* SetupRemoteDevice(InfoProviderObject* self, const char* ski, DataWriterObject* data_writer);
 static void Start(ShipNodeObject* self);
 static void Stop(ShipNodeObject* self);
@@ -633,11 +640,31 @@ void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, 
   ShipNodePostConnectionClose(sn, sc, had_error);
 }
 
-void ReportServiceShipId(InfoProviderObject* self, const char* service_id, const char* ship_id) {
+// Caller holds the node mutex. Returns the peer entry whose current connection is sc.
+// The superseded slot is deliberately excluded: a connection that was replaced by
+// a newer one no longer reports state for the peer.
+static NodeConnectionObject* ShipNodeFindCurrentConnection(ShipNode* sn, const ShipConnectionObject* sc) {
+  NodeConnectionObject* const nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SHIP_CONNECTION(sn->connections, sc);
+  return ((nc != NULL) && (NODE_CONNECTION(nc)->connection == sc)) ? nc : NULL;
+}
+
+void ReportServiceShipId(
+    InfoProviderObject* self,
+    ShipConnectionObject* sc,
+    const char* service_id,
+    const char* ship_id
+) {
   ShipNode* const sn = SHIP_NODE(self);
   EEBUS_MUTEX_LOCK(sn->mutex);
-  NodeConnectionObject* nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SKI(sn->connections, service_id);
-  if ((nc != NULL) && (NODE_CONNECTION(nc)->ship_id == NULL)) {
+  NodeConnectionObject* nc = ShipNodeFindCurrentConnection(sn, sc);
+  if (nc == NULL) {
+    // The connection was released from its peer while it was still running.
+    // It must not report information for the connection that replaced it.
+    EEBUS_MUTEX_UNLOCK(sn->mutex);
+    return;
+  }
+
+  if (NODE_CONNECTION(nc)->ship_id == NULL) {
     NODE_CONNECTION(nc)->ship_id = StringCopy(ship_id);
   }
 
@@ -650,32 +677,44 @@ bool IsWaitingForTrustAllowed(InfoProviderObject* self, const char* ski) {
   return SHIP_NODE_READER_IS_WAITING_FOR_TRUST_ALLOWED(sn->ship_node_reader, ski);
 }
 
-void HandleShipStateUpdate(InfoProviderObject* self, const char* ski, SmeState state, const char* err) {
+void HandleShipStateUpdate(
+    InfoProviderObject* self,
+    ShipConnectionObject* sc,
+    const char* ski,
+    SmeState state,
+    const char* err
+) {
   UNUSED(err);
   ShipNode* const sn = SHIP_NODE(self);
 
+  bool just_completed            = false;
+  bool current_pairing_connected = false;
+
+  EEBUS_MUTEX_LOCK(sn->mutex);
+  NodeConnectionObject* nc = ShipNodeFindCurrentConnection(sn, sc);
+  if ((nc != NULL) && (state == kDataExchange)) {
+    just_completed            = NODE_CONNECTION_ON_HANDSHAKE_COMPLETE(nc);
+    current_pairing_connected = just_completed && ShipNodeIsCurrentPairingPeer(sn, NODE_CONNECTION(nc));
+  }
+
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
+  if (nc == NULL) {
+    // The connection was released from its peer while it was still running.
+    // It must not report state for the connection that replaced it.
+    return;
+  }
+
   SHIP_NODE_READER_ON_SHIP_STATE_UPDATE(sn->ship_node_reader, ski, state);
 
-  if (state == kDataExchange) {
-    bool just_completed            = false;
-    bool current_pairing_connected = false;
-    EEBUS_MUTEX_LOCK(sn->mutex);
-    NodeConnectionObject* nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SKI(sn->connections, ski);
-    if (nc != NULL) {
-      just_completed            = NODE_CONNECTION_ON_HANDSHAKE_COMPLETE(nc);
-      current_pairing_connected = just_completed && ShipNodeIsCurrentPairingPeer(sn, NODE_CONNECTION(nc));
-    }
+  // Section 4.3.1, item b.ii: a successful connection to the current devZ
+  // deactivates addCu again if the reactivation interval already elapsed.
+  if (current_pairing_connected && (sn->ship_pairing != NULL)) {
+    SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(sn->ship_pairing);
+  }
 
-    EEBUS_MUTEX_UNLOCK(sn->mutex);
-    // Section 4.3.1, item b.ii: a successful connection to the current devZ
-    // deactivates addCu again if the reactivation interval already elapsed.
-    if (current_pairing_connected && (sn->ship_pairing != NULL)) {
-      SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(sn->ship_pairing);
-    }
-
-    if (just_completed) {
-      SHIP_NODE_READER_ON_REMOTE_SKI_CONNECTED(sn->ship_node_reader, ski);
-    }
+  if (just_completed) {
+    SHIP_NODE_READER_ON_REMOTE_SKI_CONNECTED(sn->ship_node_reader, ski);
   }
 }
 

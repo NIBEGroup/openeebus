@@ -69,7 +69,12 @@ struct InfoProviderInterface {
   /**
    * @brief Report the ship ID provided during the handshake
    */
-  void (*report_service_ship_id)(InfoProviderObject* self, const char* service_id, const char* ship_id);
+  void (*report_service_ship_id)(
+      InfoProviderObject* self,
+      ShipConnectionObject* sc,
+      const char* service_id,
+      const char* ship_id
+  );
   /**
    * @brief Check if the user is still able to trust the connection
    */
@@ -79,7 +84,12 @@ struct InfoProviderInterface {
    * for a SKI
    */
   void (*handle_ship_state_update)(
-      InfoProviderObject* self, const char* ski, SmeState state, const char* err);
+      InfoProviderObject* self,
+      ShipConnectionObject* sc,
+      const char* ski,
+      SmeState state,
+      const char* err
+  );
   /**
    * @brief Report an approved handshake by a remote device
    */
@@ -123,8 +133,8 @@ struct InfoProviderObject {
 /**
  * @brief Info Provider Report Service Ship ID caller definition
  */
-#define INFO_PROVIDER_REPORT_SERVICE_SHIP_ID(obj, s_id, ship_id) \
-  (INFO_PROVIDER_INTERFACE(obj)->report_service_ship_id(INFO_PROVIDER_OBJECT(obj), (s_id), (ship_id)))
+#define INFO_PROVIDER_REPORT_SERVICE_SHIP_ID(obj, sc, s_id, ship_id) \
+  (INFO_PROVIDER_INTERFACE(obj)->report_service_ship_id(INFO_PROVIDER_OBJECT(obj), (sc), (s_id), (ship_id)))
 
 /**
  * @brief Info Provider Is Waiting For Trust Allowed caller definition
@@ -135,8 +145,8 @@ struct InfoProviderObject {
 /**
  * @brief Info Provider Handle Ship State Update caller definition
  */
-#define INFO_PROVIDER_HANDLE_SHIP_STATE_UPDATE(obj, ski, state, err) \
-  (INFO_PROVIDER_INTERFACE(obj)->handle_ship_state_update(INFO_PROVIDER_OBJECT(obj), (ski), (state), (err)))
+#define INFO_PROVIDER_HANDLE_SHIP_STATE_UPDATE(obj, sc, ski, state, err) \
+  (INFO_PROVIDER_INTERFACE(obj)->handle_ship_state_update(INFO_PROVIDER_OBJECT(obj), (sc), (ski), (state), (err)))
 
 /**
  * @brief Info Provider Setup Remote Device caller definition

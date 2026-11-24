@@ -30,26 +30,37 @@
 
 class InfoProviderMockInterface {
  public:
-  virtual ~InfoProviderMockInterface() {};
-  virtual void Destruct(InfoProviderObject* self)                                                                = 0;
-  virtual bool IsRemoteServiceForSkiPaired(InfoProviderObject* self, const char* ski)                            = 0;
-  virtual void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, bool had_error)        = 0;
-  virtual void ReportServiceShipId(InfoProviderObject* self, const char* service_id, const char* ship_id)        = 0;
-  virtual bool IsWaitingForTrustAllowed(InfoProviderObject*, const char* ski)                                    = 0;
-  virtual void HandleShipStateUpdate(InfoProviderObject* self, const char* ski, SmeState state, const char* err) = 0;
+  virtual ~InfoProviderMockInterface(){};
+  virtual void Destruct(InfoProviderObject* self)                                                         = 0;
+  virtual bool IsRemoteServiceForSkiPaired(InfoProviderObject* self, const char* ski)                     = 0;
+  virtual void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, bool had_error) = 0;
+  virtual void
+  ReportServiceShipId(InfoProviderObject* self, ShipConnectionObject* sc, const char* service_id, const char* ship_id)
+      = 0;
+  virtual bool IsWaitingForTrustAllowed(InfoProviderObject*, const char* ski) = 0;
+  virtual void HandleShipStateUpdate(
+      InfoProviderObject* self,
+      ShipConnectionObject* sc,
+      const char* ski,
+      SmeState state,
+      const char* err
+  ) = 0;
   virtual DataReaderObject* SetupRemoteDevice(InfoProviderObject* self, const char* ski, DataWriterObject* data_writer)
       = 0;
 };
 
 class InfoProviderGMock : public InfoProviderMockInterface {
  public:
-  virtual ~InfoProviderGMock() {};
+  virtual ~InfoProviderGMock(){};
   MOCK_METHOD1(Destruct, void(InfoProviderObject*));
   MOCK_METHOD2(IsRemoteServiceForSkiPaired, bool(InfoProviderObject*, const char*));
   MOCK_METHOD3(HandleConnectionClosed, void(InfoProviderObject*, ShipConnectionObject*, bool));
-  MOCK_METHOD3(ReportServiceShipId, void(InfoProviderObject*, const char*, const char*));
+  MOCK_METHOD4(ReportServiceShipId, void(InfoProviderObject*, ShipConnectionObject*, const char*, const char*));
   MOCK_METHOD2(IsWaitingForTrustAllowed, bool(InfoProviderObject*, const char*));
-  MOCK_METHOD4(HandleShipStateUpdate, void(InfoProviderObject*, const char*, SmeState, const char*));
+  MOCK_METHOD5(
+      HandleShipStateUpdate,
+      void(InfoProviderObject*, ShipConnectionObject*, const char*, SmeState, const char*)
+  );
   MOCK_METHOD3(
       SetupRemoteDevice,
       DataReaderObject*(InfoProviderObject* self, const char* ski, DataWriterObject* data_writer)

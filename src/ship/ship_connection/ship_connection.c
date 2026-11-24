@@ -425,7 +425,13 @@ void ReportConnectionError(ShipConnection* self, EebusError err) {
 
   SHIP_CONNECTION_CLOSE_CONNECTION(self, false, 0, "");
 
-  INFO_PROVIDER_HANDLE_SHIP_STATE_UPDATE(self->info_provider, self->remote_ski, kSmeStateError, "");
+  INFO_PROVIDER_HANDLE_SHIP_STATE_UPDATE(
+      self->info_provider,
+      SHIP_CONNECTION_OBJECT(self),
+      self->remote_ski,
+      kSmeStateError,
+      ""
+  );
 }
 
 void ShipConnectionWebsocketCallback(WebsocketCallbackType type, const void* in, size_t size, void* ctx) {
@@ -469,7 +475,13 @@ void ShipConnectionSetSmeState(ShipConnection* self, SmeState state) {
   // Node callbacks may acquire the node mutex, so report after unlocking.
   if (changed) {
     SHIP_CONNECTION_DEBUG_PRINTF("SHIP state changed to: %s (%d)\n", SmeStateToString(state), state);
-    INFO_PROVIDER_HANDLE_SHIP_STATE_UPDATE(self->info_provider, SHIP_CONNECTION_GET_REMOTE_SKI(self), state, "");
+    INFO_PROVIDER_HANDLE_SHIP_STATE_UPDATE(
+        self->info_provider,
+        SHIP_CONNECTION_OBJECT(self),
+        SHIP_CONNECTION_GET_REMOTE_SKI(self),
+        state,
+        ""
+    );
   }
 }
 
@@ -1206,7 +1218,12 @@ EebusError SmeHandshakeAccessMethodsHandle(ShipConnection* self, ShipMessageDese
 
   // remote_ship_id is populated by SmeHandshakeAccessMethodsCheckMessageVal above.
   // Report it now so info-provider clients can display the remote device name.
-  INFO_PROVIDER_REPORT_SERVICE_SHIP_ID(self->info_provider, self->remote_ski, self->remote_ship_id);
+  INFO_PROVIDER_REPORT_SERVICE_SHIP_ID(
+      self->info_provider,
+      SHIP_CONNECTION_OBJECT(self),
+      self->remote_ski,
+      self->remote_ship_id
+  );
   return kEebusErrorOk;
 }
 
