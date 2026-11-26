@@ -22,18 +22,11 @@ jobs:
       - name: Fetch main branch
         run: git fetch origin main:refs/remotes/origin/main
 
-      - name: Install clang-format from LLVM repository
+      - name: Install clang-format
         run: |
-          # Add LLVM GPG key
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-
-          # Add LLVM repository
-          CODENAME=$(lsb_release -cs)
-          echo "deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-18 main" | sudo tee /etc/apt/sources.list.d/llvm.list
-
-          # Install clang-format-18 and generic clang-format
+          # From Ubuntu's archive; apt.llvm.org lacks LLVM 18 for newer Ubuntu releases.
           sudo apt-get update
-          sudo apt-get install -y clang-format-18 clang-format
+          sudo apt-get install -y clang-format-18
 
       - name: Check code style
         env:
