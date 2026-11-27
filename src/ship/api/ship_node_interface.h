@@ -146,6 +146,25 @@ struct ShipNodeInterface {
       const char* ship_id,
       const char* fingerprint
   );
+
+  /**
+   * @brief Stops trusting a peer configured with register_remote_fingerprint_with_ship_id()
+   *
+   * The counterpart of register_remote_fingerprint_with_ship_id(), for a node
+   * that asked a peer to trust it (devZ in the SHIP Pairing Service). Such a
+   * peer has no SKI until it has been discovered or has connected, so it cannot
+   * be removed with unregister_remote_ski(). Its connection, if any, is closed.
+   *
+   * Both values have to match: the SHIP ID alone does not authenticate a peer,
+   * and a peer trusted by its SKI can have the same SHIP ID.
+   *
+   * @return kEebusErrorInputArgument if the SHIP ID or fingerprint is invalid
+   */
+  EebusError (*unregister_remote_fingerprint_with_ship_id)(
+      ShipNodeObject* self,
+      const char* ship_id,
+      const char* fingerprint
+  );
 };
 
 /**
@@ -225,6 +244,12 @@ struct ShipNodeObject {
  */
 #define SHIP_NODE_REGISTER_REMOTE_FINGERPRINT_WITH_SHIP_ID(obj, ship_id, fingerprint) \
   (SHIP_NODE_INTERFACE(obj)->register_remote_fingerprint_with_ship_id(obj, ship_id, fingerprint))
+
+/**
+ * @brief Ship Node Unregister Remote Fingerprint With Ship Id caller definition
+ */
+#define SHIP_NODE_UNREGISTER_REMOTE_FINGERPRINT_WITH_SHIP_ID(obj, ship_id, fingerprint) \
+  (SHIP_NODE_INTERFACE(obj)->unregister_remote_fingerprint_with_ship_id(obj, ship_id, fingerprint))
 
 #ifdef __cplusplus
 }

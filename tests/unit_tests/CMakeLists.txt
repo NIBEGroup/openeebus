@@ -81,6 +81,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node/node_connection_cont
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node/peer_recognition
     ${EXECUTABLE_OUTPUT_PATH}/ship/ship_node/peer_recognition)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ship/ship_node/peer_removal
+    ${EXECUTABLE_OUTPUT_PATH}/ship/ship_node/peer_removal)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/use_case/actor/cs/lpc
     ${EXECUTABLE_OUTPUT_PATH}/use_case/actor/cs/lpc)
 
