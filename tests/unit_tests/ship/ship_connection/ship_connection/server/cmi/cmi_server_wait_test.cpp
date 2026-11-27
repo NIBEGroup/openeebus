@@ -50,6 +50,7 @@ TEST_P(ShipConnectionServerCmiWaitStateTests, CmiServerWaitReceivedReplyTest) {
       *ifp_mock->gmock,
       HandleShipStateUpdate(
           sc.info_provider,
+          testing::_,
           testing::StrCaseEq(TEST_REMOTE_SKI),
           GetParam().expected_sme_state,
           testing::StrCaseEq("")

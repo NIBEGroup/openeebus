@@ -83,6 +83,7 @@ typedef struct ShipNodeQueueMessage ShipNodeQueueMessage;
 struct ShipNodeQueueMessage {
   ShipNodeQueueMsgType type;
   ShipConnectionObject* ship_connection;
+  uint64_t connection_id;
   bool had_error;
   bool is_trusted;
   char* ski;
@@ -94,9 +95,16 @@ static bool IsRemoteServiceForSkiPaired(InfoProviderObject* self, const char* sk
 static bool ShipNodeAcceptPendingTrust(ShipConnectionObject* sc, uint64_t approval_id, void* ctx);
 static void ShipNodeDiscardPendingTrust(ShipNode* self, ShipConnectionObject* sc, uint64_t approval_id);
 static void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, bool had_error);
-static void ReportServiceShipId(InfoProviderObject* self, const char* service_id, const char* ship_id);
+static void
+ReportServiceShipId(InfoProviderObject* self, ShipConnectionObject* sc, const char* service_id, const char* ship_id);
 static bool IsWaitingForTrustAllowed(InfoProviderObject* self, const char* ski);
-static void HandleShipStateUpdate(InfoProviderObject* self, const char* ski, SmeState state, const char* err);
+static void HandleShipStateUpdate(
+    InfoProviderObject* self,
+    ShipConnectionObject* sc,
+    const char* ski,
+    SmeState state,
+    const char* err
+);
 static DataReaderObject* SetupRemoteDevice(InfoProviderObject* self, const char* ski, DataWriterObject* data_writer);
 static void Start(ShipNodeObject* self);
 static void Stop(ShipNodeObject* self);
@@ -160,7 +168,7 @@ static void ShipNodeConstruct(
 
 static void ShipNodeOnMdnsEntriesFoundCallback(Vector* found_entries, void* ctx);
 static bool SkiMatches(const char* ski_a, const char* ski_b);
-static void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_error);
+static void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, uint64_t connection_id, bool had_error);
 static bool ShipNodeFindServiceForPeer(ShipNode* self, NodeConnectionObject* nc, MdnsEntry* found_entry);
 static void ShipNodeConnectToPendingSki(ShipNode* self, const char* ski);
 static void ShipNodeConnectToAllPendingSkis(ShipNode* self);
@@ -197,14 +205,29 @@ static void ShipNodeQueueMsgDeallocator(void* msg) {
   queue_msg->ski = NULL;
 }
 
-static void ShipNodePostConnectionClose(ShipNode* sn, ShipConnectionObject* sc, bool had_error) {
+static void
+ShipNodePostConnectionClose(ShipNode* sn, ShipConnectionObject* sc, uint64_t connection_id, bool had_error) {
   ShipNodeQueueMessage queue_msg = {
       .type            = kShipNodeQueueMsgTypeShipConnectionClosed,
       .ship_connection = sc,
+      .connection_id   = connection_id,
       .had_error       = had_error,
       .ski             = NULL,
   };
   EEBUS_QUEUE_SEND(sn->msg_queue, &queue_msg, kTimeoutInfinite);
+}
+
+/**
+ * @brief Hand out the id for the next connection assigned to a peer.
+ *
+ * Caller holds the node mutex. Zero is reserved for "no connection".
+ */
+static uint64_t ShipNodeNextConnectionId(ShipNode* sn) {
+  if (++sn->next_connection_id == 0) {
+    ++sn->next_connection_id;
+  }
+
+  return sn->next_connection_id;
 }
 
 static void ShipNodeRetryTimerCallback(void* ctx) {
@@ -343,6 +366,7 @@ void ShipNodeConstruct(
   self->search_for_remote_ski = false;
   self->cancel                = false;
   self->next_approval_id      = 0;
+  self->next_connection_id    = 0;
   self->connection_thread     = NULL;
 
   self->connections           = NodeConnectionContainerCreate();
@@ -529,7 +553,7 @@ static void ShipNodeDiscardPendingTrust(ShipNode* self, ShipConnectionObject* sc
   EEBUS_MUTEX_UNLOCK(self->mutex);
 }
 
-void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_error) {
+void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, uint64_t connection_id, bool had_error) {
   UNUSED(had_error);
 
   if (sc == NULL) {
@@ -537,7 +561,9 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
   }
 
   // Scan by pointer identity — never dereferences sc, safe even for dangling
-  // pointers from a double-close event on a superseded connection.
+  // pointers from a double-close event on a superseded connection. The id
+  // separates an event for a freed connection from one about a new connection
+  // that was allocated at the same address in the meantime.
   EEBUS_MUTEX_LOCK(self->mutex);
 
   char* ski                = NULL;
@@ -546,11 +572,13 @@ void CloseShipConnection(ShipNode* self, ShipConnectionObject* sc, bool had_erro
   bool is_superseded       = false;
   NodeConnectionObject* nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SHIP_CONNECTION(self->connections, sc);
   if (nc != NULL) {
-    if (NODE_CONNECTION_IS_SUPERSEDED(nc, sc)) {
+    if (NodeConnectionIsSupersededConnection(NODE_CONNECTION(nc), sc, connection_id)) {
       // The outbound connection replaced by an inbound one (simultaneous open):
       // the node connection's attempt/retry state now belongs to the new one.
       NODE_CONNECTION_RELEASE_SUPERSEDED(nc, sc);
       is_superseded = true;
+    } else if (!NodeConnectionIsCurrentConnection(NODE_CONNECTION(nc), sc, connection_id)) {
+      nc = NULL;  // Stale event from a freed connection at a reused address
     } else {
       discard     = NODE_CONNECTION(nc)->provisional && !NODE_CONNECTION(nc)->is_trusted;
       ski         = StringCopy(NODE_CONNECTION_GET_SKI(nc));
@@ -607,10 +635,17 @@ static bool ShipNodeIsPairingMessageExchangeAvailable(void* ctx) {
 void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, bool had_error) {
   ShipNode* const sn = SHIP_NODE(self);
 
+  uint64_t connection_id = 0;
   EEBUS_MUTEX_LOCK(sn->mutex);
   NodeConnectionObject* nc    = NODE_CONNECTION_CONTAINER_FIND_WITH_SHIP_CONNECTION(sn->connections, sc);
   bool current_pairing_closed = false;
   if (nc != NULL) {
+    if (NODE_CONNECTION(nc)->connection == sc) {
+      connection_id = NODE_CONNECTION(nc)->connection_id;
+    } else if (NODE_CONNECTION_IS_SUPERSEDED(nc, sc)) {
+      connection_id = NODE_CONNECTION(nc)->superseded_id;
+    }
+
     current_pairing_closed
         = NODE_CONNECTION(nc)->handshake_complete && ShipNodeIsCurrentPairingPeer(sn, NODE_CONNECTION(nc));
     NODE_CONNECTION(nc)->pending_approval_id = 0;
@@ -630,14 +665,34 @@ void HandleConnectionClosed(InfoProviderObject* self, ShipConnectionObject* sc, 
     SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(sn->ship_pairing);
   }
 
-  ShipNodePostConnectionClose(sn, sc, had_error);
+  ShipNodePostConnectionClose(sn, sc, connection_id, had_error);
 }
 
-void ReportServiceShipId(InfoProviderObject* self, const char* service_id, const char* ship_id) {
+// Caller holds the node mutex. Returns the peer entry whose current connection is sc.
+// The superseded slot is deliberately excluded: a connection that was replaced by
+// a newer one no longer reports state for the peer.
+static NodeConnectionObject* ShipNodeFindCurrentConnection(ShipNode* sn, const ShipConnectionObject* sc) {
+  NodeConnectionObject* const nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SHIP_CONNECTION(sn->connections, sc);
+  return ((nc != NULL) && (NODE_CONNECTION(nc)->connection == sc)) ? nc : NULL;
+}
+
+void ReportServiceShipId(
+    InfoProviderObject* self,
+    ShipConnectionObject* sc,
+    const char* service_id,
+    const char* ship_id
+) {
   ShipNode* const sn = SHIP_NODE(self);
   EEBUS_MUTEX_LOCK(sn->mutex);
-  NodeConnectionObject* nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SKI(sn->connections, service_id);
-  if ((nc != NULL) && (NODE_CONNECTION(nc)->ship_id == NULL)) {
+  NodeConnectionObject* nc = ShipNodeFindCurrentConnection(sn, sc);
+  if (nc == NULL) {
+    // The connection was released from its peer while it was still running.
+    // It must not report information for the connection that replaced it.
+    EEBUS_MUTEX_UNLOCK(sn->mutex);
+    return;
+  }
+
+  if (NODE_CONNECTION(nc)->ship_id == NULL) {
     NODE_CONNECTION(nc)->ship_id = StringCopy(ship_id);
   }
 
@@ -650,32 +705,44 @@ bool IsWaitingForTrustAllowed(InfoProviderObject* self, const char* ski) {
   return SHIP_NODE_READER_IS_WAITING_FOR_TRUST_ALLOWED(sn->ship_node_reader, ski);
 }
 
-void HandleShipStateUpdate(InfoProviderObject* self, const char* ski, SmeState state, const char* err) {
+void HandleShipStateUpdate(
+    InfoProviderObject* self,
+    ShipConnectionObject* sc,
+    const char* ski,
+    SmeState state,
+    const char* err
+) {
   UNUSED(err);
   ShipNode* const sn = SHIP_NODE(self);
 
+  bool just_completed            = false;
+  bool current_pairing_connected = false;
+
+  EEBUS_MUTEX_LOCK(sn->mutex);
+  NodeConnectionObject* nc = ShipNodeFindCurrentConnection(sn, sc);
+  if ((nc != NULL) && (state == kDataExchange)) {
+    just_completed            = NODE_CONNECTION_ON_HANDSHAKE_COMPLETE(nc);
+    current_pairing_connected = just_completed && ShipNodeIsCurrentPairingPeer(sn, NODE_CONNECTION(nc));
+  }
+
+  EEBUS_MUTEX_UNLOCK(sn->mutex);
+
+  if (nc == NULL) {
+    // The connection was released from its peer while it was still running.
+    // It must not report state for the connection that replaced it.
+    return;
+  }
+
   SHIP_NODE_READER_ON_SHIP_STATE_UPDATE(sn->ship_node_reader, ski, state);
 
-  if (state == kDataExchange) {
-    bool just_completed            = false;
-    bool current_pairing_connected = false;
-    EEBUS_MUTEX_LOCK(sn->mutex);
-    NodeConnectionObject* nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SKI(sn->connections, ski);
-    if (nc != NULL) {
-      just_completed            = NODE_CONNECTION_ON_HANDSHAKE_COMPLETE(nc);
-      current_pairing_connected = just_completed && ShipNodeIsCurrentPairingPeer(sn, NODE_CONNECTION(nc));
-    }
+  // Section 4.3.1, item b.ii: a successful connection to the current devZ
+  // deactivates addCu again if the reactivation interval already elapsed.
+  if (current_pairing_connected && (sn->ship_pairing != NULL)) {
+    SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(sn->ship_pairing);
+  }
 
-    EEBUS_MUTEX_UNLOCK(sn->mutex);
-    // Section 4.3.1, item b.ii: a successful connection to the current devZ
-    // deactivates addCu again if the reactivation interval already elapsed.
-    if (current_pairing_connected && (sn->ship_pairing != NULL)) {
-      SHIP_PAIRING_NOTIFY_MESSAGE_EXCHANGE(sn->ship_pairing);
-    }
-
-    if (just_completed) {
-      SHIP_NODE_READER_ON_REMOTE_SKI_CONNECTED(sn->ship_node_reader, ski);
-    }
+  if (just_completed) {
+    SHIP_NODE_READER_ON_REMOTE_SKI_CONNECTED(sn->ship_node_reader, ski);
   }
 }
 
@@ -842,10 +909,11 @@ static EebusError ShipNodeCheckPeerRegistration(
   return kEebusErrorOk;
 }
 
-static void ShipNodeSchedulePeerConnection(ShipNode* sn, ShipConnectionObject* close_connection) {
+static void
+ShipNodeSchedulePeerConnection(ShipNode* sn, ShipConnectionObject* close_connection, uint64_t close_connection_id) {
   if (close_connection != NULL) {
     // Close the existing connection and retry with the new required certificate fingerprint.
-    ShipNodePostConnectionClose(sn, close_connection, false);
+    ShipNodePostConnectionClose(sn, close_connection, close_connection_id, false);
   }
 
   if (ShipNodeIsClientSupported(sn)) {
@@ -876,6 +944,7 @@ ShipNodeRegisterPeerTrust(ShipNode* sn, const char* ship_id, const char* fingerp
   }
 
   ShipConnectionObject* close_connection = NULL;
+  uint64_t close_connection_id           = 0;
   EEBUS_MUTEX_LOCK(sn->mutex);
   NodeConnectionObject* nc = ShipNodeFindPeerForRegistration(sn, ship_id, fingerprint, trust_source);
   const EebusError ret     = ShipNodeCheckPeerRegistration(nc, fingerprint, trust_source, &close_connection);
@@ -905,9 +974,13 @@ ShipNodeRegisterPeerTrust(ShipNode* sn, const char* ship_id, const char* fingerp
   peer->is_trusted           = true;
   peer->provisional          = false;
   peer->trusted_by_pairing   = peer->trusted_by_pairing || (trust_source == kPeerTrustFromPairingRequest);
+  if (close_connection != NULL) {
+    close_connection_id = NODE_CONNECTION(nc)->connection_id;
+  }
+
   EEBUS_MUTEX_UNLOCK(sn->mutex);
 
-  ShipNodeSchedulePeerConnection(sn, close_connection);
+  ShipNodeSchedulePeerConnection(sn, close_connection, close_connection_id);
   return kEebusErrorOk;
 }
 
@@ -1090,7 +1163,10 @@ static void ShipNodeConnectToPendingSkiInternal(ShipNode* self, NodeConnectionOb
 
   StringDelete((char*)uri);
 
-  NODE_CONNECTION_CLIENT_CONNECT(nc, wsc, self->local_service_details->ship_id);
+  if (NODE_CONNECTION_CLIENT_CONNECT(nc, wsc, self->local_service_details->ship_id) == kEebusErrorOk) {
+    NODE_CONNECTION(nc)->connection_id = ShipNodeNextConnectionId(self);
+  }
+
   WebsocketCreatorDelete(wsc);
 }
 
@@ -1155,7 +1231,7 @@ void* ShipNodeConnectionLoop(void* ctx) {
     if (queue_msg.type == kShipNodeQueueMsgTypeMdnsEntriesFound) {
       ShipNodeConnectToAllPendingSkis(sn);
     } else if (queue_msg.type == kShipNodeQueueMsgTypeShipConnectionClosed) {
-      CloseShipConnection(sn, queue_msg.ship_connection, queue_msg.had_error);
+      CloseShipConnection(sn, queue_msg.ship_connection, queue_msg.connection_id, queue_msg.had_error);
     } else if (queue_msg.type == kShipNodeQueueMsgTypeShipUnregisterSki) {
       ShipNodeUnregisterSki(SHIP_NODE_OBJECT(sn), queue_msg.ski);
     } else if (queue_msg.type == kShipNodeQueueMsgTypeShipRegisterSki) {
@@ -1166,7 +1242,7 @@ void* ShipNodeConnectionLoop(void* ctx) {
     } else if (queue_msg.type == kShipNodeQueueMsgTypeRetryConnectionForSki) {
       ShipNodeConnectToPendingSki(sn, queue_msg.ski);
     } else if (queue_msg.type == kShipNodeQueueMsgTypeDiscardSuperseded) {
-      CloseShipConnection(sn, queue_msg.ship_connection, queue_msg.had_error);
+      CloseShipConnection(sn, queue_msg.ship_connection, queue_msg.connection_id, queue_msg.had_error);
     } else if (queue_msg.type == kShipNodeQueueMsgTypePromoteFingerprint) {
       ShipNodePromoteFingerprint(sn);
     } else if (queue_msg.type == kShipNodeQueueMsgTypeApprovePendingSki) {
@@ -1212,12 +1288,18 @@ static int ShipNodeReplaceConnection(
 
   EEBUS_MUTEX_LOCK(sn->mutex);
   NodeConnectionObject* const nc = NODE_CONNECTION_CONTAINER_FIND_WITH_SKI(sn->connections, ski);
-  const bool created
-      = (nc != NULL) && !sn->cancel
-        && (NODE_CONNECTION_SERVER_CONNECT(nc, websocket_creator, sn->local_service_details->ship_id) == kEebusErrorOk);
-  if (!created && (nc != NULL)) {
+  bool created                   = (nc != NULL) && !sn->cancel;
+  if (created) {
+    created
+        = NODE_CONNECTION_SERVER_CONNECT(nc, websocket_creator, sn->local_service_details->ship_id) == kEebusErrorOk;
+  }
+
+  if (created) {
+    NODE_CONNECTION(nc)->connection_id = ShipNodeNextConnectionId(sn);
+  } else if (nc != NULL) {
     NODE_CONNECTION_CLEAR_ATTEMPT(nc);
   }
+
   EEBUS_MUTEX_UNLOCK(sn->mutex);
 
   if (!created) {
@@ -1278,6 +1360,8 @@ int ShipNodeDecideSimopen(
     return -1;
   }
 
+  NODE_CONNECTION(nc)->connection_id = ShipNodeNextConnectionId(sn);
+
   *discard = old_client;
   return 0;
 }
@@ -1328,6 +1412,8 @@ int ShipNodeDecideIncomingConnection(
     SHIP_NODE_DEBUG_PRINTF("%s(), creating ship connection failed\n", __func__);
     return -1;
   }
+
+  NODE_CONNECTION(nc)->connection_id = ShipNodeNextConnectionId(sn);
 
   return 0;
 }
@@ -1423,6 +1509,7 @@ int ShipNodeOnWebsocketServerConnectionCallback(const char* ski, WebsocketCreato
   bool replaced_established      = false;
   const int err
       = ShipNodeDecideIncomingConnection(sn, nc, ski, websocket_creator, &discard, &replaced, &replaced_established);
+  const uint64_t discard_id = (discard == NULL) ? 0 : NODE_CONNECTION(nc)->superseded_id;
 
   EEBUS_MUTEX_UNLOCK(sn->mutex);
 
@@ -1440,6 +1527,7 @@ int ShipNodeOnWebsocketServerConnectionCallback(const char* ski, WebsocketCreato
     const ShipNodeQueueMessage discard_msg = {
         .type            = kShipNodeQueueMsgTypeDiscardSuperseded,
         .ship_connection = discard,
+        .connection_id   = discard_id,
         .had_error       = false,
         .ski             = NULL,
     };

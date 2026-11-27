@@ -91,6 +91,7 @@ NodeConnectionConstruct(NodeConnection* nc, const char* ski, struct ShipNode* ow
   nc->ski                  = NULL;
   nc->ship_id              = NULL;
   nc->connection           = NULL;
+  nc->connection_id        = 0;
   nc->pending_approval_id  = 0;
   nc->attempt_cnt          = 0;
   nc->is_attempt_running   = false;
@@ -99,6 +100,7 @@ NodeConnectionConstruct(NodeConnection* nc, const char* ski, struct ShipNode* ow
   nc->yield_cnt            = 0;
   nc->inbound_hs_cnt       = 0;
   nc->superseded           = NULL;
+  nc->superseded_id        = 0;
   nc->is_trusted           = false;
   nc->provisional          = false;
   nc->trusted_by_pairing   = false;
@@ -176,6 +178,7 @@ ShipConnectionObject* ReleaseShipConnection(NodeConnectionObject* self) {
   ShipConnectionObject* sc = nc->connection;
 
   nc->connection          = NULL;
+  nc->connection_id       = 0;
   nc->pending_approval_id = 0;
 
   return sc;
@@ -197,6 +200,7 @@ uint32_t OnConnectionClosed(NodeConnectionObject* self) {
   NodeConnection* const nc = NODE_CONNECTION(self);
 
   nc->connection          = NULL;
+  nc->connection_id       = 0;
   nc->pending_approval_id = 0;
   nc->is_attempt_running  = false;
   nc->is_outbound         = false;
@@ -331,9 +335,11 @@ ShipConnectionObject* SupersedeClient(NodeConnectionObject* self) {
   // The outbound connection is being replaced: it no longer counts as a client,
   // but the attempt stays marked as running so that no competing outbound
   // attempt can start while the replacing server connection is set up.
-  nc->superseded  = old_client;
-  nc->connection  = NULL;
-  nc->is_outbound = false;
+  nc->superseded    = old_client;
+  nc->superseded_id = nc->connection_id;
+  nc->connection    = NULL;
+  nc->connection_id = 0;
+  nc->is_outbound   = false;
   return old_client;
 }
 
@@ -341,9 +347,11 @@ void RestoreSuperseded(NodeConnectionObject* self) {
   NodeConnection* const nc = NODE_CONNECTION(self);
 
   if (nc->superseded != NULL) {
-    nc->connection  = nc->superseded;
-    nc->superseded  = NULL;
-    nc->is_outbound = true;
+    nc->connection    = nc->superseded;
+    nc->connection_id = nc->superseded_id;
+    nc->superseded    = NULL;
+    nc->superseded_id = 0;
+    nc->is_outbound   = true;
   }
 }
 
@@ -356,7 +364,8 @@ void ReleaseSuperseded(NodeConnectionObject* self, const ShipConnectionObject* s
   NodeConnection* const nc = NODE_CONNECTION(self);
 
   if ((sc != NULL) && (nc->superseded == sc)) {
-    nc->superseded = NULL;
+    nc->superseded    = NULL;
+    nc->superseded_id = 0;
   }
 }
 
@@ -370,6 +379,7 @@ ShipConnectionObject* DetachConnection(NodeConnectionObject* self, bool* was_est
   // must be reported to the application again (the old one is reported as
   // disconnected by the caller). is_attempt_running stays as it is.
   nc->connection         = NULL;
+  nc->connection_id      = 0;
   nc->is_outbound        = false;
   nc->handshake_complete = false;
   return old_connection;
@@ -379,15 +389,18 @@ void ClearAttempt(NodeConnectionObject* self) {
   NodeConnection* const nc = NODE_CONNECTION(self);
 
   nc->connection         = NULL;
+  nc->connection_id      = 0;
   nc->is_attempt_running = false;
   nc->is_outbound        = false;
   nc->handshake_complete = false;
+  nc->superseded_id      = 0;
 }
 
 ShipConnectionObject* TakeSuperseded(NodeConnectionObject* self) {
   NodeConnection* const nc       = NODE_CONNECTION(self);
   ShipConnectionObject* const sc = nc->superseded;
   nc->superseded                 = NULL;
+  nc->superseded_id              = 0;
   return sc;
 }
 

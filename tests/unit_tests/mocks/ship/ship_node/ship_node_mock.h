@@ -31,7 +31,7 @@
 
 class ShipNodeGMockInterface : public InfoProviderMock {
  public:
-  virtual ~ShipNodeGMockInterface() {};
+  virtual ~ShipNodeGMockInterface(){};
   virtual void Start(ShipNodeObject* self)                                                           = 0;
   virtual void Stop(ShipNodeObject* self)                                                            = 0;
   virtual void RegisterRemoteSki(ShipNodeObject* self, const char* ski, bool is_trusted)             = 0;
@@ -49,13 +49,16 @@ class ShipNodeGMockInterface : public InfoProviderMock {
 
 class ShipNodeGMock : public ShipNodeGMockInterface {
  public:
-  virtual ~ShipNodeGMock() {};
+  virtual ~ShipNodeGMock(){};
   MOCK_METHOD1(Destruct, void(InfoProviderObject*));
   MOCK_METHOD2(IsRemoteServiceForSkiPaired, bool(InfoProviderObject*, const char*));
   MOCK_METHOD3(HandleConnectionClosed, void(InfoProviderObject*, ShipConnectionObject*, bool));
-  MOCK_METHOD3(ReportServiceShipId, void(InfoProviderObject*, const char*, const char*));
+  MOCK_METHOD4(ReportServiceShipId, void(InfoProviderObject*, ShipConnectionObject*, const char*, const char*));
   MOCK_METHOD2(IsWaitingForTrustAllowed, bool(InfoProviderObject*, const char*));
-  MOCK_METHOD4(HandleShipStateUpdate, void(InfoProviderObject*, const char*, SmeState, const char*));
+  MOCK_METHOD5(
+      HandleShipStateUpdate,
+      void(InfoProviderObject*, ShipConnectionObject*, const char*, SmeState, const char*)
+  );
   MOCK_METHOD3(
       SetupRemoteDevice,
       DataReaderObject*(InfoProviderObject* self, const char* ski, DataWriterObject* data_writer)

@@ -91,7 +91,10 @@ EebusError ShipConnectionTestSuite::MessageBufferInitHelper(MessageBuffer* msg_b
 }
 
 void ShipConnectionTestSuite::ExpectStateUpdate(SmeState state) {
-  EXPECT_CALL(*ifp_mock->gmock, HandleShipStateUpdate(sc.info_provider, sc.remote_ski, state, testing::StrCaseEq("")));
+  EXPECT_CALL(
+      *ifp_mock->gmock,
+      HandleShipStateUpdate(sc.info_provider, testing::_, sc.remote_ski, state, testing::StrCaseEq(""))
+  );
 }
 
 void ShipConnectionTestSuite::SetShipConnectionState(SmeState state) {
