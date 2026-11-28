@@ -80,12 +80,12 @@ struct EebusQueueObject {
 /**
  * @brief Eebus Queue Send caller definition
  */
-#define EEBUS_QUEUE_SEND(obj, msg, timeout_ms) (EEBUS_QUEUE_INTERFACE(obj)->send(obj, msg, timeout_ms))
+#define EEBUS_QUEUE_SEND(obj, msg, timeout_ms) ((EEBUS_QUEUE_INTERFACE(obj)->send)(obj, msg, timeout_ms))
 
 /**
  * @brief Eebus Queue Receive caller definition
  */
-#define EEBUS_QUEUE_RECEIVE(obj, msg, timeout_ms) (EEBUS_QUEUE_INTERFACE(obj)->receive(obj, msg, timeout_ms))
+#define EEBUS_QUEUE_RECEIVE(obj, msg, timeout_ms) ((EEBUS_QUEUE_INTERFACE(obj)->receive)(obj, msg, timeout_ms))
 
 /**
  * @brief Eebus Queue Is Empty caller definition

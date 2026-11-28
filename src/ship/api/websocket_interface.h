@@ -99,17 +99,17 @@ struct WebsocketObject {
 /**
  * @brief Websocket Destruct caller definition
  */
-#define WEBSOCKET_DESTRUCT(obj) (WEBSOCKET_INTERFACE(obj)->destruct(obj))
+#define WEBSOCKET_DESTRUCT(obj) ((WEBSOCKET_INTERFACE(obj)->destruct)(obj))
 
 /**
  * @brief Websocket Write caller definition
  */
-#define WEBSOCKET_WRITE(obj, msg, msg_size) (WEBSOCKET_INTERFACE(obj)->write(obj, msg, msg_size))
+#define WEBSOCKET_WRITE(obj, msg, msg_size) ((WEBSOCKET_INTERFACE(obj)->write)(obj, msg, msg_size))
 
 /**
  * @brief Websocket Close caller definition
  */
-#define WEBSOCKET_CLOSE(obj, close_code, reason) (WEBSOCKET_INTERFACE(obj)->close(obj, close_code, reason))
+#define WEBSOCKET_CLOSE(obj, close_code, reason) ((WEBSOCKET_INTERFACE(obj)->close)(obj, close_code, reason))
 
 /**
  * @brief Websocket Is Closed caller definition

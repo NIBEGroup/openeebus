@@ -20,6 +20,7 @@
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
+#include <stdbool.h>
 
 #include "src/common/api/eebus_mutex_interface.h"
 #include "src/common/eebus_errors.h"
