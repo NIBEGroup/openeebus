@@ -60,6 +60,14 @@ struct Websocket {
   /** Implements the Websocket Interface */
   WebsocketObject obj;
 
+  /**
+   * @brief LWS wsi of this websocket, or NULL
+   *
+   * The wsi is owned by the LWS service thread of its context: the service
+   * thread is the only one allowed to dereference it, and it clears this
+   * reference (under wr_mutex) before LWS frees the wsi. Other threads take a
+   * snapshot with WebsocketGetWsi() for bookkeeping only.
+   */
   struct lws* wsi;
   struct lws_context* lws_ctx;
 
@@ -86,6 +94,7 @@ int32_t WebsocketWrite(WebsocketObject* self, const uint8_t* msg, size_t msg_siz
 void WebsocketClose(WebsocketObject* self, int32_t close_code, const char* reason);
 bool WebsocketIsClosed(const WebsocketObject* self);
 int32_t WebsocketGetCloseError(const WebsocketObject* self);
+struct lws* WebsocketGetWsi(Websocket* self);
 void WebsocketScheduleWrite(WebsocketObject* self);
 void WebsocketStaggerCallback(lws_sorted_usec_list_t* sul);
 void WebsocketUserCallback(const Websocket* self, WebsocketCallbackType type, const void* in, size_t size);

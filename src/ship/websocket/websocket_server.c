@@ -110,6 +110,6 @@ WebsocketObject* WebsocketServerOpen(HttpServerObject* srv, struct lws* wsi, Web
 void WebsocketServerClose(WebsocketObject* self, int32_t close_code, const char* reason) {
   WebsocketServer* const wss = WEBSOCKET_SERVER(self);
 
-  HttpServerUnbindWsi(wss->server, WEBSOCKET(self)->wsi);
+  HttpServerUnbindWsi(wss->server, WebsocketGetWsi(WEBSOCKET(self)));
   WebsocketClose(self, close_code, reason);
 }
